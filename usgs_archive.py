@@ -1234,21 +1234,12 @@ class AsciiMetadata(object):
 
 
     """
-    def __init__(self, fn=None, **kwargs):
+    def __init__(self, fn=None, sch_obj=None, **kwargs):
         self.fn = fn
         self.SurveyID = None
         self.RunID = None
-        self._station = None
-        self._latitude = None
-        self._longitude = None
-        self._elevation = None
-        self._start_time = None
-        self._stop_time = None
-        self._sampling_rate = None
-        self._n_samples = None
-        self.channel_dict = None
+        self.sch_obj = sch_obj
         self.MissingDataFlag = np.NaN
-        self._chn_num = None
         self.CoordinateSystem = None
         self._time_fmt = '%Y-%m-%dT%H:%M:%S %Z'
         self._metadata_len = 30
@@ -1286,10 +1277,10 @@ class AsciiMetadata(object):
 
     @property
     def SiteID(self):
-        return self._station
+        return self.sch_obj.meta_db.station
     @SiteID.setter
     def SiteID(self, station):
-        self._station = station
+        self.sch_obj.meta_db.station = station
 
     @property
     def SiteLatitude(self):
