@@ -556,12 +556,33 @@ class Provenance(object):
     def __init__(self, **kwargs):
         self.creation_time = time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime())
         self.creating_application = 'MTpy'
-        self.Creator = Person()
-        self.Submitter = Person()
+        self.creator = Person()
+        self.submitter = Person()
 
         for key in kwargs.keys():
             setattr(self, key, kwargs[key])
-
+            
+    def write_json(self):
+        """
+        write json of attributes
+        """
+        prov_dict = json.dumps(self.__dict__)
+        prov_dict['creator'] = self.creator.__dict__
+        prov_dict['submitter'] = self.submitter.__dict__
+        
+        return json.dumps(prov_dict)
+    
+    def read_json(self, prov_json):
+        """
+        read copyright json string and update attributes
+        """
+        prov_dict = json.loads(prov_json)
+        for key, value in prov_dict.items():
+            if key in ['creator', 'submitter']:
+                for ckey, cvalue in value.items():
+                    setattr(self.citation, ckey, cvalue)
+            else:
+                setattr(self, key, value)
 
 # ==============================================================================
 # Person
@@ -594,13 +615,6 @@ class Person(object):
 
         for key in kwargs.keys():
             setattr(self, key, kwargs[key])
-            
-    def write_json(self):
-        """
-        write a json string of attributes
-        """
-        
-        return json.dumps(self.__dict__)
 
 # ==============================================================================
 # Processing
@@ -645,10 +659,30 @@ class Software(object):
     def __init__(self, **kwargs):
         self.name = None
         self.version = None
-        self.Author = Person()
+        self.author = Person()
 
         for key in kwargs:
             setattr(self, key, kwargs[key])
+            
+    def write_json(self):
+        """
+        write json of attributes
+        """
+        soft_dict = json.dumps(self.__dict__)
+        soft_dict['author'] = self.author.__dict__
+        return json.dumps(soft_dict)
+    
+    def read_json(self, soft_json):
+        """
+        read copyright json string and update attributes
+        """
+        soft_dict = json.loads(soft_json)
+        for key, value in soft_dict.items():
+            if key in ['author']:
+                for ckey, cvalue in value.items():
+                    setattr(self.citation, ckey, cvalue)
+            else:
+                setattr(self, key, value)
 
 # =============================================================================
 # MT HDF5 file
@@ -665,6 +699,8 @@ class MTHF(object):
         self.data_qualtiy = DataQuality()
         self.copyright = Copyright()
         self.software = Software()
+        self.provenance = Provenance()
+        
         
         
 # ==============================================================================
