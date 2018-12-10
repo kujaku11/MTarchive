@@ -11,11 +11,12 @@ Created on Sun Dec  9 20:50:41 2018
 # Imports
 # =============================================================================
 import os
-import json
-import h5py
-import numpy as np
 import datetime
 import time
+import json
+import h5py
+import pandas as pd
+import numpy as np
 import mtpy.utils.gis_tools as gis_tools
         
 #==============================================================================
@@ -622,6 +623,127 @@ class Software(object):
         read copyright json string and update attributes
         """
         read_json(soft_json, self)
+        
+# =============================================================================
+# schedule
+# =============================================================================
+class ScheduleDF(object):
+    """
+    Container for a single schedule item
+    
+    :param time_series_dataframe: data frame of the time series data merged
+                                  together.
+    :type time_series_dataframe: pandas.DataFrame
+    
+    :param meta_df: metadata dataframe.  
+    :type meta_df: pandas.DataFrame
+    
+    .. note:: The time_series_dataframe should have columns name for the 
+              components [ ex | ey | hx | hy | hz ] and should be indexed by 
+              time. 
+              
+    :Metadata keywords:
+        
+          ===================== =======================================
+          name                  description
+          ===================== =======================================
+          station               station name 
+          latitude              latitude of station (decimal degrees)
+          longitude             longitude of station (decimal degrees)
+          hx_azimuth            azimuth of HX (degrees from north=0)
+          hy_azimuth            azimuth of HY (degrees from north=0)
+          hz_azimuth            azimuth of HZ (degrees from horizon=0)
+          ex_azimuth            azimuth of EX (degrees from north=0)
+          ey_azimuth            azimuth of EY (degrees from north=0)
+          hx_sensor             instrument id number for HX
+          hy_sensor             instrument id number for HY
+          hz_sensor             instrument id number for HZ
+          ex_sensor             instrument id number for EX
+          ey_sensor             instrument id number for EY
+          ex_length             dipole length (m) for EX
+          ey_length             dipole length (m) for EX
+          ex_num                channel number of EX
+          ey_num                channel number of EX
+          hx_num                channel number of EX
+          hy_num                channel number of EX
+          hz_num                channel number of EX 
+          instrument_id         instrument id 
+          ===================== =======================================
+    """
+
+    def __init__(self, time_series_dataframe, meta_df=None):
+
+        self.ts_df = time_series_database
+        self.meta_df = meta_df
+
+    @property
+    def start_time(self):
+        """
+        Start time in UTC string format
+        """
+        return '{0} UTC'.format(self.ts_df.index[0].isoformat())
+
+    @property
+    def stop_time(self):
+        """
+        Stop time in UTC string format
+        """
+        return '{0} UTC'.format(self.ts_df.index[-1].isoformat())
+    
+    @property
+    def start_seconds(self):
+        """
+        Start time in epoch seconds
+        """
+        return self.ts_df.index[0].to_datetime64().astype(np.int64)/1e9
+    
+    @property
+    def stop_seconds(self):
+        """
+        sopt time in epoch seconds
+        """
+        return self.ts_df.index[-1].to_datetime64().astype(np.int64)/1e9
+
+    @property
+    def n_chan(self):
+        """
+        number of channels
+        """
+        return self.ts_df.shape[1]
+
+    @property
+    def sampling_rate(self):
+        """
+        sampling rate
+        """
+        return np.round(1.0e9/self.ts_df.index[0].freq.nanos, decimals=1)
+
+    @property
+    def n_samples(self):
+        """
+        number of samples
+        """
+        return self.ts_df.shape[0]
+    
+    def write_metadata_csv(self, csv_dir):
+        """
+        write metadata to a csv file
+        """
+        
+        csv_fn = self._make_csv_fn(csv_dir)
+        self.meta_df.to_csv(csv_fn)
+        
+        return csv_fn
+            
+    def _make_csv_fn(self, csv_dir):
+        if not isinstance(self.meta_df, pd.Series):
+            raise ValueError('meta_df is not a Pandas Series, {0}'.format(type(self.meta_df)))
+        csv_fn = '{0}_{1}_{2}_{3}.csv'.format(self.meta_df.station,
+                                              self.ts_df.index[0].strftime('%Y%m%d'),
+                                              self.ts_df.index[1].strftime('%H%M%S'),
+                                              int(self.sampling_rate))
+        
+        return os.path.join(csv_dir, csv_fn)
 
 # =============================================================================
 # MT HDF5 file
@@ -652,11 +774,85 @@ class MTH5(object):
         ### change any parameters
         self.mth5_obj = h5py.File(self.mth5_fn, 'r+')
         
-    def write_mth5(self):
+    def h5_is_write(self):
+        """
+        """
+        if isinstance(self.mth5_obj, h5py.File):
+            if 'w' in self.mth5_obj.mode:
+                return True
+            elif 'r' in self.mth5_obj.mode:
+                return False
+        else:
+            return False
+        
+    def open_mth5(self, mth5_fn):
         """
         write an mth5 file
         """
-        pass
+        self.mth5_fn = mth5_fn
+        
+        if os.path.isfile(self.mth5_fn):
+            print('*** Overwriting {0}'.format(mth5_fn))
+            
+        self.mth5_obj = h5py.File(self.mth5_fn, 'w')
+        
+    def close_mth5(self):
+        """
+        close mth5 file to make sure everything is flushed to the file
+        """
+        self.mth5_obj.close()
+        
+    def write_metadata(self):
+        """ 
+        Write metadata to the HDf5 file as json strings under the headings:
+            * site
+            * field_notes
+            * copyright
+            * provenance
+            * software
+        """
+        if self.h5_is_write():
+            for attr in ['site', 'field_notes', 'copyright', 'provenance',
+                         'software']:
+                self.mth5_obj.attrs[attr] = getattr(self, attr).write_json()
+        
+    def add_schedule(self, schedule_obj, schedule_name, compress=True):
+        """
+        add a schedule object to the HDF5 file
+        
+        :param schedule_obj: container holding the time series data as a 
+                             pandas.DataFrame with columns as components
+                             and indexed by time.
+        :type schedule_obj: mtf5.Schedule object
+        
+        :param schedule_name: name of the schedule, convention is 'schedule_##'
+        :type schedule_name: string
+        
+        """
+        
+        if self.h5_is_write():
+            ### create group for schedule action
+            schedule = self.h5_obj.create_group(schedule_name)
+            ### add metadata
+            schedule.attrs['start_time'] = schedule_obj.start_time
+            schedule.attrs['stop_time'] = schedule_obj.stop_time
+            schedule.attrs['n_samples'] = schedule_obj.n_samples
+            schedule.attrs['n_channels'] = schedule_obj.n_chan
+            schedule.attrs['sampling_rate'] = schedule_obj.sampling_rate
+            schedule.attrs['start_seconds'] = schedule_obj.start_seconds
+            schedule.attrs['stop_seconds'] = schedule_obj.stop_seconds
+
+            ### add datasets for each channel
+            for comp in schedule_obj.ts_db.columns:
+                if compress:
+                    schedule.create_dataset(comp.lower(), 
+                                            data=schedule_obj.ts_db[comp],
+                                            compression='gzip',
+                                            compression_opts=9)
+                else:
+                    schedule.create_dataset(comp.lower(), 
+                                            data=schedule_obj.ts_db[comp])
+        return schedule
     
     def read_mth5_cfg(self, mth5_cfg_fn):
         """
