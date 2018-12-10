@@ -17,22 +17,6 @@ import numpy as np
 import datetime
 import time
 import mtpy.utils.gis_tools as gis_tools
-
-# =============================================================================
-# MT HDF5 file
-# =============================================================================
-class MTHF(object):
-    """
-    MT HDF5 file
-    """
-
-    def __init__(self, **kwargs):
-        self.h5_fn = None
-        self.site = Site()
-        self.field_notes = FieldNotes()
-        self.data_qualtiy = DataQuality()
-        self.copyright = Copyright()
-        self.software = Software()
         
 #==============================================================================
 # Need a dummy utc time zone for the date time format
@@ -666,7 +650,23 @@ class Software(object):
         for key in kwargs:
             setattr(self, key, kwargs[key])
 
+# =============================================================================
+# MT HDF5 file
+# =============================================================================
+class MTHF(object):
+    """
+    MT HDF5 file
+    """
 
+    def __init__(self, **kwargs):
+        self.h5_fn = None
+        self.site = Site()
+        self.field_notes = FieldNotes()
+        self.data_qualtiy = DataQuality()
+        self.copyright = Copyright()
+        self.software = Software()
+        
+        
 # ==============================================================================
 #             Error
 # ==============================================================================
