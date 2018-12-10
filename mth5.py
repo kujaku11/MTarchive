@@ -232,23 +232,13 @@ class Site(Location):
         """
         write json string to put into attributes
         """
-        site_dict = dict([(attr, getattr(self, attr)) for attr in self._site_attrs])
-        site_dict['acquired_by'] = self.acquired_by.__dict__
-        site_json = json.dumps(site_dict)
-        
-        return site_json
+        return write_json(self)
     
     def read_json(self, site_json):
         """
         read in json file for site information
         """
-        site_dict = json.loads(site_json)
-        for key, value in site_dict.items():
-            if key == 'acquired_by':
-                for akey, avalue in value.items():
-                    setattr(self.acquired_by, akey, avalue)
-            else:
-                setattr(self, key, value)
+        read_json(site_json, self)
 
 # ==============================================================================
 # Field Notes
@@ -296,35 +286,13 @@ class FieldNotes(object):
         """
         write json of FieldNotes
         """
-        
-        field_dict = {}
-        for key in self.__dict__.keys():
-            if key.find('_') == 0:
-                continue
-            else:
-                obj = getattr(self, key)
-                if isinstance(obj, (DataQuality, Instrument)):
-                    field_dict[key] = obj.__dict__
-                else:
-                    field_dict[key] = obj
-                    
-        return json.dumps(field_dict)
+        return write_json(self)
     
     def read_json(self, field_json):
         """
         read a json string of field notes and update attributes
         """
-        
-        field_dict = json.loads(field_json)
-        
-        for key, value in field_dict.items():
-            if key in ['data_quality', 'data_logger', 'electrode_ex',
-                       'electrode_ey', 'magnetometer_hx', 'magnetometer_hy',
-                       'magnetometer_hz']:
-                for fkey, fvalue in value.items():
-                    setattr(getattr(self, key), fkey, fvalue)
-            else:
-                setattr(self, key, value)
+        read_json(field_json, self)
                 
 # ==============================================================================
 # Instrument
@@ -406,15 +374,13 @@ class DataQuality(object):
         """
         write json of attributes
         """
-        return json.dumps(self.__dict__)
+        return write_json(self)
     
     def read_json(self, dq_json):
         """
         read data quality json string and update attributes
         """
-        dq_dict = json.loads(dq_json)
-        for key, value in dq_dict.items():
-            setattr(self, key, value)
+        read_json(dq_json, self)
 
 # ==============================================================================
 # Citation
@@ -455,15 +421,13 @@ class Citation(object):
         """
         write json of attributes
         """
-        return json.dumps(self.__dict__)
+        return write_json(self)
     
     def read_json(self, cite_json):
         """
         read data quality json string and update attributes
         """
-        cite_dict = json.loads(cite_json)
-        for key, value in cite_dict.items():
-            setattr(self, key, value)
+        read_json(cite_json, self)
 
 # ==============================================================================
 # Copyright
@@ -514,21 +478,13 @@ class Copyright(object):
         """
         write json of attributes
         """
-        cr_dict = json.dumps(self.__dict__)
-        cr_dict['citation'] = self.citation.__dict__
-        return json.dumps(cr_dict)
+        return write_json(self)
     
     def read_json(self, cr_json):
         """
         read copyright json string and update attributes
         """
-        cr_dict = json.loads(cr_json)
-        for key, value in cr_dict.items():
-            if key in ['citation']:
-                for ckey, cvalue in value.items():
-                    setattr(self.citation, ckey, cvalue)
-            else:
-                setattr(self, key, value)
+        read_json(cr_json, self)
 
 # ==============================================================================
 # Provenance
@@ -567,23 +523,13 @@ class Provenance(object):
         """
         write json of attributes
         """
-        prov_dict = json.dumps(self.__dict__)
-        prov_dict['creator'] = self.creator.__dict__
-        prov_dict['submitter'] = self.submitter.__dict__
-        
-        return json.dumps(prov_dict)
+        return write_json(self)
     
     def read_json(self, prov_json):
         """
         read copyright json string and update attributes
         """
-        prov_dict = json.loads(prov_json)
-        for key, value in prov_dict.items():
-            if key in ['creator', 'submitter']:
-                for ckey, cvalue in value.items():
-                    setattr(self.citation, ckey, cvalue)
-            else:
-                setattr(self, key, value)
+        read_json(prov_json, self)
 
 # ==============================================================================
 # Person
@@ -669,21 +615,13 @@ class Software(object):
         """
         write json of attributes
         """
-        soft_dict = json.dumps(self.__dict__)
-        soft_dict['author'] = self.author.__dict__
-        return json.dumps(soft_dict)
+        return write_json(self)
     
     def read_json(self, soft_json):
         """
         read copyright json string and update attributes
         """
-        soft_dict = json.loads(soft_json)
-        for key, value in soft_dict.items():
-            if key in ['author']:
-                for ckey, cvalue in value.items():
-                    setattr(self.citation, ckey, cvalue)
-            else:
-                setattr(self, key, value)
+        read_json(soft_json, self)
 
 # =============================================================================
 # MT HDF5 file
@@ -741,6 +679,16 @@ class MTH5(object):
             if value.find('[') >= 0 and value.find(']') >= 0 and value.find('<') != 0:
                 value = value.replace('[', '').replace(']', '')
                 value = [v.strip() for v in value.split(',')]
+            if value.find('.') > 0:
+                try:
+                    value = float(value)
+                except ValueError:
+                    pass
+            else:
+                try:
+                    value = int(value)
+                except ValueError:
+                    pass
 
             # if there is a dot, meaning an object with an attribute separate
             if key.count('.') == 0:
@@ -754,8 +702,54 @@ class MTH5(object):
                         value)
             
     
-        
-        
+# =============================================================================
+#  read and write json for attributes       
+# =============================================================================
+def write_json(obj):
+    """
+    write a json string from a given object, taking into account other class
+    objects contained within the given object.
+    
+    :param obj: class object to transform into string
+    """
+    obj_dict = {}
+    for key, value in obj.__dict__.items():
+        if key.find('_') == 0:
+            continue
+        if isinstance(value, (Site, Location, FieldNotes, Instrument,
+                              DataQuality, Citation, Provenance, Person,
+                              Processing, Software)):
+            obj_dict[key] = {}
+            for o_key, o_value in value.__dict__.items():
+                obj_dict[key][o_key] = o_value
+        else:
+            obj_dict[key] = value
+            
+    return json.dumps(obj_dict)
+
+def read_json(json_str, obj):
+    """
+    read in a json string and update attributes of an object
+    
+    :param json_str: json string
+    :type json_str:string
+    
+    :param obj: class object to update
+    :type obj: class object
+    
+    :returns obj: 
+    """
+    
+    obj_dict = json.loads(json_str)
+    
+    for key, value in obj_dict.items():
+        if isinstance(value, dict):
+            for o_key, o_value in value.items():
+                setattr(getattr(obj, key), o_key, o_value)
+        else:
+            setattr(obj, key, value)
+            
+    return obj
         
 # ==============================================================================
 #             Error
