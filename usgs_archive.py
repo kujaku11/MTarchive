@@ -794,6 +794,10 @@ class USGSHDF5(object):
         self.station = 'mt01'
         self.units = 'mV'
         self.declination = 0.0
+        self.submitter = None
+        self.citation = None
+        self.copyright = None
+        self.survey = None
         self._attr_list = ['station',
                            'latitude',
                            'longitude',
