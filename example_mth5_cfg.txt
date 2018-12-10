@@ -1,0 +1,28 @@
+###===================================================###
+### Metadata Configuration File for Science Base MTH5 ###
+###===================================================###
+
+### Site information --> mainly for location
+site.id = MT Test
+site.coordinate_system = Geomagnetic North
+site.datum = WGS84
+site.declination = 15.5
+site.declination_epoch = 1995
+site.elevation = 1110
+site.elev_units = meters
+site.latitude = 40.12434
+site.longitude = -118.345
+site.survey = Test
+site.start_date = 2018-05-07T20:10:00.
+site.end_date = 2018-07-07T10:20:30.
+#site._date_fmt = None
+
+### Field Notes --> for instrument setup
+field_notes.data_logger = 
+field_notes.data_quality = 
+field_notes.electrode_ex = 
+field_notes.electrode_ey = 
+field_notes.magnetometer_hx = 
+field_notes.magnetometer_hy = 
+field_notes.magnetometer_hz = 
+ 

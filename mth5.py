@@ -275,6 +275,7 @@ class FieldNotes(object):
     """
 
     def __init__(self, **kwargs):
+        self.units = 'mV'
         self._electric_channel = {'length':None, 'azimuth':None, 'sensor':None,
                                   'chn_num':None}
         self._magnetic_channel = {'azimuth':None, 'sensor':None, 'chn_num':None}
@@ -287,7 +288,7 @@ class FieldNotes(object):
         self.magnetometer_hx = Instrument(**self._magnetic_channel)
         self.magnetometer_hy = Instrument(**self._magnetic_channel)
         self.magnetometer_hz = Instrument(**self._magnetic_channel)
-
+        
         for key in kwargs.keys():
             setattr(self, key, kwargs[key])
             
@@ -687,13 +688,14 @@ class Software(object):
 # =============================================================================
 # MT HDF5 file
 # =============================================================================
-class MTHF(object):
+class MTH5(object):
     """
     MT HDF5 file
     """
 
     def __init__(self, **kwargs):
-        self.h5_fn = None
+        self.mth5_fn = None
+        self.mth5_obj = None
         self.site = Site()
         self.field_notes = FieldNotes()
         self.data_qualtiy = DataQuality()
@@ -701,10 +703,57 @@ class MTHF(object):
         self.software = Software()
         self.provenance = Provenance()
         
+    def read_mth5(self, mth5_fn):
+        """
+        Read MTH5 file and update attributes
+        """
+        if not os.path.isfile(mth5_fn):
+            raise MTH5Error("Could not find {0}, check path".format(mth5_fn))
+        
+        self.mth5_fn = mth5_fn
+        ### read in file and give write permissions in case the user wants to
+        ### change any parameters
+        self.mth5_obj = h5py.File(self.mth5_fn, 'r+')
+        
+    def write_mth5(self):
+        """
+        write an mth5 file
+        """
+        pass
+    
+    def read_mth5_cfg(self, mth5_cfg_fn):
+        """
+        read a configuration file for all the mth5 attributes
+        """
+        usgs_str = 'U.S. Geological Survey'
+        # read in the configuration file
+        with open(mth5_cfg_fn, 'r') as fid:
+            lines = fid.readlines()
+
+        for line in lines:
+            # skip comment lines
+            if line.find('#') == 0 or len(line.strip()) < 2:
+                continue
+            # make a key = value pair
+            key, value = [item.strip() for item in line.split('=', 1)]
+            if value == 'usgs_str':
+                value = usgs_str
+            if value.find('[') >= 0 and value.find(']') >= 0 and value.find('<') != 0:
+                value = value.replace('[', '').replace(']', '')
+                value = [v.strip() for v in value.split(',')]
+
+            # if there is a dot, meaning an object with an attribute separate
+            if key.find('.') > 0:
+                obj, obj_attr = key.split('.')
+                setattr(getattr(self, obj), obj_attr, value)
+            else:
+                setattr(self, key, value)
+    
+        
         
         
 # ==============================================================================
 #             Error
 # ==============================================================================
-class MTHFError(Exception):
+class MTH5Error(Exception):
     pass
