@@ -13,7 +13,7 @@ Created on Sun Dec  9 20:50:41 2018
 import os
 import json
 import h5py
-import numpy
+import numpy as np
 import datetime
 import time
 import mtpy.utils.gis_tools as gis_tools
@@ -24,17 +24,15 @@ import mtpy.utils.gis_tools as gis_tools
 class MTHF(object):
     """
     MT HDF5 file
-    
     """
 
     def __init__(self, **kwargs):
         self.h5_fn = None
-        self.Site = Site()
-        self.FieldNotes = FieldNotes()
-        self.DataQualtiy = DataQuality()
-        self.Citation = Citation()
-        self.Software = Software()
-        
+        self.site = Site()
+        self.field_notes = FieldNotes()
+        self.data_qualtiy = DataQuality()
+        self.copyright = Copyright()
+        self.software = Software()
         
 #==============================================================================
 # Need a dummy utc time zone for the date time format
@@ -263,7 +261,8 @@ class Site(Location):
         site_dict = json.loads(site_json)
         for key, value in site_dict.items():
             if key == 'acquired_by':
-                setattr(self.acquired_by, key, value)
+                for akey, avalue in value.items():
+                    setattr(self.acquired_by, akey, avalue)
             else:
                 setattr(self, key, value)
 
@@ -296,14 +295,14 @@ class FieldNotes(object):
                                   'chn_num':None}
         self._magnetic_channel = {'azimuth':None, 'sensor':None, 'chn_num':None}
         
-        self.DataQuality = DataQuality()
-        self.DataLogger = Instrument()
-        self.Electrode_ex = Instrument(**self._electric_channel)
-        self.Electrode_ey = Instrument(**self._electric_channel)
+        self.data_quality = DataQuality()
+        self.data_logger = Instrument()
+        self.electrode_ex = Instrument(**self._electric_channel)
+        self.electrode_ey = Instrument(**self._electric_channel)
 
-        self.Magnetometer_hx = Instrument(**self._magnetic_channel)
-        self.Magnetometer_hy = Instrument(**self._magnetic_channel)
-        self.Magnetometer_hz = Instrument(**self._magnetic_channel)
+        self.magnetometer_hx = Instrument(**self._magnetic_channel)
+        self.magnetometer_hy = Instrument(**self._magnetic_channel)
+        self.magnetometer_hz = Instrument(**self._magnetic_channel)
 
         for key in kwargs.keys():
             setattr(self, key, kwargs[key])
@@ -313,8 +312,35 @@ class FieldNotes(object):
         write json of FieldNotes
         """
         
+        field_dict = {}
+        for key in self.__dict__.keys():
+            if key.find('_') == 0:
+                continue
+            else:
+                obj = getattr(self, key)
+                if isinstance(obj, (DataQuality, Instrument)):
+                    field_dict[key] = obj.__dict__
+                else:
+                    field_dict[key] = obj
+                    
+        return json.dumps(field_dict)
+    
+    def read_json(self, field_json):
+        """
+        read a json string of field notes and update attributes
+        """
         
-
+        field_dict = json.loads(field_json)
+        
+        for key, value in field_dict.items():
+            if key in ['data_quality', 'data_logger', 'electrode_ex',
+                       'electrode_ey', 'magnetometer_hx', 'magnetometer_hy',
+                       'magnetometer_hz']:
+                for fkey, fvalue in value.items():
+                    setattr(getattr(self, key), fkey, fvalue)
+            else:
+                setattr(self, key, value)
+                
 # ==============================================================================
 # Instrument
 # ==============================================================================
@@ -390,7 +416,20 @@ class DataQuality(object):
 
         for key in kwargs.keys():
             setattr(self, key, kwargs[key])
-
+            
+    def write_json(self):
+        """
+        write json of attributes
+        """
+        return json.dumps(self.__dict__)
+    
+    def read_json(self, dq_json):
+        """
+        read data quality json string and update attributes
+        """
+        dq_dict = json.loads(dq_json)
+        for key, value in dq_dict.items():
+            setattr(self, key, value)
 
 # ==============================================================================
 # Citation
@@ -427,6 +466,19 @@ class Citation(object):
         for key in kwargs.keys():
             setattr(self, key, kwargs[key])
 
+    def write_json(self):
+        """
+        write json of attributes
+        """
+        return json.dumps(self.__dict__)
+    
+    def read_json(self, cite_json):
+        """
+        read data quality json string and update attributes
+        """
+        cite_dict = json.loads(cite_json)
+        for key, value in cite_dict.items():
+            setattr(self, key, value)
 
 # ==============================================================================
 # Copyright
@@ -452,7 +504,7 @@ class Copyright(object):
     """
 
     def __init__(self, **kwargs):
-        self.Citation = Citation()
+        self.citation = Citation()
         self.conditions_of_use = ''.join(['All data and metadata for this survey are ',
                                           'available free of charge and may be copied ',
                                           'freely, duplicated and further distributed ',
@@ -472,6 +524,26 @@ class Copyright(object):
         self.additional_info = None
         for key in kwargs.keys():
             setattr(self, key, kwargs[key])
+            
+    def write_json(self):
+        """
+        write json of attributes
+        """
+        cr_dict = json.dumps(self.__dict__)
+        cr_dict['citation'] = self.citation.__dict__
+        return json.dumps(cr_dict)
+    
+    def read_json(self, cr_json):
+        """
+        read copyright json string and update attributes
+        """
+        cr_dict = json.loads(cr_json)
+        for key, value in cr_dict.items():
+            if key in ['citation']:
+                for ckey, cvalue in value.items():
+                    setattr(self.citation, ckey, cvalue)
+            else:
+                setattr(self, key, value)
 
 # ==============================================================================
 # Provenance
