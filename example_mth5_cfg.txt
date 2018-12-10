@@ -13,16 +13,93 @@ site.elev_units = meters
 site.latitude = 40.12434
 site.longitude = -118.345
 site.survey = Test
-site.start_date = 2018-05-07T20:10:00.
-site.end_date = 2018-07-07T10:20:30.
+site.start_date = 2018-05-07T20:10:00.0
+site.end_date = 2018-07-07T10:20:30.0
 #site._date_fmt = None
 
 ### Field Notes --> for instrument setup
-field_notes.data_logger = 
-field_notes.data_quality = 
-field_notes.electrode_ex = 
-field_notes.electrode_ey = 
-field_notes.magnetometer_hx = 
-field_notes.magnetometer_hy = 
-field_notes.magnetometer_hz = 
- 
+# Data logger information
+field_notes.data_logger.id = ZEN_test
+field_notes.data_logger.manufacturer = Zonge
+field_notes.data_logger.type = 32-Bit 5-channel GPS synced
+
+# Data quality information
+field_notes.data_quality.comments = testing
+field_notes.data_quality.rating = 0
+field_notes.data_quality.warnings_comments = bad data at 2018-06-07T20:10:00.
+field_notes.data_quality.warnings_flag = 1
+field_notes.data_quality.author = C. Cagniard
+
+# EX Electrode information 
+field_notes.electrode_ex.azimuth = 0
+field_notes.electrode_ex.chn_num = 1
+field_notes.electrode_ex.id = ex
+field_notes.electrode_ex.length = 97.
+field_notes.electrode_ex.manufacturer = Borin
+field_notes.electrode_ex.sensor = Fat Cat
+field_notes.electrode_ex.type = Ag-AgCl
+
+# EY Electrode information
+field_notes.electrode_ey.azimuth = 90
+field_notes.electrode_ey.chn_num = 2
+field_notes.electrode_ey.id = ey
+field_notes.electrode_ey.length = 92.
+field_notes.electrode_ey.manufacturer = Borin
+field_notes.electrode_ey.sensor = Fat Cat
+field_notes.electrode_ey.type = Ag-AgCl 
+
+# HX magnetometer information
+field_notes.magnetometer_hx.azimuth = 0
+field_notes.magnetometer_hx.chn_num = 3
+field_notes.magnetometer_hx.id = hx
+field_notes.magnetometer_hx.manufacturer = Geotell
+field_notes.magnetometer_hx.sensor = Ant 4
+field_notes.magnetometer_hx.type = Induction Coil 
+
+# HY magnetometer information
+field_notes.magnetometer_hy.azimuth = 90
+field_notes.magnetometer_hy.chn_num = 4
+field_notes.magnetometer_hy.id = hy
+field_notes.magnetometer_hy.manufacturer = Geotell
+field_notes.magnetometer_hy.sensor = Ant 4
+field_notes.magnetometer_hy.type = Induction Coil
+
+# HZ magnetometer information
+field_notes.magnetometer_hz.azimuth = 0
+field_notes.magnetometer_hz.chn_num = 5
+field_notes.magnetometer_hz.id = hz
+field_notes.magnetometer_hz.manufacturer = Geotell
+field_notes.magnetometer_hz.sensor = Ant 4
+field_notes.magnetometer_hz.type = Induction Coil
+
+### Copyright information
+copyright.citation.author = Tikhanov
+copyright.citation.doi = 10.1023/ugsg_mt_test
+copyright.citation.journal = SI
+copyright.citation.title = MT HDF5 test
+copyright.citation.volume = 1
+copyright.citation.year = 2018
+copyright.additional_info = this is a test
+copyright.conditions_of_use = All data and metadata for this survey are available free of charge and may be copied freely, duplicated and further distributed provided this data set is cited as the reference. While the author(s) strive to provide data and metadata of best possible quality, neither the author(s) of this data set, not IRIS make any claims, promises, or guarantees about the accuracy, completeness, or adequacy of this information, and expressly disclaim liability for errors and omissions in the contents of this file. Guidelines about the quality or limitations of the data and metadata, as obtained from the author(s), are included for informational purposes only.
+copyright.release_status = Open to the public
+
+### Software information for making the HDF5 file
+software.name = MTH5py
+software.version = Beta
+software.author.email = send@gmail.com
+software.author.name = author
+software.author.organization = usgs_str
+software.author.organization_url = https://test.usgs.gov
+
+### Provenance information --> who, when, and where was the data submitted
+provenance.creator.email = test@gmail.com
+provenance.creator.name = author
+provenance.creator.organization = usgs_str
+provenance.creator.organization_url = https://www.usgs.gov/
+provenance.submitter.email = test@gmail.com
+provenance.submitter.name = author
+provenance.submitter.organization = usgs_str
+provenance.submitter.organization_url = https://www.usgs.gov/
+provenance.creating_application = MTH5py
+provenance.creation_time = 2017-11-27 21:54:49
+

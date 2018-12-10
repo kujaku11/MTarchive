@@ -698,7 +698,6 @@ class MTH5(object):
         self.mth5_obj = None
         self.site = Site()
         self.field_notes = FieldNotes()
-        self.data_qualtiy = DataQuality()
         self.copyright = Copyright()
         self.software = Software()
         self.provenance = Provenance()
@@ -736,6 +735,7 @@ class MTH5(object):
                 continue
             # make a key = value pair
             key, value = [item.strip() for item in line.split('=', 1)]
+            
             if value == 'usgs_str':
                 value = usgs_str
             if value.find('[') >= 0 and value.find(']') >= 0 and value.find('<') != 0:
@@ -743,11 +743,16 @@ class MTH5(object):
                 value = [v.strip() for v in value.split(',')]
 
             # if there is a dot, meaning an object with an attribute separate
-            if key.find('.') > 0:
+            if key.count('.') == 0:
+                setattr(self, key, value)
+            elif key.count('.') == 1:
                 obj, obj_attr = key.split('.')
                 setattr(getattr(self, obj), obj_attr, value)
-            else:
-                setattr(self, key, value)
+            elif key.count('.') == 2:
+                obj, obj_attr_01, obj_attr_02 = key.split('.')
+                setattr(getattr(getattr(self, obj), obj_attr_01), obj_attr_02,
+                        value)
+            
     
         
         
