@@ -229,17 +229,17 @@ class Site(Location):
                       " or set your own using Site._date_fmt")
                 self._end_date = None
             
-    def write_json(self):
+    def to_json(self):
         """
         write json string to put into attributes
         """
-        return write_json(self)
+        return to_json(self)
     
-    def read_json(self, site_json):
+    def from_json(self, site_json):
         """
         read in json file for site information
         """
-        read_json(site_json, self)
+        from_json(site_json, self)
 
 # ==============================================================================
 # Field Notes
@@ -267,9 +267,8 @@ class FieldNotes(object):
 
     def __init__(self, **kwargs):
         self.units = 'mV'
-        self._electric_channel = {'length':None, 'azimuth':None, 'sensor':None,
-                                  'chn_num':None}
-        self._magnetic_channel = {'azimuth':None, 'sensor':None, 'chn_num':None}
+        self._electric_channel = {'length':None, 'azimuth':None, 'chn_num':None}
+        self._magnetic_channel = {'azimuth':None, 'chn_num':None}
         
         self.data_quality = DataQuality()
         self.data_logger = Instrument()
@@ -283,17 +282,17 @@ class FieldNotes(object):
         for key in kwargs.keys():
             setattr(self, key, kwargs[key])
             
-    def write_json(self):
+    def to_json(self):
         """
         write json of FieldNotes
         """
-        return write_json(self)
+        return to_json(self)
     
-    def read_json(self, field_json):
+    def from_json(self, field_json):
         """
         read a json string of field notes and update attributes
         """
-        read_json(field_json, self)
+        from_json(field_json, self)
                 
 # ==============================================================================
 # Instrument
@@ -371,17 +370,17 @@ class DataQuality(object):
         for key in kwargs.keys():
             setattr(self, key, kwargs[key])
             
-    def write_json(self):
+    def to_json(self):
         """
         write json of attributes
         """
-        return write_json(self)
+        return to_json(self)
     
-    def read_json(self, dq_json):
+    def from_json(self, dq_json):
         """
         read data quality json string and update attributes
         """
-        read_json(dq_json, self)
+        from_json(dq_json, self)
 
 # ==============================================================================
 # Citation
@@ -418,17 +417,17 @@ class Citation(object):
         for key in kwargs.keys():
             setattr(self, key, kwargs[key])
 
-    def write_json(self):
+    def to_json(self):
         """
         write json of attributes
         """
-        return write_json(self)
+        return to_json(self)
     
-    def read_json(self, cite_json):
+    def from_json(self, cite_json):
         """
         read data quality json string and update attributes
         """
-        read_json(cite_json, self)
+        from_json(cite_json, self)
 
 # ==============================================================================
 # Copyright
@@ -475,17 +474,17 @@ class Copyright(object):
         for key in kwargs.keys():
             setattr(self, key, kwargs[key])
             
-    def write_json(self):
+    def to_json(self):
         """
         write json of attributes
         """
-        return write_json(self)
+        return to_json(self)
     
-    def read_json(self, cr_json):
+    def from_json(self, cr_json):
         """
         read copyright json string and update attributes
         """
-        read_json(cr_json, self)
+        from_json(cr_json, self)
 
 # ==============================================================================
 # Provenance
@@ -520,17 +519,17 @@ class Provenance(object):
         for key in kwargs.keys():
             setattr(self, key, kwargs[key])
             
-    def write_json(self):
+    def to_json(self):
         """
         write json of attributes
         """
-        return write_json(self)
+        return to_json(self)
     
-    def read_json(self, prov_json):
+    def from_json(self, prov_json):
         """
         read copyright json string and update attributes
         """
-        read_json(prov_json, self)
+        from_json(prov_json, self)
 
 # ==============================================================================
 # Person
@@ -612,17 +611,17 @@ class Software(object):
         for key in kwargs:
             setattr(self, key, kwargs[key])
             
-    def write_json(self):
+    def to_json(self):
         """
         write json of attributes
         """
-        return write_json(self)
+        return to_json(self)
     
-    def read_json(self, soft_json):
+    def from_json(self, soft_json):
         """
         read copyright json string and update attributes
         """
-        read_json(soft_json, self)
+        from_json(soft_json, self)
         
 # =============================================================================
 # schedule
@@ -762,25 +761,13 @@ class MTH5(object):
         self.software = Software()
         self.provenance = Provenance()
         
-    def read_mth5(self, mth5_fn):
-        """
-        Read MTH5 file and update attributes
-        """
-        if not os.path.isfile(mth5_fn):
-            raise MTH5Error("Could not find {0}, check path".format(mth5_fn))
-        
-        self.mth5_fn = mth5_fn
-        ### read in file and give write permissions in case the user wants to
-        ### change any parameters
-        self.mth5_obj = h5py.File(self.mth5_fn, 'r+')
-        
     def h5_is_write(self):
         """
         """
         if isinstance(self.mth5_obj, h5py.File):
-            if 'w' in self.mth5_obj.mode:
+            if 'w' in self.mth5_obj.mode or '+' in self.mth5_obj.mode:
                 return True
-            elif 'r' in self.mth5_obj.mode:
+            elif self.mth5_obj.mode == 'r':
                 return False
         else:
             return False
@@ -814,7 +801,7 @@ class MTH5(object):
         if self.h5_is_write():
             for attr in ['site', 'field_notes', 'copyright', 'provenance',
                          'software']:
-                self.mth5_obj.attrs[attr] = getattr(self, attr).write_json()
+                self.mth5_obj.attrs[attr] = getattr(self, attr).to_json()
         
     def add_schedule(self, schedule_obj, schedule_name, compress=True):
         """
@@ -832,7 +819,7 @@ class MTH5(object):
         
         if self.h5_is_write():
             ### create group for schedule action
-            schedule = self.h5_obj.create_group(schedule_name)
+            schedule = self.mth5_obj.create_group(schedule_name)
             ### add metadata
             schedule.attrs['start_time'] = schedule_obj.start_time
             schedule.attrs['stop_time'] = schedule_obj.stop_time
@@ -852,11 +839,58 @@ class MTH5(object):
                 else:
                     schedule.create_dataset(comp.lower(), 
                                             data=schedule_obj.ts_db[comp])
-        return schedule
+            return schedule
+        else:
+            return None
+        
+    def read_mth5(self, mth5_fn):
+        """
+        Read MTH5 file and update attributes
+        """
+        if not os.path.isfile(mth5_fn):
+            raise MTH5Error("Could not find {0}, check path".format(mth5_fn))
+        
+        self.mth5_fn = mth5_fn
+        ### read in file and give write permissions in case the user wants to
+        ### change any parameters
+        self.mth5_obj = h5py.File(self.mth5_fn, 'r+')
+        print("reading attributes")
+        for attr in ['site', 'field_notes', 'copyright', 'provenance',
+                     'software']:
+            getattr(self, attr).from_json(self.mth5_obj.attrs[attr])
     
     def read_mth5_cfg(self, mth5_cfg_fn):
         """
         read a configuration file for all the mth5 attributes
+        
+        :param mth5_cfg_fn: full path to configuration file for mth5 file
+        :type mth5_cfg_fn: string
+        
+        The configuration file has the format:
+            ###===================================================###
+            ### Metadata Configuration File for Science Base MTH5 ###
+            ###===================================================###
+            
+            ### Site information --> mainly for location
+            site.id = MT Test
+            site.coordinate_system = Geomagnetic North
+            site.datum = WGS84
+            site.declination = 15.5
+            site.declination_epoch = 1995
+            site.elevation = 1110
+            site.elev_units = meters
+            site.latitude = 40.12434
+            site.longitude = -118.345
+            site.survey = Test
+            site.start_date = 2018-05-07T20:10:00.0
+            site.end_date = 2018-07-07T10:20:30.0
+            #site._date_fmt = None
+            
+            ### Field Notes --> for instrument setup
+            # Data logger information
+            field_notes.data_logger.id = ZEN_test
+            field_notes.data_logger.manufacturer = Zonge
+            field_notes.data_logger.type = 32-Bit 5-channel GPS synced
         """
         usgs_str = 'U.S. Geological Survey'
         # read in the configuration file
@@ -947,48 +981,80 @@ class MTH5(object):
                 self.site.id = getattr(station_series, key)
             elif key == 'units':
                 self.site.elev_units = getattr(station_series, key)
-            elif key[0:2] in ['ex', 'ey']:
+            elif key[0:2] in ['ex', 'ey', 'hx', 'hy', 'hz']:
                 comp = key[0:2]
                 attr = key.split('_')[1]
                 if attr == 'num':
                     attr = 'chn_num'
-                setattr(getattr(self.field_notes, 'electrode_{0}'.format(comp)),
+                if attr == 'sensor':
+                    attr = 'id'
+                if 'e' in comp:
+                    setattr(getattr(self.field_notes, 'electrode_{0}'.format(comp)),
+                            attr, getattr(station_series, key))
+                elif 'h' in comp:
+                    setattr(getattr(self.field_notes, 'magnetometer_{0}'.format(comp)),
                         attr, getattr(station_series, key))
-            elif key[0:2] in ['hx', 'hy', 'hz']:
-                comp = key[0:2]
-                attr = key.split('_')[1]
-                if attr == 'num':
-                    attr = 'chn_num'
-                setattr(getattr(self.field_notes, 'magnetometer_{0}'.format(comp)),
-                        attr, getattr(station_series, key))
-            
-    
+                    
 # =============================================================================
 #  read and write json for attributes       
 # =============================================================================
-def write_json(obj):
+class NumpyEncoder(json.JSONEncoder):
+    """ 
+    Need to encode numpy ints and floats for json to work
+    """
+    def default(self, obj):
+        if isinstance(obj, (np.int_, np.intc, np.intp, np.int8,
+                            np.int16, np.int32, np.int64, np.uint8,
+                            np.uint16, np.uint32, np.uint64)):
+            return int(obj)
+        
+        elif isinstance(obj, (np.float_, np.float16, np.float32, np.float64)):
+            return float(obj)
+        
+        elif isinstance(obj,(np.ndarray,)): 
+            return obj.tolist()
+        
+        return json.JSONEncoder.default(self, obj)
+
+def to_json(obj):
     """
     write a json string from a given object, taking into account other class
     objects contained within the given object.
     
     :param obj: class object to transform into string
     """
+    if isinstance(obj, (Site, Location)):
+        keys = obj.__dict__.keys() + ['latitude', 'longitude', 'elevation']
+    else:
+        keys = obj.__dict__.keys()
+        
     obj_dict = {}
-    for key, value in obj.__dict__.items():
+    for key in keys:
         if key.find('_') == 0:
             continue
+        value = getattr(obj, key)
+        
         if isinstance(value, (Site, Location, FieldNotes, Instrument,
                               DataQuality, Citation, Provenance, Person,
                               Processing, Software)):
             obj_dict[key] = {}
             for o_key, o_value in value.__dict__.items():
+                if o_key.find('_') == 0:
+                    continue
                 obj_dict[key][o_key] = o_value
+                
+        elif isinstance(value, (Site, Location)):
+            obj_dict[key] = {}
+            for o_key in value.__dict__.keys()+['latitude', 'longitude', 'elevation']:
+                if o_key.find('_') == 0:
+                    continue
+                obj_dict[key][o_key] = getattr(obj, o_key)
         else:
             obj_dict[key] = value
             
-    return json.dumps(obj_dict)
+    return json.dumps(obj_dict, cls=NumpyEncoder)
 
-def read_json(json_str, obj):
+def from_json(json_str, obj):
     """
     read in a json string and update attributes of an object
     
