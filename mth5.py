@@ -896,6 +896,71 @@ class MTH5(object):
                 obj, obj_attr_01, obj_attr_02 = key.split('.')
                 setattr(getattr(getattr(self, obj), obj_attr_01), obj_attr_02,
                         value)
+                
+    def update_metadata_from_series(self, station_series):
+        """
+        Update metadata from a pandas.Series with old keys as columns:
+            * station
+            * latitude
+            * longitude
+            * elevation
+            * declination
+            * start
+            * stop
+            * datum
+            * coordinate_system
+            * units
+            * instrument_id
+            * ex_azimuth
+            * ex_length
+            * ex_sensor
+            * ex_num
+            * ey_azimuth
+            * ey_length
+            * ey_sensor
+            * ey_num
+            * hx_azimuth
+            * hx_sensor
+            * hx_num
+            * hy_azimuth
+            * hy_sensor
+            * hy_num
+            * hz_azimuth
+            * hz_sensor
+            * hz_num
+            
+        :param station_series: pandas.Series with the above index values
+        :type station_series: pandas.Series
+        """
+        if isinstance(station_series, pd.DataFrame):
+            station_series = station_series.iloc[0]
+            
+        assert isinstance(station_series, pd.Series), \
+                'station_series is not a pandas.Series'
+        
+        for key in station_series.index:
+            if key in self.site.__dict__.keys()+['latitude', 'longitude']:
+                setattr(self.site, key, getattr(station_series, key))
+            elif key == 'instrument_id':
+                self.field_notes.data_logger.id = getattr(station_series, key)
+            elif key == 'station':
+                self.site.id = getattr(station_series, key)
+            elif key == 'units':
+                self.site.elev_units = getattr(station_series, key)
+            elif key[0:2] in ['ex', 'ey']:
+                comp = key[0:2]
+                attr = key.split('_')[1]
+                if attr == 'num':
+                    attr = 'chn_num'
+                setattr(getattr(self.field_notes, 'electrode_{0}'.format(comp)),
+                        attr, getattr(station_series, key))
+            elif key[0:2] in ['hx', 'hy', 'hz']:
+                comp = key[0:2]
+                attr = key.split('_')[1]
+                if attr == 'num':
+                    attr = 'chn_num'
+                setattr(getattr(self.field_notes, 'magnetometer_{0}'.format(comp)),
+                        attr, getattr(station_series, key))
             
     
 # =============================================================================
