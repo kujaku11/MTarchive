@@ -782,6 +782,7 @@ class MTH5(object):
             print('*** Overwriting {0}'.format(mth5_fn))
             
         self.mth5_obj = h5py.File(self.mth5_fn, 'w')
+        self.mth5_obj.create_group('calibrations')
         
     def close_mth5(self):
         """
@@ -842,6 +843,29 @@ class MTH5(object):
             return schedule
         else:
             return None
+        
+    def add_calibrations(self, calibration_df, name, compress=True):
+        """
+        add calibrations for sensors
+        
+        :param calibration_df: pandas.DataFrame with columns freq, real, imag
+        :type calibration_df: pandas.DataFrame
+        
+        :param name: name of sensor for calibration
+        :type name: string
+        """
+        
+        if self.h5_is_write():
+            cal = self.mth5_obj['/calibrations'].create_group(name)
+            for col in calibration_df.columns:
+                if compress:
+                    cal.create_dataset(col.lower(), 
+                                       data=calibration_df[col],
+                                       compression='gzip',
+                                       compression_opts=9)
+                else:
+                    cal.create_dataset(col.lower(), 
+                                       data=calibration_df[col])
         
     def read_mth5(self, mth5_fn):
         """
