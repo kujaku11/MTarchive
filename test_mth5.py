@@ -100,6 +100,10 @@ class TestMTH5ReadCFG(unittest.TestCase):
     def test_field_notes_electrode_ex_type(self):
         self.assertEqual(self.mth5_obj.field_notes.electrode_ex.type,
                          'Fat Cat Ag-AgCl')
+    def test_field_notes_electrode_ex_units(self):
+        self.assertEqual(self.mth5_obj.field_notes.electrode_ex.units, 'mV')
+    def test_field_notes_electrode_ex_gain(self):
+        self.assertEqual(self.mth5_obj.field_notes.electrode_ex.gain, 1)
         
     # EY Electrode information 
     def test_field_notes_electrode_ey_azimuth(self):
@@ -116,6 +120,10 @@ class TestMTH5ReadCFG(unittest.TestCase):
     def test_field_notes_electrode_ey_type(self):
         self.assertEqual(self.mth5_obj.field_notes.electrode_ey.type, 
                          'Fat Cat Ag-AgCl')
+    def test_field_notes_electrode_ey_units(self):
+        self.assertEqual(self.mth5_obj.field_notes.electrode_ey.units, 'mV')
+    def test_field_notes_electrode_ey_gain(self):
+        self.assertEqual(self.mth5_obj.field_notes.electrode_ey.gain, 1)
     
     # HX magnetometer information 
     def test_field_notes_magnetometer_hx_azimuth(self):
@@ -130,6 +138,10 @@ class TestMTH5ReadCFG(unittest.TestCase):
     def test_field_notes_magnetometer_hx_type(self):
         self.assertEqual(self.mth5_obj.field_notes.magnetometer_hx.type,
                          'Ant 4 Induction Coil')
+    def test_field_notes_magnetometer_hx_units(self):
+        self.assertEqual(self.mth5_obj.field_notes.magnetometer_hx.units, 'mV')
+    def test_field_notes_magnetometer_hx_gain(self):
+        self.assertEqual(self.mth5_obj.field_notes.magnetometer_hx.gain, 1)
     
     # HY magnetometer information 
     def test_field_notes_magnetometer_hy_azimuth(self):
@@ -144,6 +156,10 @@ class TestMTH5ReadCFG(unittest.TestCase):
     def test_field_notes_magnetometer_hy_type(self):
         self.assertEqual(self.mth5_obj.field_notes.magnetometer_hy.type,
                          'Ant 4 Induction Coil')
+    def test_field_notes_magnetometer_hy_units(self):
+        self.assertEqual(self.mth5_obj.field_notes.magnetometer_hy.units, 'mV')
+    def test_field_notes_magnetometer_hy_gain(self):
+        self.assertEqual(self.mth5_obj.field_notes.magnetometer_hy.gain, 1)
         
     # HZ magnetometer information 
     def test_field_notes_magnetometer_hz_azimuth(self):
@@ -158,6 +174,10 @@ class TestMTH5ReadCFG(unittest.TestCase):
     def test_field_notes_magnetometer_hz_type(self):
         self.assertEqual(self.mth5_obj.field_notes.magnetometer_hz.type,
                          'Ant 4 Induction Coil')
+    def test_field_notes_magnetometer_hz_units(self):
+        self.assertEqual(self.mth5_obj.field_notes.magnetometer_hz.units, 'mV')
+    def test_field_notes_magnetometer_hz_gain(self):
+        self.assertEqual(self.mth5_obj.field_notes.magnetometer_hz.gain, 1)
         
     ### Copyright information
     def test_copyright_citation_author(self):

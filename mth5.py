@@ -267,8 +267,10 @@ class FieldNotes(object):
 
     def __init__(self, **kwargs):
         self.units = 'mV'
-        self._electric_channel = {'length':None, 'azimuth':None, 'chn_num':None}
-        self._magnetic_channel = {'azimuth':None, 'chn_num':None}
+        self._electric_channel = {'length':None, 'azimuth':None, 'chn_num':None,
+                                  'units':'mV', 'gain':1}
+        self._magnetic_channel = {'azimuth':None, 'chn_num':None, 
+                                  'units':'mV', 'gain':1}
         
         self.data_quality = DataQuality()
         self.data_logger = Instrument()

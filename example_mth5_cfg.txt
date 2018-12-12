@@ -37,6 +37,8 @@ field_notes.electrode_ex.id = 1
 field_notes.electrode_ex.length = 97.
 field_notes.electrode_ex.manufacturer = Borin
 field_notes.electrode_ex.type = Fat Cat Ag-AgCl
+field_notes.electrode_ex.units = mV
+field_notes.electrode_ex.gain = 1
 
 # EY Electrode information
 field_notes.electrode_ey.azimuth = 90
@@ -45,6 +47,8 @@ field_notes.electrode_ey.id = 2
 field_notes.electrode_ey.length = 92.
 field_notes.electrode_ey.manufacturer = Borin
 field_notes.electrode_ey.type = Fat Cat Ag-AgCl 
+field_notes.electrode_ey.units = mV
+field_notes.electrode_ey.gain = 1
 
 # HX magnetometer information
 field_notes.magnetometer_hx.azimuth = 0
@@ -52,6 +56,8 @@ field_notes.magnetometer_hx.chn_num = 3
 field_notes.magnetometer_hx.id = 2274
 field_notes.magnetometer_hx.manufacturer = Geotell
 field_notes.magnetometer_hx.type = Ant 4 Induction Coil 
+field_notes.magnetometer_hx.units = mV
+field_notes.magnetometer_hx.gain = 1
 
 # HY magnetometer information
 field_notes.magnetometer_hy.azimuth = 90
@@ -59,6 +65,8 @@ field_notes.magnetometer_hy.chn_num = 4
 field_notes.magnetometer_hy.id = 2284
 field_notes.magnetometer_hy.manufacturer = Geotell
 field_notes.magnetometer_hy.type = Ant 4 Induction Coil
+field_notes.magnetometer_hy.units = mV
+field_notes.magnetometer_hy.gain = 1
 
 # HZ magnetometer information
 field_notes.magnetometer_hz.azimuth = 0
@@ -66,6 +74,8 @@ field_notes.magnetometer_hz.chn_num = 5
 field_notes.magnetometer_hz.id = 2294
 field_notes.magnetometer_hz.manufacturer = Geotell
 field_notes.magnetometer_hz.type = Ant 4 Induction Coil
+field_notes.magnetometer_hz.units = mV
+field_notes.magnetometer_hz.gain = 1
 
 ### Copyright information
 copyright.citation.author = Tikhanov
