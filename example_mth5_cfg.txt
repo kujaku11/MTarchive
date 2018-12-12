@@ -31,41 +31,41 @@ field_notes.data_quality.warnings_flag = 1
 field_notes.data_quality.author = C. Cagniard
 
 # EX Electrode information 
-#field_notes.electrode_ex.azimuth = 0
+field_notes.electrode_ex.azimuth = 0
 field_notes.electrode_ex.chn_num = 1
 field_notes.electrode_ex.id = ex
-#field_notes.electrode_ex.length = 97.
+field_notes.electrode_ex.length = 97.
 field_notes.electrode_ex.manufacturer = Borin
 field_notes.electrode_ex.sensor = 1
 field_notes.electrode_ex.type = Fat Cat Ag-AgCl
 
 # EY Electrode information
-#field_notes.electrode_ey.azimuth = 90
+field_notes.electrode_ey.azimuth = 90
 field_notes.electrode_ey.chn_num = 2
 field_notes.electrode_ey.id = ey
-#field_notes.electrode_ey.length = 92.
+field_notes.electrode_ey.length = 92.
 field_notes.electrode_ey.manufacturer = Borin
 field_notes.electrode_ey.sensor = 2
 field_notes.electrode_ey.type = Fat Cat Ag-AgCl 
 
 # HX magnetometer information
-#field_notes.magnetometer_hx.azimuth = 0
+field_notes.magnetometer_hx.azimuth = 0
 field_notes.magnetometer_hx.chn_num = 3
-#field_notes.magnetometer_hx.id = hx
+field_notes.magnetometer_hx.id = hx
 field_notes.magnetometer_hx.manufacturer = Geotell
-#field_notes.magnetometer_hx.sensor = Ant 4
+field_notes.magnetometer_hx.sensor = Ant 4
 field_notes.magnetometer_hx.type = Ant 4 Induction Coil 
 
 # HY magnetometer information
-#field_notes.magnetometer_hy.azimuth = 90
-#field_notes.magnetometer_hy.chn_num = 4
+field_notes.magnetometer_hy.azimuth = 90
+field_notes.magnetometer_hy.chn_num = 4
 field_notes.magnetometer_hy.id = hy
 field_notes.magnetometer_hy.manufacturer = Geotell
-#field_notes.magnetometer_hy.sensor = Ant 4
+field_notes.magnetometer_hy.sensor = Ant 4
 field_notes.magnetometer_hy.type = Ant 4 Induction Coil
 
 # HZ magnetometer information
-#field_notes.magnetometer_hz.azimuth = 0
+field_notes.magnetometer_hz.azimuth = 0
 field_notes.magnetometer_hz.chn_num = 5
 field_notes.magnetometer_hz.id = hz
 field_notes.magnetometer_hz.manufacturer = Geotell
