@@ -11,6 +11,7 @@ Created on Wed Dec 12 10:51:40 2018
 import os
 import unittest
 import mth5
+import pandas as pd
 
 # =============================================================================
 # Test Suite
@@ -253,8 +254,121 @@ class TestMTH5ReadCFG(unittest.TestCase):
         self.assertEqual(self.mth5_obj.provenance.creation_time,
                          '2017-11-27T21:54:49.00')
         
+class TestMTH5UpdateAttributesFromSeries(unittest.TestCase):
+    """
+    test if attributes are updated from an input series.
+    """
+    def setUp(self):
+        self.mth5_obj = mth5.MTH5()
         
+        pd_series = pd.Series({'station': 'MT test',
+                                'latitude': 40.90,
+                                'longitude': -115.78,
+                                'elevation': 1234,
+                                'declination': -15.5,
+                                'start': '2018-01-01T12:00:00.00',
+                                'stop': '2018-02-01T12:00:00.00',
+                                'datum': 'WGS84',
+                                'coordinate_system': 'Geographic North',
+                                'units': 'mV',
+                                'instrument_id': 'ZEN_test',
+                                'ex_azimuth': 0,
+                                'ex_length': 50.0,
+                                'ex_sensor': 1,
+                                'ex_num': 1,
+                                'ey_azimuth': 90,
+                                'ey_length': 52.0,
+                                'ey_sensor': 2,
+                                'ey_num': 2,
+                                'hx_azimuth': 0,
+                                'hx_sensor': 2274,
+                                'hx_num': 3,
+                                'hy_azimuth': 90,
+                                'hy_sensor': 2284,
+                                'hy_num': 4,
+                                'hz_azimuth': 0,
+                                'hz_sensor': 2294,
+                                'hz_num': 5})
+        self.mth5_obj.update_metadata_from_series(pd_series)
+    
+    ### Site Attributes
+    def test_site_id(self):
+        self.assertEqual(self.mth5_obj.site.id,  'MT test')
+    def test_site_coordinate_system(self):
+        self.assertEqual(self.mth5_obj.site.coordinate_system,
+                         'Geographic North')
+    def test_site_datum(self):
+        self.assertEqual(self.mth5_obj.site.datum, 'WGS84') 
+    def test_site_declination(self):
+        self.assertEqual(self.mth5_obj.site.declination, -15.5)   
+    def test_site_elevation(self):
+        self.assertEqual(self.mth5_obj.site.elevation, 1234)
+    def test_site_latitude(self):
+        self.assertEqual(self.mth5_obj.site.latitude, 40.90)
+    def test_site_longitude(self):
+        self.assertEqual(self.mth5_obj.site.longitude, -115.78)
+    def test_site_start_date(self):
+        self.assertEqual(self.mth5_obj.site.start_date,
+                         '2018-01-01T12:00:00.000000')
+    def test_site_end_date(self):
+        self.assertEqual(self.mth5_obj.site.end_date,
+                         '2018-02-01T12:00:00.000000')
         
+    def test_site_project2utm(self):
+        self.mth5_obj.site.project_location2utm()
+        self.assertAlmostEqual(self.mth5_obj.site.easting, 602760.0, places=0)
+        self.assertAlmostEqual(self.mth5_obj.site.northing, 4528373.0, places=0)
+        self.assertEqual(self.mth5_obj.site.utm_zone, '11T')
+    
+    ### Field Notes Attributes    
+    # Data logger information
+    def test_field_notes_data_logger_id(self):
+        self.assertEqual(self.mth5_obj.field_notes.data_logger.id, 'ZEN_test')
+        
+    # EX Electrode information 
+    def test_field_notes_electrode_ex_azimuth(self):
+        self.assertEqual(self.mth5_obj.field_notes.electrode_ex.azimuth, 0)
+    def test_field_notes_electrode_ex_chn_num(self):
+        self.assertEqual(self.mth5_obj.field_notes.electrode_ex.chn_num, 1)
+    def test_field_notes_electrode_ex_id(self):
+        self.assertEqual(self.mth5_obj.field_notes.electrode_ex.id, 1)
+    def test_field_notes_electrode_ex_length(self):
+        self.assertEqual(self.mth5_obj.field_notes.electrode_ex.length, 50.)
+        
+    # EY Electrode information 
+    def test_field_notes_electrode_ey_azimuth(self):
+        self.assertEqual(self.mth5_obj.field_notes.electrode_ey.azimuth, 90)
+    def test_field_notes_electrode_ey_chn_num(self):
+        self.assertEqual(self.mth5_obj.field_notes.electrode_ey.chn_num, 2)
+    def test_field_notes_electrode_ey_id(self):
+        self.assertEqual(self.mth5_obj.field_notes.electrode_ey.id, 2)
+    def test_field_notes_electrode_ey_length(self):
+        self.assertEqual(self.mth5_obj.field_notes.electrode_ey.length, 52.)
+    
+    # HX magnetometer information 
+    def test_field_notes_magnetometer_hx_azimuth(self):
+        self.assertEqual(self.mth5_obj.field_notes.magnetometer_hx.azimuth, 0)
+    def test_field_notes_magnetometer_hx_chn_num(self):
+        self.assertEqual(self.mth5_obj.field_notes.magnetometer_hx.chn_num, 3)
+    def test_field_notes_magnetometer_hx_id(self):
+        self.assertEqual(self.mth5_obj.field_notes.magnetometer_hx.id, 2274)
+    
+    # HY magnetometer information 
+    def test_field_notes_magnetometer_hy_azimuth(self):
+        self.assertEqual(self.mth5_obj.field_notes.magnetometer_hy.azimuth, 90)
+    def test_field_notes_magnetometer_hy_chn_num(self):
+        self.assertEqual(self.mth5_obj.field_notes.magnetometer_hy.chn_num, 4)
+    def test_field_notes_magnetometer_hy_id(self):
+        self.assertEqual(self.mth5_obj.field_notes.magnetometer_hy.id, 2284)
+        
+    # HZ magnetometer information 
+    def test_field_notes_magnetometer_hz_azimuth(self):
+        self.assertEqual(self.mth5_obj.field_notes.magnetometer_hz.azimuth, 0)
+    def test_field_notes_magnetometer_hz_chn_num(self):
+        self.assertEqual(self.mth5_obj.field_notes.magnetometer_hz.chn_num, 5)
+    def test_field_notes_magnetometer_hz_id(self):
+        self.assertEqual(self.mth5_obj.field_notes.magnetometer_hz.id, 2294)
+
 # =============================================================================
 # run        
 # =============================================================================

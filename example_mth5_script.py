@@ -10,6 +10,7 @@ Created on Mon Dec 10 16:53:51 2018
 # =============================================================================
 import mth5
 import usgs_archive as archive
+import datetime 
 #import numpy as np
 
 # =============================================================================
@@ -27,6 +28,7 @@ cfg_fn = r"C:\Users\jpeacock\Documents\GitHub\MTarchive\example_mth5_cfg.txt"
 zc = archive.Z3DCollection()
 fn_list = zc.get_time_blocks(z3d_dir)
 
+st = datetime.datetime.now()
 ### Use with so that it will close if something goes amiss
 m = mth5.MTH5()
 m.open_mth5(r"c:\Users\jpeacock\Documents\imush\mshH020_test.mth5")
@@ -43,6 +45,7 @@ m.write_metadata()
 #instr_id_list = []
 #start_list = []
 #stop_list = []
+
 for ii, fn_block in enumerate(fn_list, 1):
     sch_obj = zc.merge_z3d(fn_block)
 
@@ -69,8 +72,8 @@ m.close_mth5()
 #
 #run_df, run_csv = combine_station_runs(archive_dir)
 #
-#et = datetime.datetime.now()
-#t_diff = et-st
-#print('Took --> {0:.2f} seconds'.format(t_diff.total_seconds()))
-#
+et = datetime.datetime.now()
+t_diff = et-st
+print('Took --> {0:.2f} seconds'.format(t_diff.total_seconds()))
+
 #return self.hdf5_fn

@@ -109,9 +109,10 @@ class Location(object):
 
         Returns East, North, Zone
         """
-        utm_point = gis_tools.project_point_ll2utm(self._latitude,
-                                                   self._longitude,
-                                                   datum=self.datum)
+        # need to convert datum to string, gdal doesn't like unicode apparently
+        utm_point = gis_tools.project_point_ll2utm(self.latitude,
+                                                   self.longitude,
+                                                   datum=str(self.datum))
 
         self.easting = utm_point[0]
         self.northing = utm_point[1]
@@ -127,7 +128,7 @@ class Location(object):
         ll_point = gis_tools.project_point_utm2ll(self.easting,
                                                   self.northing,
                                                   self.utm_zone,
-                                                  datum=self.datum)
+                                                  datum=str(self.datum))
 
         self.latitude = ll_point[0]
         self.longitude = ll_point[1]
@@ -1004,14 +1005,21 @@ class MTH5(object):
                 'station_series is not a pandas.Series'
         
         for key in station_series.index:
-            if key in self.site.__dict__.keys()+['latitude', 'longitude']:
-                setattr(self.site, key, getattr(station_series, key))
+            value = getattr(station_series, key)
+            if key in self.site._site_attrs:
+                setattr(self.site, key, value)
+            elif key  == 'start':
+                attr = '{0}_date'.format(key)
+                setattr(self.site, attr, value)
+            elif key  == 'stop':
+                attr = '{0}_date'.format('end')
+                setattr(self.site, attr, value)
             elif key == 'instrument_id':
-                self.field_notes.data_logger.id = getattr(station_series, key)
+                self.field_notes.data_logger.id = value
             elif key == 'station':
-                self.site.id = getattr(station_series, key)
+                self.site.id = value
             elif key == 'units':
-                self.site.elev_units = getattr(station_series, key)
+                self.site.elev_units = value
             elif key[0:2] in ['ex', 'ey', 'hx', 'hy', 'hz']:
                 comp = key[0:2]
                 attr = key.split('_')[1]
@@ -1021,10 +1029,10 @@ class MTH5(object):
                     attr = 'id'
                 if 'e' in comp:
                     setattr(getattr(self.field_notes, 'electrode_{0}'.format(comp)),
-                            attr, getattr(station_series, key))
+                            attr, value)
                 elif 'h' in comp:
                     setattr(getattr(self.field_notes, 'magnetometer_{0}'.format(comp)),
-                        attr, getattr(station_series, key))
+                        attr, value)
                     
 # =============================================================================
 #  read and write json for attributes       
