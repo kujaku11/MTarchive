@@ -104,6 +104,9 @@ class TestMTH5ReadCFG(unittest.TestCase):
         self.assertEqual(self.mth5_obj.field_notes.electrode_ex.units, 'mV')
     def test_field_notes_electrode_ex_gain(self):
         self.assertEqual(self.mth5_obj.field_notes.electrode_ex.gain, 1)
+    def test_field_notes_electrode_ex_contact_resistance(self):
+        self.assertEqual(self.mth5_obj.field_notes.electrode_ex.contact_resistance,
+                         1)
         
     # EY Electrode information 
     def test_field_notes_electrode_ey_azimuth(self):
@@ -124,6 +127,9 @@ class TestMTH5ReadCFG(unittest.TestCase):
         self.assertEqual(self.mth5_obj.field_notes.electrode_ey.units, 'mV')
     def test_field_notes_electrode_ey_gain(self):
         self.assertEqual(self.mth5_obj.field_notes.electrode_ey.gain, 1)
+    def test_field_notes_electrode_ey_contact_resistance(self):
+        self.assertEqual(self.mth5_obj.field_notes.electrode_ey.contact_resistance,
+                         1)
     
     # HX magnetometer information 
     def test_field_notes_magnetometer_hx_azimuth(self):
