@@ -512,7 +512,7 @@ class Provenance(object):
 
     def __init__(self, **kwargs):
         self.creation_time = time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime())
-        self.creating_application = 'MTpy'
+        self.creating_application = 'MTH5'
         self.creator = Person()
         self.submitter = Person()
 
@@ -672,7 +672,7 @@ class ScheduleDF(object):
 
     def __init__(self, time_series_dataframe, meta_df=None):
 
-        self.ts_df = time_series_database
+        self.ts_df = time_series_dataframe
         self.meta_df = meta_df
 
     @property
