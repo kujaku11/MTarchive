@@ -10,8 +10,10 @@ Created on Wed Dec 12 10:51:40 2018
 # =============================================================================
 import os
 import unittest
-import mth5.mth5 as mth5
+import numpy as np
 import pandas as pd
+import mth5.mth5 as mth5
+
 
 # =============================================================================
 # Test Suite
@@ -376,7 +378,33 @@ class TestMTH5UpdateAttributesFromSeries(unittest.TestCase):
         self.assertEqual(self.mth5_obj.field_notes.magnetometer_hz.chn_num, 5)
     def test_field_notes_magnetometer_hz_id(self):
         self.assertEqual(self.mth5_obj.field_notes.magnetometer_hz.id, 2294)
-
+        
+class TestScheduleObj(unittest.TestCase):
+    """
+    test a schedule object
+    """
+    
+    def setUp(self):
+        self.schedule_obj = mth5.ScheduleDF()
+    def test_from_dataframe(self):
+        dt_start = '2018-06-01T01:00:00.0'
+        dt_stop = '2018-06-01T02:00:00.0'
+        sr = 256.
+        df = pd.DataFrame(np.random.random((256*3600+1, 5)), 
+                          columns=['ex', 'ey', 'hx', 'hy', 'hz'],
+                          index=pd.date_range(start=dt_start,
+                                              end=dt_stop, 
+                                              freq='{0:.0f}N'.format(1./sr*1E9)))
+        self.schedule_obj.from_dataframe(df)
+        
+        self.assertEqual(self.schedule_obj.start_time.split()[0], 
+                         df.index[0].isoformat())
+        self.assertEqual(self.schedule_obj.stop_time.split()[0], 
+                         df.index[-1].isoformat())
+        self.assertEqual(self.schedule_obj.sampling_rate, sr)
+        self.assertEqual(self.schedule_obj.comp_list, list(df.columns))
+        
+        
 # =============================================================================
 # run        
 # =============================================================================

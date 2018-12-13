@@ -623,18 +623,7 @@ class Software(object):
 # =============================================================================
 class ScheduleDF(object):
     """
-    Container for a single schedule item
-    
-    :param time_series_dataframe: data frame of the time series data merged
-                                  together.
-    :type time_series_dataframe: pandas.DataFrame
-    
-    :param meta_df: metadata dataframe.  
-    :type meta_df: pandas.DataFrame
-    
-    .. note:: The time_series_dataframe should have columns name for the 
-              components [ ex | ey | hx | hy | hz ] and should be indexed by 
-              time. 
+    Container for a single schedule item 
               
     :Metadata keywords:
         
@@ -665,9 +654,18 @@ class ScheduleDF(object):
           ===================== =======================================
     """
 
-    def __init__(self, time_series_dataframe, meta_df=None):
+    def __init__(self, time_series_dataframe=None, meta_df=None):
 
-        self.ts_df = time_series_dataframe
+        self.ex = None
+        self.ey = None
+        self.hx = None
+        self.hy = None
+        self.hz = None
+        self.dt_index = None
+        
+        self._comp_list = ['ex', 'ey', 'hx', 'hy', 'hz']
+        
+        #self.ts_df = time_series_dataframe
         self.meta_df = meta_df
 
     @property
@@ -675,50 +673,135 @@ class ScheduleDF(object):
         """
         Start time in UTC string format
         """
-        return '{0} UTC'.format(self.ts_df.index[0].isoformat())
+        return '{0} UTC'.format(self.dt_index[0].isoformat())
 
     @property
     def stop_time(self):
         """
         Stop time in UTC string format
         """
-        return '{0} UTC'.format(self.ts_df.index[-1].isoformat())
+        return '{0} UTC'.format(self.dt_index[-1].isoformat())
     
     @property
     def start_seconds(self):
         """
         Start time in epoch seconds
         """
-        return self.ts_df.index[0].to_datetime64().astype(np.int64)/1e9
+        return self.dt_index[0].to_datetime64().astype(np.int64)/1e9
     
     @property
     def stop_seconds(self):
         """
         sopt time in epoch seconds
         """
-        return self.ts_df.index[-1].to_datetime64().astype(np.int64)/1e9
+        return self.dt_index[-1].to_datetime64().astype(np.int64)/1e9
 
     @property
     def n_chan(self):
         """
         number of channels
         """
-        return self.ts_df.shape[1]
+        
+        return len(self.comp_list)
 
     @property
     def sampling_rate(self):
         """
         sampling rate
         """
-        return np.round(1.0e9/self.ts_df.index[0].freq.nanos, decimals=1)
+        return np.round(1.0e9/self.dt_index[0].freq.nanos, decimals=1)
 
     @property
     def n_samples(self):
         """
         number of samples
         """
-        return self.ts_df.shape[0]
+        return self.dt_index.shape[0]
     
+    @property
+    def comp_list(self):
+        """
+        component list for the given schedule
+        """
+        return [comp for comp in self._comp_list
+                if getattr(self, comp) is not None]
+    
+    def make_dt_index(self, start_time, end_time, sampling_rate):
+        """
+        make time index array
+        
+        .. note:: date-time format should be YYYY-M-DDThh:mm:ss.ms UTC
+        
+        :param start_time: start time
+        :type start_time: string 
+        
+        :param end_time: end time
+        :type end_time: string 
+        
+        :param sampling_rate: sampling_rate in samples/second
+        :type sampling_rate: float
+        """
+
+        # set the index to be UTC time
+        dt_freq = '{0:.0f}N'.format(1./(sampling_rate)*1E9)
+        dt_index = pd.date_range(start=start_time,
+                                 end=end_time,
+                                 freq=dt_freq)
+        
+        return dt_index
+    
+    def from_dataframe(self, ts_dataframe):
+        """
+        update attributes from a pandas dataframe.  
+        
+        Dataframe should have columns:
+            * ex
+            * ey
+            * hx
+            * hy
+            * hz
+        and should be indexed by time.
+        
+        :param ts_dataframe: dataframe holding the data
+        :type ts_datarame: pandas.DataFrame
+        """
+        try:
+            assert isinstance(ts_dataframe, pd.DataFrame) is True
+        except AssertionError:
+            raise TypeError('ts_dataframe is not a pandas.DataFrame object.\n',
+                            'ts_dataframe is {0}'.format(type(ts_dataframe)))
+        
+        for col in ts_dataframe.columns:
+            try:
+                setattr(self, col.lower(), ts_dataframe[col])
+            except AttributeError:
+                print("\t xxx skipping {0} xxx".format(col))
+        self.dt_index = ts_dataframe.index
+        return
+    
+    def from_mth5(self, mth5_obj, name):
+        """
+        make a schedule object from mth5 file
+        
+        :param mth5_obj: an open mth5 object
+        :type mth5_obj: mth5.MTH5 open object
+        
+        :param name: name of schedule to use
+        :type name: string
+        """
+        mth5_schedule = mth5_obj[name]
+        
+        for comp in self._comp_list:
+            try:
+                setattr(self, comp, mth5_schedule[comp])
+            except KeyError:
+                print('\t xxx No {0} data xxx'.format(comp))
+                continue
+        
+        self.dt_index = self.make_dt_index(mth5_schedule.attrs['start_time'],
+                                           mth5_schedule.attrs['stop_time'],
+                                           mth5_schedule.attrs['sampling_rate'])
+        
     def write_metadata_csv(self, csv_dir):
         """
         write metadata to a csv file
@@ -738,6 +821,8 @@ class ScheduleDF(object):
                                               int(self.sampling_rate))
         
         return os.path.join(csv_dir, csv_fn)
+    
+
 
 # =============================================================================
 # MT HDF5 file
