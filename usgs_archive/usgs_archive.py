@@ -289,8 +289,8 @@ class Z3DCollection(object):
         :param fn_list: list of z3d files from same schedule action
         :type fn_list: list of strings
         
-        :returns: ScheduleDF object that contains metadata and TS dataframes
-        :rtype: mth5.ScheduleDF
+        :returns: Schedule object that contains metadata and TS dataframes
+        :rtype: mth5.Schedule
         
         :Example: ::
             >>> zc = archive.Z3DCollection()
@@ -455,7 +455,7 @@ class Z3DCollection(object):
                                  freq=dt_freq)
         ts_db.index = dt_index
         
-        schedule_obj = mth5.ScheduleDF()
+        schedule_obj = mth5.Schedule()
         schedule_obj.from_dataframe(ts_db)
         
         return schedule_obj

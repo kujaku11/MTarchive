@@ -621,7 +621,7 @@ class Software(object):
 # =============================================================================
 # schedule
 # =============================================================================
-class ScheduleDF(object):
+class Schedule(object):
     """
     Container for a single schedule item 
               
@@ -654,7 +654,7 @@ class ScheduleDF(object):
           ===================== =======================================
     """
 
-    def __init__(self, time_series_dataframe=None, meta_df=None):
+    def __init__(self, name=None, meta_df=None):
 
         self.ex = None
         self.ey = None
@@ -662,6 +662,7 @@ class ScheduleDF(object):
         self.hy = None
         self.hz = None
         self.dt_index = None
+        self.name = name
         
         self._comp_list = ['ex', 'ey', 'hx', 'hy', 'hz']
         self._attr_list = ['start_time',
@@ -807,6 +808,8 @@ class ScheduleDF(object):
         :type name: string
         """
         mth5_schedule = mth5_obj[name]
+        
+        self.name = name
         
         for comp in self._comp_list:
             try:
@@ -981,6 +984,13 @@ class MTH5(object):
         for attr in ['site', 'field_notes', 'copyright', 'provenance',
                      'software']:
             getattr(self, attr).from_json(self.mth5_obj.attrs[attr])
+            
+        for key in self.mth5_obj.keys():
+            if 'sch' in key:
+                setattr(self, key, Schedule())
+                getattr(self, key).from_mth5(self.mth5_obj, key)
+                
+        
     
     def read_mth5_cfg(self, mth5_cfg_fn):
         """
