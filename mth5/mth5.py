@@ -664,6 +664,13 @@ class ScheduleDF(object):
         self.dt_index = None
         
         self._comp_list = ['ex', 'ey', 'hx', 'hy', 'hz']
+        self._attr_list = ['start_time',
+                           'stop_time',
+                           'start_seconds_from_epoch',
+                           'stop_seconds_from_epoch',
+                           'n_samples',
+                           'n_channels',
+                           'sampling_rate']
         
         #self.ts_df = time_series_dataframe
         self.meta_df = meta_df
@@ -683,21 +690,21 @@ class ScheduleDF(object):
         return '{0} UTC'.format(self.dt_index[-1].isoformat())
     
     @property
-    def start_seconds(self):
+    def start_seconds_from_epoch(self):
         """
         Start time in epoch seconds
         """
         return self.dt_index[0].to_datetime64().astype(np.int64)/1e9
     
     @property
-    def stop_seconds(self):
+    def stop_seconds_from_epoch(self):
         """
         sopt time in epoch seconds
         """
         return self.dt_index[-1].to_datetime64().astype(np.int64)/1e9
 
     @property
-    def n_chan(self):
+    def n_channels(self):
         """
         number of channels
         """
@@ -835,6 +842,10 @@ class ScheduleDF(object):
         
         return os.path.join(csv_dir, csv_fn)
     
+# =============================================================================
+# Calibrations
+# =============================================================================
+    
 
 
 # =============================================================================
@@ -915,29 +926,24 @@ class MTH5(object):
             ### create group for schedule action
             schedule = self.mth5_obj.create_group(schedule_name)
             ### add metadata
-            schedule.attrs['start_time'] = schedule_obj.start_time
-            schedule.attrs['stop_time'] = schedule_obj.stop_time
-            schedule.attrs['n_samples'] = schedule_obj.n_samples
-            schedule.attrs['n_channels'] = schedule_obj.n_chan
-            schedule.attrs['sampling_rate'] = schedule_obj.sampling_rate
-            schedule.attrs['start_seconds'] = schedule_obj.start_seconds
-            schedule.attrs['stop_seconds'] = schedule_obj.stop_seconds
+            for attr in schedule_obj._attr_list:
+                schedule.attrs[attr] = getattr(schedule_obj, attr)
 
             ### add datasets for each channel
-            for comp in schedule_obj.ts_db.columns:
+            for comp in schedule_obj.comp_list:
                 if compress:
                     schedule.create_dataset(comp.lower(), 
-                                            data=schedule_obj.ts_db[comp],
+                                            data=getattr(schedule_obj, comp),
                                             compression='gzip',
                                             compression_opts=9)
                 else:
                     schedule.create_dataset(comp.lower(), 
-                                            data=schedule_obj.ts_db[comp])
+                                            data=getattr(schedule_obj, comp))
             return schedule
         else:
             return None
         
-    def add_calibrations(self, calibration_df, name, compress=True):
+    def add_calibrations(self, calibration_obj, name, compress=True):
         """
         add calibrations for sensors
         
@@ -950,15 +956,15 @@ class MTH5(object):
         
         if self.h5_is_write():
             cal = self.mth5_obj['/calibrations'].create_group(name)
-            for col in calibration_df.columns:
+            for col in calibration_obj.columns:
                 if compress:
                     cal.create_dataset(col.lower(), 
-                                       data=calibration_df[col],
+                                       data=calibration_obj[col],
                                        compression='gzip',
                                        compression_opts=9)
                 else:
                     cal.create_dataset(col.lower(), 
-                                       data=calibration_df[col])
+                                       data=calibration_obj[col])
         
     def read_mth5(self, mth5_fn):
         """

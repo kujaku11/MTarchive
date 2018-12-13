@@ -8,8 +8,8 @@ Created on Mon Dec 10 16:53:51 2018
 # =============================================================================
 # Imports
 # =============================================================================
-import mth5
-import usgs_archive as archive
+import mth5.mth5 as mth5
+import usgs_archive.usgs_archive as archive
 import datetime 
 #import numpy as np
 
@@ -18,7 +18,7 @@ import datetime
 # =============================================================================
 z3d_dir = r"c:\Users\jpeacock\Documents\imush\mshH020"
 csv_fn = r"c:\Users\jpeacock\Documents\imush\imush_archive_summary_edited.csv"
-cfg_fn = r"C:\Users\jpeacock\Documents\GitHub\MTarchive\example_mth5_cfg.txt"
+cfg_fn = r"C:\Users\jpeacock\Documents\GitHub\MTarchive\examples\example_mth5_cfg.txt"
 # =============================================================================
 # File
 # =============================================================================

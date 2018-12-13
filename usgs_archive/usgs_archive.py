@@ -33,6 +33,8 @@ import mtpy.usgs.zonge as zonge
 import mtpy.utils.gis_tools as gis_tools
 import mtpy.utils.configfile as mtcfg
 
+import mth5.mth5 as mth5 
+
 # for writing shape file
 import geopandas as gpd
 from shapely.geometry import Point
@@ -83,87 +85,6 @@ def get_nm_elev(lat, lon):
         nm_elev = float(elev.text)
     return nm_elev
 
-# =============================================================================
-# schedule
-# =============================================================================
-class ScheduleDB(object):
-    """
-    Container for a single schedule item
-    """
-
-    def __init__(self, time_series_database, meta_db=None):
-
-        self.ts_db = time_series_database
-        self.meta_db = meta_db
-
-    @property
-    def start_time(self):
-        """
-        Start time in UTC string format
-        """
-        return '{0} UTC'.format(self.ts_db.index[0].isoformat())
-
-    @property
-    def stop_time(self):
-        """
-        Stop time in UTC string format
-        """
-        return '{0} UTC'.format(self.ts_db.index[-1].isoformat())
-    
-    @property
-    def start_seconds(self):
-        """
-        Start time in epoch seconds
-        """
-        return self.ts_db.index[0].to_datetime64().astype(np.int64)/1e9
-    
-    @property
-    def stop_seconds(self):
-        """
-        sopt time in epoch seconds
-        """
-        return self.ts_db.index[-1].to_datetime64().astype(np.int64)/1e9
-
-    @property
-    def n_chan(self):
-        """
-        number of channels
-        """
-        return self.ts_db.shape[1]
-
-    @property
-    def sampling_rate(self):
-        """
-        sampling rate
-        """
-        return np.round(1.0e9/self.ts_db.index[0].freq.nanos, decimals=1)
-
-    @property
-    def n_samples(self):
-        """
-        number of samples
-        """
-        return self.ts_db.shape[0]
-    
-    def write_metadata_csv(self, csv_dir):
-        """
-        write metadata to a csv file
-        """
-        
-        csv_fn = self._make_csv_fn(csv_dir)
-        self.meta_db.to_csv(csv_fn)
-        
-        return csv_fn
-            
-    def _make_csv_fn(self, csv_dir):
-        if not isinstance(self.meta_db, pd.Series):
-            raise ValueError('meta_db is not a Pandas Series, {0}'.format(type(self.meta_db)))
-        csv_fn = '{0}_{1}_{2}_{3}.csv'.format(self.meta_db.station,
-                                              self.ts_db.index[0].strftime('%Y%m%d'),
-                                              self.ts_db.index[1].strftime('%H%M%S'),
-                                              int(self.sampling_rate))
-        
-        return os.path.join(csv_dir, csv_fn)
 #==============================================================================
 # Need a dummy utc time zone for the date time format
 #==============================================================================
@@ -368,8 +289,8 @@ class Z3DCollection(object):
         :param fn_list: list of z3d files from same schedule action
         :type fn_list: list of strings
         
-        :returns: ScheduleDB object that contains metadata and TS dataframes
-        :rtype: ScheduleDB
+        :returns: ScheduleDF object that contains metadata and TS dataframes
+        :rtype: mth5.ScheduleDF
         
         :Example: ::
             >>> zc = archive.Z3DCollection()
@@ -456,9 +377,9 @@ class Z3DCollection(object):
         
         ### merge time series into a single data base
         sch_obj = self.merge_ts_list(ts_list, decimate=decimate)
-        meta_db.start = sch_obj.start_seconds
-        meta_db.stop = sch_obj.stop_seconds
-        meta_db.n_chan = sch_obj.n_chan
+        meta_db.start = sch_obj.start_seconds_from_epoch
+        meta_db.stop = sch_obj.stop_seconds_from_epoch
+        meta_db.n_chan = sch_obj.n_channels
         meta_db.n_samples = sch_obj.n_samples
         ### add metadata DataFrame to the schedule object
         sch_obj.meta_db = meta_db
@@ -534,7 +455,10 @@ class Z3DCollection(object):
                                  freq=dt_freq)
         ts_db.index = dt_index
         
-        return ScheduleDB(ts_db)
+        schedule_obj = mth5.ScheduleDF()
+        schedule_obj.from_dataframe(ts_db)
+        
+        return schedule_obj
 
     #==================================================
     def check_time_series(self, fn_list):
