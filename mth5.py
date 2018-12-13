@@ -12,6 +12,7 @@ Created on Sun Dec  9 20:50:41 2018
 # =============================================================================
 import os
 import datetime
+import dateutil
 import time
 import json
 import h5py
@@ -172,8 +173,9 @@ class Site(Location):
         self._end_date = None
         self.id = None
         self.survey = None
-        self._date_fmt = '%Y-%m-%dT%H:%M:%S.%f'
-        self._site_attrs = ['start_date',
+        self._date_fmt = '%Y-%m-%dT%H:%M:%S.%f %Z'
+        self._site_attrs = ['acquired_by',
+                            'start_date',
                             'end_date',
                             'id',
                             'survey',
@@ -197,18 +199,11 @@ class Site(Location):
             return None
     
     @start_date.setter
-    def start_date(self, start_date, fmt=None):
-        if fmt is not None:
-            self._start_date = datetime.datetime.strptime(start_date, 
-                                                          fmt)
-        else:
-            try:
-                self._start_date = datetime.datetime.strptime(start_date, 
-                                                              self._date_fmt)
-            except TypeError:
-                print("Date format is not correct, should be {0}".format(self._date_fmt)+\
-                      " or set your own using Site._date_fmt")
-                self._start_date = None
+    def start_date(self, start_date):
+        self._start_date = dateutil.parser.parse(start_date)
+        if self._start_date.tzname() is None:
+            self._start_date = self._start_date.replace(tzinfo=UTC())
+
     @property
     def end_date(self):
         try:
@@ -217,18 +212,10 @@ class Site(Location):
             return None
     
     @end_date.setter
-    def end_date(self, end_date, fmt=None):
-        if fmt is not None:
-            self._end_date = datetime.datetime.strptime(end_date, 
-                                                        fmt)
-        else:
-            try:
-                self._end_date = datetime.datetime.strptime(end_date, 
-                                                            self._date_fmt)
-            except TypeError:
-                print("Date format is not correct, should be {0}".format(self._date_fmt)+\
-                      " or set your own using Site._date_fmt")
-                self._end_date = None
+    def end_date(self, end_date):
+        self._end_date = dateutil.parser.parse(end_date)
+        if self._end_date.tzname() is None:
+            self._end_date = self._end_date.replace(tzinfo=UTC())
             
     def to_json(self):
         """
@@ -1011,8 +998,8 @@ class MTH5(object):
             elif key  == 'start':
                 attr = '{0}_date'.format(key)
                 setattr(self.site, attr, value)
-            elif key  == 'stop':
-                attr = '{0}_date'.format('end')
+            elif key  == 'stop' or key == 'stop_date':
+                attr = 'end_date'
                 setattr(self.site, attr, value)
             elif key == 'instrument_id':
                 self.field_notes.data_logger.id = value
@@ -1063,7 +1050,7 @@ def to_json(obj):
     :param obj: class object to transform into string
     """
     if isinstance(obj, (Site, Location)):
-        keys = obj.__dict__.keys() + ['latitude', 'longitude', 'elevation']
+        keys = obj._site_attrs
     else:
         keys = obj.__dict__.keys()
         

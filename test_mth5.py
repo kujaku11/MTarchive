@@ -55,10 +55,19 @@ class TestMTH5ReadCFG(unittest.TestCase):
         self.assertEqual(self.mth5_obj.site.survey, 'Test')
     def test_site_start_date(self):
         self.assertEqual(self.mth5_obj.site.start_date,
-                         '2018-05-07T20:10:00.000000')
+                         '2018-05-07T20:10:00.000000 UTC')
     def test_site_end_date(self):
         self.assertEqual(self.mth5_obj.site.end_date,
-                         '2018-07-07T10:20:30.000000')
+                         '2018-07-07T10:20:30.000000 UTC')
+    def test_site_acquired_by_name(self):
+        self.assertEqual(self.mth5_obj.site.acquired_by.name, 'steve')
+    def test_site_acquired_by_email(self):
+        self.assertEqual(self.mth5_obj.site.acquired_by.email, 'steve@email.com')
+    def test_site_acquired_by_organization(self):
+        self.assertEqual(self.mth5_obj.site.acquired_by.organization, 'Enron')
+    def test_site_acquired_by_organization_url(self):
+        self.assertEqual(self.mth5_obj.site.acquired_by.organization_url,
+                         'www.corrupt.enron')
     
     ### Field Notes Attributes    
     # Data logger information
@@ -266,8 +275,8 @@ class TestMTH5UpdateAttributesFromSeries(unittest.TestCase):
                                 'longitude': -115.78,
                                 'elevation': 1234,
                                 'declination': -15.5,
-                                'start': '2018-01-01T12:00:00.00',
-                                'stop': '2018-02-01T12:00:00.00',
+                                'start': '2018-01-01 12:00:00.00',
+                                'stop': '2018-02-01 12:00:00.00',
                                 'datum': 'WGS84',
                                 'coordinate_system': 'Geographic North',
                                 'units': 'mV',
@@ -309,11 +318,10 @@ class TestMTH5UpdateAttributesFromSeries(unittest.TestCase):
         self.assertEqual(self.mth5_obj.site.longitude, -115.78)
     def test_site_start_date(self):
         self.assertEqual(self.mth5_obj.site.start_date,
-                         '2018-01-01T12:00:00.000000')
+                         '2018-01-01T12:00:00.000000 UTC')
     def test_site_end_date(self):
         self.assertEqual(self.mth5_obj.site.end_date,
-                         '2018-02-01T12:00:00.000000')
-        
+                         '2018-02-01T12:00:00.000000 UTC')
     def test_site_project2utm(self):
         self.mth5_obj.site.project_location2utm()
         self.assertAlmostEqual(self.mth5_obj.site.easting, 602760.0, places=0)

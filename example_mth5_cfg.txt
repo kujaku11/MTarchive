@@ -15,7 +15,11 @@ site.longitude = -118.345
 site.survey = Test
 site.start_date = 2018-05-07T20:10:00.0
 site.end_date = 2018-07-07T10:20:30.0
-#site._date_fmt = None
+site.acquired_by.name = steve
+site.acquired_by.email = steve@email.com
+site.acquired_by.organization = Enron
+site.acquired_by.organization_url = www.corrupt.enron
+#site._date_fmt = %Y-%m-%dT%H:%M:%S.%f %Z
 
 ### Field Notes --> for instrument setup
 # Data logger information
