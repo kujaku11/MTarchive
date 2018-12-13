@@ -1,6 +1,6 @@
 \documentclass{article}
 
-\usepackage[hmargin=1in, vmargin=1in]{geometry}
+\usepackage[hmargin=1in, vmargin=.75in]{geometry}
 \usepackage[citecolor=blue, colorlinks=true, linkcolor=blue, urlcolor=blue]{hyperref}
 \usepackage{natbib}
 \usepackage{graphicx}
@@ -10,7 +10,7 @@
 \author[1]{J. R. Peacock}
 \affil[1]{U.S. Geological Survey}
 
-\newcommand{\attr}[1]{\textbf{\textit{#1}}}
+\newcommand{\attr}[1]{\textbf{#1}}
 
 \begin{document}
 	
@@ -35,28 +35,27 @@ The top level of a MTH5 file, the root directory, stores attributes important to
 \subsection{Description of \textbf{site}}
 
 \begin{itemize}
-	\item \textbf{site}: Information about where the site is
+	\setlength{\itemsep}{.05em}
+	\item \attr{acquired\_by}: who acquired the data
 	\begin{itemize}
-		\item \attr{acquired\_by}: who acquired the data
-		\begin{itemize}
-			\item \attr{email}: email of person responsible for the data
-			\item \attr{name}: name of person responsible for the data
-			\item \attr{organization}: organization name for person responsible for the data
-			\item \attr{organization\_url}: organization website for person responsible for the data
-		\end{itemize}
-		\item \attr{coordinate\_system}: [ Geographic North $|$ Geomagnetic North $|$ something else ]
-		\item \attr{datum}: Datum that represents the location coordinates, (WGS84)
-		\item \attr{declination}: geomagnetic declination of station location
-		\item \attr{declination\_epoch}: epoch from which declination is estimated
-		\item \attr{elev\_units}: units of elevation [ meters $|$ feet $|$ something else ]
-		\item \attr{elevation}: elevation of station in \attr{elev\_units}
-		\item \attr{end\_date}: date and time of when recording stopped\footnote[1]{The preferred format is YYYY-MM-DDThh:mm:ss.ms UTC}.
-		\item \attr{id}: name of the station
-		\item \attr{latitude}: latitude of station\footnote[2]{Preferred format is decimal degrees}
-		\item \attr{longitude}: longitude of station\footnotemark[2]
-		\item \attr{start\_date}: date and time of when recording began\footnotemark[1]
-		\item \attr{survey}: survey name and location  
+		\setlength{\itemsep}{.05em}
+		\item \attr{email}: email of person responsible for the data
+		\item \attr{name}: name of person responsible for the data
+		\item \attr{organization}: organization name for person responsible for the data
+		\item \attr{organization\_url}: organization website for person responsible for the data
 	\end{itemize}
+	\item \attr{coordinate\_system}: [ Geographic North $|$ Geomagnetic North $|$ something else ]
+	\item \attr{datum}: Datum that represents the location coordinates, (WGS84)
+	\item \attr{declination}: geomagnetic declination of station location
+	\item \attr{declination\_epoch}: epoch from which declination is estimated
+	\item \attr{elev\_units}: units of elevation [ meters $|$ feet $|$ something else ]
+	\item \attr{elevation}: elevation of station in \attr{elev\_units}
+	\item \attr{end\_date}: date and time of when recording stopped\footnote[1]{The preferred format is YYYY-MM-DDThh:mm:ss.ms UTC}.
+	\item \attr{id}: name of the station
+	\item \attr{latitude}: latitude of station\footnote[2]{Preferred format is decimal degrees}
+	\item \attr{longitude}: longitude of station\footnotemark[2]
+	\item \attr{start\_date}: date and time of when recording began\footnotemark[1]
+	\item \attr{survey}: survey name and location  
 \end{itemize}
 
 \newpage
@@ -81,6 +80,49 @@ The top level of a MTH5 file, the root directory, stores attributes important to
 \end{verbatim}
 
 \subsection{Description of \textbf{field\_notes}}
+\begin{itemize}
+	\setlength{\itemsep}{.05em}
+	\item \attr{data\_logger}: information about the data logger
+	\begin{itemize}
+		\setlength{\itemsep}{.05em}
+		\item \attr{id}: ID number of data logger
+		\item \attr{manufacturer}: Name of manufacturer
+		\item \attr{type}: type of data logger
+	\end{itemize}
+	\item \attr{data\_quality}: information about data quality
+	\begin{itemize}
+		\setlength{\itemsep}{.05em}
+		\item \attr{author}: name of person assessing data quality
+		\item \attr{comments}: comments on data quality
+		\item \attr{rating}: [1--5] 1 -- poor, 5 -- great
+		\item \attr{warnings\_comments}: comments on any warnings flagged
+		\item \attr{warnings\_flags}: number of flags
+	\end{itemize}
+	\item \attr{electrode\_xx}: information for electric fields EX and EY
+	\begin{itemize}
+		\setlength{\itemsep}{.05em}
+		\item \attr{azimuth}: heading of dipole relative to \attr{site.coordinate\_system}
+		\item \attr{chn\_num}: channel number 
+		\item \attr{contact\_resistance}: contact resistance in kOhms
+		\item \attr{gain}: gain for electric channel
+		\item \attr{id}: ID number of electrode(s)
+		\item \attr{length}: dipole length in meters
+		\item \attr{manufacturer}: electrode maker name
+		\item \attr{type}: type of electrode
+		\item \attr{units}: units of electric field data 
+	\end{itemize}
+	\item \attr{magnetoteter\_xx}: information for magnetic fields HX, HY, HZ
+	\begin{itemize}
+		\setlength{\itemsep}{.05em}
+		\item \attr{azimuth}: heading of magnetotmeter relative to \attr{site.coordinate\_system}
+		\item \attr{chn\_num}: channel number 
+		\item \attr{gain}: gain for electric channel
+		\item \attr{id}: ID number of electrode(s)
+		\item \attr{manufacturer}: electrode maker name
+		\item \attr{type}: type of electrode
+		\item \attr{units}: units of electric field data 
+	\end{itemize}
+\end{itemize}
 
 \newpage
 \subsubsection{Example JSON encoded metadata for \textbf{field\_notes}}
@@ -90,7 +132,7 @@ The top level of a MTH5 file, the root directory, stores attributes important to
                  "type": "32-Bit 5-channel GPS synced"},
 "data_quality": {"author": "C. Cagniard",
                  "comments": "testing",
-                 "rating": 0,
+                 "rating": 5,
                  "warnings_comments": "bad data at 2018-06-07T20:10:00.00",
                  "warnings_flag": 1},
 "electrode_ex": {"azimuth": 15.5,
@@ -119,22 +161,101 @@ The top level of a MTH5 file, the root directory, stores attributes important to
                     "type": "Ant 4 Induction Coil",
                     "units": "mV"},
 "magnetometer_hy": {"azimuth": 105.5,
-				 "chn_num": 2,
-				 "gain": 1,
-				 "id": 2384,
-				 "manufacturer": "Geotell",
-				 "type": "Ant 4 Induction Coil",
-				 "units": "mV"},
+                    "chn_num": 2,
+                    "gain": 1,
+                    "id": 2384,
+                    "manufacturer": "Geotell",
+                    "type": "Ant 4 Induction Coil",
+                    "units": "mV"},
 "magnetometer_hz": {"azimuth": 90,
-				 "chn_num": 3,
-				 "gain": 1,
-				 "id": 2514,
-				 "manufacturer": "Geotell",
-				 "type": "Ant 4 Induction Coil",
-				 "units": "mV"}}
+                    "chn_num": 3,
+                    "gain": 1,
+                    "id": 2514,
+                    "manufacturer": "Geotell",
+                    "type": "Ant 4 Induction Coil",
+                    "units": "mV"}}
 \end{verbatim}
 
-       
+\newpage
+\subsection{Description of \textbf{copyright}} 
+
+\begin{itemize}
+	\setlength{\itemsep}{.05em}
+	\item \attr{additional\_info}: any additional information about copyright
+	\item \attr{citation}: Citation that uses this data
+	\begin{itemize}
+		\setlength{\itemsep}{.05em}
+		\item \attr{author}: citation author
+		\item \attr{doi}: doi number of citation
+		\item \attr{journal}: name of publisher
+		\item \attr{title}: citation title
+		\item \attr{volume}: citation volume
+		\item \attr{year}: citation year
+	\end{itemize}
+	\item \attr{conditions\_of\_use}: Conditions of using the data
+	\item \attr{release\_status}: status of the data release
+\end{itemize}
+
+\subsubsection{Example JSON encoded metadata for \textbf{copyright}}
+\begin{verbatim}
+{"additional_info": "this is a test",
+ "citation": {"author": "Tikhanov",
+              "doi": "10.1023/usgs_mt_test",
+              "journal": "SI",
+              "title": "MT HDF5 test",
+              "volume": 1,
+              "year": 2018},
+ "conditions_of_use": "All data and metadata for this survey are available free of charge 
+                       and may be copied freely, duplicated and further distributed provided
+                       this data set is cited as the reference. While the author(s) strive to
+                       provide data and metadata of best possible quality, neither the author(s)
+                       of this data set, not IRIS make any claims, promises, or guarantees about
+                       the accuracy, completeness, or adequacy of this information, and expressly
+                       disclaim liability for errors and omissions in the contents of this file.
+                       Guidelines about the quality or limitations of the data and metadata, as 
+                       obtained from the author(s), are included for informational purposes 
+                       only.",
+ "release_status": "Open to the public"} 
+\end{verbatim}
+   
+\subsection{Description of \textbf{provenance}} 
+
+\begin{itemize}
+	\setlength{\itemsep}{.05em}
+	\item \attr{creating\_application}: software used to create the file
+	\item \attr{creation\_time}: creation date and time of file
+	\item \attr{creator}: information about creator 
+	\begin{itemize}
+		\setlength{\itemsep}{.05em}
+		\item \attr{email}: email of person who created file
+		\item \attr{name}: name of person who created file
+		\item \attr{organization}: organization of person who created file
+		\item \attr{organization\_url}: organization URL of person who created file
+	\end{itemize}
+	\item \attr{submitter}: information about submitter 
+	\begin{itemize}
+		\setlength{\itemsep}{.05em}
+		\item \attr{email}: email of person who submitted file
+		\item \attr{name}: name of person who submitted file
+		\item \attr{organization}: organization of person who submitted file
+		\item \attr{organization\_url}: organization URL of person who submitted file
+	\end{itemize}
+\end{itemize}
+   
+\subsubsection{Example JSON encoded metadata for \textbf{provenance}}
+\begin{verbatim}
+{"creating_application": "MTH5py",
+ "creation_time": "2017-11-27T21:54:49.00",
+ "creator": {"email": "test@email.com",
+             "name": "author",
+             "organization": "company name",
+             "organization_url": "https://www.company_name.com"},
+ "submitter": {"email": "test@email.com",
+               "name": "author",
+               "organization": "company name",
+               "organization_url": "https://www.company.com"}}
+\end{verbatim}
+  
 
 
 \end{document}
