@@ -726,7 +726,8 @@ class ScheduleDF(object):
         return [comp for comp in self._comp_list
                 if getattr(self, comp) is not None]
     
-    def make_dt_index(self, start_time, end_time, sampling_rate):
+    def make_dt_index(self, start_time, sampling_rate, stop_time=None, 
+                      n_samples=None):
         """
         make time index array
         
@@ -744,9 +745,17 @@ class ScheduleDF(object):
 
         # set the index to be UTC time
         dt_freq = '{0:.0f}N'.format(1./(sampling_rate)*1E9)
-        dt_index = pd.date_range(start=start_time,
-                                 end=end_time,
-                                 freq=dt_freq)
+        if stop_time is not None:
+            dt_index = pd.date_range(start=start_time,
+                                     end=stop_time,
+                                     freq=dt_freq, 
+                                     closed='left')
+        elif n_samples is not None:
+            dt_index = pd.date_range(start=start_time,
+                                     periods=n_samples,
+                                     freq=dt_freq)
+        else:
+            raise ValueError('Need to input either stop_time or n_samples')
         
         return dt_index
     
@@ -777,6 +786,7 @@ class ScheduleDF(object):
             except AttributeError:
                 print("\t xxx skipping {0} xxx".format(col))
         self.dt_index = ts_dataframe.index
+        
         return
     
     def from_mth5(self, mth5_obj, name):
@@ -798,9 +808,12 @@ class ScheduleDF(object):
                 print('\t xxx No {0} data xxx'.format(comp))
                 continue
         
+        
         self.dt_index = self.make_dt_index(mth5_schedule.attrs['start_time'],
-                                           mth5_schedule.attrs['stop_time'],
-                                           mth5_schedule.attrs['sampling_rate'])
+                                           mth5_schedule.attrs['sampling_rate'],
+                                           n_samples=mth5_schedule.attrs['n_samples'])
+        assert self.dt_index.shape[0] == getattr(self, self.comp_list[0]).shape[0]
+        return 
         
     def write_metadata_csv(self, csv_dir):
         """
