@@ -10,7 +10,7 @@ Created on Wed Dec 12 10:51:40 2018
 # =============================================================================
 import os
 import unittest
-import mth5
+import mth5.mth5 as mth5
 import pandas as pd
 
 # =============================================================================
@@ -23,7 +23,7 @@ class TestMTH5ReadCFG(unittest.TestCase):
     
     def setUp(self):
         self.mth5_obj = mth5.MTH5()
-        cfg_fn = r"example_mth5_cfg.txt"
+        cfg_fn = r"../examples/example_mth5_cfg.txt"
         self.assertTrue(os.path.isfile(cfg_fn), "{0} not found".format(cfg_fn))
         
         self.mth5_obj.read_mth5_cfg(cfg_fn)
