@@ -26,11 +26,19 @@
 
 The magnetotelluric community is relatively small which has led to various formats for storing the time series data.  Some type of ASCII format seems to be the most prevalent because before large data sets that was the easiest method of storage.  However, in terms of read/write efficiency, ASCII is the slowest.  Various binary formats exist, some proprietary and some open like the Scripps format, though efficient these files lack some critical metadata. 
 
-The most widely used format for archiving large data sets is the Hierarchical Data Format (HDF5).  The HDF5 Group (\url{https://www.hdfgroup.org/}) maintains and updates the format as well as the software needed to read and write.  The advantages of HDF5 are the metadata can be stored alongside the data, different components or calibration data or different schedules can be stored as separate folders, and the data is stored to the hard drive making reading and writing very efficient.  There is also capability to access a single file from multiple different processors making it versatile for parallel computing.  The goal for MTH5 is to develop a format where metadata can easily be stored and searched, as well has have a hierarchical structure where a single station can be stored in one HDF5 file.  \textit{Note: this is still in the development stage and any comments are welcome.} \url{jpeacock@usgs.gov}.  
+The most widely used format for archiving large data sets is the Hierarchical Data Format (HDF5).  The HDF5 Group (\url{https://www.hdfgroup.org/}) maintains and updates the format as well as the software needed to read and write.  The advantages of HDF5 are the metadata can be stored alongside the data, different components or calibration data or different schedules can be stored as separate folders, and the data is stored to the hard drive making reading and writing very efficient.  There is also capability to access a single file from multiple different processors making it versatile for parallel computing.  The goal for MTH5 is to develop a format where metadata can easily be stored and searched, as well has have a hierarchical structure where a single station can be stored in one HDF5 file.  \textit{Note: this is still in the development stage and any comments are welcome.} \url{jpeacock@usgs.gov}. 
+ 
 
 \section{General Structure}
 
-The top level of a MTH5 file, the root directory, stores attributes important to the location of the data, how the data were collected, the provenance of the data, the software used to write the data, and copyright information on how the data can be used.  These metadata are stored as JSON encoded strings.  The metadata are split into the following headings \attr{site}, \attr{field\_notes}, \attr{copyright}, \attr{provenance}, and \attr{software}. These are described below. 
+The top level of a MTH5 file, the \verb|root| directory, stores attributes important to the location of the data, how the data were collected, the provenance of the data, the software used to write the data, and copyright information on how the data can be used.  These metadata are stored as JSON encoded strings.  The metadata are split into the following headings \attr{site}, \attr{field\_notes}, \attr{copyright}, \attr{provenance}, and \attr{software}. These are described below. Off the \verb|root| directory are the data folders.  One for instrument calibrations and one for each different schedule action or sampling rate in which the data was collected. Note that this file structure assumes the data were collected with all the same setup, if the setup was changed a new file should be made.  
+
+\begin{figure}[!htb]
+	\centering
+	\includegraphics[width=.99\textwidth]{mth5_flowchart.pdf}
+	\caption{Schematic of how an MTH5 file is setup.  See below for description of root attributes \attr{site}, \attr{field\_notes}, \attr{copyright}, \attr{provenance}, and \attr{software}.}
+	\label{fig:flowchar}
+\end{figure}
 
 \subsection{Description of \textbf{site}}
 
@@ -58,7 +66,6 @@ The top level of a MTH5 file, the root directory, stores attributes important to
 	\item \attr{survey}: survey name and location  
 \end{itemize}
 
-\newpage
 \subsubsection{Example JSON encoded metadata for \textbf{site}}
 \begin{verbatim}
 	{"acquired_by": {"email": "generic@email.com",
@@ -79,6 +86,7 @@ The top level of a MTH5 file, the root directory, stores attributes important to
 	"survey": "MT survey Washington, USA"}
 \end{verbatim}
 
+\newpage
 \subsection{Description of \textbf{field\_notes}}
 \begin{itemize}
 	\setlength{\itemsep}{.05em}
@@ -281,5 +289,43 @@ The top level of a MTH5 file, the root directory, stores attributes important to
  "name": "MTH5py",
  "version": "Beta"}
 \end{verbatim}
+
+\section{Calibrations}
+
+Calibrations are put in a dedicated folder where each instrument calibration is put in a sub-folder.  Each instrument calibration folder can have metadata attributes.  These should contain information about units, date of calibration, and who did the calibration.  Typically the magnetometer calibrations are given as a complex value as a function of frequency or period.  These data are subsequently put in their own folder.
+
+Attributes should include:
+\begin{itemize}
+	\setlength{\itemsep}{.1em}
+	\item \attr{calibration\_date}: date of calibration\footnote[1]{The preferred format is YYYY-MM-DD}
+	\item \attr{calibration\_person}:
+	\begin{itemize}
+		\setlength{\itemsep}{.05em}
+		\item \attr{email}: email of person who did calibration
+		\item \attr{name}: name of person who did calibration
+		\item \attr{organization}: organization of person who did calibration
+		\item \attr{organization\_url}: organization URL of person who did calibration
+	\end{itemize} 
+	\item \attr{units}: units of calibration
+\end{itemize} 
+
+\section{Schedule Blocks}
+
+Commonly MT measurements are recorded at different sampling rates over the course of a measurement to get the full range of data.  Or sometimes data recording may be interrupted and restarted.  The different recordings are labeled \verb|schedule_xx| where the \verb|xx| represents order of the measurement [0--n], labeled as a 2 character number, with a leading 0 if n is less than 10.  The first schedule is \verb|schedule_01| and the n$^{th}$ schedule is \verb|schedule_nn|. 
+
+The \verb|schedule_nn| folder has attributes attached to it.  These are:
+
+\begin{itemize}
+	\setlength{\itemsep}{.1em}
+	\item \attr{start\_time}: date and time data recording started\footnote[1]{The preferred format is YYYY-MM-DDThh:mm:ss.ms UTC}
+	\item \attr{end\_time}: date and time data recording ended\footnotemark[1]
+	\item \attr{start\_seconds}: seconds from the epoch (1970-01-01) data recording started
+	\item \attr{end\_seconds}: seconds from the epoch (1970-01-01) data recording ended
+	\item \attr{sampling\_rate}: sampling rate in samples/second
+	\item \attr{n\_samples}: number of samples in each channel
+	\item \attr{n\_channels}: number of channels recorded
+\end{itemize}  
+
+   
 
 \end{document}
