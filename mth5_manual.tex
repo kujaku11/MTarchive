@@ -30,7 +30,7 @@ The most widely used format for archiving large data sets is the Hierarchical Da
 
 \section{General Structure}
 
-The top level of a MTH5 file, the root directory, stores attributes important to the location of the data, how the data were collected, the provenance of the data, the software used to write the data, and copyright information on how the data can be used.  These metadata are stored as JSON encoded strings.  The metadata are split into the following headings, where each indentation represents a different layer.
+The top level of a MTH5 file, the root directory, stores attributes important to the location of the data, how the data were collected, the provenance of the data, the software used to write the data, and copyright information on how the data can be used.  These metadata are stored as JSON encoded strings.  The metadata are split into the following headings \attr{site}, \attr{field\_notes}, \attr{copyright}, \attr{provenance}, and \attr{software}. These are described below. 
 
 \subsection{Description of \textbf{site}}
 
@@ -256,6 +256,30 @@ The top level of a MTH5 file, the root directory, stores attributes important to
                "organization_url": "https://www.company.com"}}
 \end{verbatim}
   
+\subsection{Description of \textbf{software}} 
 
+\begin{itemize}
+	\item \attr{author}: information about the author of the software used to make file
+	\setlength{\itemsep}{.05em}
+	\begin{itemize}
+		\setlength{\itemsep}{.05em}
+		\item \attr{email}: email of software author
+		\item \attr{name}: name of software author
+		\item \attr{organization}: organization of software author
+		\item \attr{organization\_url}: organization URL software author
+	\end{itemize}
+	\item \attr{name}: software name that made file
+	\item \attr{version}: software version 
+\end{itemize}
+
+\subsubsection{Example JSON encoded metadata for \textbf{provenance}}
+\begin{verbatim}
+{"author": {"email": "send@email.com",
+            "name": "author",
+            "organization": "company name",
+            "organization_url": "https://company_name.com"},
+ "name": "MTH5py",
+ "version": "Beta"}
+\end{verbatim}
 
 \end{document}
