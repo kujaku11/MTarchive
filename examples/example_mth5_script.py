@@ -38,16 +38,17 @@ m.open_mth5(r"c:\Users\jpeacock\Documents\imush\mshH020_test.mth5")
 if not m.h5_is_write:
     raise mth5.MTH5Error('Something is fucked')
 
-m.read_mth5_cfg(cfg_fn)    
+m.update_metadata_from_cfg(cfg_fn)    
 m.update_metadata_from_series(archive.get_station_info_from_csv(csv_fn, 
                                                                'mshH020'))
 m.write_metadata()
 
 for ii, fn_block in enumerate(fn_list, 1):
     sch_obj = zc.merge_z3d(fn_block)
+    sch_obj.name = 'schedule_{0:02}'.format(ii)
 
     ### create group for schedule action
-    m.add_schedule(sch_obj, 'schedule_{0:02}'.format(ii))
+    m.add_schedule(sch_obj)
     
 ### add calibrations
 for hh in ['hx', 'hy', 'hz']:

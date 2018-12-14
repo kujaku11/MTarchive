@@ -766,11 +766,13 @@ class Schedule(object):
             dt_index = pd.date_range(start=start_time,
                                      end=stop_time,
                                      freq=dt_freq,
-                                     closed='left')
+                                     closed='left',
+                                     tz='UTC')
         elif n_samples is not None:
             dt_index = pd.date_range(start=start_time,
                                      periods=n_samples,
-                                     freq=dt_freq)
+                                     freq=dt_freq,
+                                     tz='UTC')
         else:
             raise ValueError('Need to input either stop_time or n_samples')
 
