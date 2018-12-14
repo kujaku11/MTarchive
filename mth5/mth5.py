@@ -34,7 +34,7 @@ import mtpy.utils.gis_tools as gis_tools
 #==============================================================================
 class UTC(datetime.tzinfo):
     """
-    An class to hold information about UTC 
+    An class to hold information about UTC
     """
     def utcoffset(self):
         return datetime.timedelta(hours=0)
@@ -199,7 +199,7 @@ class Site(Location):
         self.id = None
         self.survey = None
         self._date_fmt = '%Y-%m-%dT%H:%M:%S.%f %Z'
-        self._site_attrs = ['acquired_by',
+        self._attrs_list = ['acquired_by',
                             'start_date',
                             'end_date',
                             'id',
@@ -491,7 +491,7 @@ class Copyright(object):
                                           'included for informational purposes only.'])
         self.release_status = None
         self.additional_info = None
-        
+
         for key, value in kwargs.items():
             setattr(self, key, value)
 
@@ -671,7 +671,7 @@ class Schedule(object):
         self.name = name
 
         self._comp_list = ['ex', 'ey', 'hx', 'hy', 'hz']
-        self._attr_list = ['start_time',
+        self._attrs_list = ['start_time',
                            'stop_time',
                            'start_seconds_from_epoch',
                            'stop_seconds_from_epoch',
@@ -889,6 +889,11 @@ class Calibration(object):
         self.real = None
         self.imaginary = None
         self._col_list = ['frequency', 'real', 'imaginary']
+        self._attrs_list = ['name',
+                           'instrument_id',
+                           'units',
+                           'calibration_date',
+                           'calibration_person']
 
     def from_dataframe(self, cal_dataframe, name=None):
         """
@@ -1039,12 +1044,12 @@ class MTH5(object):
         :type schedule_name: string
 
         """
-        
+
         if self.h5_is_write():
             ### create group for schedule action
             schedule = self.mth5_obj.create_group(schedule_name)
             ### add metadata
-            for attr in schedule_obj._attr_list:
+            for attr in schedule_obj._attrs_list:
                 schedule.attrs[attr] = getattr(schedule_obj, attr)
 
             ### add datasets for each channel
@@ -1227,7 +1232,7 @@ class MTH5(object):
 
         for key in station_series.index:
             value = getattr(station_series, key)
-            if key in self.site._site_attrs:
+            if key in self.site._attrs_list:
                 setattr(self.site, key, value)
             elif key == 'start':
                 attr = '{0}_date'.format(key)
@@ -1283,8 +1288,8 @@ def to_json(obj):
 
     :param obj: class object to transform into string
     """
-    if isinstance(obj, (Site, Location)):
-        keys = obj._site_attrs
+    if isinstance(obj, (Site, Calibration)):
+        keys = obj._attrs_list
     else:
         keys = obj.__dict__.keys()
 
@@ -1303,9 +1308,9 @@ def to_json(obj):
                     continue
                 obj_dict[key][o_key] = o_value
 
-        elif isinstance(value, (Site, Location)):
+        elif isinstance(value, (Site, Calibration)):
             obj_dict[key] = {}
-            for o_key in value.__dict__.keys()+['latitude', 'longitude', 'elevation']:
+            for o_key in value._attrs_list:
                 if o_key.find('_') == 0:
                     continue
                 obj_dict[key][o_key] = getattr(obj, o_key)
