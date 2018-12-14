@@ -984,7 +984,6 @@ class MTH5(object):
         self.copyright = Copyright()
         self.software = Software()
         self.provenance = Provenance()
-        self.calibration = None
         
     def h5_is_write(self):
         """
@@ -1110,9 +1109,9 @@ class MTH5(object):
             elif 'cal' in key:
                 try:
                     for ckey in self.mth5_obj[key].keys():
-                        setattr(self.calibration, ckey, Calibration())
-                        getattr(self.calibration, ckey).from_mth5(self.mth5_obj,
-                                                                  ckey)
+                        m_attr = 'calibration_{0}'.format(ckey)
+                        setattr(self, m_attr, Calibration())
+                        getattr(self, m_attr).from_mth5(self.mth5_obj, ckey)
                 except KeyError:
                     print('No Calibration Data')
                 
