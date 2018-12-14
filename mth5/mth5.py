@@ -891,6 +891,7 @@ class Calibration(object):
         self.frequency = None
         self.real = None
         self.imaginary = None
+        self._col_list = ['frequency', 'real', 'imaginary']
         
     def from_dataframe(self, cal_dataframe, name=None):
         """
@@ -941,6 +942,19 @@ class Calibration(object):
                 setattr(self, key, cal_np_array[ii, :])
             
         return 
+    
+    def to_json(self):
+        """
+        write json string to put into attributes
+        """
+        return to_json(self)
+    
+    def from_json(self, cal_json):
+        """
+        read in json file for site information
+        """
+        from_json(cal_json, self)
+    
 # =============================================================================
 # MT HDF5 file
 # =============================================================================
@@ -1036,28 +1050,30 @@ class MTH5(object):
         else:
             return None
         
-    def add_calibrations(self, calibration_obj, name, compress=True):
+    def add_calibrations(self, calibration_obj, compress=True):
         """
         add calibrations for sensors
         
-        :param calibration_df: pandas.DataFrame with columns freq, real, imag
-        :type calibration_df: pandas.DataFrame
+        :param calibration_obj: calibration object that has frequency, real, 
+                                imaginary attributes
+        :type calibration_obj: mth5.Calibration
         
         :param name: name of sensor for calibration
         :type name: string
         """
         
         if self.h5_is_write():
-            cal = self.mth5_obj['/calibrations'].create_group(name)
-            for col in calibration_obj.columns:
+            cal = self.mth5_obj['/calibrations'].create_group(calibration_obj.name)
+            cal.attrs['metadata'] = calibration_obj.to_json()
+            for col in calibration_obj._col_list:
                 if compress:
                     cal.create_dataset(col.lower(), 
-                                       data=calibration_obj[col],
+                                       data=getattr(calibration_obj, col),
                                        compression='gzip',
                                        compression_opts=9)
                 else:
                     cal.create_dataset(col.lower(), 
-                                       data=calibration_obj[col])
+                                       data=getattr(calibration_obj, col))
         
     def read_mth5(self, mth5_fn):
         """
