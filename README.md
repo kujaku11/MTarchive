@@ -1,6 +1,6 @@
 # MTarchive
 
-.. note:: This is a work in progress.  
+NOTE: This is a work in progress.  
 
 The goal is to develop a HDF5 standard for storing magnetotelluric (MT) time series data.
 
