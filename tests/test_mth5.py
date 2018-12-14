@@ -27,7 +27,7 @@ class TestMTH5ReadCFG(unittest.TestCase):
         cfg_fn = r"../examples/example_mth5_cfg.txt"
         self.assertTrue(os.path.isfile(cfg_fn), "{0} not found".format(cfg_fn))
 
-        self.mth5_obj.read_mth5_cfg(cfg_fn)
+        self.mth5_obj.update_metadata_from_cfg(cfg_fn)
 
     ### Site Attributes
     def test_site_id(self):
@@ -263,6 +263,11 @@ class TestMTH5ReadCFG(unittest.TestCase):
     def test_provenance_creation_time(self):
         self.assertEqual(self.mth5_obj.provenance.creation_time,
                          '2017-11-27T21:54:49.00')
+        
+    def test_write_mth5(self):
+        self.mth5_obj.open_mth5(r"../examples/mth5_example.mth5")
+        self.mth5_obj.close_mth5()
+        self.assertEqual(self.mth5_obj.h5_is_write(), False)
 
 class TestMTH5UpdateAttributesFromSeries(unittest.TestCase):
     """
@@ -377,6 +382,8 @@ class TestMTH5UpdateAttributesFromSeries(unittest.TestCase):
         self.assertEqual(self.mth5_obj.field_notes.magnetometer_hz.chn_num, 5)
     def test_field_notes_magnetometer_hz_id(self):
         self.assertEqual(self.mth5_obj.field_notes.magnetometer_hz.id, 2294)
+        
+
 
 class TestScheduleObj(unittest.TestCase):
     """
@@ -438,6 +445,8 @@ class TestCalibration(unittest.TestCase):
         self.assertEqual(self.calibration_obj.frequency.shape[0], 20)
         self.assertEqual(self.calibration_obj.real.shape[0], 20)
         self.assertEqual(self.calibration_obj.imaginary.shape[0], 20)
+        
+
 
 # =============================================================================
 # run

@@ -36,11 +36,11 @@ class UTC(datetime.tzinfo):
     """
     An class to hold information about UTC
     """
-    def utcoffset(self):
+    def utcoffset(self, df):
         return datetime.timedelta(hours=0)
-    def dst(self):
+    def dst(self, df):
         return datetime.timedelta(0)
-    def tzname(self):
+    def tzname(self, df):
         return "UTC"
 
 # ==============================================================================
@@ -219,8 +219,8 @@ class Site(Location):
     @property
     def start_date(self):
         try:
-            return datetime.datetime.strftime(self._start_date, self._date_fmt)
-        except TypeError:
+            return self._start_date.strftime(self._date_fmt)
+        except (TypeError, AttributeError):
             return None
 
     @start_date.setter
@@ -232,8 +232,8 @@ class Site(Location):
     @property
     def end_date(self):
         try:
-            return datetime.datetime.strftime(self._end_date, self._date_fmt)
-        except TypeError:
+            return self._end_date.strftime(self._date_fmt)
+        except (TypeError, AttributeError):
             return None
 
     @end_date.setter
@@ -975,9 +975,103 @@ class Calibration(object):
 class MTH5(object):
     """
     MT HDF5 file
+    =================
+
+    Class object to deal with reading and writing an MTH5 file.
+
+    ======================= ===================================================
+    Attribute               Description
+    ======================= ===================================================
+    copyright               Copyright object containing information on
+                            copyright information
+    field_notes             FieldNotes object containing information on how
+                            the data was collected
+    mth5_fn                 full path to MTH5 file
+    mth5_obj                HDF5 object from h5py
+    provenance              Provenance object containing information on when
+                            and by whom the data was collected
+    site                    Site object containing information about the
+                            location of the station
+    software                Software object containing information on the
+                            software used to make the file
+    schedule_##             Schedule object where ## is the number of the
+                            schedule if a MTH5 file was read in
+    calibration_##          Calibration object where ## is the component of
+                            the calibration
+    ======================= ===================================================
+
+    .. seealso:: mth5.Copyright, mth5.FieldNotes, mth5.Provenance, mth5.Site
+                 mth5.Software, mth5.Schedule, mth5.Calibration, h5py
+
+    ============================ ==============================================
+    Method                       Description
+    ============================ ==============================================
+    open_mth5                    load in a MTH5 file
+    close_mth5                   flushes any changes and closes MTH5 file
+    add_schedule                 add a schedule data set
+    add_calibration              add instrument calibration to /root/calibrations
+    write_metadata               write root metadata
+    update_metadata_from_cfg     update metadata attributes from a cfg file
+    update_metadata_from_series  update metadata attributes from pandas series
+    h5_is_write                  check if MTH5 file is open and writeable
+    ============================ ==============================================
+
+    * Example: Load MTH5 File
+    
+    >>> import mth5.mth5 as mth5
+    >>> data = mth5.MTH.open_mth5(r"/home/mtdata/mt01.mth5")
+
+    * Example: Update metadata from cfg file
+    
+    >>> data = mth5.MTH5()
+    >>> # read in configuration file to update attributes
+    >>> data.update_metadata_from_cfg(r"/home/survey_mth5.cfg")
+    >>> data.write_metadata()
+    
+    * Example: Add schedule to MTH5 File
+    
+    >>> schedule_obj = mth5.Schedule()
+    >>> # make schedule object from a pandas dataframe
+    >>> import pandas as pd
+    >>> sdf = df = pd.DataFrame(np.random.random((256*3600+1, 5)),
+    ...                         columns=['ex', 'ey', 'hx', 'hy', 'hz'],
+    ...                         index=pd.date_range(start='2018-01-01T01:00:00',
+    ...                                             end='2018-01-01T02:00:00',
+    ...                                             freq='{0:.0f}N'.format(1./256.*1E9)))
+    >>> data.schedule_01 = schedule_obj.from_dataframe(sdf, 'schedule_01')
+        
+    * Example: Add calibration from structured numpy array
+
+    >>> import numpy as np
+    >>> cal = mth5.Calibration()
+    >>> cal_dtype = [(name, np.float) for name in ['frequency', 'real', 'imaginary']]
+    >>> cal.from_numpy_array(np.zeros(20), dtype=cal_dtype)
+    >>> cal.frequency = np.logspace(-3, 3, 20)
+    >>> cal.real = np.random.random(20)
+    >>> cal.imaginary = np.random.random(20)
+    >>> cal.name = 'hx'
+    >>> cal.instrument_id = 2284
+    >>> cal.calibration_date = '2018-01-01'
+    >>> cal.calibration_person.name = 'tester name'
+    >>> cal.calibration_person.organization = 'tester company'
+    >>> data.calibrations.calibration_hx = data.add_calibration(cal, 'hx')
+    
+    * Example: Update data
+    
+    >>> data.schedule_01.ex[0:10] = np.nan
+    >>> data.calibration_hx[...] = np.logspace(-4, 4, 20)
+    
+    .. note:: if replacing an entire array with a new one you need to use [...]
+              otherwise the data will not be updated.  
+              
+    .. warning:: You can only replace entire arrays with arrays of the same 
+                 size.  Otherwise you need to delete the existing data and 
+                 make a new dataset.  
+                 
+    .. seealso:: https://www.hdfgroup.org/ and h5py()
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self):
         self.mth5_fn = None
         self.mth5_obj = None
         self.site = Site()
@@ -991,9 +1085,12 @@ class MTH5(object):
         check to see if the hdf5 file is open and writeable
         """
         if isinstance(self.mth5_obj, h5py.File):
-            if 'w' in self.mth5_obj.mode or '+' in self.mth5_obj.mode:
-                return True
-            elif self.mth5_obj.mode == 'r':
+            try:
+                if 'w' in self.mth5_obj.mode or '+' in self.mth5_obj.mode:
+                    return True
+                elif self.mth5_obj.mode == 'r':
+                    return False
+            except ValueError:
                 return False
         return False
 
@@ -1014,6 +1111,7 @@ class MTH5(object):
         close mth5 file to make sure everything is flushed to the file
         """
 
+        self.write_metadata()
         self.mth5_obj.flush()
         self.mth5_obj.close()
 
@@ -1087,6 +1185,19 @@ class MTH5(object):
                 else:
                     cal.create_dataset(col.lower(),
                                        data=getattr(calibration_obj, col))
+            return cal
+        return None
+    
+    def update_schedule_metadata(self):
+        """
+        update schedule metadata on the HDF file
+        """
+        
+        for key in self.__dict__.keys():
+            if 'sch' in key:
+                for attr in getattr(self, key)._attrs_list:
+                    value = getattr(getattr(self, key), attr)
+                    getattr(self.mth5_obj[key]).attrs[attr] = value
 
     def read_mth5(self, mth5_fn):
         """
@@ -1117,7 +1228,7 @@ class MTH5(object):
                 except KeyError:
                     print('No Calibration Data')
 
-    def read_mth5_cfg(self, mth5_cfg_fn):
+    def update_metadata_from_cfg(self, mth5_cfg_fn):
         """
         read a configuration file for all the mth5 attributes
 
@@ -1299,9 +1410,8 @@ def to_json(obj):
             continue
         value = getattr(obj, key)
 
-        if isinstance(value, (Site, Location, FieldNotes, Instrument,
-                              DataQuality, Citation, Provenance, Person,
-                              Software)):
+        if isinstance(value, (FieldNotes, Instrument, DataQuality, Citation, 
+                              Provenance, Person, Software)):
             obj_dict[key] = {}
             for o_key, o_value in value.__dict__.items():
                 if o_key.find('_') == 0:
