@@ -310,9 +310,23 @@ Attributes should include:
 	\item \attr{units}: units of calibration
 \end{itemize} 
 
+\subsubsection{Example JSON encoded metadata for \textbf{calibration}}
+\begin{verbatim}
+{"calibration_date": "2010-10-01",
+ "calibration_person": {"email": "test@email.com",
+                        "name": "test",
+                        "organization": "house",
+                        "organization_url": "www.house.com"},
+ "instrument_id": 2284,
+ "name": "hx",
+ "units": "mV/nT"}
+\end{verbatim}
+
 \section{Schedule Blocks}
 
 Commonly MT measurements are recorded at different sampling rates over the course of a measurement to get the full range of data.  Or sometimes data recording may be interrupted and restarted.  The different recordings are labeled \verb|schedule_xx| where the \verb|xx| represents order of the measurement [0--n], labeled as a 2 character number, with a leading 0 if n is less than 10.  The first schedule is \verb|schedule_01| and the n$^{th}$ schedule is \verb|schedule_nn|. 
+
+\textbf{Should the attributes be converted to JSON or left as is?}
 
 The \verb|schedule_nn| folder has attributes attached to it.  These are:
 
