@@ -8,9 +8,12 @@ Created on Mon Dec 10 16:53:51 2018
 # =============================================================================
 # Imports
 # =============================================================================
+
+import numpy as np
 import mth5.mth5 as mth5
 import usgs_archive.usgs_archive as archive
 import datetime 
+
 #import numpy as np
 
 # =============================================================================
@@ -40,38 +43,28 @@ m.update_metadata_from_series(archive.get_station_info_from_csv(csv_fn,
                                                                'mshH020'))
 m.write_metadata()
 
-#lat_list = []
-#lon_list = []
-#instr_id_list = []
-#start_list = []
-#stop_list = []
-
 for ii, fn_block in enumerate(fn_list, 1):
     sch_obj = zc.merge_z3d(fn_block)
 
     ### create group for schedule action
     m.add_schedule(sch_obj, 'schedule_{0:02}'.format(ii))
     
+### add calibrations
+for hh in ['hx', 'hy', 'hz']:
+    cal_hx = mth5.Calibration()
+    cal_hx.from_numpy_array(np.zeros((3, 20)))
+    cal_hx.name = hh
+    cal_hx.calibration_person.email = 'test@email.com'
+    cal_hx.calibration_person.name = 'test'
+    cal_hx.calibration_person.organization = 'house'
+    cal_hx.calibration_person.organization_url = 'www.house.com'
+    cal_hx.calibration_date = '2010-10-01'
+    cal_hx.units = 'mV/nT'
+    
+    m.add_calibration(cal_hx)
+    
 m.close_mth5()
     
-#### calculate the lat and lon
-#station_lat = np.median(np.array(lat_list, dtype=np.float))
-#station_lon = np.median(np.array(lon_list, dtype=np.float))
-#
-#### set main attributes
-#h5_obj.attrs['station'] = self.station
-#h5_obj.attrs['coordinate_system'] = self.coordinate_system 
-#h5_obj.attrs['datum'] = self.datum
-#h5_obj.attrs['latitude'] = station_lat
-#h5_obj.attrs['longitude'] = station_lon
-#h5_obj.attrs['elevation'] = get_nm_elev(station_lat, station_lon)
-#h5_obj.attrs['instrument_id'] = list(set(instr_id_list))[0]
-#h5_obj.attrs['units'] = self.units
-#h5_obj.attrs['start'] = sorted(start_list)[0]
-#h5_obj.attrs['stop'] = sorted(stop_list)[-1]
-#
-#run_df, run_csv = combine_station_runs(archive_dir)
-#
 et = datetime.datetime.now()
 t_diff = et-st
 print('Took --> {0:.2f} seconds'.format(t_diff.total_seconds()))

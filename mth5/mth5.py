@@ -827,7 +827,7 @@ class Schedule(object):
             try:
                 setattr(self, comp, mth5_schedule[comp])
             except KeyError:
-                print('\t xxx No {0} data xxx'.format(comp))
+                print('\t xxx No {0} data for {1} xxx'.format(comp, self.name))
                 continue
         
         
@@ -882,7 +882,8 @@ class Calibration(object):
         * units
     """
     
-    def __int__(self, name=None):
+    def __init__(self, name=None):
+        
         self.name = name
         self.instrument_id = None
         self.units = None
@@ -943,6 +944,18 @@ class Calibration(object):
             
         return 
     
+    def from_mth5(self, mth5_obj, name):
+        """
+        update attribues from mth5 file
+        """
+        self.name = name
+        for key in mth5_obj['/calibrations/{0}'.format(self.name)].keys():
+            setattr(self, key, mth5_obj['/calibrations/{0}/{1}'.format(self.name,
+                                        key)])
+            
+        ### read in attributes
+        self.from_json(mth5_obj['/calibrations/{0}'.format(self.name)].attrs['metadata'])
+    
     def to_json(self):
         """
         write json string to put into attributes
@@ -971,6 +984,7 @@ class MTH5(object):
         self.copyright = Copyright()
         self.software = Software()
         self.provenance = Provenance()
+        self.calibration = None
         
     def h5_is_write(self):
         """
@@ -1050,7 +1064,7 @@ class MTH5(object):
         else:
             return None
         
-    def add_calibrations(self, calibration_obj, compress=True):
+    def add_calibration(self, calibration_obj, compress=True):
         """
         add calibrations for sensors
         
@@ -1058,8 +1072,6 @@ class MTH5(object):
                                 imaginary attributes
         :type calibration_obj: mth5.Calibration
         
-        :param name: name of sensor for calibration
-        :type name: string
         """
         
         if self.h5_is_write():
@@ -1095,9 +1107,15 @@ class MTH5(object):
             if 'sch' in key:
                 setattr(self, key, Schedule())
                 getattr(self, key).from_mth5(self.mth5_obj, key)
+            elif 'cal' in key:
+                try:
+                    for ckey in self.mth5_obj[key].keys():
+                        setattr(self.calibration, ckey, Calibration())
+                        getattr(self.calibration, ckey).from_mth5(self.mth5_obj,
+                                                                  ckey)
+                except KeyError:
+                    print('No Calibration Data')
                 
-        
-    
     def read_mth5_cfg(self, mth5_cfg_fn):
         """
         read a configuration file for all the mth5 attributes
