@@ -557,6 +557,18 @@ class Person(object):
 
         for key in kwargs.keys():
             setattr(self, key, kwargs[key])
+            
+    def to_json(self):
+        """
+        write json of attributes
+        """
+        return to_json(self)
+    
+    def from_json(self, person_json):
+        """
+        read person json string and update attributes
+        """
+        from_json(person_json, self)
 
 # ==============================================================================
 # Processing
@@ -614,7 +626,7 @@ class Software(object):
     
     def from_json(self, soft_json):
         """
-        read copyright json string and update attributes
+        read software json string and update attributes
         """
         from_json(soft_json, self)
         
@@ -824,6 +836,15 @@ class Schedule(object):
                                            n_samples=mth5_schedule.attrs['n_samples'])
         assert self.dt_index.shape[0] == getattr(self, self.comp_list[0]).shape[0]
         return 
+    
+    def from_numpy_array(self, schedul_np_array, start_time, stop_time, 
+                         sampling_rate):
+        """
+        TODO
+        update attributes from a numpy array
+        """
+        pass
+        
         
     def write_metadata_csv(self, csv_dir):
         """
@@ -848,9 +869,78 @@ class Schedule(object):
 # =============================================================================
 # Calibrations
 # =============================================================================
+class Calibration(object):
+    """
+    container for insturment calibrations
     
-
-
+    Each instrument should be a separate class
+    
+    Metadata should be:
+        * instrument_id
+        * calibration_date
+        * calibration_person
+        * units
+    """
+    
+    def __int__(self, name=None):
+        self.name = name
+        self.instrument_id = None
+        self.units = None
+        self.calibration_date = None
+        self.calibration_person = Person()
+        self.frequency = None
+        self.real = None
+        self.imaginary = None
+        
+    def from_dataframe(self, cal_dataframe, name=None):
+        """
+        updated attributes from a pandas DataFrame
+        
+        :param cal_dataframe: dataframe with columns frequency, real, imaginary
+        :type cal_dataframe: pandas.DataFrame
+        
+        """
+        assert isinstance(cal_dataframe, pd.DataFrame) is True
+        
+        if name is not None:
+            self.name = name
+            
+        for col in cal_dataframe.columns:
+            setattr(self, col, cal_dataframe[col])
+            
+    def from_numpy_array(self, cal_np_array, name=None):
+        """
+        update attributes from a numpy array
+        
+        :param cal_np_array: array of values for calibration, see below
+        :type cal_np_array: numpy.ndarray
+        
+        if array is a numpy structured array names need to be:
+            * frequency
+            * real
+            * imaginary
+            
+        if array is just columns, needs to be ordered:
+            * frequency (index 0)
+            * real (index 1)
+            * imaginary (index 2)
+            
+        """
+        if name is not None:
+            self.name = name
+            
+        ### assume length of 1 is a structured array
+        if len(cal_np_array.shape) == 1:
+            assert cal_np_array.dtype.names == ('frequency', 'real', 'imaginary')
+            for key in cal_np_array.dtype.names:
+                setattr(self, key, cal_np_array[key])
+        
+        ### assume an unstructured array (f, r, i)
+        if len(cal_np_array.shape) == 2 and cal_np_array.shape[0] == 3:
+            for ii, key in enumerate(['frequency', 'real', 'imaginary']):
+                setattr(self, key, cal_np_array[ii, :])
+            
+        return 
 # =============================================================================
 # MT HDF5 file
 # =============================================================================

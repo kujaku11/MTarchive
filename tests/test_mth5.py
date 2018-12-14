@@ -385,7 +385,7 @@ class TestScheduleObj(unittest.TestCase):
     """
     
     def setUp(self):
-        self.schedule_obj = mth5.ScheduleDF()
+        self.schedule_obj = mth5.Schedule()
     def test_from_dataframe(self):
         dt_start = '2018-06-01T01:00:00.0'
         dt_stop = '2018-06-01T02:00:00.0'
@@ -404,6 +404,41 @@ class TestScheduleObj(unittest.TestCase):
         self.assertEqual(self.schedule_obj.sampling_rate, sr)
         self.assertEqual(self.schedule_obj.comp_list, list(df.columns))
         
+class TestCalibration(unittest.TestCase):
+    """
+    test calibration
+    """
+    
+    def setUp(self):
+        self.calibration_obj = mth5.Calibration()
+        
+    def test_from_dataframe(self):
+        df = pd.DataFrame(np.random.random((20, 3)),
+                          columns=['frequency', 'real', 'imaginary'])
+        self.calibration_obj.from_dataframe(df, 'test')
+        
+        self.assertEqual(self.calibration_obj.frequency.shape[0], 20)
+        self.assertEqual(self.calibration_obj.real.shape[0], 20)
+        self.assertEqual(self.calibration_obj.imaginary.shape[0], 20)
+        self.assertEqual(self.calibration_obj.name, 'test')
+        
+    def test_from_structured_array(self):
+        cal = np.zeros(20, dtype=[('frequency', np.float),
+                                  ('real', np.float),
+                                  ('imaginary', np.float)])
+        self.calibration_obj.from_numpy_array(cal)
+        
+        self.assertEqual(self.calibration_obj.frequency.shape[0], 20)
+        self.assertEqual(self.calibration_obj.real.shape[0], 20)
+        self.assertEqual(self.calibration_obj.imaginary.shape[0], 20)
+        
+    def test_from_array(self):
+        cal = np.random.random((3, 20))
+        self.calibration_obj.from_numpy_array(cal)
+        
+        self.assertEqual(self.calibration_obj.frequency.shape[0], 20)
+        self.assertEqual(self.calibration_obj.real.shape[0], 20)
+        self.assertEqual(self.calibration_obj.imaginary.shape[0], 20)
         
 # =============================================================================
 # run        
