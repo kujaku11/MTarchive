@@ -29,6 +29,10 @@ import h5py
 import pandas as pd
 import numpy as np
 import mtpy.utils.gis_tools as gis_tools
+# =============================================================================
+#  global parameters
+# =============================================================================
+dt_fmt = '%Y-%m-%dT%H:%M:%S.%f %Z'
 #==============================================================================
 # Need a dummy utc time zone for the date time format
 #==============================================================================
@@ -198,7 +202,6 @@ class Site(Location):
         self._end_date = None
         self.id = None
         self.survey = None
-        self._date_fmt = '%Y-%m-%dT%H:%M:%S.%f %Z'
         self._attrs_list = ['acquired_by',
                             'start_date',
                             'end_date',
@@ -219,7 +222,7 @@ class Site(Location):
     @property
     def start_date(self):
         try:
-            return self._start_date.strftime(self._date_fmt)
+            return self._start_date.strftime(dt_fmt)
         except (TypeError, AttributeError):
             return None
 
@@ -232,7 +235,7 @@ class Site(Location):
     @property
     def end_date(self):
         try:
-            return self._end_date.strftime(self._date_fmt)
+            return self._end_date.strftime(dt_fmt)
         except (TypeError, AttributeError):
             return None
 
@@ -687,14 +690,14 @@ class Schedule(object):
         """
         Start time in UTC string format
         """
-        return '{0} UTC'.format(self.dt_index[0].isoformat())
+        return '{0}'.format(self.dt_index[0].strftime(dt_fmt))
 
     @property
     def stop_time(self):
         """
         Stop time in UTC string format
         """
-        return '{0} UTC'.format(self.dt_index[-1].isoformat())
+        return '{0}'.format(self.dt_index[-1].strftime(dt_fmt))
 
     @property
     def start_seconds_from_epoch(self):
@@ -823,7 +826,6 @@ class Schedule(object):
             except KeyError:
                 print('\t xxx No {0} data for {1} xxx'.format(comp, self.name))
                 continue
-
 
         self.dt_index = self.make_dt_index(mth5_schedule.attrs['start_time'],
                                            mth5_schedule.attrs['sampling_rate'],
@@ -1111,8 +1113,8 @@ class MTH5(object):
         close mth5 file to make sure everything is flushed to the file
         """
 
-        self.write_metadata()
         self.mth5_obj.flush()
+        self.write_metadata()        
         self.mth5_obj.close()
 
     def write_metadata(self):
@@ -1129,7 +1131,7 @@ class MTH5(object):
                          'software']:
                 self.mth5_obj.attrs[attr] = getattr(self, attr).to_json()
 
-    def add_schedule(self, schedule_obj, schedule_name, compress=True):
+    def add_schedule(self, schedule_obj, compress=True):
         """
         add a schedule object to the HDF5 file
 
@@ -1137,15 +1139,17 @@ class MTH5(object):
                              pandas.DataFrame with columns as components
                              and indexed by time.
         :type schedule_obj: mtf5.Schedule object
-
-        :param schedule_name: name of the schedule, convention is 'schedule_##'
-        :type schedule_name: string
-
+        
+        :param bool compress: [ True | False ] to internally compress the data
+        
+        .. note:: will name the schedule according to schedule_obj.name.  
+                  Should be schedule_## where ## is the order of the schedule
+                  as a 2 character digit [0-9][0-9] 
         """
 
         if self.h5_is_write():
             ### create group for schedule action
-            schedule = self.mth5_obj.create_group(schedule_name)
+            schedule = self.mth5_obj.require_group(schedule_obj.name)
             ### add metadata
             for attr in schedule_obj._attrs_list:
                 schedule.attrs[attr] = getattr(schedule_obj, attr)
@@ -1160,8 +1164,30 @@ class MTH5(object):
                 else:
                     schedule.create_dataset(comp.lower(),
                                             data=getattr(schedule_obj, comp))
-            return schedule
-        return None
+            ### set the convenience attribute to the schedule
+            setattr(self, schedule_obj.name, Schedule())
+            getattr(self, schedule_obj.name).from_mth5(self.mth5_obj, 
+                                                       schedule_obj.name)
+            
+        else:
+            raise MTH5Error('{0} is not writeable'.format(self.mth5_fn))
+            
+    def remove_schedule(self, schedule_name):
+        """
+        Remove a schedule item given schedule name.
+        
+        :param str schedule_name: schedule name verbatim of the one you want
+                                  to delete.
+                                  
+        .. note:: This does not free up memory, it just simply deletes the 
+                  link to the schedule item.  See 
+        """
+        
+        try:
+            delattr(self, schedule_name)
+            del self.mth5_obj['/{0}'.format(schedule_name)]
+        except AttributeError:
+            print("Could not find {0}, not an attribute".format(schedule_name))
 
     def add_calibration(self, calibration_obj, compress=True):
         """
@@ -1174,7 +1200,7 @@ class MTH5(object):
         """
 
         if self.h5_is_write():
-            cal = self.mth5_obj['/calibrations'].create_group(calibration_obj.name)
+            cal = self.mth5_obj['/calibrations'].require_group(calibration_obj.name)
             cal.attrs['metadata'] = calibration_obj.to_json()
             for col in calibration_obj._col_list:
                 if compress:
@@ -1185,8 +1211,13 @@ class MTH5(object):
                 else:
                     cal.create_dataset(col.lower(),
                                        data=getattr(calibration_obj, col))
-            return cal
-        return None
+            
+            ### set the convenience attribute to the calibration
+            setattr(self, calibration_obj.name, Calibration())
+            getattr(self, calibration_obj.name).from_mth5(self.mth5_obj, 
+                                                          calibration_obj.name)
+        else:
+            raise MTH5Error('{0} is not writeable'.format(self.mth5_fn))
     
     def update_schedule_metadata(self):
         """
@@ -1197,7 +1228,7 @@ class MTH5(object):
             if 'sch' in key:
                 for attr in getattr(self, key)._attrs_list:
                     value = getattr(getattr(self, key), attr)
-                    getattr(self.mth5_obj[key]).attrs[attr] = value
+                    self.mth5_obj[key].attrs[attr] = value
 
     def read_mth5(self, mth5_fn):
         """
@@ -1210,7 +1241,6 @@ class MTH5(object):
         ### read in file and give write permissions in case the user wants to
         ### change any parameters
         self.mth5_obj = h5py.File(self.mth5_fn, 'r+')
-        print("reading attributes")
         for attr in ['site', 'field_notes', 'copyright', 'provenance',
                      'software']:
             getattr(self, attr).from_json(self.mth5_obj.attrs[attr])

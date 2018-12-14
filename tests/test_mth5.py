@@ -263,11 +263,11 @@ class TestMTH5ReadCFG(unittest.TestCase):
     def test_provenance_creation_time(self):
         self.assertEqual(self.mth5_obj.provenance.creation_time,
                          '2017-11-27T21:54:49.00')
-        
-    def test_write_mth5(self):
-        self.mth5_obj.open_mth5(r"../examples/mth5_example.mth5")
-        self.mth5_obj.close_mth5()
-        self.assertEqual(self.mth5_obj.h5_is_write(), False)
+#    def test_write_mth5(self):
+#        if not self.mth5_obj.h5_is_write: 
+#            self.mth5_obj.open_mth5(r"../examples/mth5_example.mth5")
+#        self.mth5_obj.close_mth5()
+#        self.assertEqual(self.mth5_obj.h5_is_write(), False)
 
 class TestMTH5UpdateAttributesFromSeries(unittest.TestCase):
     """
@@ -382,8 +382,6 @@ class TestMTH5UpdateAttributesFromSeries(unittest.TestCase):
         self.assertEqual(self.mth5_obj.field_notes.magnetometer_hz.chn_num, 5)
     def test_field_notes_magnetometer_hz_id(self):
         self.assertEqual(self.mth5_obj.field_notes.magnetometer_hz.id, 2294)
-        
-
 
 class TestScheduleObj(unittest.TestCase):
     """
@@ -446,8 +444,61 @@ class TestCalibration(unittest.TestCase):
         self.assertEqual(self.calibration_obj.real.shape[0], 20)
         self.assertEqual(self.calibration_obj.imaginary.shape[0], 20)
         
-
-
+class TestBuildMTHD5(unittest.TestCase):
+    """
+    test if attributes have been updated
+    """
+    
+    def setUp(self):
+        self.mth5_obj = mth5.MTH5()
+        self.mth5_fn = r"../examples/mth5_example.mth5"
+        
+    def test_update_site_id(self):
+        self.mth5_obj.read_mth5(self.mth5_fn)
+        self.mth5_obj.site.id = 'updated id'
+        self.mth5_obj.close_mth5()
+        self.mth5_obj.read_mth5(self.mth5_fn)
+        self.assertEqual(self.mth5_obj.site.id, 'updated id')
+        self.mth5_obj.close_mth5()
+        
+    def test_add_schedule(self):
+        dt_start = '2018-06-01T01:00:00.0'
+        dt_stop = '2018-06-01T02:00:00.0'
+        sr = 256.
+        df = pd.DataFrame(np.random.random((256*3600+1, 5)),
+                          columns=['ex', 'ey', 'hx', 'hy', 'hz'],
+                          index=pd.date_range(start=dt_start,
+                                              end=dt_stop,
+                                              freq='{0:.0f}N'.format(1./sr*1E9)))
+        schedule_obj = mth5.Schedule()
+        schedule_obj.from_dataframe(df)
+        schedule_obj.name = 'schedule_01'
+        self.mth5_obj.read_mth5(self.mth5_fn)
+        if hasattr(self.mth5_obj, 'schedule_01') is True:
+            self.mth5_obj.remove_schedule('schedule_01')
+            
+        self.mth5_obj.add_schedule(schedule_obj)
+        self.assertTrue(hasattr(self.mth5_obj, 'schedule_01') is True)
+        self.mth5_obj.close_mth5()
+        self.mth5_obj.read_mth5(self.mth5_fn)
+        self.assertTrue(hasattr(self.mth5_obj, 'schedule_01') is True)
+        self.assertEqual(self.mth5_obj.schedule_01.start_time[0:18],
+                         dt_start[0:18])
+        self.assertEqual(self.mth5_obj.schedule_01.stop_time[0:18],
+                         dt_stop[0:18])
+        self.assertEqual(self.mth5_obj.schedule_01.sampling_rate, sr)
+        self.mth5_obj.close_mth5()
+        
+    def test_update_schedule_sampling_rate(self):
+        self.mth5_obj.read_mth5(self.mth5_fn)
+        self.mth5_obj.schedule_01.name = 'schedule_02'
+        self.mth5_obj.update_schedule_metadata()
+        self.assertEqual(self.mth5_obj['schedule_01'].attrs['name'], 'schedule_02')
+        self.mth5_obj.close_mth5()
+        
+        
+        
+        
 # =============================================================================
 # run
 # =============================================================================
