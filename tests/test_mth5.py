@@ -15,7 +15,34 @@ import pandas as pd
 import mth5.mth5 as mth5
 
 # =============================================================================
+# Parameters
+# =============================================================================
+MTH5_FN = '../examples/example_mth5.mth5'
+CFG_FN = '../examples/example_mth5_cfg.txt'
+
+# =============================================================================
 # Test Suite
+# =============================================================================
+### make example file
+m = mth5.MTH5()
+m.open_mth5(MTH5_FN)
+m.update_metadata_from_cfg(CFG_FN)
+dt_start = '2018-06-01T01:00:00.0'
+dt_stop = '2018-06-01T02:00:00.0'
+sr = 256.
+df = pd.DataFrame(np.random.random((256*3600+1, 5)),
+                  columns=['ex', 'ey', 'hx', 'hy', 'hz'],
+                  index=pd.date_range(start=dt_start,
+                                      end=dt_stop,
+                                      freq='{0:.0f}N'.format(1./sr*1E9)))
+s = mth5.Schedule()
+s.name = 'schedule_01'
+s.from_dataframe(df)
+m.add_schedule(s)
+m.close_mth5()
+
+# =============================================================================
+# Test loading in configuration file
 # =============================================================================
 class TestMTH5ReadCFG(unittest.TestCase):
     """
@@ -263,12 +290,10 @@ class TestMTH5ReadCFG(unittest.TestCase):
     def test_provenance_creation_time(self):
         self.assertEqual(self.mth5_obj.provenance.creation_time,
                          '2017-11-27T21:54:49.00')
-#    def test_write_mth5(self):
-#        if not self.mth5_obj.h5_is_write: 
-#            self.mth5_obj.open_mth5(r"../examples/mth5_example.mth5")
-#        self.mth5_obj.close_mth5()
-#        self.assertEqual(self.mth5_obj.h5_is_write(), False)
 
+# =============================================================================
+# Test updating attributes from a Pandas Series
+# =============================================================================
 class TestMTH5UpdateAttributesFromSeries(unittest.TestCase):
     """
     test if attributes are updated from an input series.
@@ -383,6 +408,9 @@ class TestMTH5UpdateAttributesFromSeries(unittest.TestCase):
     def test_field_notes_magnetometer_hz_id(self):
         self.assertEqual(self.mth5_obj.field_notes.magnetometer_hz.id, 2294)
 
+# =============================================================================
+# Test making a Schedule object
+# =============================================================================
 class TestScheduleObj(unittest.TestCase):
     """
     test a schedule object
@@ -402,12 +430,15 @@ class TestScheduleObj(unittest.TestCase):
         self.schedule_obj.from_dataframe(df)
 
         self.assertEqual(self.schedule_obj.start_time.split()[0],
-                         df.index[0].isoformat())
+                         df.index[0].strftime(mth5.dt_fmt).strip())
         self.assertEqual(self.schedule_obj.stop_time.split()[0],
-                         df.index[-1].isoformat())
+                         df.index[-1].strftime(mth5.dt_fmt).strip())
         self.assertEqual(self.schedule_obj.sampling_rate, sr)
         self.assertEqual(self.schedule_obj.comp_list, list(df.columns))
 
+# =============================================================================
+# Test making a Calibration object
+# =============================================================================
 class TestCalibration(unittest.TestCase):
     """
     test calibration
@@ -493,7 +524,7 @@ class TestBuildMTHD5(unittest.TestCase):
         self.mth5_obj.read_mth5(self.mth5_fn)
         self.mth5_obj.schedule_01.name = 'schedule_02'
         self.mth5_obj.update_schedule_metadata()
-        self.assertEqual(self.mth5_obj['schedule_01'].attrs['name'], 'schedule_02')
+        self.assertEqual(self.mth5_obj.mth5_obj['schedule_01'].attrs['name'], 'schedule_02')
         self.mth5_obj.close_mth5()
         
         

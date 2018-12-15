@@ -50,7 +50,35 @@ class UTC(datetime.tzinfo):
 # ==============================================================================
 # Location class, be sure to put locations in decimal degrees, and note datum
 # ==============================================================================
-class Location(object):
+class Generic(object):
+    """
+    a generic class that is common to most of the Metadata objects
+    
+    Includes:
+        * to_json
+        * from_json
+    """
+    
+    def __init__(self, **kwargs):
+        
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+            
+    def to_json(self):
+        """
+        write json string to put into attributes
+        """
+        return to_json(self)
+
+    def from_json(self, site_json):
+        """
+        read in json file for site information
+        """
+        from_json(site_json, self)
+            
+        
+
+class Location(Generic):
     """
     location details including:
         * latitude
@@ -69,6 +97,7 @@ class Location(object):
     """
 
     def __init__(self, **kwargs):
+        super(Location, self).__init__()
         self.datum = 'WGS84'
         self.declination = None
         self.declination_epoch = None
@@ -245,22 +274,10 @@ class Site(Location):
         if self._end_date.tzname() is None:
             self._end_date = self._end_date.replace(tzinfo=UTC())
 
-    def to_json(self):
-        """
-        write json string to put into attributes
-        """
-        return to_json(self)
-
-    def from_json(self, site_json):
-        """
-        read in json file for site information
-        """
-        from_json(site_json, self)
-
 # ==============================================================================
 # Field Notes
 # ==============================================================================
-class FieldNotes(object):
+class FieldNotes(Generic):
     """
     Field note information.
 
@@ -282,6 +299,7 @@ class FieldNotes(object):
     """
 
     def __init__(self, **kwargs):
+        super(FieldNotes, self).__init__()
         self._electric_channel = {'length':None,
                                   'azimuth':None,
                                   'chn_num':None,
@@ -305,22 +323,10 @@ class FieldNotes(object):
         for key, value in kwargs.items():
             setattr(self, key, value)
 
-    def to_json(self):
-        """
-        write json of FieldNotes
-        """
-        return to_json(self)
-
-    def from_json(self, field_json):
-        """
-        read a json string of field notes and update attributes
-        """
-        from_json(field_json, self)
-
 # ==============================================================================
 # Instrument
 # ==============================================================================
-class Instrument(object):
+class Instrument(Generic):
     """
     Information on an instrument that was used.
 
@@ -340,6 +346,7 @@ class Instrument(object):
     """
 
     def __init__(self, **kwargs):
+        super(Instrument, self).__init__()
         self.id = None
         self.manufacturer = None
         self.type = None
@@ -361,7 +368,7 @@ class Instrument(object):
 # ==============================================================================
 # Data Quality
 # ==============================================================================
-class DataQuality(object):
+class DataQuality(Generic):
     """
     Information on data quality.
 
@@ -384,6 +391,7 @@ class DataQuality(object):
     """
 
     def __init__(self, **kwargs):
+        super(DataQuality, self).__init__()
         self.comments = None
         self.rating = None
         self.warnings_comments = None
@@ -393,22 +401,10 @@ class DataQuality(object):
         for key, value in kwargs.items():
             setattr(self, key, value)
 
-    def to_json(self):
-        """
-        write json of attributes
-        """
-        return to_json(self)
-
-    def from_json(self, dq_json):
-        """
-        read data quality json string and update attributes
-        """
-        from_json(dq_json, self)
-
 # ==============================================================================
 # Citation
 # ==============================================================================
-class Citation(object):
+class Citation(Generic):
     """
     Information for a citation.
 
@@ -430,6 +426,7 @@ class Citation(object):
     """
 
     def __init__(self, **kwargs):
+        super(Citation, self).__init__()
         self.author = None
         self.title = None
         self.journal = None
@@ -440,22 +437,10 @@ class Citation(object):
         for key, value in kwargs.items():
             setattr(self, key, value)
 
-    def to_json(self):
-        """
-        write json of attributes
-        """
-        return to_json(self)
-
-    def from_json(self, cite_json):
-        """
-        read data quality json string and update attributes
-        """
-        from_json(cite_json, self)
-
 # ==============================================================================
 # Copyright
 # ==============================================================================
-class Copyright(object):
+class Copyright(Generic):
     """
     Information of copyright, mainly about how someone else can use these
     data. Be sure to read over the conditions_of_use.
@@ -476,6 +461,7 @@ class Copyright(object):
     """
 
     def __init__(self, **kwargs):
+        super(Copyright, self).__init__()
         self.citation = Citation()
         self.conditions_of_use = ''.join(['All data and metadata for this survey are ',
                                           'available free of charge and may be copied ',
@@ -498,22 +484,10 @@ class Copyright(object):
         for key, value in kwargs.items():
             setattr(self, key, value)
 
-    def to_json(self):
-        """
-        write json of attributes
-        """
-        return to_json(self)
-
-    def from_json(self, cr_json):
-        """
-        read copyright json string and update attributes
-        """
-        from_json(cr_json, self)
-
 # ==============================================================================
 # Provenance
 # ==============================================================================
-class Provenance(object):
+class Provenance(Generic):
     """
     Information of the file history, how it was made
 
@@ -535,6 +509,7 @@ class Provenance(object):
     """
 
     def __init__(self, **kwargs):
+        super(Provenance, self).__init__()
         self.creation_time = time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime())
         self.creating_application = 'MTH5'
         self.creator = Person()
@@ -543,22 +518,10 @@ class Provenance(object):
         for key, value in kwargs.items():
             setattr(self, key, value)
 
-    def to_json(self):
-        """
-        write json of attributes
-        """
-        return to_json(self)
-
-    def from_json(self, prov_json):
-        """
-        read copyright json string and update attributes
-        """
-        from_json(prov_json, self)
-
 # ==============================================================================
 # Person
 # ==============================================================================
-class Person(object):
+class Person(Generic):
     """
     Information for a person
 
@@ -579,6 +542,7 @@ class Person(object):
     """
 
     def __init__(self, **kwargs):
+        super(Person, self).__init__()
         self.email = None
         self.name = None
         self.organization = None
@@ -587,45 +551,22 @@ class Person(object):
         for key, value in kwargs.items():
             setattr(self, key, value)
 
-    def to_json(self):
-        """
-        write json of attributes
-        """
-        return to_json(self)
-
-    def from_json(self, person_json):
-        """
-        read person json string and update attributes
-        """
-        from_json(person_json, self)
-
 # ==============================================================================
 # Software
 # ==============================================================================
-class Software(object):
+class Software(Generic):
     """
     software
     """
 
     def __init__(self, **kwargs):
+        super(Software, self).__init__()
         self.name = None
         self.version = None
         self.author = Person()
 
         for key, value in kwargs.items():
             setattr(self, key, value)
-
-    def to_json(self):
-        """
-        write json of attributes
-        """
-        return to_json(self)
-
-    def from_json(self, soft_json):
-        """
-        read software json string and update attributes
-        """
-        from_json(soft_json, self)
 
 # =============================================================================
 # schedule
@@ -674,13 +615,14 @@ class Schedule(object):
         self.name = name
 
         self._comp_list = ['ex', 'ey', 'hx', 'hy', 'hz']
-        self._attrs_list = ['start_time',
-                           'stop_time',
-                           'start_seconds_from_epoch',
-                           'stop_seconds_from_epoch',
-                           'n_samples',
-                           'n_channels',
-                           'sampling_rate']
+        self._attrs_list = ['name',
+                            'start_time',
+                            'stop_time',
+                            'start_seconds_from_epoch',
+                            'stop_seconds_from_epoch',
+                            'n_samples',
+                            'n_channels',
+                            'sampling_rate']
 
         #self.ts_df = time_series_dataframe
         self.meta_df = meta_df
@@ -869,7 +811,7 @@ class Schedule(object):
 # =============================================================================
 # Calibrations
 # =============================================================================
-class Calibration(object):
+class Calibration(Generic):
     """
     container for insturment calibrations
 
@@ -883,7 +825,7 @@ class Calibration(object):
     """
 
     def __init__(self, name=None):
-
+        super(Calibration, self).__init__()
         self.name = name
         self.instrument_id = None
         self.units = None
@@ -960,18 +902,6 @@ class Calibration(object):
 
         ### read in attributes
         self.from_json(mth5_obj['/calibrations/{0}'.format(self.name)].attrs['metadata'])
-
-    def to_json(self):
-        """
-        write json string to put into attributes
-        """
-        return to_json(self)
-
-    def from_json(self, cal_json):
-        """
-        read in json file for site information
-        """
-        from_json(cal_json, self)
 
 # =============================================================================
 # MT HDF5 file
@@ -1182,15 +1112,21 @@ class MTH5(object):
                                   to delete.
                                   
         .. note:: This does not free up memory, it just simply deletes the 
-                  link to the schedule item.  See 
+                  link to the schedule item.  See
+                  http://docs.h5py.org/en/stable/high/group.html.  The best
+                  method would be to build a different file without the data
+                  your are trying to delete.
         """
-        
-        try:
-            delattr(self, schedule_name)
-            del self.mth5_obj['/{0}'.format(schedule_name)]
-        except AttributeError:
-            print("Could not find {0}, not an attribute".format(schedule_name))
+        if self.h5_is_write():
+            try:
+                delattr(self, schedule_name)
+                del self.mth5_obj['/{0}'.format(schedule_name)]
+            except AttributeError:
+                print("Could not find {0}, not an attribute".format(schedule_name))
 
+        else:
+            raise MTH5Error("File not open")
+            
     def add_calibration(self, calibration_obj, compress=True):
         """
         add calibrations for sensors
@@ -1220,6 +1156,28 @@ class MTH5(object):
                                                           calibration_obj.name)
         else:
             raise MTH5Error('{0} is not writeable'.format(self.mth5_fn))
+            
+    def remove_calibration(self, calibration_name):
+        """
+        Remove a calibration item given calibration name.
+        
+        :param str calibration_name: calibration name verbatim of the one you
+                                     want to delete.
+                                  
+        .. note:: This does not free up memory, it just simply deletes the 
+                  link to the schedule item.  See
+                  http://docs.h5py.org/en/stable/high/group.html.  The best
+                  method would be to build a different file without the data
+                  your are trying to delete.
+        """
+        if self.h5_is_write():
+            try:
+                delattr(self, calibration_name)
+                del self.mth5_obj['calibrations/{0}'.format(calibration_name)]
+            except AttributeError:
+                print("Could not find {0}, not an attribute".format(calibration_name))
+        else:
+            raise MTH5Error("File not open")
     
     def update_schedule_metadata(self):
         """
@@ -1235,7 +1193,10 @@ class MTH5(object):
     def read_mth5(self, mth5_fn):
         """
         Read MTH5 file and update attributes
+        
+        :param str mth5_fn: full path to mth5 file
         """
+        
         if not os.path.isfile(mth5_fn):
             raise MTH5Error("Could not find {0}, check path".format(mth5_fn))
 
