@@ -525,6 +525,7 @@ class TestBuildMTHD5(unittest.TestCase):
         self.mth5_obj.schedule_01.name = 'schedule_02'
         self.mth5_obj.update_schedule_metadata()
         self.assertEqual(self.mth5_obj.mth5_obj['schedule_01'].attrs['name'], 'schedule_02')
+        
         self.mth5_obj.close_mth5()
         
         
