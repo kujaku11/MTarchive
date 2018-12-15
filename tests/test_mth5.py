@@ -482,13 +482,12 @@ class TestBuildMTHD5(unittest.TestCase):
     
     def setUp(self):
         self.mth5_obj = mth5.MTH5()
-        self.mth5_fn = r"../examples/mth5_example.mth5"
         
     def test_update_site_id(self):
-        self.mth5_obj.read_mth5(self.mth5_fn)
+        self.mth5_obj.read_mth5(MTH5_FN)
         self.mth5_obj.site.id = 'updated id'
         self.mth5_obj.close_mth5()
-        self.mth5_obj.read_mth5(self.mth5_fn)
+        self.mth5_obj.read_mth5(MTH5_FN)
         self.assertEqual(self.mth5_obj.site.id, 'updated id')
         self.mth5_obj.close_mth5()
         
@@ -504,14 +503,14 @@ class TestBuildMTHD5(unittest.TestCase):
         schedule_obj = mth5.Schedule()
         schedule_obj.from_dataframe(df)
         schedule_obj.name = 'schedule_01'
-        self.mth5_obj.read_mth5(self.mth5_fn)
+        self.mth5_obj.read_mth5(MTH5_FN)
         if hasattr(self.mth5_obj, 'schedule_01') is True:
             self.mth5_obj.remove_schedule('schedule_01')
             
         self.mth5_obj.add_schedule(schedule_obj)
         self.assertTrue(hasattr(self.mth5_obj, 'schedule_01') is True)
         self.mth5_obj.close_mth5()
-        self.mth5_obj.read_mth5(self.mth5_fn)
+        self.mth5_obj.read_mth5(MTH5_FN)
         self.assertTrue(hasattr(self.mth5_obj, 'schedule_01') is True)
         self.assertEqual(self.mth5_obj.schedule_01.start_time[0:18],
                          dt_start[0:18])
@@ -521,24 +520,22 @@ class TestBuildMTHD5(unittest.TestCase):
         self.mth5_obj.close_mth5()
         
     def test_update_schedule_sampling_rate(self):
-        self.mth5_obj.read_mth5(self.mth5_fn)
+        self.mth5_obj.read_mth5(MTH5_FN)
         self.mth5_obj.schedule_01.name = 'schedule_02'
         self.mth5_obj.update_schedule_metadata()
-        self.assertEqual(self.mth5_obj.mth5_obj['schedule_01'].attrs['name'], 'schedule_02')
-        
+        self.assertEqual(self.mth5_obj.mth5_obj['schedule_01'].attrs['name'], 
+                         'schedule_02')
         self.mth5_obj.close_mth5()
         
-        
-        
+    def test_remove_schedule(self):
+        self.mth5_obj.read_mth5(MTH5_FN)
+        self.mth5_obj.remove_schedule('schedule_01')
+        self.assertFalse(hasattr(self.mth5_obj, 'schedule_01'), True)
+        self.assertRaises(self.mth5_obj.mth5_obj['schedule_01'], KeyError)
+        self.mth5_obj.close_mth5()
         
 # =============================================================================
 # run
 # =============================================================================
 if __name__ == '__main__':
     unittest.main()
-
-
-# =============================================================================
-# File
-# =============================================================================
-
