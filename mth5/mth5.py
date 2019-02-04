@@ -840,6 +840,8 @@ class Calibration(Generic):
                            'units',
                            'calibration_date',
                            'calibration_person']
+        
+
 
     def from_dataframe(self, cal_dataframe, name=None):
         """
@@ -902,6 +904,29 @@ class Calibration(Generic):
 
         ### read in attributes
         self.from_json(mth5_obj['/calibrations/{0}'.format(self.name)].attrs['metadata'])
+        
+    def from_csv(self, cal_csv, name=None, header=False):
+        """
+        Read a csv file that is in the format frequency,real,imaginary
+        
+        :param cal_csv: full path to calibration csv file
+        :type cal_csv: string
+        
+        :param name: instrument id
+        :type name: string
+        
+        :param header: boolean if there is a header in the csv file
+        :type header: [ True | False ]
+        
+        """
+        if not header:
+            cal_df = pd.read_csv(cal_csv, header=None, names=self._col_list)
+        else:
+            cal_df = pd.read_csv(cal_csv, names=self._col_list)
+            
+        if name is not None:
+            self.name
+        self.from_dataframe(cal_df)
 
 # =============================================================================
 # MT HDF5 file
