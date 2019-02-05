@@ -1022,11 +1022,11 @@ def summarize_station_runs(run_df):
         if col == 'start':
             value = run_df['start'].max()
             start_date = datetime.datetime.fromtimestamp(float(value))
-            station_dict['start_date'] = start_date.isoformat()
+            station_dict['start_date'] = start_date.isoformat()+' UTC'
         elif col == 'stop':
             value = run_df['stop'].min()
             stop_date = datetime.datetime.fromtimestamp(float(value))
-            station_dict['stop_date'] = stop_date.isoformat()
+            station_dict['stop_date'] = stop_date.isoformat()+' UTC'
         else:
             try:
                 value = run_df[col].median()
