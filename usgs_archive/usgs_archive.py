@@ -1020,11 +1020,11 @@ def summarize_station_runs(run_df):
         if '_fn' in col:
             continue
         if col == 'start':
-            value = run_df['start'].max()
+            value = run_df['start'].min()
             start_date = datetime.datetime.fromtimestamp(float(value))
             station_dict['start_date'] = start_date.isoformat()+' UTC'
         elif col == 'stop':
-            value = run_df['stop'].min()
+            value = run_df['stop'].max()
             stop_date = datetime.datetime.fromtimestamp(float(value))
             station_dict['stop_date'] = stop_date.isoformat()+' UTC'
         else:
