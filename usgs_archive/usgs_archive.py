@@ -18,6 +18,8 @@ import os
 import time
 import datetime
 from collections import Counter
+import sys
+from cStringIO import StringIO
 
 import h5py
 import gzip
@@ -41,6 +43,18 @@ from shapely.geometry import Point
 
 # science base
 import sciencebasepy as sb
+# =============================================================================
+# class for capturing the output to store in a file
+# =============================================================================
+# this should capture all the print statements
+class Capturing(list):
+    def __enter__(self):
+        self._stdout = sys.stdout
+        sys.stdout = self._stringio = StringIO()
+        return self
+    def __exit__(self, *args):
+        self.extend(self._stringio.getvalue().splitlines())
+        sys.stdout = self._stdout
 
 # =============================================================================
 #
@@ -1070,10 +1084,10 @@ def combine_survey_csv(survey_dir, skip_stations=None):
             print('*** No Information for {0} ***'.format(station))
             continue
         if count == 0:
-            survey_df = summarize_station_runs(run_df)
+            survey_df = pd.DataFrame(summarize_station_runs(run_df)).T
             count += 1
         else:
-            survey_df = survey_df.append(summarize_station_runs(run_df))
+            survey_df = survey_df.append(pd.DataFrame(summarize_station_runs(run_df)).T)
             count += 1
             
     survey_df.latitude = survey_df.latitude.astype(np.float)
@@ -1124,10 +1138,74 @@ def get_station_info_from_csv(survey_csv, station):
     try:
         station_index = db.index[db.station == station].tolist()[0]
     except IndexError:
-        raise ValueError('Could not find {0}, check name'.format(station))
+        raise ArchiveError('Could not find {0}, check name'.format(station))
 
     return db.iloc[station_index]
 
+def write_shp_file(survey_csv_fn, save_path=None):
+        """
+        write a shape file with important information
+
+        :param survey_csv_fn: full path to survey_summary.csv
+        :type survey_csf_fn: string
+
+        :param save_path: directory to save shape file to
+        :type save_path: string
+
+        :return: full path to shape files
+        :rtype: string
+        """
+        if save_path is not None:
+            save_fn = save_path
+        else:
+            save_fn = os.path.join(os.path.dirname(survey_csv_fn),
+                                   'survey_sites.shp')
+
+        survey_db = pd.read_csv(survey_csv_fn)
+        geometry = [Point(x, y) for x, y in zip(survey_db.longitude,
+                                                survey_db.latitude)]
+        crs = {'init':'epsg:4326'}
+        survey_db = survey_db.drop(['latitude', 'longitude'], axis=1)
+        survey_db = survey_db.rename(columns={'collected_by':'operator',
+                                              'instrument_id':'instr_id'})
+
+        # list of columns to take from the database
+        col_list = ['siteID',
+                    'elevation',
+                    'hx_azimuth',
+                    'hy_azimuth',
+                    'hz_azimuth',
+                    'hx_sensor',
+                    'hy_sensor',
+                    'hz_sensor',
+                    'ex_length',
+                    'ey_length',
+                    'ex_azimuth',
+                    'ey_azimuth',
+                    'n_chan',
+                    'instr_id',
+                    'operator',
+                    'type',
+                    'quality',
+                    'start_date',
+                    'stop_date']
+
+        survey_db = survey_db[col_list]
+
+        geo_db = gpd.GeoDataFrame(survey_db,
+                                  crs=crs,
+                                  geometry=geometry)
+
+        geo_db.to_file(save_fn)
+
+        print('*** Wrote survey shapefile to {0}'.format(save_fn))
+        return save_fn
+
+# =============================================================================
+# data base error
+# =============================================================================
+class ArchiveError(Exception):
+    pass
 # =============================================================================
 #  Metadata for usgs ascii file
 # =============================================================================
