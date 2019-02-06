@@ -2597,7 +2597,8 @@ def sb_get_fn_list(archive_dir):
     fn_list = [os.path.join(archive_dir, fn)
                for fn in os.listdir(archive_dir)
                if fn.endswith('.zip') or fn.endswith('.xml') or
-               fn.endswith('.edi') or fn.endswith('.png')]
+               fn.endswith('.edi') or fn.endswith('.png') or 
+               fn.endswith('.mth5')]
 
     return sb_sort_fn_list(fn_list)
 

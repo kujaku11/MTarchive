@@ -1318,7 +1318,7 @@ class MTH5(object):
                 setattr(getattr(getattr(self, obj), obj_attr_01), obj_attr_02,
                         value)
 
-    def update_metadata_from_series(self, station_series):
+    def update_metadata_from_series(self, station_series, update_time=False):
         """
         Update metadata from a pandas.Series with old keys as columns:
             * station
@@ -1326,8 +1326,8 @@ class MTH5(object):
             * longitude
             * elevation
             * declination
-            * start
-            * stop
+            * start_date
+            * stop_date
             * datum
             * coordinate_system
             * units
@@ -1352,6 +1352,9 @@ class MTH5(object):
 
         :param station_series: pandas.Series with the above index values
         :type station_series: pandas.Series
+        
+        :param update_time: boolean to update the start and stop time
+        :type update_time: [ True | False ]
         """
         if isinstance(station_series, pd.DataFrame):
             station_series = station_series.iloc[0]
@@ -1363,10 +1366,14 @@ class MTH5(object):
             value = getattr(station_series, key)
             if key in self.site._attrs_list:
                 setattr(self.site, key, value)
-            elif key == 'start':
-                attr = '{0}_date'.format(key)
+            elif key == 'start_date':
+                if not update_time:
+                    continue
+                attr = key
                 setattr(self.site, attr, value)
-            elif key == 'stop' or key == 'stop_date':
+            elif key == 'stop_date':
+                if not update_time:
+                    continue
                 attr = 'end_date'
                 setattr(self.site, attr, value)
             elif key == 'instrument_id':
