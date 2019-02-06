@@ -18,6 +18,8 @@ import os
 import time
 import datetime
 from collections import Counter
+import sys
+from cStringIO import StringIO
 
 import h5py
 import gzip
@@ -41,6 +43,18 @@ from shapely.geometry import Point
 
 # science base
 import sciencebasepy as sb
+# =============================================================================
+# class for capturing the output to store in a file
+# =============================================================================
+# this should capture all the print statements
+class Capturing(list):
+    def __enter__(self):
+        self._stdout = sys.stdout
+        sys.stdout = self._stringio = StringIO()
+        return self
+    def __exit__(self, *args):
+        self.extend(self._stringio.getvalue().splitlines())
+        sys.stdout = self._stdout
 
 # =============================================================================
 #
@@ -301,7 +315,7 @@ class Z3DCollection(object):
         n_fn = len(fn_list)
         
         ### get empty series to fill
-        meta_db = self._empty_meta_arr()
+        meta_df = self._empty_meta_arr()
         
         ### need to get some statistics from the files, sometimes a file can
         ### be corrupt so we can make some of these lists
@@ -338,51 +352,51 @@ class Z3DCollection(object):
             zen_num[ii] = int(z3d_obj.header.box_number)
             
             #### get channel setups
-            meta_db['comp'] += '{} '.format(comp)
-            meta_db['{0}_{1}'.format(comp, 'start')] = dt_index[0]
-            meta_db['{0}_{1}'.format(comp, 'stop')] = dt_index[-1]
+            meta_df['comp'] += '{} '.format(comp)
+            meta_df['{0}_{1}'.format(comp, 'start')] = dt_index[0]
+            meta_df['{0}_{1}'.format(comp, 'stop')] = dt_index[-1]
             start.append(dt_index[0])
             stop.append(dt_index[-1])
-            meta_db['{0}_{1}'.format(comp, 'fn')] = fn
-            meta_db['{0}_{1}'.format(comp, 'azmimuth')] = z3d_obj.metadata.ch_azimuth
+            meta_df['{0}_{1}'.format(comp, 'fn')] = fn
+            meta_df['{0}_{1}'.format(comp, 'azmimuth')] = z3d_obj.metadata.ch_azimuth
             if 'e' in comp:
-                meta_db['{0}_{1}'.format(comp, 'length')] = z3d_obj.metadata.ch_length
+                meta_df['{0}_{1}'.format(comp, 'length')] = z3d_obj.metadata.ch_length
             ### get sensor number
             elif 'h' in comp:
-                meta_db['{0}_{1}'.format(comp, 'sensor')] = int(z3d_obj.metadata.ch_number.split('.')[0])
-            meta_db['{0}_{1}'.format(comp, 'num')] = ii+1
-            meta_db['{0}_{1}'.format(comp,'n_samples')] = z3d_obj.ts_obj.ts.shape[0]
+                meta_df['{0}_{1}'.format(comp, 'sensor')] = int(z3d_obj.metadata.ch_number.split('.')[0])
+            meta_df['{0}_{1}'.format(comp, 'num')] = ii+1
+            meta_df['{0}_{1}'.format(comp,'n_samples')] = z3d_obj.ts_obj.ts.shape[0]
             n_samples.append(z3d_obj.ts_obj.ts.shape[0])
-            meta_db['{0}_{1}'.format(comp,'t_diff')] = int((dt_index[-1]-dt_index[0])*z3d_obj.df)-\
+            meta_df['{0}_{1}'.format(comp,'t_diff')] = int((dt_index[-1]-dt_index[0])*z3d_obj.df)-\
                                       z3d_obj.ts_obj.ts.shape[0]
             # give deviation in percent
-            meta_db['{0}_{1}'.format(comp,'standard_deviation')] = \
+            meta_df['{0}_{1}'.format(comp,'standard_deviation')] = \
                                 100*abs(z3d_obj.ts_obj.ts.std()[0]/\
                                         z3d_obj.ts_obj.ts.median()[0])
             try:
-                meta_db['notes'] = z3d_obj.metadata.notes.replace('\r', ' ').replace('\x00', '').rstrip()
+                meta_df['notes'] = z3d_obj.metadata.notes.replace('\r', ' ').replace('\x00', '').rstrip()
             except AttributeError:
                 pass
             
             ts_list.append(z3d_obj.ts_obj)
 
         ### fill in meta data for the station
-        meta_db.latitude = self._median_value(lat)
-        meta_db.longitude = self._median_value(lon)
-        meta_db.elevation = get_nm_elev(meta_db.latitude,
-                                        meta_db.longitude)
-        meta_db.station = self._median_value(station)
-        meta_db.instrument_id = 'ZEN{0}'.format(self._median_value(zen_num))
-        meta_db.sampling_rate = self._median_value(sampling_rate)
+        meta_df.latitude = self._median_value(lat)
+        meta_df.longitude = self._median_value(lon)
+        meta_df.elevation = get_nm_elev(meta_df.latitude,
+                                        meta_df.longitude)
+        meta_df.station = self._median_value(station)
+        meta_df.instrument_id = 'ZEN{0}'.format(self._median_value(zen_num))
+        meta_df.sampling_rate = self._median_value(sampling_rate)
         
         ### merge time series into a single data base
         sch_obj = self.merge_ts_list(ts_list, decimate=decimate)
-        meta_db.start = sch_obj.start_seconds_from_epoch
-        meta_db.stop = sch_obj.stop_seconds_from_epoch
-        meta_db.n_chan = sch_obj.n_channels
-        meta_db.n_samples = sch_obj.n_samples
+        meta_df.start = sch_obj.start_seconds_from_epoch
+        meta_df.stop = sch_obj.stop_seconds_from_epoch
+        meta_df.n_chan = sch_obj.n_channels
+        meta_df.n_samples = sch_obj.n_samples
         ### add metadata DataFrame to the schedule object
-        sch_obj.meta_db = meta_db
+        sch_obj.meta_df = meta_df
         
         return sch_obj
     
@@ -769,7 +783,7 @@ class USGSHDF5(object):
         ### metadata series
         for index in station_db.index:
             try:
-                schedule_obj.meta_db[index] = station_db[index]
+                schedule_obj.meta_df[index] = station_db[index]
             except AttributeError:
                 continue
         return schedule_obj
@@ -866,13 +880,13 @@ class USGSHDF5(object):
                     sch_obj = self.update_metadata(sch_obj, csv_fn)
     
                 # get lat and lon for statistics
-                lat_list.append(sch_obj.meta_db.latitude)
-                lon_list.append(sch_obj.meta_db.longitude)
-                instr_id_list.append(sch_obj.meta_db.instrument_id)
+                lat_list.append(sch_obj.meta_df.latitude)
+                lon_list.append(sch_obj.meta_df.longitude)
+                instr_id_list.append(sch_obj.meta_df.instrument_id)
     
                 for key in self._attr_list:
                     try:
-                        h5_obj.attrs[key] = sch_obj.meta_db[key]
+                        h5_obj.attrs[key] = sch_obj.meta_df[key]
                     except TypeError:
                         h5_obj.attrs[key] = 'None'
                     except KeyError:
@@ -1017,18 +1031,24 @@ def summarize_station_runs(run_df):
     """
     station_dict = pd.compat.OrderedDict() 
     for col in run_df.columns:
+        if '_fn' in col:
+            continue
         if col == 'start':
-            value = run_df['start'].max()
+            value = run_df['start'].min()
+            start_date = datetime.datetime.fromtimestamp(float(value))
+            station_dict['start_date'] = start_date.isoformat()+' UTC'
         elif col == 'stop':
-            value = run_df['stop'].min()
+            value = run_df['stop'].max()
+            stop_date = datetime.datetime.fromtimestamp(float(value))
+            station_dict['stop_date'] = stop_date.isoformat()+' UTC'
         else:
             try:
                 value = run_df[col].median()
-            except TypeError:
+            except (TypeError, ValueError):
                 value = list(set(run_df[col]))[0]
         station_dict[col] = value
         
-    return pd.DataFrame(station_dict)
+    return pd.Series(station_dict)
 
 def combine_survey_csv(survey_dir, skip_stations=None):
     """
@@ -1064,10 +1084,10 @@ def combine_survey_csv(survey_dir, skip_stations=None):
             print('*** No Information for {0} ***'.format(station))
             continue
         if count == 0:
-            survey_df = summarize_station_runs(run_df)
+            survey_df = pd.DataFrame(summarize_station_runs(run_df)).T
             count += 1
         else:
-            survey_df = survey_df.append(summarize_station_runs(run_df))
+            survey_df = survey_df.append(pd.DataFrame(summarize_station_runs(run_df)).T)
             count += 1
             
     survey_df.latitude = survey_df.latitude.astype(np.float)
@@ -1118,10 +1138,74 @@ def get_station_info_from_csv(survey_csv, station):
     try:
         station_index = db.index[db.station == station].tolist()[0]
     except IndexError:
-        raise ValueError('Could not find {0}, check name'.format(station))
+        raise ArchiveError('Could not find {0}, check name'.format(station))
 
     return db.iloc[station_index]
 
+def write_shp_file(survey_csv_fn, save_path=None):
+        """
+        write a shape file with important information
+
+        :param survey_csv_fn: full path to survey_summary.csv
+        :type survey_csf_fn: string
+
+        :param save_path: directory to save shape file to
+        :type save_path: string
+
+        :return: full path to shape files
+        :rtype: string
+        """
+        if save_path is not None:
+            save_fn = save_path
+        else:
+            save_fn = os.path.join(os.path.dirname(survey_csv_fn),
+                                   'survey_sites.shp')
+
+        survey_db = pd.read_csv(survey_csv_fn)
+        geometry = [Point(x, y) for x, y in zip(survey_db.longitude,
+                                                survey_db.latitude)]
+        crs = {'init':'epsg:4326'}
+        survey_db = survey_db.drop(['latitude', 'longitude'], axis=1)
+        survey_db = survey_db.rename(columns={'collected_by':'operator',
+                                              'instrument_id':'instr_id'})
+
+        # list of columns to take from the database
+        col_list = ['siteID',
+                    'elevation',
+                    'hx_azimuth',
+                    'hy_azimuth',
+                    'hz_azimuth',
+                    'hx_sensor',
+                    'hy_sensor',
+                    'hz_sensor',
+                    'ex_length',
+                    'ey_length',
+                    'ex_azimuth',
+                    'ey_azimuth',
+                    'n_chan',
+                    'instr_id',
+                    'operator',
+                    'type',
+                    'quality',
+                    'start_date',
+                    'stop_date']
+
+        survey_db = survey_db[col_list]
+
+        geo_db = gpd.GeoDataFrame(survey_db,
+                                  crs=crs,
+                                  geometry=geometry)
+
+        geo_db.to_file(save_fn)
+
+        print('*** Wrote survey shapefile to {0}'.format(save_fn))
+        return save_fn
+
+# =============================================================================
+# data base error
+# =============================================================================
+class ArchiveError(Exception):
+    pass
 # =============================================================================
 #  Metadata for usgs ascii file
 # =============================================================================
@@ -1205,10 +1289,10 @@ class AsciiMetadata(object):
 
     @property
     def SiteID(self):
-        return self.sch_obj.meta_db.station
+        return self.sch_obj.meta_df.station
     @SiteID.setter
     def SiteID(self, station):
-        self.sch_obj.meta_db.station = station
+        self.sch_obj.meta_df.station = station
 
     @property
     def SiteLatitude(self):
@@ -1987,13 +2071,13 @@ class USGScfg(object):
         self.std_tol = .005
         self.note_names = ['_start', '_nsamples']
 
-    def combine_run_cfg(self, cfg_dir, write=True):
+    def combine_run_csv(self, csv_dir, write=True):
         """
-        Combine all the cfg files for each run into a master spreadsheet
+        Combine all the csv files for each run into a master spreadsheet
 
-        :param cfg_dir: directory to cfg files for a station
+        :param csv_dir: directory to csv files for a station
                         /home/mtdata/station
-        :type cfg_dir: string
+        :type csv_dir: string
 
         :param write: write a csv file summarizing the runs
         :type write: boolean [ True | False ]
@@ -2001,11 +2085,11 @@ class USGScfg(object):
         .. note:: the station name is assumed to be the same as the folder name
 
         """
-        station = os.path.basename(cfg_dir)
+        station = os.path.basename(csv_dir)
 
-        cfg_fn_list = sorted([os.path.join(cfg_dir, fn) for fn in os.listdir(cfg_dir)
+        cfg_fn_list = sorted([os.path.join(csv_dir, fn) for fn in os.listdir(csv_dir)
                               if 'mt' not in fn and 'runs' not in fn
-                              and fn.endswith('.cfg')])
+                              and fn.endswith('.csv')])
 
         count = 0
         for cfg_fn in cfg_fn_list:
@@ -2513,7 +2597,8 @@ def sb_get_fn_list(archive_dir):
     fn_list = [os.path.join(archive_dir, fn)
                for fn in os.listdir(archive_dir)
                if fn.endswith('.zip') or fn.endswith('.xml') or
-               fn.endswith('.edi') or fn.endswith('.png')]
+               fn.endswith('.edi') or fn.endswith('.png') or 
+               fn.endswith('.mth5')]
 
     return sb_sort_fn_list(fn_list)
 
