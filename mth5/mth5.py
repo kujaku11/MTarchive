@@ -8,8 +8,8 @@ This module deals with reading and writing MTH5 files, which are HDF5 files
 developed for magnetotelluric (MT) data.  The code is based on h5py and
 attributes use JSON encoding.
 
-Currently the convenience methods support read only.  Working on developing
-the write convenience methods.
+.. note:: Currently the convenience methods support read only.  
+          Working on developing the write convenience methods.
 
 Created on Sun Dec  9 20:50:41 2018
 
@@ -28,11 +28,11 @@ import dateutil
 import h5py
 import pandas as pd
 import numpy as np
-import mtpy.utils.gis_tools as gis_tools
 # =============================================================================
 #  global parameters
 # =============================================================================
 dt_fmt = '%Y-%m-%dT%H:%M:%S.%f %Z'
+
 #==============================================================================
 # Need a dummy utc time zone for the date time format
 #==============================================================================
@@ -47,9 +47,7 @@ class UTC(datetime.tzinfo):
     def tzname(self, df):
         return "UTC"
 
-# ==============================================================================
-# Location class, be sure to put locations in decimal degrees, and note datum
-# ==============================================================================
+
 class Generic(object):
     """
     a generic class that is common to most of the Metadata objects
@@ -72,12 +70,13 @@ class Generic(object):
 
     def from_json(self, site_json):
         """
-        read in json file for site information
+        read in json file for information
         """
         from_json(site_json, self)
             
-        
-
+# ==============================================================================
+# Location class, be sure to put locations in decimal degrees, and note datum
+# ==============================================================================       
 class Location(Generic):
     """
     location details including:
@@ -87,13 +86,6 @@ class Location(Generic):
         * datum
         * coordinate_system
         * declination
-        * easting
-        * northing
-        * utm_zone
-
-    .. note:: coordinates can be projected from (lat, lon) to
-              (east, north, zone) by using the methods project_location2utm,
-              or project_location2ll
     """
 
     def __init__(self, **kwargs):
@@ -106,9 +98,6 @@ class Location(Generic):
         self._latitude = None
         self._longitude = None
 
-        self._northing = None
-        self._easting = None
-        self.utm_zone = None
         self.elev_units = 'm'
         self.coordinate_system = 'Geographic North'
 
@@ -121,7 +110,7 @@ class Location(Generic):
 
     @latitude.setter
     def latitude(self, lat):
-        self._latitude = gis_tools.assert_lat_value(lat)
+        self._latitude = self._assert_lat_value(lat)
 
     @property
     def longitude(self):
@@ -129,7 +118,7 @@ class Location(Generic):
 
     @longitude.setter
     def longitude(self, lon):
-        self._longitude = gis_tools.assert_lon_value(lon)
+        self._longitude = self._assert_lon_value(lon)
 
     @property
     def elevation(self):
@@ -137,61 +126,150 @@ class Location(Generic):
 
     @elevation.setter
     def elevation(self, elev):
-        self._elevation = gis_tools.assert_elevation_value(elev)
-
-    @property
-    def easting(self):
-        return self._easting
-
-    @easting.setter
-    def easting(self, easting):
+        self._elevation = self._assert_elevation_value(elev)
+            
+    def _assert_lat_value(self, latitude):
+        """
+        Make sure the latitude value is in decimal degrees, if not change it.
+        And that the latitude is within -90 < lat > 90.
+        
+        :param latitude: latitude in decimal degrees or other format
+        :type latitude: float or string
+        """
+        if latitude in [None, 'None']:
+            return None
         try:
-            self._easting = float(easting)
+            lat_value = float(latitude)
+    
         except TypeError:
-            self._easting = None
-
-    @property
-    def northing(self):
-        return self._northing
-
-    @northing.setter
-    def northing(self, northing):
+            return None
+    
+        except ValueError:
+            lat_value = self._convert_position_str2float(latitude)
+    
+        if abs(lat_value) >= 90:
+            print("==> The lat_value =", lat_value)
+            raise ValueError('|Latitude| > 90, unacceptable!')
+    
+        return lat_value
+    
+    def _assert_lon_value(self, longitude):
+        """
+        Make sure the longitude value is in decimal degrees, if not change it.
+        And that the latitude is within -180 < lat > 180.
+        
+        :param latitude: longitude in decimal degrees or other format
+        :type latitude: float or string
+        """
+        if longitude in [None, 'None']:
+            return None
         try:
-            self._northing = float(northing)
+            lon_value = float(longitude)
+    
         except TypeError:
-            self._northing = None
-
-    def project_location2utm(self):
+            return None
+    
+        except ValueError:
+            lon_value = self._convert_position_str2float(longitude)
+    
+        if abs(lon_value) >= 180:
+            print("==> The longitude_value =", lon_value)
+            raise ValueError('|Longitude| > 180, unacceptable!')
+    
+        return lon_value
+    
+    def _assert_elevation_value(self, elevation):
         """
-        project location coordinates into meters given the reference ellipsoid,
-        for now that is constrained to WGS84
-
-        Returns East, North, Zone
+        make sure elevation is a floating point number
+        
+        :param elevation: elevation as a float or string that can convert
+        :type elevation: float or str
         """
-        # need to convert datum to string, gdal doesn't like unicode apparently
-        utm_point = gis_tools.project_point_ll2utm(self.latitude,
-                                                   self.longitude,
-                                                   datum=str(self.datum))
-
-        self.easting = utm_point[0]
-        self.northing = utm_point[1]
-        self.utm_zone = utm_point[2]
-
-    def project_location2ll(self):
+    
+        try:
+            elev_value = float(elevation)
+        except (ValueError, TypeError):
+            elev_value = 0.0
+    
+        return elev_value
+    
+    def _convert_position_float2str(self, position):
         """
-        project location coordinates into meters given the reference ellipsoid,
-        for now that is constrained to WGS84
+        Convert position float to a string in the format of DD:MM:SS.
 
-        Returns East, North, Zone
+        :param position: decimal degrees of latitude or longitude
+        :type position: float
+                           
+        :returns: latitude or longitude in format of DD:MM:SS.ms
         """
-        ll_point = gis_tools.project_point_utm2ll(self.easting,
-                                                  self.northing,
-                                                  self.utm_zone,
-                                                  datum=str(self.datum))
+    
+        assert type(position) is float, 'Given value is not a float'
+    
+        deg = int(position)
+        sign = 1
+        if deg < 0:
+            sign = -1
+    
+        deg = abs(deg)
+        minutes = (abs(position) - deg) * 60.
+        # need to round seconds to 4 decimal places otherwise machine precision
+        # keeps the 60 second roll over and the string is incorrect.
+        sec = np.round((minutes - int(minutes)) * 60., 4)
+        if sec >= 60.:
+            minutes += 1
+            sec = 0
+    
+        if int(minutes) == 60:
+            deg += 1
+            minutes = 0
+            
+        position_str = '{0}:{1:02.0f}:{2:05.2f}'.format(sign * int(deg),
+                                                        int(minutes),
+                                                        sec)
+    
+        return position_str
+    
+    def _convert_position_str2float(self, position_str):
+        """
+        Convert a position string in the format of DD:MM:SS to decimal degrees
+        
+         :param position: latitude or longitude om DD:MM:SS.ms
+        :type position: float
+                           
+        :returns: latitude or longitude as a float
+        """
+    
+        if position_str in [None, 'None']:
+            return None
+        
+        p_list = position_str.split(':')
+        if len(p_list) != 3:
+            raise ValueError('{0} not correct format, should be DD:MM:SS'.format(position_str))
+    
+        deg = float(p_list[0])
+        minutes = self._assert_minutes(float(p_list[1]))
+        sec = self._assert_seconds(float(p_list[2]))
+    
+        # get the sign of the position so that when all are added together the
+        # position is in the correct place
+        sign = 1
+        if deg < 0:
+            sign = -1
+    
+        position_value = sign * (abs(deg) + minutes / 60. + sec / 3600.)
+    
+        return position_value
+    
+    def _assert_minutes(self, minutes):
+        assert 0 <= minutes < 60., \
+            'minutes needs to be <60 and >0, currently {0:.0f}'.format(minutes)
+    
+        return minutes
 
-        self.latitude = ll_point[0]
-        self.longitude = ll_point[1]
-
+    def _assert_seconds(self, seconds):
+        assert 0 <= seconds < 60., \
+            'seconds needs to be <60 and >0, currently {0:.3f}'.format(seconds)
+        return seconds
 
 # ==============================================================================
 # Site details
@@ -978,7 +1056,7 @@ class MTH5(object):
     * Example: Load MTH5 File
     
     >>> import mth5.mth5 as mth5
-    >>> data = mth5.MTH.open_mth5(r"/home/mtdata/mt01.mth5")
+    >>> data = mth5.MTH5.open_mth5(r"/home/mtdata/mt01.mth5")
 
     * Example: Update metadata from cfg file
     
