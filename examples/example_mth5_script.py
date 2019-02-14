@@ -14,8 +14,6 @@ import mth5.mth5 as mth5
 import usgs_archive.usgs_archive as archive
 import datetime 
 
-#import numpy as np
-
 # =============================================================================
 # Inputs
 # =============================================================================
