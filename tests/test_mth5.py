@@ -306,8 +306,8 @@ class TestMTH5UpdateAttributesFromSeries(unittest.TestCase):
                                 'longitude': -115.78,
                                 'elevation': 1234,
                                 'declination': -15.5,
-                                'start': '2018-01-01 12:00:00.00',
-                                'stop': '2018-02-01 12:00:00.00',
+                                'start_date': '2018-01-01 12:00:00.00',
+                                'end_date': '2018-02-01 12:00:00.00',
                                 'datum': 'WGS84',
                                 'coordinate_system': 'Geographic North',
                                 'units': 'mV',
@@ -353,11 +353,11 @@ class TestMTH5UpdateAttributesFromSeries(unittest.TestCase):
     def test_site_end_date(self):
         self.assertEqual(self.mth5_obj.site.end_date,
                          '2018-02-01T12:00:00.000000 UTC')
-    def test_site_project2utm(self):
-        self.mth5_obj.site.project_location2utm()
-        self.assertAlmostEqual(self.mth5_obj.site.easting, 602760.0, places=0)
-        self.assertAlmostEqual(self.mth5_obj.site.northing, 4528373.0, places=0)
-        self.assertEqual(self.mth5_obj.site.utm_zone, '11T')
+#    def test_site_project2utm(self):
+#        self.mth5_obj.site.project_location2utm()
+#        self.assertAlmostEqual(self.mth5_obj.site.easting, 602760.0, places=0)
+#        self.assertAlmostEqual(self.mth5_obj.site.northing, 4528373.0, places=0)
+#        self.assertEqual(self.mth5_obj.site.utm_zone, '11T')
 
     ### Field Notes Attributes
     # Data logger information
@@ -519,21 +519,63 @@ class TestBuildMTHD5(unittest.TestCase):
         self.assertEqual(self.mth5_obj.schedule_01.sampling_rate, sr)
         self.mth5_obj.close_mth5()
         
-    def test_update_schedule_sampling_rate(self):
-        self.mth5_obj.read_mth5(MTH5_FN)
-        self.mth5_obj.schedule_01.name = 'schedule_02'
-        self.mth5_obj.update_schedule_metadata()
-        self.assertEqual(self.mth5_obj.mth5_obj['schedule_01'].attrs['name'], 
-                         'schedule_02')
-        self.mth5_obj.close_mth5()
+#    def test_update_schedule_sampling_rate(self):
+#        self.mth5_obj.read_mth5(MTH5_FN)
+#        self.mth5_obj.schedule_01.name = 'schedule_02'
+#        self.mth5_obj.update_schedule_metadata()
+#        self.assertEqual(self.mth5_obj.mth5_obj['schedule_01'].attrs['name'], 
+#                         'schedule_02')
+#        self.mth5_obj.close_mth5()
+#        
+#    def test_remove_schedule(self):
+#        self.mth5_obj.read_mth5(MTH5_FN)
+#        self.mth5_obj.remove_schedule('schedule_01')
+#        self.assertFalse(hasattr(self.mth5_obj, 'schedule_01'), True)
+#        self.assertRaises(self.mth5_obj.mth5_obj['schedule_01'], KeyError)
+#        self.mth5_obj.close_mth5()
         
-    def test_remove_schedule(self):
-        self.mth5_obj.read_mth5(MTH5_FN)
-        self.mth5_obj.remove_schedule('schedule_01')
-        self.assertFalse(hasattr(self.mth5_obj, 'schedule_01'), True)
-        self.assertRaises(self.mth5_obj.mth5_obj['schedule_01'], KeyError)
-        self.mth5_obj.close_mth5()
+# =============================================================================
+# test location
+# =============================================================================
+class TestLocation(unittest.TestCase):
+    """
+    Test the Location object
+    """
+    
+    def setUp(self):
+        self.location = mth5.Location()
         
+    def test_lat_str(self):
+        self.location.latitude = '40:00:00.0'
+        self.assertIsInstance(self.location.latitude, float)
+        
+    def test_lon_str(self):
+        self.location.longitude = '140:00:00.0'
+        self.assertIsInstance(self.location.longitude, float)
+        
+    def test_elev_str(self):
+        self.location.elevation = '1400.0'
+        self.assertIsInstance(self.location.elevation, float)
+        
+# =============================================================================
+# test Site
+# =============================================================================
+class TestSite(unittest.TestCase):
+    """
+    Test Site object
+    """       
+    
+    def setUp(self):
+        self.site = mth5.Site()
+        self.site.start_date = '2000-01-01 10:30:00'
+        self.site.end_date = '2000-01-01 10:30:00'
+        
+    def test_start_date(self):
+        self.assertEqual(self.site.start_date, '2000-01-01T10:30:00.000000 UTC')
+        
+    def test_end_date(self):
+        self.assertEqual(self.site.end_date, '2000-01-01T10:30:00.000000 UTC')
+
 # =============================================================================
 # run
 # =============================================================================
