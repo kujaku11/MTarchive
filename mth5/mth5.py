@@ -13,7 +13,7 @@ attributes use JSON encoding.
 
 Created on Sun Dec  9 20:50:41 2018
 
-@author: jpeacock
+@author: J. Peacock
 """
 
 # =============================================================================
@@ -50,7 +50,7 @@ class UTC(datetime.tzinfo):
 
 class Generic(object):
     """
-    a generic class that is common to most of the Metadata objects
+    A generic class that is common to most of the Metadata objects
     
     Includes:
         * to_json
@@ -64,15 +64,20 @@ class Generic(object):
             
     def to_json(self):
         """
-        write json string to put into attributes
+        Write a json string from a given object, taking into account other
+        class objects contained within the given object.
         """
         return to_json(self)
 
-    def from_json(self, site_json):
+    def from_json(self, json_str):
         """
-        read in json file for information
+        read in a json string and update attributes of an object
+
+        :param json_str: json string
+        :type json_str: string
+    
         """
-        from_json(site_json, self)
+        from_json(json_str, self)
             
 # ==============================================================================
 # Location class, be sure to put locations in decimal degrees, and note datum
@@ -465,7 +470,7 @@ class DataQuality(Generic):
 
     More attributes can be added by inputing a key word dictionary
 
-    >>>DataQuality(**{'time_series_comments':'Periodic Noise'})
+    >>> DataQuality(**{'time_series_comments':'Periodic Noise'})
     """
 
     def __init__(self, **kwargs):
@@ -1012,7 +1017,6 @@ class Calibration(Generic):
 class MTH5(object):
     """
     MT HDF5 file
-    =================
 
     Class object to deal with reading and writing an MTH5 file.
 
@@ -1331,7 +1335,8 @@ class MTH5(object):
         :param mth5_cfg_fn: full path to configuration file for mth5 file
         :type mth5_cfg_fn: string
 
-        The configuration file has the format:
+        The configuration file has the format::
+            
             ###===================================================###
             ### Metadata Configuration File for Science Base MTH5 ###
             ###===================================================###
