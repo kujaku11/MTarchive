@@ -1,0 +1,1651 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>mth5.mth5 &#8212; mth5 0.1.beta documentation</title>
+    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">mth5 0.1.beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for mth5.mth5</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">==================</span>
+<span class="sd">MTH5</span>
+<span class="sd">==================</span>
+
+<span class="sd">This module deals with reading and writing MTH5 files, which are HDF5 files</span>
+<span class="sd">developed for magnetotelluric (MT) data.  The code is based on h5py and</span>
+<span class="sd">attributes use JSON encoding.</span>
+
+<span class="sd">.. note:: Currently the convenience methods support read only.  </span>
+<span class="sd">          Working on developing the write convenience methods.</span>
+
+<span class="sd">Created on Sun Dec  9 20:50:41 2018</span>
+
+<span class="sd">@author: J. Peacock</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="c1"># =============================================================================</span>
+<span class="c1"># Imports</span>
+<span class="c1"># =============================================================================</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">dateutil</span>
+
+<span class="kn">import</span> <span class="nn">h5py</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="c1"># =============================================================================</span>
+<span class="c1">#  global parameters</span>
+<span class="c1"># =============================================================================</span>
+<span class="n">dt_fmt</span> <span class="o">=</span> <span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1">T%H:%M:%S.</span><span class="si">%f</span><span class="s1"> %Z&#39;</span>
+
+<span class="c1">#==============================================================================</span>
+<span class="c1"># Need a dummy utc time zone for the date time format</span>
+<span class="c1">#==============================================================================</span>
+<div class="viewcode-block" id="UTC"><a class="viewcode-back" href="../../index.html#mth5.mth5.UTC">[docs]</a><span class="k">class</span> <span class="nc">UTC</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">tzinfo</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    An class to hold information about UTC</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+<div class="viewcode-block" id="UTC.utcoffset"><a class="viewcode-back" href="../../index.html#mth5.mth5.UTC.utcoffset">[docs]</a>    <span class="k">def</span> <span class="nf">utcoffset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">hours</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></div>
+<div class="viewcode-block" id="UTC.dst"><a class="viewcode-back" href="../../index.html#mth5.mth5.UTC.dst">[docs]</a>    <span class="k">def</span> <span class="nf">dst</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span></div>
+<div class="viewcode-block" id="UTC.tzname"><a class="viewcode-back" href="../../index.html#mth5.mth5.UTC.tzname">[docs]</a>    <span class="k">def</span> <span class="nf">tzname</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;UTC&quot;</span></div></div>
+
+
+<div class="viewcode-block" id="Generic"><a class="viewcode-back" href="../../index.html#mth5.mth5.Generic">[docs]</a><span class="k">class</span> <span class="nc">Generic</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A generic class that is common to most of the Metadata objects</span>
+<span class="sd">    </span>
+<span class="sd">    Includes:</span>
+<span class="sd">        * to_json</span>
+<span class="sd">        * from_json</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+            
+<div class="viewcode-block" id="Generic.to_json"><a class="viewcode-back" href="../../index.html#mth5.mth5.Generic.to_json">[docs]</a>    <span class="k">def</span> <span class="nf">to_json</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Write a json string from a given object, taking into account other</span>
+<span class="sd">        class objects contained within the given object.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">to_json</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Generic.from_json"><a class="viewcode-back" href="../../index.html#mth5.mth5.Generic.from_json">[docs]</a>    <span class="k">def</span> <span class="nf">from_json</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">json_str</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        read in a json string and update attributes of an object</span>
+
+<span class="sd">        :param json_str: json string</span>
+<span class="sd">        :type json_str: string</span>
+<span class="sd">    </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">from_json</span><span class="p">(</span><span class="n">json_str</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span></div></div>
+            
+<span class="c1"># ==============================================================================</span>
+<span class="c1"># Location class, be sure to put locations in decimal degrees, and note datum</span>
+<span class="c1"># ==============================================================================       </span>
+<div class="viewcode-block" id="Location"><a class="viewcode-back" href="../../index.html#mth5.mth5.Location">[docs]</a><span class="k">class</span> <span class="nc">Location</span><span class="p">(</span><span class="n">Generic</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    location details including:</span>
+<span class="sd">        * latitude</span>
+<span class="sd">        * longitude</span>
+<span class="sd">        * elevation</span>
+<span class="sd">        * datum</span>
+<span class="sd">        * coordinate_system</span>
+<span class="sd">        * declination</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Location</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">datum</span> <span class="o">=</span> <span class="s1">&#39;WGS84&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">declination</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">declination_epoch</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_elevation</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_latitude</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_longitude</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">elev_units</span> <span class="o">=</span> <span class="s1">&#39;m&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">coordinate_system</span> <span class="o">=</span> <span class="s1">&#39;Geographic North&#39;</span>
+
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">latitude</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_latitude</span>
+
+    <span class="nd">@latitude</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">latitude</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lat</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_latitude</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_assert_lat_value</span><span class="p">(</span><span class="n">lat</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">longitude</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_longitude</span>
+
+    <span class="nd">@longitude</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">longitude</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lon</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_longitude</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_assert_lon_value</span><span class="p">(</span><span class="n">lon</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">elevation</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_elevation</span>
+
+    <span class="nd">@elevation</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">elevation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">elev</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_elevation</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_assert_elevation_value</span><span class="p">(</span><span class="n">elev</span><span class="p">)</span>
+            
+    <span class="k">def</span> <span class="nf">_assert_lat_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">latitude</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Make sure the latitude value is in decimal degrees, if not change it.</span>
+<span class="sd">        And that the latitude is within -90 &lt; lat &gt; 90.</span>
+<span class="sd">        </span>
+<span class="sd">        :param latitude: latitude in decimal degrees or other format</span>
+<span class="sd">        :type latitude: float or string</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">latitude</span> <span class="ow">in</span> <span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="s1">&#39;None&#39;</span><span class="p">]:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">lat_value</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">latitude</span><span class="p">)</span>
+    
+        <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+    
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="n">lat_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_convert_position_str2float</span><span class="p">(</span><span class="n">latitude</span><span class="p">)</span>
+    
+        <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">lat_value</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">90</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;==&gt; The lat_value =&quot;</span><span class="p">,</span> <span class="n">lat_value</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;|Latitude| &gt; 90, unacceptable!&#39;</span><span class="p">)</span>
+    
+        <span class="k">return</span> <span class="n">lat_value</span>
+    
+    <span class="k">def</span> <span class="nf">_assert_lon_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">longitude</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Make sure the longitude value is in decimal degrees, if not change it.</span>
+<span class="sd">        And that the latitude is within -180 &lt; lat &gt; 180.</span>
+<span class="sd">        </span>
+<span class="sd">        :param latitude: longitude in decimal degrees or other format</span>
+<span class="sd">        :type latitude: float or string</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">longitude</span> <span class="ow">in</span> <span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="s1">&#39;None&#39;</span><span class="p">]:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">lon_value</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">longitude</span><span class="p">)</span>
+    
+        <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+    
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="n">lon_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_convert_position_str2float</span><span class="p">(</span><span class="n">longitude</span><span class="p">)</span>
+    
+        <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">lon_value</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">180</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;==&gt; The longitude_value =&quot;</span><span class="p">,</span> <span class="n">lon_value</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;|Longitude| &gt; 180, unacceptable!&#39;</span><span class="p">)</span>
+    
+        <span class="k">return</span> <span class="n">lon_value</span>
+    
+    <span class="k">def</span> <span class="nf">_assert_elevation_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">elevation</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        make sure elevation is a floating point number</span>
+<span class="sd">        </span>
+<span class="sd">        :param elevation: elevation as a float or string that can convert</span>
+<span class="sd">        :type elevation: float or str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+    
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">elev_value</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">elevation</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
+            <span class="n">elev_value</span> <span class="o">=</span> <span class="mf">0.0</span>
+    
+        <span class="k">return</span> <span class="n">elev_value</span>
+    
+    <span class="k">def</span> <span class="nf">_convert_position_float2str</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">position</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Convert position float to a string in the format of DD:MM:SS.</span>
+
+<span class="sd">        :param position: decimal degrees of latitude or longitude</span>
+<span class="sd">        :type position: float</span>
+<span class="sd">                           </span>
+<span class="sd">        :returns: latitude or longitude in format of DD:MM:SS.ms</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+    
+        <span class="k">assert</span> <span class="nb">type</span><span class="p">(</span><span class="n">position</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">float</span><span class="p">,</span> <span class="s1">&#39;Given value is not a float&#39;</span>
+    
+        <span class="n">deg</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
+        <span class="n">sign</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">deg</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">sign</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+    
+        <span class="n">deg</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">deg</span><span class="p">)</span>
+        <span class="n">minutes</span> <span class="o">=</span> <span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">position</span><span class="p">)</span> <span class="o">-</span> <span class="n">deg</span><span class="p">)</span> <span class="o">*</span> <span class="mf">60.</span>
+        <span class="c1"># need to round seconds to 4 decimal places otherwise machine precision</span>
+        <span class="c1"># keeps the 60 second roll over and the string is incorrect.</span>
+        <span class="n">sec</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">((</span><span class="n">minutes</span> <span class="o">-</span> <span class="nb">int</span><span class="p">(</span><span class="n">minutes</span><span class="p">))</span> <span class="o">*</span> <span class="mf">60.</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">sec</span> <span class="o">&gt;=</span> <span class="mf">60.</span><span class="p">:</span>
+            <span class="n">minutes</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">sec</span> <span class="o">=</span> <span class="mi">0</span>
+    
+        <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="n">minutes</span><span class="p">)</span> <span class="o">==</span> <span class="mi">60</span><span class="p">:</span>
+            <span class="n">deg</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">minutes</span> <span class="o">=</span> <span class="mi">0</span>
+            
+        <span class="n">position_str</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{0}</span><span class="s1">:</span><span class="si">{1:02.0f}</span><span class="s1">:</span><span class="si">{2:05.2f}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">sign</span> <span class="o">*</span> <span class="nb">int</span><span class="p">(</span><span class="n">deg</span><span class="p">),</span>
+                                                        <span class="nb">int</span><span class="p">(</span><span class="n">minutes</span><span class="p">),</span>
+                                                        <span class="n">sec</span><span class="p">)</span>
+    
+        <span class="k">return</span> <span class="n">position_str</span>
+    
+    <span class="k">def</span> <span class="nf">_convert_position_str2float</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">position_str</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Convert a position string in the format of DD:MM:SS to decimal degrees</span>
+<span class="sd">        </span>
+<span class="sd">         :param position: latitude or longitude om DD:MM:SS.ms</span>
+<span class="sd">        :type position: float</span>
+<span class="sd">                           </span>
+<span class="sd">        :returns: latitude or longitude as a float</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+    
+        <span class="k">if</span> <span class="n">position_str</span> <span class="ow">in</span> <span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="s1">&#39;None&#39;</span><span class="p">]:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        
+        <span class="n">p_list</span> <span class="o">=</span> <span class="n">position_str</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">p_list</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{0}</span><span class="s1"> not correct format, should be DD:MM:SS&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">position_str</span><span class="p">))</span>
+    
+        <span class="n">deg</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">p_list</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">minutes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_assert_minutes</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">p_list</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+        <span class="n">sec</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_assert_seconds</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">p_list</span><span class="p">[</span><span class="mi">2</span><span class="p">]))</span>
+    
+        <span class="c1"># get the sign of the position so that when all are added together the</span>
+        <span class="c1"># position is in the correct place</span>
+        <span class="n">sign</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">deg</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">sign</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+    
+        <span class="n">position_value</span> <span class="o">=</span> <span class="n">sign</span> <span class="o">*</span> <span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">deg</span><span class="p">)</span> <span class="o">+</span> <span class="n">minutes</span> <span class="o">/</span> <span class="mf">60.</span> <span class="o">+</span> <span class="n">sec</span> <span class="o">/</span> <span class="mf">3600.</span><span class="p">)</span>
+    
+        <span class="k">return</span> <span class="n">position_value</span>
+    
+    <span class="k">def</span> <span class="nf">_assert_minutes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">minutes</span><span class="p">):</span>
+        <span class="k">assert</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">minutes</span> <span class="o">&lt;</span> <span class="mf">60.</span><span class="p">,</span> \
+            <span class="s1">&#39;minutes needs to be &lt;60 and &gt;0, currently </span><span class="si">{0:.0f}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">minutes</span><span class="p">)</span>
+    
+        <span class="k">return</span> <span class="n">minutes</span>
+
+    <span class="k">def</span> <span class="nf">_assert_seconds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">seconds</span><span class="p">):</span>
+        <span class="k">assert</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">seconds</span> <span class="o">&lt;</span> <span class="mf">60.</span><span class="p">,</span> \
+            <span class="s1">&#39;seconds needs to be &lt;60 and &gt;0, currently </span><span class="si">{0:.3f}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">seconds</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">seconds</span></div>
+
+<span class="c1"># ==============================================================================</span>
+<span class="c1"># Site details</span>
+<span class="c1"># ==============================================================================</span>
+<div class="viewcode-block" id="Site"><a class="viewcode-back" href="../../index.html#mth5.mth5.Site">[docs]</a><span class="k">class</span> <span class="nc">Site</span><span class="p">(</span><span class="n">Location</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Information on the site, including location, id, etc.</span>
+
+<span class="sd">    Holds the following information:</span>
+
+<span class="sd">    ================= =========== =============================================</span>
+<span class="sd">    Attributes         Type        Explanation</span>
+<span class="sd">    ================= =========== =============================================</span>
+<span class="sd">    aqcuired_by       string       name of company or person whom aqcuired the</span>
+<span class="sd">                                   data.</span>
+<span class="sd">    id                string       station name</span>
+<span class="sd">    Location          object       Holds location information, lat, lon, elev</span>
+<span class="sd">                      Location     datum, easting, northing see Location class</span>
+<span class="sd">    start_date        string       YYYY-MM-DD start date of measurement</span>
+<span class="sd">    end_date          string       YYYY-MM-DD end date of measurement</span>
+<span class="sd">    year_collected    string       year data collected</span>
+<span class="sd">    survey            string       survey name</span>
+<span class="sd">    project           string       project name</span>
+<span class="sd">    run_list          string       list of measurment runs ex. [mt01a, mt01b]</span>
+<span class="sd">    ================= =========== =============================================</span>
+
+<span class="sd">    More attributes can be added by inputing a key word dictionary</span>
+
+<span class="sd">    &gt;&gt;&gt; Site(**{&#39;state&#39;:&#39;Nevada&#39;, &#39;Operator&#39;:&#39;MTExperts&#39;})</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Site</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">acquired_by</span> <span class="o">=</span> <span class="n">Person</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_start_date</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_end_date</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">survey</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_attrs_list</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;acquired_by&#39;</span><span class="p">,</span>
+                            <span class="s1">&#39;start_date&#39;</span><span class="p">,</span>
+                            <span class="s1">&#39;end_date&#39;</span><span class="p">,</span>
+                            <span class="s1">&#39;id&#39;</span><span class="p">,</span>
+                            <span class="s1">&#39;survey&#39;</span><span class="p">,</span>
+                            <span class="s1">&#39;latitude&#39;</span><span class="p">,</span>
+                            <span class="s1">&#39;longitude&#39;</span><span class="p">,</span>
+                            <span class="s1">&#39;elevation&#39;</span><span class="p">,</span>
+                            <span class="s1">&#39;datum&#39;</span><span class="p">,</span>
+                            <span class="s1">&#39;declination&#39;</span><span class="p">,</span>
+                            <span class="s1">&#39;declination_epoch&#39;</span><span class="p">,</span>
+                            <span class="s1">&#39;elev_units&#39;</span><span class="p">,</span>
+                            <span class="s1">&#39;coordinate_system&#39;</span><span class="p">]</span>
+
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">start_date</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_start_date</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="n">dt_fmt</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">AttributeError</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="nd">@start_date</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">start_date</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start_date</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_start_date</span> <span class="o">=</span> <span class="n">dateutil</span><span class="o">.</span><span class="n">parser</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">start_date</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_start_date</span><span class="o">.</span><span class="n">tzname</span><span class="p">()</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_start_date</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_start_date</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">tzinfo</span><span class="o">=</span><span class="n">UTC</span><span class="p">())</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">end_date</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_end_date</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="n">dt_fmt</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">AttributeError</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="nd">@end_date</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">end_date</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">end_date</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_end_date</span> <span class="o">=</span> <span class="n">dateutil</span><span class="o">.</span><span class="n">parser</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">end_date</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_end_date</span><span class="o">.</span><span class="n">tzname</span><span class="p">()</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_end_date</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_end_date</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">tzinfo</span><span class="o">=</span><span class="n">UTC</span><span class="p">())</span></div>
+
+<span class="c1"># ==============================================================================</span>
+<span class="c1"># Field Notes</span>
+<span class="c1"># ==============================================================================</span>
+<div class="viewcode-block" id="FieldNotes"><a class="viewcode-back" href="../../index.html#mth5.mth5.FieldNotes">[docs]</a><span class="k">class</span> <span class="nc">FieldNotes</span><span class="p">(</span><span class="n">Generic</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Field note information.</span>
+
+
+<span class="sd">    Holds the following information:</span>
+
+<span class="sd">    ================= =========== =============================================</span>
+<span class="sd">    Attributes         Type        Explanation</span>
+<span class="sd">    ================= =========== =============================================</span>
+<span class="sd">    data_quality      DataQuality notes on data quality</span>
+<span class="sd">    electrode         Instrument      type of electrode used</span>
+<span class="sd">    data_logger       Instrument      type of data logger</span>
+<span class="sd">    magnetometer      Instrument      type of magnetotmeter</span>
+<span class="sd">    ================= =========== =============================================</span>
+
+<span class="sd">    More attributes can be added by inputing a key word dictionary</span>
+
+<span class="sd">    &gt;&gt;&gt; FieldNotes(**{&#39;electrode_ex&#39;:&#39;Ag-AgCl 213&#39;, &#39;magnetometer_hx&#39;:&#39;102&#39;})</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">FieldNotes</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_electric_channel</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;length&#39;</span><span class="p">:</span><span class="kc">None</span><span class="p">,</span>
+                                  <span class="s1">&#39;azimuth&#39;</span><span class="p">:</span><span class="kc">None</span><span class="p">,</span>
+                                  <span class="s1">&#39;chn_num&#39;</span><span class="p">:</span><span class="kc">None</span><span class="p">,</span>
+                                  <span class="s1">&#39;units&#39;</span><span class="p">:</span><span class="s1">&#39;mV&#39;</span><span class="p">,</span>
+                                  <span class="s1">&#39;gain&#39;</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span>
+                                  <span class="s1">&#39;contact_resistance&#39;</span><span class="p">:</span><span class="mi">1</span><span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_magnetic_channel</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;azimuth&#39;</span><span class="p">:</span><span class="kc">None</span><span class="p">,</span>
+                                  <span class="s1">&#39;chn_num&#39;</span><span class="p">:</span><span class="kc">None</span><span class="p">,</span>
+                                  <span class="s1">&#39;units&#39;</span><span class="p">:</span><span class="s1">&#39;mV&#39;</span><span class="p">,</span>
+                                  <span class="s1">&#39;gain&#39;</span><span class="p">:</span><span class="mi">1</span><span class="p">}</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">data_quality</span> <span class="o">=</span> <span class="n">DataQuality</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data_logger</span> <span class="o">=</span> <span class="n">Instrument</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">electrode_ex</span> <span class="o">=</span> <span class="n">Instrument</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_electric_channel</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">electrode_ey</span> <span class="o">=</span> <span class="n">Instrument</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_electric_channel</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">magnetometer_hx</span> <span class="o">=</span> <span class="n">Instrument</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_magnetic_channel</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">magnetometer_hy</span> <span class="o">=</span> <span class="n">Instrument</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_magnetic_channel</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">magnetometer_hz</span> <span class="o">=</span> <span class="n">Instrument</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_magnetic_channel</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span></div>
+
+<span class="c1"># ==============================================================================</span>
+<span class="c1"># Instrument</span>
+<span class="c1"># ==============================================================================</span>
+<div class="viewcode-block" id="Instrument"><a class="viewcode-back" href="../../index.html#mth5.mth5.Instrument">[docs]</a><span class="k">class</span> <span class="nc">Instrument</span><span class="p">(</span><span class="n">Generic</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Information on an instrument that was used.</span>
+
+<span class="sd">    Holds the following information:</span>
+
+<span class="sd">    ================= =========== =============================================</span>
+<span class="sd">    Attributes         Type        Explanation</span>
+<span class="sd">    ================= =========== =============================================</span>
+<span class="sd">    id                string      serial number or id number of data logger</span>
+<span class="sd">    manufacturer      string      company whom makes the instrument</span>
+<span class="sd">    type              string      Broadband, long period, something else</span>
+<span class="sd">    ================= =========== =============================================</span>
+
+<span class="sd">    More attributes can be added by inputing a key word dictionary</span>
+
+<span class="sd">    &gt;&gt;&gt; Instrument(**{&#39;ports&#39;:&#39;5&#39;, &#39;gps&#39;:&#39;time_stamped&#39;})</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Instrument</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">manufacturer</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Instrument.get_length"><a class="viewcode-back" href="../../index.html#mth5.mth5.Instrument.get_length">[docs]</a>    <span class="k">def</span> <span class="nf">get_length</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        get dipole length</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">x2</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">x</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">y2</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mi">0</span></div></div>
+
+
+<span class="c1"># ==============================================================================</span>
+<span class="c1"># Data Quality</span>
+<span class="c1"># ==============================================================================</span>
+<div class="viewcode-block" id="DataQuality"><a class="viewcode-back" href="../../index.html#mth5.mth5.DataQuality">[docs]</a><span class="k">class</span> <span class="nc">DataQuality</span><span class="p">(</span><span class="n">Generic</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Information on data quality.</span>
+
+<span class="sd">    Holds the following information:</span>
+
+<span class="sd">    ================= =========== =============================================</span>
+<span class="sd">    Attributes         Type        Explanation</span>
+<span class="sd">    ================= =========== =============================================</span>
+<span class="sd">    comments          string      comments on data quality</span>
+<span class="sd">    good_from_period  float       minimum period data are good</span>
+<span class="sd">    good_to_period    float       maximum period data are good</span>
+<span class="sd">    rating            int         [1-5]; 1 = poor, 5 = excellent</span>
+<span class="sd">    warrning_comments string      any comments on warnings in the data</span>
+<span class="sd">    warnings_flag     int         [0-#of warnings]</span>
+<span class="sd">    ================= =========== =============================================</span>
+
+<span class="sd">    More attributes can be added by inputing a key word dictionary</span>
+
+<span class="sd">    &gt;&gt;&gt; DataQuality(**{&#39;time_series_comments&#39;:&#39;Periodic Noise&#39;})</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">DataQuality</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">comments</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rating</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">warnings_comments</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">warnings_flag</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">author</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span></div>
+
+<span class="c1"># ==============================================================================</span>
+<span class="c1"># Citation</span>
+<span class="c1"># ==============================================================================</span>
+<div class="viewcode-block" id="Citation"><a class="viewcode-back" href="../../index.html#mth5.mth5.Citation">[docs]</a><span class="k">class</span> <span class="nc">Citation</span><span class="p">(</span><span class="n">Generic</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Information for a citation.</span>
+
+<span class="sd">    Holds the following information:</span>
+
+<span class="sd">    ================= =========== =============================================</span>
+<span class="sd">    Attributes         Type        Explanation</span>
+<span class="sd">    ================= =========== =============================================</span>
+<span class="sd">    author            string      Author names</span>
+<span class="sd">    title             string      Title of article, or publication</span>
+<span class="sd">    journal           string      Name of journal</span>
+<span class="sd">    doi               string      DOI number (doi:10.110/sf454)</span>
+<span class="sd">    year              int         year published</span>
+<span class="sd">    ================= =========== =============================================</span>
+
+<span class="sd">    More attributes can be added by inputing a key word dictionary</span>
+
+<span class="sd">    &gt;&gt;&gt; Citation(**{&#39;volume&#39;:56, &#39;pages&#39;:&#39;234--214&#39;})</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Citation</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">author</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">title</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">journal</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">volume</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">doi</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">year</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span></div>
+
+<span class="c1"># ==============================================================================</span>
+<span class="c1"># Copyright</span>
+<span class="c1"># ==============================================================================</span>
+<div class="viewcode-block" id="Copyright"><a class="viewcode-back" href="../../index.html#mth5.mth5.Copyright">[docs]</a><span class="k">class</span> <span class="nc">Copyright</span><span class="p">(</span><span class="n">Generic</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Information of copyright, mainly about how someone else can use these</span>
+<span class="sd">    data. Be sure to read over the conditions_of_use.</span>
+
+<span class="sd">    Holds the following information:</span>
+
+<span class="sd">    ================= =========== =============================================</span>
+<span class="sd">    Attributes         Type        Explanation</span>
+<span class="sd">    ================= =========== =============================================</span>
+<span class="sd">    citation          Citation    citation of published work using these data</span>
+<span class="sd">    conditions_of_use string      conditions of use of these data</span>
+<span class="sd">    release_status    string      release status [ open | public | proprietary]</span>
+<span class="sd">    ================= =========== =============================================</span>
+
+<span class="sd">    More attributes can be added by inputing a key word dictionary</span>
+
+<span class="sd">    &gt;&gt;&gt; Copyright(**{&#39;owner&#39;:&#39;University of MT&#39;, &#39;contact&#39;:&#39;Cagniard&#39;})</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Copyright</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">citation</span> <span class="o">=</span> <span class="n">Citation</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">conditions_of_use</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="s1">&#39;All data and metadata for this survey are &#39;</span><span class="p">,</span>
+                                          <span class="s1">&#39;available free of charge and may be copied &#39;</span><span class="p">,</span>
+                                          <span class="s1">&#39;freely, duplicated and further distributed &#39;</span><span class="p">,</span>
+                                          <span class="s1">&#39;provided this data set is cited as the &#39;</span><span class="p">,</span>
+                                          <span class="s1">&#39;reference. While the author(s) strive to &#39;</span><span class="p">,</span>
+                                          <span class="s1">&#39;provide data and metadata of best possible &#39;</span><span class="p">,</span>
+                                          <span class="s1">&#39;quality, neither the author(s) of this data &#39;</span><span class="p">,</span>
+                                          <span class="s1">&#39;set, not IRIS make any claims, promises, or &#39;</span><span class="p">,</span>
+                                          <span class="s1">&#39;guarantees about the accuracy, completeness, &#39;</span><span class="p">,</span>
+                                          <span class="s1">&#39;or adequacy of this information, and expressly &#39;</span><span class="p">,</span>
+                                          <span class="s1">&#39;disclaim liability for errors and omissions in &#39;</span><span class="p">,</span>
+                                          <span class="s1">&#39;the contents of this file. Guidelines about &#39;</span><span class="p">,</span>
+                                          <span class="s1">&#39;the quality or limitations of the data and &#39;</span><span class="p">,</span>
+                                          <span class="s1">&#39;metadata, as obtained from the author(s), are &#39;</span><span class="p">,</span>
+                                          <span class="s1">&#39;included for informational purposes only.&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">release_status</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">additional_info</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span></div>
+
+<span class="c1"># ==============================================================================</span>
+<span class="c1"># Provenance</span>
+<span class="c1"># ==============================================================================</span>
+<div class="viewcode-block" id="Provenance"><a class="viewcode-back" href="../../index.html#mth5.mth5.Provenance">[docs]</a><span class="k">class</span> <span class="nc">Provenance</span><span class="p">(</span><span class="n">Generic</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Information of the file history, how it was made</span>
+
+<span class="sd">    Holds the following information:</span>
+
+<span class="sd">    ====================== =========== ========================================</span>
+<span class="sd">    Attributes             Type        Explanation</span>
+<span class="sd">    ====================== =========== ========================================</span>
+<span class="sd">    creation_time          string      creation time of file YYYY-MM-DD,hh:mm:ss</span>
+<span class="sd">    creating_application   string      name of program creating the file</span>
+<span class="sd">    creator                Person      person whom created the file</span>
+<span class="sd">    submitter              Person      person whom is submitting file for</span>
+<span class="sd">                                       archiving</span>
+<span class="sd">    ====================== =========== ========================================</span>
+
+<span class="sd">    More attributes can be added by inputing a key word dictionary</span>
+
+<span class="sd">    &gt;&gt;&gt; Provenance(**{&#39;archive&#39;:&#39;IRIS&#39;, &#39;reprocessed_by&#39;:&#39;grad_student&#39;})</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Provenance</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">creation_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1"> %H:%M:%S&#39;</span><span class="p">,</span> <span class="n">time</span><span class="o">.</span><span class="n">gmtime</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">creating_application</span> <span class="o">=</span> <span class="s1">&#39;MTH5&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">creator</span> <span class="o">=</span> <span class="n">Person</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">submitter</span> <span class="o">=</span> <span class="n">Person</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span></div>
+
+<span class="c1"># ==============================================================================</span>
+<span class="c1"># Person</span>
+<span class="c1"># ==============================================================================</span>
+<div class="viewcode-block" id="Person"><a class="viewcode-back" href="../../index.html#mth5.mth5.Person">[docs]</a><span class="k">class</span> <span class="nc">Person</span><span class="p">(</span><span class="n">Generic</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Information for a person</span>
+
+<span class="sd">    Holds the following information:</span>
+
+<span class="sd">    ================= =========== =============================================</span>
+<span class="sd">    Attributes         Type        Explanation</span>
+<span class="sd">    ================= =========== =============================================</span>
+<span class="sd">    email             string      email of person</span>
+<span class="sd">    name              string      name of person</span>
+<span class="sd">    organization      string      name of person&#39;s organization</span>
+<span class="sd">    organization_url  string      organizations web address</span>
+<span class="sd">    ================= =========== =============================================</span>
+
+<span class="sd">    More attributes can be added by inputing a key word dictionary</span>
+
+<span class="sd">    &gt;&gt;&gt; Person(**{&#39;phone&#39;:&#39;650-888-6666&#39;})</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Person</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">email</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">organization</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">organization_url</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span></div>
+
+<span class="c1"># ==============================================================================</span>
+<span class="c1"># Software</span>
+<span class="c1"># ==============================================================================</span>
+<div class="viewcode-block" id="Software"><a class="viewcode-back" href="../../index.html#mth5.mth5.Software">[docs]</a><span class="k">class</span> <span class="nc">Software</span><span class="p">(</span><span class="n">Generic</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    software</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Software</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">version</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">author</span> <span class="o">=</span> <span class="n">Person</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span></div>
+
+<span class="c1"># =============================================================================</span>
+<span class="c1"># schedule</span>
+<span class="c1"># =============================================================================</span>
+<div class="viewcode-block" id="Schedule"><a class="viewcode-back" href="../../index.html#mth5.mth5.Schedule">[docs]</a><span class="k">class</span> <span class="nc">Schedule</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Container for a single schedule item</span>
+
+<span class="sd">    :Metadata keywords:</span>
+
+<span class="sd">          ===================== =======================================</span>
+<span class="sd">          name                  description</span>
+<span class="sd">          ===================== =======================================</span>
+<span class="sd">          station               station name</span>
+<span class="sd">          latitude              latitude of station (decimal degrees)</span>
+<span class="sd">          longitude             longitude of station (decimal degrees)</span>
+<span class="sd">          hx_azimuth            azimuth of HX (degrees from north=0)</span>
+<span class="sd">          hy_azimuth            azimuth of HY (degrees from north=0)</span>
+<span class="sd">          hz_azimuth            azimuth of HZ (degrees from horizon=0)</span>
+<span class="sd">          ex_azimuth            azimuth of EX (degrees from north=0)</span>
+<span class="sd">          ey_azimuth            azimuth of EY (degrees from north=0)</span>
+<span class="sd">          hx_sensor             instrument id number for HX</span>
+<span class="sd">          hy_sensor             instrument id number for HY</span>
+<span class="sd">          hz_sensor             instrument id number for HZ</span>
+<span class="sd">          ex_sensor             instrument id number for EX</span>
+<span class="sd">          ey_sensor             instrument id number for EY</span>
+<span class="sd">          ex_length             dipole length (m) for EX</span>
+<span class="sd">          ey_length             dipole length (m) for EX</span>
+<span class="sd">          ex_num                channel number of EX</span>
+<span class="sd">          ey_num                channel number of EX</span>
+<span class="sd">          hx_num                channel number of EX</span>
+<span class="sd">          hy_num                channel number of EX</span>
+<span class="sd">          hz_num                channel number of EX</span>
+<span class="sd">          instrument_id         instrument id</span>
+<span class="sd">          ===================== =======================================</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">meta_df</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">ex</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ey</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hx</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hy</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hz</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dt_index</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_comp_list</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;ex&#39;</span><span class="p">,</span> <span class="s1">&#39;ey&#39;</span><span class="p">,</span> <span class="s1">&#39;hx&#39;</span><span class="p">,</span> <span class="s1">&#39;hy&#39;</span><span class="p">,</span> <span class="s1">&#39;hz&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_attrs_list</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">,</span>
+                            <span class="s1">&#39;start_time&#39;</span><span class="p">,</span>
+                            <span class="s1">&#39;stop_time&#39;</span><span class="p">,</span>
+                            <span class="s1">&#39;start_seconds_from_epoch&#39;</span><span class="p">,</span>
+                            <span class="s1">&#39;stop_seconds_from_epoch&#39;</span><span class="p">,</span>
+                            <span class="s1">&#39;n_samples&#39;</span><span class="p">,</span>
+                            <span class="s1">&#39;n_channels&#39;</span><span class="p">,</span>
+                            <span class="s1">&#39;sampling_rate&#39;</span><span class="p">]</span>
+
+        <span class="c1">#self.ts_df = time_series_dataframe</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">meta_df</span> <span class="o">=</span> <span class="n">meta_df</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">start_time</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Start time in UTC string format</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="s1">&#39;</span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dt_index</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="n">dt_fmt</span><span class="p">))</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">stop_time</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Stop time in UTC string format</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="s1">&#39;</span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dt_index</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="n">dt_fmt</span><span class="p">))</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">start_seconds_from_epoch</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Start time in epoch seconds</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dt_index</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">to_datetime64</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span><span class="o">/</span><span class="mf">1e9</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">stop_seconds_from_epoch</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        sopt time in epoch seconds</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dt_index</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">to_datetime64</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span><span class="o">/</span><span class="mf">1e9</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">n_channels</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        number of channels</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">comp_list</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">sampling_rate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        sampling rate</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mf">1.0e9</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">dt_index</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">freq</span><span class="o">.</span><span class="n">nanos</span><span class="p">,</span> <span class="n">decimals</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">n_samples</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        number of samples</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dt_index</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">comp_list</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        component list for the given schedule</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">comp</span> <span class="k">for</span> <span class="n">comp</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_comp_list</span>
+                <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">comp</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">]</span>
+
+<div class="viewcode-block" id="Schedule.make_dt_index"><a class="viewcode-back" href="../../index.html#mth5.mth5.Schedule.make_dt_index">[docs]</a>    <span class="k">def</span> <span class="nf">make_dt_index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start_time</span><span class="p">,</span> <span class="n">sampling_rate</span><span class="p">,</span> <span class="n">stop_time</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                      <span class="n">n_samples</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        make time index array</span>
+
+<span class="sd">        .. note:: date-time format should be YYYY-M-DDThh:mm:ss.ms UTC</span>
+
+<span class="sd">        :param start_time: start time</span>
+<span class="sd">        :type start_time: string</span>
+
+<span class="sd">        :param end_time: end time</span>
+<span class="sd">        :type end_time: string</span>
+
+<span class="sd">        :param sampling_rate: sampling_rate in samples/second</span>
+<span class="sd">        :type sampling_rate: float</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># set the index to be UTC time</span>
+        <span class="n">dt_freq</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{0:.0f}</span><span class="s1">N&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="mf">1.</span><span class="o">/</span><span class="p">(</span><span class="n">sampling_rate</span><span class="p">)</span><span class="o">*</span><span class="mf">1E9</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">stop_time</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">dt_index</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">date_range</span><span class="p">(</span><span class="n">start</span><span class="o">=</span><span class="n">start_time</span><span class="p">,</span>
+                                     <span class="n">end</span><span class="o">=</span><span class="n">stop_time</span><span class="p">,</span>
+                                     <span class="n">freq</span><span class="o">=</span><span class="n">dt_freq</span><span class="p">,</span>
+                                     <span class="n">closed</span><span class="o">=</span><span class="s1">&#39;left&#39;</span><span class="p">,</span>
+                                     <span class="n">tz</span><span class="o">=</span><span class="s1">&#39;UTC&#39;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">n_samples</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">dt_index</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">date_range</span><span class="p">(</span><span class="n">start</span><span class="o">=</span><span class="n">start_time</span><span class="p">,</span>
+                                     <span class="n">periods</span><span class="o">=</span><span class="n">n_samples</span><span class="p">,</span>
+                                     <span class="n">freq</span><span class="o">=</span><span class="n">dt_freq</span><span class="p">,</span>
+                                     <span class="n">tz</span><span class="o">=</span><span class="s1">&#39;UTC&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Need to input either stop_time or n_samples&#39;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">dt_index</span></div>
+
+<div class="viewcode-block" id="Schedule.from_dataframe"><a class="viewcode-back" href="../../index.html#mth5.mth5.Schedule.from_dataframe">[docs]</a>    <span class="k">def</span> <span class="nf">from_dataframe</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ts_dataframe</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        update attributes from a pandas dataframe.</span>
+
+<span class="sd">        Dataframe should have columns:</span>
+<span class="sd">            * ex</span>
+<span class="sd">            * ey</span>
+<span class="sd">            * hx</span>
+<span class="sd">            * hy</span>
+<span class="sd">            * hz</span>
+<span class="sd">        and should be indexed by time.</span>
+
+<span class="sd">        :param ts_dataframe: dataframe holding the data</span>
+<span class="sd">        :type ts_datarame: pandas.DataFrame</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ts_dataframe</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">True</span>
+        <span class="k">except</span> <span class="ne">AssertionError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;ts_dataframe is not a pandas.DataFrame object.</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span>
+                            <span class="s1">&#39;ts_dataframe is </span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">ts_dataframe</span><span class="p">)))</span>
+
+        <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">ts_dataframe</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">col</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span> <span class="n">ts_dataframe</span><span class="p">[</span><span class="n">col</span><span class="p">])</span>
+            <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2"> xxx skipping </span><span class="si">{0}</span><span class="s2"> xxx&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">col</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dt_index</span> <span class="o">=</span> <span class="n">ts_dataframe</span><span class="o">.</span><span class="n">index</span>
+
+        <span class="k">return</span></div>
+
+<div class="viewcode-block" id="Schedule.from_mth5"><a class="viewcode-back" href="../../index.html#mth5.mth5.Schedule.from_mth5">[docs]</a>    <span class="k">def</span> <span class="nf">from_mth5</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mth5_obj</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        make a schedule object from mth5 file</span>
+
+<span class="sd">        :param mth5_obj: an open mth5 object</span>
+<span class="sd">        :type mth5_obj: mth5.MTH5 open object</span>
+
+<span class="sd">        :param name: name of schedule to use</span>
+<span class="sd">        :type name: string</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">mth5_schedule</span> <span class="o">=</span> <span class="n">mth5_obj</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+
+        <span class="k">for</span> <span class="n">comp</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_comp_list</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">comp</span><span class="p">,</span> <span class="n">mth5_schedule</span><span class="p">[</span><span class="n">comp</span><span class="p">])</span>
+            <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1"> xxx No </span><span class="si">{0}</span><span class="s1"> data for </span><span class="si">{1}</span><span class="s1"> xxx&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">comp</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
+                <span class="k">continue</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">dt_index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">make_dt_index</span><span class="p">(</span><span class="n">mth5_schedule</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;start_time&#39;</span><span class="p">],</span>
+                                           <span class="n">mth5_schedule</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;sampling_rate&#39;</span><span class="p">],</span>
+                                           <span class="n">n_samples</span><span class="o">=</span><span class="n">mth5_schedule</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;n_samples&#39;</span><span class="p">])</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">dt_index</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">comp_list</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">return</span></div>
+
+<div class="viewcode-block" id="Schedule.from_numpy_array"><a class="viewcode-back" href="../../index.html#mth5.mth5.Schedule.from_numpy_array">[docs]</a>    <span class="k">def</span> <span class="nf">from_numpy_array</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">schedul_np_array</span><span class="p">,</span> <span class="n">start_time</span><span class="p">,</span> <span class="n">stop_time</span><span class="p">,</span>
+                         <span class="n">sampling_rate</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        TODO</span>
+<span class="sd">        update attributes from a numpy array</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="Schedule.write_metadata_csv"><a class="viewcode-back" href="../../index.html#mth5.mth5.Schedule.write_metadata_csv">[docs]</a>    <span class="k">def</span> <span class="nf">write_metadata_csv</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">csv_dir</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        write metadata to a csv file</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">csv_fn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_make_csv_fn</span><span class="p">(</span><span class="n">csv_dir</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">meta_df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">csv_fn</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">csv_fn</span></div>
+
+    <span class="k">def</span> <span class="nf">_make_csv_fn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">csv_dir</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        create csv file name from data.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">meta_df</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;meta_df is not a Pandas Series, </span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">meta_df</span><span class="p">)))</span>
+        <span class="n">csv_fn</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{0}</span><span class="s1">_</span><span class="si">{1}</span><span class="s1">_</span><span class="si">{2}</span><span class="s1">_</span><span class="si">{3}</span><span class="s1">.csv&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">meta_df</span><span class="o">.</span><span class="n">station</span><span class="p">,</span>
+                                              <span class="bp">self</span><span class="o">.</span><span class="n">dt_index</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y%m</span><span class="si">%d</span><span class="s1">&#39;</span><span class="p">),</span>
+                                              <span class="bp">self</span><span class="o">.</span><span class="n">dt_index</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%H%M%S&#39;</span><span class="p">),</span>
+                                              <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sampling_rate</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">csv_dir</span><span class="p">,</span> <span class="n">csv_fn</span><span class="p">)</span></div>
+
+<span class="c1"># =============================================================================</span>
+<span class="c1"># Calibrations</span>
+<span class="c1"># =============================================================================</span>
+<div class="viewcode-block" id="Calibration"><a class="viewcode-back" href="../../index.html#mth5.mth5.Calibration">[docs]</a><span class="k">class</span> <span class="nc">Calibration</span><span class="p">(</span><span class="n">Generic</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    container for insturment calibrations</span>
+
+<span class="sd">    Each instrument should be a separate class</span>
+
+<span class="sd">    Metadata should be:</span>
+<span class="sd">        * instrument_id</span>
+<span class="sd">        * calibration_date</span>
+<span class="sd">        * calibration_person</span>
+<span class="sd">        * units</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Calibration</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">instrument_id</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">units</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">calibration_date</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">calibration_person</span> <span class="o">=</span> <span class="n">Person</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">frequency</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">real</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">imaginary</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_col_list</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;frequency&#39;</span><span class="p">,</span> <span class="s1">&#39;real&#39;</span><span class="p">,</span> <span class="s1">&#39;imaginary&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_attrs_list</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">,</span>
+                           <span class="s1">&#39;instrument_id&#39;</span><span class="p">,</span>
+                           <span class="s1">&#39;units&#39;</span><span class="p">,</span>
+                           <span class="s1">&#39;calibration_date&#39;</span><span class="p">,</span>
+                           <span class="s1">&#39;calibration_person&#39;</span><span class="p">]</span>
+        
+
+
+<div class="viewcode-block" id="Calibration.from_dataframe"><a class="viewcode-back" href="../../index.html#mth5.mth5.Calibration.from_dataframe">[docs]</a>    <span class="k">def</span> <span class="nf">from_dataframe</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cal_dataframe</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        updated attributes from a pandas DataFrame</span>
+
+<span class="sd">        :param cal_dataframe: dataframe with columns frequency, real, imaginary</span>
+<span class="sd">        :type cal_dataframe: pandas.DataFrame</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cal_dataframe</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">True</span>
+
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+
+        <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">cal_dataframe</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">col</span><span class="p">,</span> <span class="n">cal_dataframe</span><span class="p">[</span><span class="n">col</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="Calibration.from_numpy_array"><a class="viewcode-back" href="../../index.html#mth5.mth5.Calibration.from_numpy_array">[docs]</a>    <span class="k">def</span> <span class="nf">from_numpy_array</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cal_np_array</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        update attributes from a numpy array</span>
+
+<span class="sd">        :param cal_np_array: array of values for calibration, see below</span>
+<span class="sd">        :type cal_np_array: numpy.ndarray</span>
+
+<span class="sd">        if array is a numpy structured array names need to be:</span>
+<span class="sd">            * frequency</span>
+<span class="sd">            * real</span>
+<span class="sd">            * imaginary</span>
+
+<span class="sd">        if array is just columns, needs to be ordered:</span>
+<span class="sd">            * frequency (index 0)</span>
+<span class="sd">            * real (index 1)</span>
+<span class="sd">            * imaginary (index 2)</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+
+        <span class="c1">### assume length of 1 is a structured array</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">cal_np_array</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="n">cal_np_array</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">names</span> <span class="o">==</span> <span class="p">(</span><span class="s1">&#39;frequency&#39;</span><span class="p">,</span> <span class="s1">&#39;real&#39;</span><span class="p">,</span> <span class="s1">&#39;imaginary&#39;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">cal_np_array</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">names</span><span class="p">:</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">cal_np_array</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
+
+        <span class="c1">### assume an unstructured array (f, r, i)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">cal_np_array</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">cal_np_array</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">([</span><span class="s1">&#39;frequency&#39;</span><span class="p">,</span> <span class="s1">&#39;real&#39;</span><span class="p">,</span> <span class="s1">&#39;imaginary&#39;</span><span class="p">]):</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">cal_np_array</span><span class="p">[</span><span class="n">ii</span><span class="p">,</span> <span class="p">:])</span>
+
+        <span class="k">return</span></div>
+
+<div class="viewcode-block" id="Calibration.from_mth5"><a class="viewcode-back" href="../../index.html#mth5.mth5.Calibration.from_mth5">[docs]</a>    <span class="k">def</span> <span class="nf">from_mth5</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mth5_obj</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        update attribues from mth5 file</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">mth5_obj</span><span class="p">[</span><span class="s1">&#39;/calibrations/</span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)]</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">mth5_obj</span><span class="p">[</span><span class="s1">&#39;/calibrations/</span><span class="si">{0}</span><span class="s1">/</span><span class="si">{1}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                                                                       <span class="n">key</span><span class="p">)])</span>
+
+        <span class="c1">### read in attributes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">from_json</span><span class="p">(</span><span class="n">mth5_obj</span><span class="p">[</span><span class="s1">&#39;/calibrations/</span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)]</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;metadata&#39;</span><span class="p">])</span></div>
+        
+<div class="viewcode-block" id="Calibration.from_csv"><a class="viewcode-back" href="../../index.html#mth5.mth5.Calibration.from_csv">[docs]</a>    <span class="k">def</span> <span class="nf">from_csv</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cal_csv</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Read a csv file that is in the format frequency,real,imaginary</span>
+<span class="sd">        </span>
+<span class="sd">        :param cal_csv: full path to calibration csv file</span>
+<span class="sd">        :type cal_csv: string</span>
+<span class="sd">        </span>
+<span class="sd">        :param name: instrument id</span>
+<span class="sd">        :type name: string</span>
+<span class="sd">        </span>
+<span class="sd">        :param header: boolean if there is a header in the csv file</span>
+<span class="sd">        :type header: [ True | False ]</span>
+<span class="sd">        </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">header</span><span class="p">:</span>
+            <span class="n">cal_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">cal_csv</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_col_list</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">cal_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">cal_csv</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_col_list</span><span class="p">)</span>
+            
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">from_dataframe</span><span class="p">(</span><span class="n">cal_df</span><span class="p">)</span></div></div>
+
+<span class="c1"># =============================================================================</span>
+<span class="c1"># MT HDF5 file</span>
+<span class="c1"># =============================================================================</span>
+<div class="viewcode-block" id="MTH5"><a class="viewcode-back" href="../../index.html#mth5.mth5.MTH5">[docs]</a><span class="k">class</span> <span class="nc">MTH5</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    MT HDF5 file</span>
+
+<span class="sd">    Class object to deal with reading and writing an MTH5 file.</span>
+
+<span class="sd">    ======================= ===================================================</span>
+<span class="sd">    Attribute               Description</span>
+<span class="sd">    ======================= ===================================================</span>
+<span class="sd">    copyright               Copyright object containing information on</span>
+<span class="sd">                            copyright information</span>
+<span class="sd">    field_notes             FieldNotes object containing information on how</span>
+<span class="sd">                            the data was collected</span>
+<span class="sd">    mth5_fn                 full path to MTH5 file</span>
+<span class="sd">    mth5_obj                HDF5 object from h5py</span>
+<span class="sd">    provenance              Provenance object containing information on when</span>
+<span class="sd">                            and by whom the data was collected</span>
+<span class="sd">    site                    Site object containing information about the</span>
+<span class="sd">                            location of the station</span>
+<span class="sd">    software                Software object containing information on the</span>
+<span class="sd">                            software used to make the file</span>
+<span class="sd">    schedule_##             Schedule object where ## is the number of the</span>
+<span class="sd">                            schedule if a MTH5 file was read in</span>
+<span class="sd">    calibration_##          Calibration object where ## is the component of</span>
+<span class="sd">                            the calibration</span>
+<span class="sd">    ======================= ===================================================</span>
+
+<span class="sd">    .. seealso:: mth5.Copyright, mth5.FieldNotes, mth5.Provenance, mth5.Site</span>
+<span class="sd">                 mth5.Software, mth5.Schedule, mth5.Calibration, h5py</span>
+
+<span class="sd">    ============================ ==============================================</span>
+<span class="sd">    Method                       Description</span>
+<span class="sd">    ============================ ==============================================</span>
+<span class="sd">    open_mth5                    load in a MTH5 file</span>
+<span class="sd">    close_mth5                   flushes any changes and closes MTH5 file</span>
+<span class="sd">    add_schedule                 add a schedule data set</span>
+<span class="sd">    add_calibration              add instrument calibration to /root/calibrations</span>
+<span class="sd">    write_metadata               write root metadata</span>
+<span class="sd">    update_metadata_from_cfg     update metadata attributes from a cfg file</span>
+<span class="sd">    update_metadata_from_series  update metadata attributes from pandas series</span>
+<span class="sd">    h5_is_write                  check if MTH5 file is open and writeable</span>
+<span class="sd">    ============================ ==============================================</span>
+
+<span class="sd">    * Example: Load MTH5 File</span>
+<span class="sd">    </span>
+<span class="sd">    &gt;&gt;&gt; import mth5.mth5 as mth5</span>
+<span class="sd">    &gt;&gt;&gt; data = mth5.MTH5.open_mth5(r&quot;/home/mtdata/mt01.mth5&quot;)</span>
+
+<span class="sd">    * Example: Update metadata from cfg file</span>
+<span class="sd">    </span>
+<span class="sd">    &gt;&gt;&gt; data = mth5.MTH5()</span>
+<span class="sd">    &gt;&gt;&gt; # read in configuration file to update attributes</span>
+<span class="sd">    &gt;&gt;&gt; data.update_metadata_from_cfg(r&quot;/home/survey_mth5.cfg&quot;)</span>
+<span class="sd">    &gt;&gt;&gt; data.write_metadata()</span>
+<span class="sd">    </span>
+<span class="sd">    * Example: Add schedule to MTH5 File</span>
+<span class="sd">    </span>
+<span class="sd">    &gt;&gt;&gt; schedule_obj = mth5.Schedule()</span>
+<span class="sd">    &gt;&gt;&gt; # make schedule object from a pandas dataframe</span>
+<span class="sd">    &gt;&gt;&gt; import pandas as pd</span>
+<span class="sd">    &gt;&gt;&gt; sdf = df = pd.DataFrame(np.random.random((256*3600+1, 5)),</span>
+<span class="sd">    ...                         columns=[&#39;ex&#39;, &#39;ey&#39;, &#39;hx&#39;, &#39;hy&#39;, &#39;hz&#39;],</span>
+<span class="sd">    ...                         index=pd.date_range(start=&#39;2018-01-01T01:00:00&#39;,</span>
+<span class="sd">    ...                                             end=&#39;2018-01-01T02:00:00&#39;,</span>
+<span class="sd">    ...                                             freq=&#39;{0:.0f}N&#39;.format(1./256.*1E9)))</span>
+<span class="sd">    &gt;&gt;&gt; data.schedule_01 = schedule_obj.from_dataframe(sdf, &#39;schedule_01&#39;)</span>
+<span class="sd">        </span>
+<span class="sd">    * Example: Add calibration from structured numpy array</span>
+
+<span class="sd">    &gt;&gt;&gt; import numpy as np</span>
+<span class="sd">    &gt;&gt;&gt; cal = mth5.Calibration()</span>
+<span class="sd">    &gt;&gt;&gt; cal_dtype = [(name, np.float) for name in [&#39;frequency&#39;, &#39;real&#39;, &#39;imaginary&#39;]]</span>
+<span class="sd">    &gt;&gt;&gt; cal.from_numpy_array(np.zeros(20), dtype=cal_dtype)</span>
+<span class="sd">    &gt;&gt;&gt; cal.frequency = np.logspace(-3, 3, 20)</span>
+<span class="sd">    &gt;&gt;&gt; cal.real = np.random.random(20)</span>
+<span class="sd">    &gt;&gt;&gt; cal.imaginary = np.random.random(20)</span>
+<span class="sd">    &gt;&gt;&gt; cal.name = &#39;hx&#39;</span>
+<span class="sd">    &gt;&gt;&gt; cal.instrument_id = 2284</span>
+<span class="sd">    &gt;&gt;&gt; cal.calibration_date = &#39;2018-01-01&#39;</span>
+<span class="sd">    &gt;&gt;&gt; cal.calibration_person.name = &#39;tester name&#39;</span>
+<span class="sd">    &gt;&gt;&gt; cal.calibration_person.organization = &#39;tester company&#39;</span>
+<span class="sd">    &gt;&gt;&gt; data.calibrations.calibration_hx = data.add_calibration(cal, &#39;hx&#39;)</span>
+<span class="sd">    </span>
+<span class="sd">    * Example: Update data</span>
+<span class="sd">    </span>
+<span class="sd">    &gt;&gt;&gt; data.schedule_01.ex[0:10] = np.nan</span>
+<span class="sd">    &gt;&gt;&gt; data.calibration_hx[...] = np.logspace(-4, 4, 20)</span>
+<span class="sd">    </span>
+<span class="sd">    .. note:: if replacing an entire array with a new one you need to use [...]</span>
+<span class="sd">              otherwise the data will not be updated.  </span>
+<span class="sd">              </span>
+<span class="sd">    .. warning:: You can only replace entire arrays with arrays of the same </span>
+<span class="sd">                 size.  Otherwise you need to delete the existing data and </span>
+<span class="sd">                 make a new dataset.  </span>
+<span class="sd">                 </span>
+<span class="sd">    .. seealso:: https://www.hdfgroup.org/ and h5py()</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mth5_fn</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mth5_obj</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">site</span> <span class="o">=</span> <span class="n">Site</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">field_notes</span> <span class="o">=</span> <span class="n">FieldNotes</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">copyright</span> <span class="o">=</span> <span class="n">Copyright</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">software</span> <span class="o">=</span> <span class="n">Software</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">provenance</span> <span class="o">=</span> <span class="n">Provenance</span><span class="p">()</span>
+
+<div class="viewcode-block" id="MTH5.h5_is_write"><a class="viewcode-back" href="../../index.html#mth5.mth5.MTH5.h5_is_write">[docs]</a>    <span class="k">def</span> <span class="nf">h5_is_write</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        check to see if the hdf5 file is open and writeable</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mth5_obj</span><span class="p">,</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">if</span> <span class="s1">&#39;w&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">mth5_obj</span><span class="o">.</span><span class="n">mode</span> <span class="ow">or</span> <span class="s1">&#39;+&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">mth5_obj</span><span class="o">.</span><span class="n">mode</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="kc">True</span>
+                <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">mth5_obj</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;r&#39;</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="kc">False</span>
+            <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
+
+<div class="viewcode-block" id="MTH5.open_mth5"><a class="viewcode-back" href="../../index.html#mth5.mth5.MTH5.open_mth5">[docs]</a>    <span class="k">def</span> <span class="nf">open_mth5</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mth5_fn</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        write an mth5 file</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mth5_fn</span> <span class="o">=</span> <span class="n">mth5_fn</span>
+
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mth5_fn</span><span class="p">):</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;*** Overwriting </span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">mth5_fn</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">mth5_obj</span> <span class="o">=</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mth5_fn</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mth5_obj</span><span class="o">.</span><span class="n">create_group</span><span class="p">(</span><span class="s1">&#39;calibrations&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MTH5.close_mth5"><a class="viewcode-back" href="../../index.html#mth5.mth5.MTH5.close_mth5">[docs]</a>    <span class="k">def</span> <span class="nf">close_mth5</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        close mth5 file to make sure everything is flushed to the file</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">mth5_obj</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">write_metadata</span><span class="p">()</span>        
+        <span class="bp">self</span><span class="o">.</span><span class="n">mth5_obj</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="MTH5.write_metadata"><a class="viewcode-back" href="../../index.html#mth5.mth5.MTH5.write_metadata">[docs]</a>    <span class="k">def</span> <span class="nf">write_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Write metadata to the HDf5 file as json strings under the headings:</span>
+<span class="sd">            * site</span>
+<span class="sd">            * field_notes</span>
+<span class="sd">            * copyright</span>
+<span class="sd">            * provenance</span>
+<span class="sd">            * software</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">h5_is_write</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;site&#39;</span><span class="p">,</span> <span class="s1">&#39;field_notes&#39;</span><span class="p">,</span> <span class="s1">&#39;copyright&#39;</span><span class="p">,</span> <span class="s1">&#39;provenance&#39;</span><span class="p">,</span>
+                         <span class="s1">&#39;software&#39;</span><span class="p">]:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">mth5_obj</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="n">attr</span><span class="p">]</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attr</span><span class="p">)</span><span class="o">.</span><span class="n">to_json</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="MTH5.add_schedule"><a class="viewcode-back" href="../../index.html#mth5.mth5.MTH5.add_schedule">[docs]</a>    <span class="k">def</span> <span class="nf">add_schedule</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">schedule_obj</span><span class="p">,</span> <span class="n">compress</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        add a schedule object to the HDF5 file</span>
+
+<span class="sd">        :param schedule_obj: container holding the time series data as a</span>
+<span class="sd">                             pandas.DataFrame with columns as components</span>
+<span class="sd">                             and indexed by time.</span>
+<span class="sd">        :type schedule_obj: mtf5.Schedule object</span>
+<span class="sd">        </span>
+<span class="sd">        :param bool compress: [ True | False ] to internally compress the data</span>
+<span class="sd">        </span>
+<span class="sd">        .. note:: will name the schedule according to schedule_obj.name.  </span>
+<span class="sd">                  Should be schedule_## where ## is the order of the schedule</span>
+<span class="sd">                  as a 2 character digit [0-9][0-9] </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">h5_is_write</span><span class="p">():</span>
+            <span class="c1">### create group for schedule action</span>
+            <span class="n">schedule</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mth5_obj</span><span class="o">.</span><span class="n">require_group</span><span class="p">(</span><span class="n">schedule_obj</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+            <span class="c1">### add metadata</span>
+            <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="n">schedule_obj</span><span class="o">.</span><span class="n">_attrs_list</span><span class="p">:</span>
+                <span class="n">schedule</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="n">attr</span><span class="p">]</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">schedule_obj</span><span class="p">,</span> <span class="n">attr</span><span class="p">)</span>
+
+            <span class="c1">### add datasets for each channel</span>
+            <span class="k">for</span> <span class="n">comp</span> <span class="ow">in</span> <span class="n">schedule_obj</span><span class="o">.</span><span class="n">comp_list</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">compress</span><span class="p">:</span>
+                    <span class="n">schedule</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="n">comp</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span>
+                                            <span class="n">data</span><span class="o">=</span><span class="nb">getattr</span><span class="p">(</span><span class="n">schedule_obj</span><span class="p">,</span> <span class="n">comp</span><span class="p">),</span>
+                                            <span class="n">compression</span><span class="o">=</span><span class="s1">&#39;gzip&#39;</span><span class="p">,</span>
+                                            <span class="n">compression_opts</span><span class="o">=</span><span class="mi">9</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">schedule</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="n">comp</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span>
+                                            <span class="n">data</span><span class="o">=</span><span class="nb">getattr</span><span class="p">(</span><span class="n">schedule_obj</span><span class="p">,</span> <span class="n">comp</span><span class="p">))</span>
+            <span class="c1">### set the convenience attribute to the schedule</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">schedule_obj</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">Schedule</span><span class="p">())</span>
+            <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">schedule_obj</span><span class="o">.</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">from_mth5</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mth5_obj</span><span class="p">,</span> 
+                                                       <span class="n">schedule_obj</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+            
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">MTH5Error</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{0}</span><span class="s1"> is not writeable&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mth5_fn</span><span class="p">))</span></div>
+            
+<div class="viewcode-block" id="MTH5.remove_schedule"><a class="viewcode-back" href="../../index.html#mth5.mth5.MTH5.remove_schedule">[docs]</a>    <span class="k">def</span> <span class="nf">remove_schedule</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">schedule_name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Remove a schedule item given schedule name.</span>
+<span class="sd">        </span>
+<span class="sd">        :param str schedule_name: schedule name verbatim of the one you want</span>
+<span class="sd">                                  to delete.</span>
+<span class="sd">                                  </span>
+<span class="sd">        .. note:: This does not free up memory, it just simply deletes the </span>
+<span class="sd">                  link to the schedule item.  See</span>
+<span class="sd">                  http://docs.h5py.org/en/stable/high/group.html.  The best</span>
+<span class="sd">                  method would be to build a different file without the data</span>
+<span class="sd">                  your are trying to delete.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">h5_is_write</span><span class="p">():</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="nb">delattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">schedule_name</span><span class="p">)</span>
+                <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">mth5_obj</span><span class="p">[</span><span class="s1">&#39;/</span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">schedule_name</span><span class="p">)]</span>
+            <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Could not find </span><span class="si">{0}</span><span class="s2">, not an attribute&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">schedule_name</span><span class="p">))</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">MTH5Error</span><span class="p">(</span><span class="s2">&quot;File not open&quot;</span><span class="p">)</span></div>
+            
+<div class="viewcode-block" id="MTH5.add_calibration"><a class="viewcode-back" href="../../index.html#mth5.mth5.MTH5.add_calibration">[docs]</a>    <span class="k">def</span> <span class="nf">add_calibration</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">calibration_obj</span><span class="p">,</span> <span class="n">compress</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        add calibrations for sensors</span>
+
+<span class="sd">        :param calibration_obj: calibration object that has frequency, real,</span>
+<span class="sd">                                imaginary attributes</span>
+<span class="sd">        :type calibration_obj: mth5.Calibration</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">h5_is_write</span><span class="p">():</span>
+            <span class="n">cal</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mth5_obj</span><span class="p">[</span><span class="s1">&#39;/calibrations&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">require_group</span><span class="p">(</span><span class="n">calibration_obj</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+            <span class="n">cal</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;metadata&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">calibration_obj</span><span class="o">.</span><span class="n">to_json</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">calibration_obj</span><span class="o">.</span><span class="n">_col_list</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">compress</span><span class="p">:</span>
+                    <span class="n">cal</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="n">col</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span>
+                                       <span class="n">data</span><span class="o">=</span><span class="nb">getattr</span><span class="p">(</span><span class="n">calibration_obj</span><span class="p">,</span> <span class="n">col</span><span class="p">),</span>
+                                       <span class="n">compression</span><span class="o">=</span><span class="s1">&#39;gzip&#39;</span><span class="p">,</span>
+                                       <span class="n">compression_opts</span><span class="o">=</span><span class="mi">9</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">cal</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="n">col</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span>
+                                       <span class="n">data</span><span class="o">=</span><span class="nb">getattr</span><span class="p">(</span><span class="n">calibration_obj</span><span class="p">,</span> <span class="n">col</span><span class="p">))</span>
+            
+            <span class="c1">### set the convenience attribute to the calibration</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">calibration_obj</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">Calibration</span><span class="p">())</span>
+            <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">calibration_obj</span><span class="o">.</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">from_mth5</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mth5_obj</span><span class="p">,</span> 
+                                                          <span class="n">calibration_obj</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">MTH5Error</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{0}</span><span class="s1"> is not writeable&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mth5_fn</span><span class="p">))</span></div>
+            
+<div class="viewcode-block" id="MTH5.remove_calibration"><a class="viewcode-back" href="../../index.html#mth5.mth5.MTH5.remove_calibration">[docs]</a>    <span class="k">def</span> <span class="nf">remove_calibration</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">calibration_name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Remove a calibration item given calibration name.</span>
+<span class="sd">        </span>
+<span class="sd">        :param str calibration_name: calibration name verbatim of the one you</span>
+<span class="sd">                                     want to delete.</span>
+<span class="sd">                                  </span>
+<span class="sd">        .. note:: This does not free up memory, it just simply deletes the </span>
+<span class="sd">                  link to the schedule item.  See</span>
+<span class="sd">                  http://docs.h5py.org/en/stable/high/group.html.  The best</span>
+<span class="sd">                  method would be to build a different file without the data</span>
+<span class="sd">                  your are trying to delete.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">h5_is_write</span><span class="p">():</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="nb">delattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">calibration_name</span><span class="p">)</span>
+                <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">mth5_obj</span><span class="p">[</span><span class="s1">&#39;calibrations/</span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">calibration_name</span><span class="p">)]</span>
+            <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Could not find </span><span class="si">{0}</span><span class="s2">, not an attribute&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">calibration_name</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">MTH5Error</span><span class="p">(</span><span class="s2">&quot;File not open&quot;</span><span class="p">)</span></div>
+    
+<div class="viewcode-block" id="MTH5.update_schedule_metadata"><a class="viewcode-back" href="../../index.html#mth5.mth5.MTH5.update_schedule_metadata">[docs]</a>    <span class="k">def</span> <span class="nf">update_schedule_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        update schedule metadata on the HDF file</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">if</span> <span class="s1">&#39;sch&#39;</span> <span class="ow">in</span> <span class="n">key</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span><span class="o">.</span><span class="n">_attrs_list</span><span class="p">:</span>
+                    <span class="n">value</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">),</span> <span class="n">attr</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">mth5_obj</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="n">attr</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span></div>
+
+<div class="viewcode-block" id="MTH5.read_mth5"><a class="viewcode-back" href="../../index.html#mth5.mth5.MTH5.read_mth5">[docs]</a>    <span class="k">def</span> <span class="nf">read_mth5</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mth5_fn</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Read MTH5 file and update attributes</span>
+<span class="sd">        </span>
+<span class="sd">        :param str mth5_fn: full path to mth5 file</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">mth5_fn</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">MTH5Error</span><span class="p">(</span><span class="s2">&quot;Could not find </span><span class="si">{0}</span><span class="s2">, check path&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">mth5_fn</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">mth5_fn</span> <span class="o">=</span> <span class="n">mth5_fn</span>
+        <span class="c1">### read in file and give write permissions in case the user wants to</span>
+        <span class="c1">### change any parameters</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mth5_obj</span> <span class="o">=</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mth5_fn</span><span class="p">,</span> <span class="s1">&#39;r+&#39;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;site&#39;</span><span class="p">,</span> <span class="s1">&#39;field_notes&#39;</span><span class="p">,</span> <span class="s1">&#39;copyright&#39;</span><span class="p">,</span> <span class="s1">&#39;provenance&#39;</span><span class="p">,</span>
+                     <span class="s1">&#39;software&#39;</span><span class="p">]:</span>
+            <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attr</span><span class="p">)</span><span class="o">.</span><span class="n">from_json</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mth5_obj</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="n">attr</span><span class="p">])</span>
+
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">mth5_obj</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">if</span> <span class="s1">&#39;sch&#39;</span> <span class="ow">in</span> <span class="n">key</span><span class="p">:</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">Schedule</span><span class="p">())</span>
+                <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span><span class="o">.</span><span class="n">from_mth5</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mth5_obj</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="s1">&#39;cal&#39;</span> <span class="ow">in</span> <span class="n">key</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="k">for</span> <span class="n">ckey</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">mth5_obj</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                        <span class="n">m_attr</span> <span class="o">=</span> <span class="s1">&#39;calibration_</span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ckey</span><span class="p">)</span>
+                        <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">m_attr</span><span class="p">,</span> <span class="n">Calibration</span><span class="p">())</span>
+                        <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">m_attr</span><span class="p">)</span><span class="o">.</span><span class="n">from_mth5</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mth5_obj</span><span class="p">,</span> <span class="n">ckey</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;No Calibration Data&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MTH5.update_metadata_from_cfg"><a class="viewcode-back" href="../../index.html#mth5.mth5.MTH5.update_metadata_from_cfg">[docs]</a>    <span class="k">def</span> <span class="nf">update_metadata_from_cfg</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mth5_cfg_fn</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        read a configuration file for all the mth5 attributes</span>
+
+<span class="sd">        :param mth5_cfg_fn: full path to configuration file for mth5 file</span>
+<span class="sd">        :type mth5_cfg_fn: string</span>
+
+<span class="sd">        The configuration file has the format::</span>
+<span class="sd">            </span>
+<span class="sd">            ###===================================================###</span>
+<span class="sd">            ### Metadata Configuration File for Science Base MTH5 ###</span>
+<span class="sd">            ###===================================================###</span>
+
+<span class="sd">            ### Site information --&gt; mainly for location</span>
+<span class="sd">            site.id = MT Test</span>
+<span class="sd">            site.coordinate_system = Geomagnetic North</span>
+<span class="sd">            site.datum = WGS84</span>
+<span class="sd">            site.declination = 15.5</span>
+<span class="sd">            site.declination_epoch = 1995</span>
+<span class="sd">            site.elevation = 1110</span>
+<span class="sd">            site.elev_units = meters</span>
+<span class="sd">            site.latitude = 40.12434</span>
+<span class="sd">            site.longitude = -118.345</span>
+<span class="sd">            site.survey = Test</span>
+<span class="sd">            site.start_date = 2018-05-07T20:10:00.0</span>
+<span class="sd">            site.end_date = 2018-07-07T10:20:30.0</span>
+<span class="sd">            #site._date_fmt = None</span>
+
+<span class="sd">            ### Field Notes --&gt; for instrument setup</span>
+<span class="sd">            # Data logger information</span>
+<span class="sd">            field_notes.data_logger.id = ZEN_test</span>
+<span class="sd">            field_notes.data_logger.manufacturer = Zonge</span>
+<span class="sd">            field_notes.data_logger.type = 32-Bit 5-channel GPS synced</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">usgs_str</span> <span class="o">=</span> <span class="s1">&#39;U.S. Geological Survey&#39;</span>
+        <span class="c1"># read in the configuration file</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">mth5_cfg_fn</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fid</span><span class="p">:</span>
+            <span class="n">lines</span> <span class="o">=</span> <span class="n">fid</span><span class="o">.</span><span class="n">readlines</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">:</span>
+            <span class="c1"># skip comment lines</span>
+            <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;#&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="c1"># make a key = value pair</span>
+            <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="o">=</span> <span class="p">[</span><span class="n">item</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;=&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)]</span>
+
+            <span class="k">if</span> <span class="n">value</span> <span class="o">==</span> <span class="s1">&#39;usgs_str&#39;</span><span class="p">:</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="n">usgs_str</span>
+            <span class="k">if</span> <span class="n">value</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;[&#39;</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">value</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;]&#39;</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">value</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;&lt;&#39;</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;[&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;]&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="p">[</span><span class="n">v</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">value</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)]</span>
+            <span class="k">if</span> <span class="n">value</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">value</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                    <span class="k">pass</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">value</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                    <span class="k">pass</span>
+
+            <span class="c1"># if there is a dot, meaning an object with an attribute separate</span>
+            <span class="k">if</span> <span class="n">key</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">key</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">obj</span><span class="p">,</span> <span class="n">obj_attr</span> <span class="o">=</span> <span class="n">key</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">),</span> <span class="n">obj_attr</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">key</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="n">obj</span><span class="p">,</span> <span class="n">obj_attr_01</span><span class="p">,</span> <span class="n">obj_attr_02</span> <span class="o">=</span> <span class="n">key</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">),</span> <span class="n">obj_attr_01</span><span class="p">),</span> <span class="n">obj_attr_02</span><span class="p">,</span>
+                        <span class="n">value</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MTH5.update_metadata_from_series"><a class="viewcode-back" href="../../index.html#mth5.mth5.MTH5.update_metadata_from_series">[docs]</a>    <span class="k">def</span> <span class="nf">update_metadata_from_series</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">station_series</span><span class="p">,</span> <span class="n">update_time</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Update metadata from a pandas.Series with old keys as columns:</span>
+<span class="sd">            * station</span>
+<span class="sd">            * latitude</span>
+<span class="sd">            * longitude</span>
+<span class="sd">            * elevation</span>
+<span class="sd">            * declination</span>
+<span class="sd">            * start_date</span>
+<span class="sd">            * stop_date</span>
+<span class="sd">            * datum</span>
+<span class="sd">            * coordinate_system</span>
+<span class="sd">            * units</span>
+<span class="sd">            * instrument_id</span>
+<span class="sd">            * ex_azimuth</span>
+<span class="sd">            * ex_length</span>
+<span class="sd">            * ex_sensor</span>
+<span class="sd">            * ex_num</span>
+<span class="sd">            * ey_azimuth</span>
+<span class="sd">            * ey_length</span>
+<span class="sd">            * ey_sensor</span>
+<span class="sd">            * ey_num</span>
+<span class="sd">            * hx_azimuth</span>
+<span class="sd">            * hx_sensor</span>
+<span class="sd">            * hx_num</span>
+<span class="sd">            * hy_azimuth</span>
+<span class="sd">            * hy_sensor</span>
+<span class="sd">            * hy_num</span>
+<span class="sd">            * hz_azimuth</span>
+<span class="sd">            * hz_sensor</span>
+<span class="sd">            * hz_num</span>
+
+<span class="sd">        :param station_series: pandas.Series with the above index values</span>
+<span class="sd">        :type station_series: pandas.Series</span>
+<span class="sd">        </span>
+<span class="sd">        :param update_time: boolean to update the start and stop time</span>
+<span class="sd">        :type update_time: [ True | False ]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">station_series</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
+            <span class="n">station_series</span> <span class="o">=</span> <span class="n">station_series</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">station_series</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">),</span> \
+                <span class="s1">&#39;station_series is not a pandas.Series&#39;</span>
+
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">station_series</span><span class="o">.</span><span class="n">index</span><span class="p">:</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">station_series</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">site</span><span class="o">.</span><span class="n">_attrs_list</span><span class="p">:</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">site</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">key</span> <span class="o">==</span> <span class="s1">&#39;start_date&#39;</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">update_time</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="n">attr</span> <span class="o">=</span> <span class="n">key</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">site</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">key</span> <span class="o">==</span> <span class="s1">&#39;stop_date&#39;</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">update_time</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="n">attr</span> <span class="o">=</span> <span class="s1">&#39;end_date&#39;</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">site</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">key</span> <span class="o">==</span> <span class="s1">&#39;instrument_id&#39;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">field_notes</span><span class="o">.</span><span class="n">data_logger</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="n">value</span>
+            <span class="k">elif</span> <span class="n">key</span> <span class="o">==</span> <span class="s1">&#39;station&#39;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">site</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="n">value</span>
+            <span class="k">elif</span> <span class="n">key</span> <span class="o">==</span> <span class="s1">&#39;units&#39;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">site</span><span class="o">.</span><span class="n">elev_units</span> <span class="o">=</span> <span class="n">value</span>
+            <span class="k">elif</span> <span class="n">key</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;ex&#39;</span><span class="p">,</span> <span class="s1">&#39;ey&#39;</span><span class="p">,</span> <span class="s1">&#39;hx&#39;</span><span class="p">,</span> <span class="s1">&#39;hy&#39;</span><span class="p">,</span> <span class="s1">&#39;hz&#39;</span><span class="p">]:</span>
+                <span class="n">comp</span> <span class="o">=</span> <span class="n">key</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span>
+                <span class="n">attr</span> <span class="o">=</span> <span class="n">key</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">attr</span> <span class="o">==</span> <span class="s1">&#39;num&#39;</span><span class="p">:</span>
+                    <span class="n">attr</span> <span class="o">=</span> <span class="s1">&#39;chn_num&#39;</span>
+                <span class="k">if</span> <span class="n">attr</span> <span class="o">==</span> <span class="s1">&#39;sensor&#39;</span><span class="p">:</span>
+                    <span class="n">attr</span> <span class="o">=</span> <span class="s1">&#39;id&#39;</span>
+                <span class="k">if</span> <span class="s1">&#39;e&#39;</span> <span class="ow">in</span> <span class="n">comp</span><span class="p">:</span>
+                    <span class="nb">setattr</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">field_notes</span><span class="p">,</span> <span class="s1">&#39;electrode_</span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">comp</span><span class="p">)),</span>
+                            <span class="n">attr</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="s1">&#39;h&#39;</span> <span class="ow">in</span> <span class="n">comp</span><span class="p">:</span>
+                    <span class="nb">setattr</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">field_notes</span><span class="p">,</span> <span class="s1">&#39;magnetometer_</span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">comp</span><span class="p">)),</span>
+                            <span class="n">attr</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span></div></div>
+
+<span class="c1"># =============================================================================</span>
+<span class="c1">#  read and write json for attributes</span>
+<span class="c1"># =============================================================================</span>
+<div class="viewcode-block" id="NumpyEncoder"><a class="viewcode-back" href="../../index.html#mth5.mth5.NumpyEncoder">[docs]</a><span class="k">class</span> <span class="nc">NumpyEncoder</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">JSONEncoder</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Need to encode numpy ints and floats for json to work</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+<div class="viewcode-block" id="NumpyEncoder.default"><a class="viewcode-back" href="../../index.html#mth5.mth5.NumpyEncoder.default">[docs]</a>    <span class="k">def</span> <span class="nf">default</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int_</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">intc</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">intp</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">int8</span><span class="p">,</span>
+                            <span class="n">np</span><span class="o">.</span><span class="n">int16</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">,</span>
+                            <span class="n">np</span><span class="o">.</span><span class="n">uint16</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">uint32</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">uint64</span><span class="p">)):</span>
+            <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float_</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">float16</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)):</span>
+            <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,(</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)):</span>
+            <span class="k">return</span> <span class="n">obj</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">JSONEncoder</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">)</span></div></div>
+
+<div class="viewcode-block" id="to_json"><a class="viewcode-back" href="../../index.html#mth5.mth5.to_json">[docs]</a><span class="k">def</span> <span class="nf">to_json</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    write a json string from a given object, taking into account other class</span>
+<span class="sd">    objects contained within the given object.</span>
+
+<span class="sd">    :param obj: class object to transform into string</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="p">(</span><span class="n">Site</span><span class="p">,</span> <span class="n">Calibration</span><span class="p">)):</span>
+        <span class="n">keys</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">_attrs_list</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">keys</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+
+    <span class="n">obj_dict</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">key</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="n">FieldNotes</span><span class="p">,</span> <span class="n">Instrument</span><span class="p">,</span> <span class="n">DataQuality</span><span class="p">,</span> <span class="n">Citation</span><span class="p">,</span> 
+                              <span class="n">Provenance</span><span class="p">,</span> <span class="n">Person</span><span class="p">,</span> <span class="n">Software</span><span class="p">)):</span>
+            <span class="n">obj_dict</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">o_key</span><span class="p">,</span> <span class="n">o_value</span> <span class="ow">in</span> <span class="n">value</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">o_key</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="n">obj_dict</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="n">o_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">o_value</span>
+
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="n">Site</span><span class="p">,</span> <span class="n">Calibration</span><span class="p">)):</span>
+            <span class="n">obj_dict</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">o_key</span> <span class="ow">in</span> <span class="n">value</span><span class="o">.</span><span class="n">_attrs_list</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">o_key</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="n">obj_dict</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="n">o_key</span><span class="p">]</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">o_key</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">obj_dict</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+
+    <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">obj_dict</span><span class="p">,</span> <span class="bp">cls</span><span class="o">=</span><span class="n">NumpyEncoder</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="from_json"><a class="viewcode-back" href="../../index.html#mth5.mth5.from_json">[docs]</a><span class="k">def</span> <span class="nf">from_json</span><span class="p">(</span><span class="n">json_str</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    read in a json string and update attributes of an object</span>
+
+<span class="sd">    :param json_str: json string</span>
+<span class="sd">    :type json_str:string</span>
+
+<span class="sd">    :param obj: class object to update</span>
+<span class="sd">    :type obj: class object</span>
+
+<span class="sd">    :returns obj:</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">obj_dict</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">json_str</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">obj_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">o_key</span><span class="p">,</span> <span class="n">o_value</span> <span class="ow">in</span> <span class="n">value</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">key</span><span class="p">),</span> <span class="n">o_key</span><span class="p">,</span> <span class="n">o_value</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">obj</span></div>
+
+<span class="c1"># ==============================================================================</span>
+<span class="c1">#             Error</span>
+<span class="c1"># ==============================================================================</span>
+<div class="viewcode-block" id="MTH5Error"><a class="viewcode-back" href="../../index.html#mth5.mth5.MTH5Error">[docs]</a><span class="k">class</span> <span class="nc">MTH5Error</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="k">pass</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">mth5 0.1.beta documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2018, US Geological Survey.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.4.
+    </div>
+  </body>
+</html>

@@ -581,3 +581,4 @@ class TestSite(unittest.TestCase):
 # =============================================================================
 if __name__ == '__main__':
     unittest.main()
+    os.remove(MTH5_FN)
