@@ -1,11 +1,9 @@
 # MTarchive
 
-NOTE: This is a work in progress.  
+The goal of MTarchive is to develop tools for archiving magnetotelluric (MT) time series data.  
 
-The goal is to develop a HDF5 standard for storing magnetotelluric (MT) time series data.
+The preferred format is HDF5 and has been adopted to conform to MT data.  The module mth5 contains reading/writing capabilities.  
 
-The code mth5 is the beta version of reading/writing an HDF5 file specifically for MT data.
+Most of the metadata is encoded in JSON and follows the format proposed for storing transfer functions in XML.  See /docs for more documentation.  
 
-This uses JSON encoding for most of the metadata.  See /docs for more documentation.  
-
-Feel free to comment or send me a message at jpeacock@usgs.gov on the data format.
+.. note: This is a work in progress.  Feel free to comment or send me a message at jpeacock@usgs.gov on the data format.
