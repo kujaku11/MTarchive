@@ -10,6 +10,7 @@ Created on Thu Nov 15 14:14:38 2018
 # Imports
 # =============================================================================
 import datetime
+import dateutil
 import xml.etree.ElementTree as ET
 import xml.dom.minidom as minidom
 # =============================================================================
@@ -232,26 +233,16 @@ class XMLMetadata(object):
         get the date from date_time_string
         """
 
-        try:
-            date, time = date_time_str.split('T', 1)
-        except ValueError:
-            date = date_time_str
-        date = date.replace('-', '').replace("'", '')
-        return date
+        dt = dateutil.parser.parse(date_time_str)
+        return dt.strftime('%Y%m%d')
 
     def _get_time(self, date_time_str):
         """
         get time string
         """
-        try:
-            date, time = date_time_str.split('T', 1)
-        except ValueError:
-            time = '00:00:00 UTC'
-        time, zone = time.split()
-        time = time.replace(':', '')
-        time += '00Z'
+        dt = dateutil.parser.parse(date_time_str)
 
-        return time
+        return dt.strftime('%H%M%S%f')[:10]+'Z'
 
     def read_config_file(self, config_fn):
         """
