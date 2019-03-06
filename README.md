@@ -6,4 +6,4 @@ The preferred format is HDF5 and has been adopted to conform to MT data.  The mo
 
 Most of the metadata is encoded in JSON and follows the format proposed for storing transfer functions in XML.  See /docs for more documentation.  
 
-.. note: This is a work in progress.  Feel free to comment or send me a message at jpeacock@usgs.gov on the data format.
+Note: This is a work in progress.  Feel free to comment or send me a message at jpeacock@usgs.gov on the data format.
