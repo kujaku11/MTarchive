@@ -282,6 +282,8 @@ class XMLMetadata(object):
         citation = ET.SubElement(idinfo, 'citation')
         citeinfo = ET.SubElement(citation, 'citeinfo')
         for author in self.authors:
+            if 'https' in author:
+                continue
             ET.SubElement(citeinfo, 'origin').text = author
         ET.SubElement(citeinfo, 'pubdate').text = datetime.datetime.now().strftime('%Y')
         ET.SubElement(citeinfo, 'title').text = self.title
@@ -291,6 +293,10 @@ class XMLMetadata(object):
         ET.SubElement(pubinfo, 'pubplace').text = 'Denver, CO'
         ET.SubElement(pubinfo, 'publish').text = self.usgs_str
         ET.SubElement(citeinfo, 'onlink').text = self.doi_url
+        ### add in orcid id #'s
+        otherciteinfo = ET.SubElement(citeinfo, 'othercit')
+        otherciteinfo.text = 'Additional information about Originator: {0}'.format(', '.join(self.authors))
+        
         # journal publication
         if self.journal_citation:
             journal = ET.SubElement(citeinfo, 'lworkcit')
@@ -315,6 +321,7 @@ class XMLMetadata(object):
                                       if orcnum not in [None, 'none', 'None']])
                 ET.SubElement(jciteinfo, 'othercit').text = add_info_str+orcid_str
             ET.SubElement(jciteinfo, 'onlink').text = self.journal_citation.doi_url
+
 
         # description
         description = ET.SubElement(idinfo, 'descript')
