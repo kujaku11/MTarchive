@@ -1491,12 +1491,14 @@ def write_shp_file(survey_csv_fn, save_path=None):
         geometry = [Point(x, y) for x, y in zip(survey_db.longitude,
                                                 survey_db.latitude)]
         crs = {'init':'epsg:4326'}
-        survey_db = survey_db.drop(['latitude', 'longitude'], axis=1)
+        #survey_db = survey_db.drop(['latitude', 'longitude'], axis=1)
         survey_db = survey_db.rename(columns={'collected_by':'operator',
                                               'instrument_id':'instr_id'})
 
         # list of columns to take from the database
         col_list = ['siteID',
+                    'latitude', 
+                    'longitude',
                     'elevation',
                     'hx_azimuth',
                     'hy_azimuth',

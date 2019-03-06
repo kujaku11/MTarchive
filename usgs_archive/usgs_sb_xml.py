@@ -202,6 +202,7 @@ class XMLMetadata(object):
         self.keywords_general = None
         self.keywords_thesaurus = None
         self.locations = None
+        self.common_locations = None
         self.temporal = None
 
         self.use_constraint = None
@@ -367,15 +368,21 @@ class XMLMetadata(object):
         for kw in self.keywords_thesaurus:
             ET.SubElement(t3, 'themekey').text = kw
 
-        # places
+        # places GNIS
         place = ET.SubElement(keywords, 'place')
         ET.SubElement(place, 'placekt').text = 'Geographic Names Information System (GNIS)'
         for loc in self.locations:
             ET.SubElement(place, 'placekey').text = loc
+            
+        # places Common
+        place = ET.SubElement(keywords, 'place')
+        ET.SubElement(place, 'placekt').text = 'Common Geographic Areas'
+        for loc in self.common_locations:
+            ET.SubElement(place, 'placekey').text = loc
 
         # time periods
         temporal = ET.SubElement(keywords, 'temporal')
-        ET.SubElement(temporal, 'tempkt').text = 'None'
+        ET.SubElement(temporal, 'tempkt').text = 'USGS Thesaurus'
         for temp in self.temporal:
             ET.SubElement(temporal, 'tempkey').text = temp
 
@@ -469,14 +476,14 @@ class XMLMetadata(object):
             ET.SubElement(entry_type, 'enttypds').text = self.usgs_str
 
             station_attr = ET.SubElement(detailed, 'attr')
-            ET.SubElement(station_attr, 'attrlabl').text = 'Stn_name'
+            ET.SubElement(station_attr, 'attrlabl').text = 'siteID'
             ET.SubElement(station_attr, 'attrdef').text = 'Individual station name within MT survey.'
             ET.SubElement(station_attr, 'attrdefs').text = self.usgs_str
             station_attr_dom = ET.SubElement(station_attr, 'attrdomv')
             ET.SubElement(station_attr_dom, 'udom').text = self.udom
 
             lat_attr = ET.SubElement(detailed, 'attr')
-            ET.SubElement(lat_attr, 'attrlabl').text = 'Lat_WGS84'
+            ET.SubElement(lat_attr, 'attrlabl').text = 'latitude'
             ET.SubElement(lat_attr, 'attrdef').text = self.lat_def
             ET.SubElement(lat_attr, 'attrdefs').text = self.usgs_str
             lat_dom = ET.SubElement(lat_attr, 'attrdomv')
@@ -486,7 +493,7 @@ class XMLMetadata(object):
             ET.SubElement(lat_rdom, 'attrunit').text = 'Decimal degrees'
 
             lon_attr = ET.SubElement(detailed, 'attr')
-            ET.SubElement(lon_attr, 'attrlabl').text = 'Lon_WGS84'
+            ET.SubElement(lon_attr, 'attrlabl').text = 'longitude'
             ET.SubElement(lon_attr, 'attrdef').text = self.lon_def
             ET.SubElement(lon_attr, 'attrdefs').text = self.usgs_str
             lon_dom = ET.SubElement(lon_attr, 'attrdomv')
@@ -496,7 +503,7 @@ class XMLMetadata(object):
             ET.SubElement(lon_rdom, 'attrunit').text = 'Decimal degrees'
 
             elev_attr = ET.SubElement(detailed, 'attr')
-            ET.SubElement(elev_attr, 'attrlabl').text = 'Elev_NAVD88'
+            ET.SubElement(elev_attr, 'attrlabl').text = 'elevation'
             ET.SubElement(elev_attr, 'attrdef').text = self.elev_def
             ET.SubElement(elev_attr, 'attrdefs').text = self.usgs_str
             elev_dom = ET.SubElement(elev_attr, 'attrdomv')
@@ -505,26 +512,96 @@ class XMLMetadata(object):
             ET.SubElement(elev_rdom, 'rdommax').text = '{0:.1f}'.format(self.survey.elev_max)
             ET.SubElement(elev_rdom, 'attrunit').text = 'Meters'
 
-            sd_attr = ET.SubElement(detailed, 'attr')
-            ET.SubElement(sd_attr, 'attrlabl').text = 'Start_date'
-            ET.SubElement(sd_attr, 'attrdef').text = 'Starting date for station data acquisition'
-            ET.SubElement(sd_attr, 'attrdefs').text = self.usgs_str
-            sd_attr_dom = ET.SubElement(sd_attr, 'attrdomv')
-            ET.SubElement(sd_attr_dom, 'udom').text = 'Dated in YYYYMMDD format'
+            hx_azm_attr = ET.SubElement(detailed, 'attr')
+            ET.SubElement(hx_azm_attr, 'attrlabl').text = 'hx_azimuth'
+            ET.SubElement(hx_azm_attr, 'attrdef').text = 'Orientation of HX sensor'
+            ET.SubElement(hx_azm_attr, 'attrdefs').text = self.usgs_str
+            hx_azm_attr_dom = ET.SubElement(hx_azm_attr, 'attrdomv')
+            ET.SubElement(hx_azm_attr_dom, 'udom').text = 'Angle (degrees) relative to geographic North.'
 
-            ed_attr = ET.SubElement(detailed, 'attr')
-            ET.SubElement(ed_attr, 'attrlabl').text = 'End_date'
-            ET.SubElement(ed_attr, 'attrdef').text = 'Ending date for station data acquisition'
-            ET.SubElement(ed_attr, 'attrdefs').text = self.usgs_str
-            ed_attr_dom = ET.SubElement(ed_attr, 'attrdomv')
-            ET.SubElement(ed_attr_dom, 'udom').text = 'Dated in YYYYMMDD format'
+            hy_azm_attr = ET.SubElement(detailed, 'attr')
+            ET.SubElement(hy_azm_attr, 'attrlabl').text = 'hy_azimuth'
+            ET.SubElement(hy_azm_attr, 'attrdef').text = 'Orientation of HY sensor'
+            ET.SubElement(hy_azm_attr, 'attrdefs').text = self.usgs_str
+            hy_azm_attr_dom = ET.SubElement(hy_azm_attr, 'attrdomv')
+            ET.SubElement(hy_azm_attr_dom, 'udom').text = 'Angle (degrees) relative to geographic North.'
 
+            hz_azm_attr = ET.SubElement(detailed, 'attr')
+            ET.SubElement(hz_azm_attr, 'attrlabl').text = 'hz_azimuth'
+            ET.SubElement(hz_azm_attr, 'attrdef').text = 'Orientation of HZ sensor'
+            ET.SubElement(hz_azm_attr, 'attrdefs').text = self.usgs_str
+            hz_azm_attr_dom = ET.SubElement(hz_azm_attr, 'attrdomv')
+            ET.SubElement(hz_azm_attr_dom, 'udom').text = 'Angle (degrees) relative to geographic North.'
+
+            hx_attr = ET.SubElement(detailed, 'attr')
+            ET.SubElement(hx_attr, 'attrlabl').text = 'hx_sensor'
+            ET.SubElement(hx_attr, 'attrdef').text = 'Sensor ID for HX.'
+            ET.SubElement(hx_attr, 'attrdefs').text = self.usgs_str
+            hx_attr_dom = ET.SubElement(hx_attr, 'attrdomv')
+            ET.SubElement(hx_attr_dom, 'udom').text = 'Alpha-numeric'
+
+            hy_attr = ET.SubElement(detailed, 'attr')
+            ET.SubElement(hy_attr, 'attrlabl').text = 'hy_sensor'
+            ET.SubElement(hy_attr, 'attrdef').text = 'Sensor ID for HY.'
+            ET.SubElement(hy_attr, 'attrdefs').text = self.usgs_str
+            hy_attr_dom = ET.SubElement(hy_attr, 'attrdomv')
+            ET.SubElement(hy_attr_dom, 'udom').text = 'Alpha-numeric'
+
+            hz_attr = ET.SubElement(detailed, 'attr')
+            ET.SubElement(hz_attr, 'attrlabl').text = 'hz_sensor'
+            ET.SubElement(hz_attr, 'attrdef').text = 'Sensor ID for HZ.'
+            ET.SubElement(hz_attr, 'attrdefs').text = self.usgs_str
+            hz_attr_dom = ET.SubElement(hz_attr, 'attrdomv')
+            ET.SubElement(hz_attr_dom, 'udom').text = 'Alpha-numeric'
+            
+            ex_len_attr = ET.SubElement(detailed, 'attr')
+            ET.SubElement(ex_len_attr, 'attrlabl').text = 'ex_length'
+            ET.SubElement(ex_len_attr, 'attrdef').text = 'Dipole length for EX'
+            ET.SubElement(ex_len_attr, 'attrdefs').text = self.usgs_str
+            ex_len_attr_dom = ET.SubElement(ex_len_attr, 'attrdomv')
+            ET.SubElement(ex_len_attr_dom, 'udom').text = 'Distance in meters.'
+            
+            ey_len_attr = ET.SubElement(detailed, 'attr')
+            ET.SubElement(ey_len_attr, 'attrlabl').text = 'ey_length'
+            ET.SubElement(ey_len_attr, 'attrdef').text = 'Dipole length for EY'
+            ET.SubElement(ey_len_attr, 'attrdefs').text = self.usgs_str
+            ey_len_attr_dom = ET.SubElement(ey_len_attr, 'attrdomv')
+            ET.SubElement(ey_len_attr_dom, 'udom').text = 'Distance in meters.'
+            
+            ex_azm_attr = ET.SubElement(detailed, 'attr')
+            ET.SubElement(ex_azm_attr, 'attrlabl').text = 'ex_azimuth'
+            ET.SubElement(ex_azm_attr, 'attrdef').text = 'Orientation of EX sensor'
+            ET.SubElement(ex_azm_attr, 'attrdefs').text = self.usgs_str
+            ex_azm_attr_dom = ET.SubElement(ex_azm_attr, 'attrdomv')
+            ET.SubElement(ex_azm_attr_dom, 'udom').text = 'Angle (degrees) relative to geographic North.'
+
+            ey_azm_attr = ET.SubElement(detailed, 'attr')
+            ET.SubElement(ey_azm_attr, 'attrlabl').text = 'ey_azimuth'
+            ET.SubElement(ey_azm_attr, 'attrdef').text = 'Orientation of ey sensor'
+            ET.SubElement(ey_azm_attr, 'attrdefs').text = self.usgs_str
+            ey_azm_attr_dom = ET.SubElement(ey_azm_attr, 'attrdomv')
+            ET.SubElement(ey_azm_attr_dom, 'udom').text = 'Angle (degrees) relative to geographic North.'
+
+            nchn_attr = ET.SubElement(detailed, 'attr')
+            ET.SubElement(nchn_attr, 'attrlabl').text = 'n_chan'
+            ET.SubElement(nchn_attr, 'attrdef').text = 'Number of channels recorded.'
+            ET.SubElement(nchn_attr, 'attrdefs').text = self.usgs_str
+            nchn_attr_dom = ET.SubElement(nchn_attr, 'attrdomv')
+            ET.SubElement(nchn_attr_dom, 'udom').text = 'Number'
+
+            id_attr = ET.SubElement(detailed, 'attr')
+            ET.SubElement(id_attr, 'attrlabl').text = 'instr_id'
+            ET.SubElement(id_attr, 'attrdef').text = 'Data logger or instrument setup ID.'
+            ET.SubElement(id_attr, 'attrdefs').text = self.usgs_str
+            id_attr_dom = ET.SubElement(id_attr, 'attrdomv')
+            ET.SubElement(id_attr_dom, 'udom').text = 'Alpha-numeric'
+            
             dt_attr = ET.SubElement(detailed, 'attr')
-            ET.SubElement(dt_attr, 'attrlabl').text = 'Data_type'
+            ET.SubElement(dt_attr, 'attrlabl').text = 'type'
             ET.SubElement(dt_attr, 'attrdef').text = 'Type of data acquired'
             ET.SubElement(dt_attr, 'attrdefs').text = self.usgs_str
             dt_attr_dom = ET.SubElement(dt_attr, 'attrdomv')
-            ET.SubElement(dt_attr_dom, 'udom').text = 'W = wideband, L = long-period'
+            ET.SubElement(dt_attr_dom, 'udom').text = 'W = wideband, L = long-period, Bb = broadband'
 
             dq_attr = ET.SubElement(detailed, 'attr')
             ET.SubElement(dq_attr, 'attrlabl').text = 'Qual_fac'
@@ -537,6 +614,20 @@ class XMLMetadata(object):
                                 '2 = serious issues with one or both modes',
                                 '1 = poor TF that can barely be used for inversion'])
             ET.SubElement(dq_attr_dom, 'udom').text = dq_str
+            
+            sd_attr = ET.SubElement(detailed, 'attr')
+            ET.SubElement(sd_attr, 'attrlabl').text = 'Start_date'
+            ET.SubElement(sd_attr, 'attrdef').text = 'Starting date for station data acquisition'
+            ET.SubElement(sd_attr, 'attrdefs').text = self.usgs_str
+            sd_attr_dom = ET.SubElement(sd_attr, 'attrdomv')
+            ET.SubElement(sd_attr_dom, 'udom').text = 'Date in YYYY-MM-DDTHH:MM:SS.ms UTC'
+
+            ed_attr = ET.SubElement(detailed, 'attr')
+            ET.SubElement(ed_attr, 'attrlabl').text = 'End_date'
+            ET.SubElement(ed_attr, 'attrdef').text = 'Ending date for station data acquisition'
+            ET.SubElement(ed_attr, 'attrdefs').text = self.usgs_str
+            ed_attr_dom = ET.SubElement(ed_attr, 'attrdomv')
+            ET.SubElement(ed_attr_dom, 'udom').text = 'Date in YYYY-MM-DDTHH:MM:SS.ms UTC'
 
         overview = ET.SubElement(eainfo, 'overview')
         ET.SubElement(overview, 'eaover').text = self.guide.fn
