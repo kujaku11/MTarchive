@@ -292,10 +292,12 @@ class XMLMetadata(object):
         pubinfo = ET.SubElement(citeinfo, 'pubinfo')
         ET.SubElement(pubinfo, 'pubplace').text = 'Denver, CO'
         ET.SubElement(pubinfo, 'publish').text = self.usgs_str
-        ET.SubElement(citeinfo, 'onlink').text = self.doi_url
+        
         ### add in orcid id #'s
-        otherciteinfo = ET.SubElement(citeinfo, 'othercit')
-        otherciteinfo.text = 'Additional information about Originator: {0}'.format(', '.join(self.authors))
+        ET.SubElement(citeinfo, 'othercit').text = 'Additional information about Originator: {0}'.format(', '.join(self.authors))
+        
+        ### add online link
+        ET.SubElement(citeinfo, 'onlink').text = self.doi_url
         
         # journal publication
         if self.journal_citation:
