@@ -197,6 +197,9 @@ class Z3DCollection(object):
             z3d_obj.read_all_info()
             merge_list.append({'fn':fn, 'start_date':z3d_obj.zen_schedule, 
                                'df':z3d_obj.df})
+        
+        if merge_list == []:
+            raise ArchiveError('No .z3d files in {0}'.format(z3d_dir))
             
         df = pd.DataFrame(merge_list)
         
