@@ -2,25 +2,43 @@
 """
 Created on Wed Mar  6 09:43:07 2019
 
+Estimate Transfer Function Quality
+    
+    * based on simple statistics
+
 @author: jpeacock
 """
+# =============================================================================
+# Imports
+# =============================================================================
 import os
 import glob
 import numpy as np
 import pandas as pd
 from scipy import interpolate
 from mtpy.core import mt
-import matplotlib.pyplot as plt
 
 # =============================================================================
-# Inputs
+# 
 # =============================================================================
-
-
 class EMTFStats(object):
     """
     Class to estimate data quality of EM transfer functions
     
+    :param tf_dir: transfer function directory
+    :type tf_dir: string
+    
+    :param stat_limits: criteria for statistics based on a 0-5 rating scale 
+    :type stat_limits: dictionary
+    
+    :Example: ::
+        
+        >>> from usgs_archive import estimate_tf_quality_factor as tfq
+        >>> edi_dir = r"/home/edi_folders/survey_01"
+        >>> q = EMTFStats()
+        >>> stat_df = q.compute_statistics(edi_dir) 
+        >>> q_df = q.estimate_data_quality(stat_df=stat_df)         
+        >>> s_df = q.summarize_data_quality(q_df) 
     """
 
     def __init__(self, *args, **kwargs):
@@ -64,7 +82,23 @@ class EMTFStats(object):
         
     def compute_statistics(self, tf_dir=None):
         """
-        compute some statistics
+        Compute statistics of the transfer functions in a given directory.
+        
+        Statistics are:
+            
+            * one-lag autocorrelation coefficient, estimator for smoothness
+            * average of errors on components
+            * fit to a least-squres smooth curve
+            * normalized standard deviation of the first derivative, another
+              smoothness estimator
+              
+        :param tf_dir: path to directory of transfer functions
+        :type tf_dir: string
+        
+        :returns: data frame of all the statistics estimated
+        :rtype: pandas.DataFrame
+        
+        .. note:: Writes a file to the tf_dir named data_quality_statistics.csv 
         """
         
         if tf_dir is not None:
@@ -113,7 +147,6 @@ class EMTFStats(object):
                     stat_array[kk]['res_{0}_std'.format(comp)] = res_err.mean()
                     stat_array[kk]['phase_{0}_std'.format(comp)] = phase_err.mean()
                     
-                    
                     ### estimate smoothness
                     stat_array[kk]['res_{0}_corr'.format(comp)] = np.corrcoef(res[0:-1], res[1:])[0, 1]
                     stat_array[kk]['phase_{0}_corr'.format(comp)] = np.corrcoef(phase[0:-1], phase[1:])[0, 1]
@@ -121,6 +154,7 @@ class EMTFStats(object):
                     ### estimate smoothness with difference
                     stat_array[kk]['res_{0}_diff'.format(comp)] = np.std(np.diff(res))/abs(np.mean(np.diff(res)))
                     stat_array[kk]['phase_{0}_diff'.format(comp)] = np.std(np.diff(phase))/abs(np.mean(np.diff(phase)))
+                    
                     ### compute tipper
                     if ii == 0:
                         tcomp = self.t_dict[(0, jj)]
@@ -144,12 +178,23 @@ class EMTFStats(object):
         
         return df
     
-    def estimate_data_quality(self, stat_df=None, stat_fn=None, 
-                              limits_fn=None):
+    def estimate_data_quality(self, stat_df=None, stat_fn=None):
         """
-        Input either data frame or file name for csv
+        Convert the statistical estimates into the rating between 0-5 given
+        a certain criteria.
         
-        be able to update limits
+        .. note:: To change the criteria change self.stat_limits
+        
+        :param stat_df: Dataframe of the statistics
+        :type stat_df: pandas.DataFrame
+        
+        :param stat_fn: name of .csv file of statistics
+        :type stat_fn: string
+        
+        :returns: a dataframe of the converted statistics
+        :rtype: pandas.DataFrame
+        
+        .. note:: Writes a file to the tf_dir named tf_quality_estimate.csv
         """
         if stat_df is not None:
             stat_df = stat_df
@@ -184,7 +229,18 @@ class EMTFStats(object):
     
     def summarize_data_quality(self, quality_df=None, quality_fn=None):
         """
-        summarize the data quality
+        Summarize the data quality into a single number for each station.
+        
+        :param quality_df: Dataframe of the quality factors
+        :type quality_df: pandas.DataFrame
+        
+        :param quality_fn: name of .csv file of quality factors
+        :type quality_fn: string
+        
+        :returns: a dataframe of the  summarized quality factors
+        :rtype: pandas.DataFrame
+        
+        .. note:: Writes a file to the tf_dir named data_quality.csv
         """
         if quality_df is not None:
             quality_df = quality_df
