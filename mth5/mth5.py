@@ -294,7 +294,7 @@ class Site(Location):
     Location          object       Holds location information, lat, lon, elev
                       Location     datum, easting, northing see Location class
     start_date        string       YYYY-MM-DD start date of measurement
-    end_date          string       YYYY-MM-DD end date of measurement
+    stop_date         string       YYYY-MM-DD end date of measurement
     year_collected    string       year data collected
     survey            string       survey name
     project           string       project name
@@ -311,12 +311,12 @@ class Site(Location):
         super(Site, self).__init__()
         self.acquired_by = Person()
         self._start_date = None
-        self._end_date = None
+        self._stop_date = None
         self.id = None
         self.survey = None
         self._attrs_list = ['acquired_by',
                             'start_date',
-                            'end_date',
+                            'stop_date',
                             'id',
                             'survey',
                             'latitude',
@@ -345,17 +345,17 @@ class Site(Location):
             self._start_date = self._start_date.replace(tzinfo=UTC())
 
     @property
-    def end_date(self):
+    def stop_date(self):
         try:
-            return self._end_date.strftime(dt_fmt)
+            return self._stop_date.strftime(dt_fmt)
         except (TypeError, AttributeError):
             return None
 
-    @end_date.setter
-    def end_date(self, end_date):
-        self._end_date = dateutil.parser.parse(end_date)
-        if self._end_date.tzname() is None:
-            self._end_date = self._end_date.replace(tzinfo=UTC())
+    @stop_date.setter
+    def stop_date(self, stop_date):
+        self._stop_date = dateutil.parser.parse(stop_date)
+        if self._stop_date.tzname() is None:
+            self._stop_date = self._stop_date.replace(tzinfo=UTC())
 
 # ==============================================================================
 # Field Notes
@@ -1432,6 +1432,7 @@ class MTH5(object):
             * hz_azimuth
             * hz_sensor
             * hz_num
+            * quality
 
         :param station_series: pandas.Series with the above index values
         :type station_series: pandas.Series
@@ -1461,6 +1462,10 @@ class MTH5(object):
                 setattr(self.site, attr, value)
             elif key == 'instrument_id':
                 self.field_notes.data_logger.id = value
+            elif key == 'quality':
+                self.field_notes.data_quality.rating = value
+            elif key == 'notes':
+                self.field_notes.data_quality.comments = value
             elif key == 'station':
                 self.site.id = value
             elif key == 'units':

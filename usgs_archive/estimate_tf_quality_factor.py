@@ -49,21 +49,21 @@ class EMTFStats(object):
                                    2: (40, 80),
                                    1: (80, 200),
                                    0: (200, 1E36)},
-                            'corr':{5: (.9, 1.0), 
-                                    4: (.8, .9),
-                                    3: (.6, .8),
-                                    2: (.4, .6),
-                                    1: (.2, .4),
+                            'corr':{5: (.95, 1.0), 
+                                    4: (.85, .95),
+                                    3: (.7, .85),
+                                    2: (.5, .7),
+                                    1: (.2, .5),
                                     0: (-1.0, .2)},
                             'diff':{5: (0., 5.), 
-                                    4: (5., 20.),
-                                    3: (20., 50.),
+                                    4: (5., 15.),
+                                    3: (15., 50.),
                                     2: (50., 200.),
                                     1: (200., 1000.),
                                     0: (1000., 1E36)},
-                            'fit':{5: (0, 10), 
-                                   4: (10, 20),
-                                   3: (20, 50),
+                            'fit':{5: (0, 5), 
+                                   4: (5, 15),
+                                   3: (15, 50),
                                    2: (50, 100),
                                    1: (100, 200),
                                    0: (200, 1E36)}}
@@ -98,7 +98,7 @@ class EMTFStats(object):
         :returns: data frame of all the statistics estimated
         :rtype: pandas.DataFrame
         
-        .. note:: Writes a file to the tf_dir named data_quality_statistics.csv 
+        .. note:: Writes a file to the tf_dir named tf_quality_statistics.csv 
         """
         
         if tf_dir is not None:
@@ -164,16 +164,21 @@ class EMTFStats(object):
                         else:
                             tmag = mt_obj.Tipper.amplitude[t_index, 0, jj][0][::-1]
                             tmag_err = mt_obj.Tipper.amplitude_err[t_index, 0, jj][0][::-1]
-                            tf = mt_obj.Tipper.freq[t_index][::-1]
-                            ls_tmag = interpolate.make_lsq_spline(tf, tmag, t, k)
-                            stat_array[kk]['tipper_{0}_fit'.format(tcomp)] = np.std(tmag-ls_tmag(tf))
+                            tip_f = mt_obj.Tipper.freq[t_index][::-1]
+                            tip_t = np.r_[(tip_f[0],)*(k+1), 
+                                          [1],
+                                          (tip_f[-1],)*(k+1)]
+
+                            ls_tmag = interpolate.make_lsq_spline(tip_f, tmag,
+                                                                  tip_t, k)
+                            stat_array[kk]['tipper_{0}_fit'.format(tcomp)] = np.std(tmag-ls_tmag(tip_f))
                             stat_array[kk]['tipper_{0}_std'.format(tcomp)] = tmag_err.mean()
                             stat_array[kk]['tipper_{0}_corr'.format(tcomp)] = np.corrcoef(tmag[0:-1], tmag[1:])[0, 1]
                             stat_array[kk]['tipper_{0}_diff'.format(tcomp)] = np.std(np.diff(tmag))/abs(np.mean(np.diff(tmag)))
                             
         ### write file
         df = pd.DataFrame(stat_array, index=station_list)
-        df.to_csv(os.path.join(edi_dir, 'data_quality_statistics.csv'),
+        df.to_csv(os.path.join(self.tf_dir, 'tf_quality_statistics.csv'),
                   index=True)
         
         return df
@@ -240,7 +245,7 @@ class EMTFStats(object):
         :returns: a dataframe of the  summarized quality factors
         :rtype: pandas.DataFrame
         
-        .. note:: Writes a file to the tf_dir named data_quality.csv
+        .. note:: Writes a file to the tf_dir named tf_quality.csv
         """
         if quality_df is not None:
             quality_df = quality_df
@@ -254,19 +259,34 @@ class EMTFStats(object):
         
         ### compute median value
         summarized_df = quality_df.median(axis=1)
-        summarized_df.to_csv(os.path.join(self.tf_dir, 'data_quality.csv'),
+        summarized_df.to_csv(os.path.join(self.tf_dir, 'tf_quality.csv'),
                              header=False)
         return summarized_df
+    
+    def estimate_quality_factors(self, tf_dir=None):
+        """
+        Convenience function doing all the steps to estimate quality factor
+        """
         
+        if tf_dir is not None:
+            self.tf_dir = tf_dir
+        assert os.path.isdir(self.tf_dir) is True, \
+               '{0} is not a directory'.format(self.tf_dir)
+               
+        statistics_df = self.compute_statistics()
+        qualities_df = self.estimate_data_quality(stat_df=statistics_df)
+        qf_df = self.summarize_data_quality(quality_df=qualities_df)
+        
+        return qf_df
         
 # =============================================================================
 # Test
 # =============================================================================
-edi_dir = r"c:\Users\jpeacock\Documents\edi_folders\imush_edi"
-q = EMTFStats()
-stat_df = q.compute_statistics(edi_dir) 
-q_df = q.estimate_data_quality(stat_df=stat_df)         
-s_df = q.summarize_data_quality(q_df)    
+#edi_dir = r"c:\Users\jpeacock\Documents\edi_folders\imush_edi"
+#q = EMTFStats()
+#stat_df = q.compute_statistics(edi_dir) 
+#q_df = q.estimate_data_quality(stat_df=stat_df)         
+#s_df = q.summarize_data_quality(q_df)    
         
         
         
