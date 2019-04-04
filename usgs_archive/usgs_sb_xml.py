@@ -197,7 +197,8 @@ class XMLMetadata(object):
         self.sc_dict = {'GGGSC': 'Geology, Geophysics, and Geochemistry Science Center',
                         'GMEGSC': 'Geology, Minerals, Energy, and Geophysics Science Center'}
         self.program_dict = {'MRP': 'Mineral Resources Program',
-                             'VHP': 'Volcano Hazards Program'}
+                             'VHP': 'Volcano Hazards Program',
+                             'ERP': 'Energy Resources Program'}
 
         self.keywords_general = None
         self.keywords_thesaurus = None
