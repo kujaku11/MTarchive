@@ -67,12 +67,12 @@ class EMTFStats(object):
                                    2: (50, 100),
                                    1: (100, 200),
                                    0: (200, 1E36)},
-                            'bad':{5: (0, 3), 
-                                   4: (3, 6),
-                                   3: (6, 10),
+                            'bad':{5: (0, 2), 
+                                   4: (2, 4),
+                                   3: (4, 10),
                                    2: (10, 15),
-                                   1: (15, 25),
-                                   0: (25, 1E36)}}
+                                   1: (15, 20),
+                                   0: (20, 1E36)}}
                             
         self.z_dict = {(0, 0): 'xx', (0, 1): 'xy', (1, 0): 'yx', (1, 1): 'yy'}
         self.t_dict = {(0, 0): 'x', (0, 1): 'y'}
@@ -151,7 +151,7 @@ class EMTFStats(object):
             
         return np.array(bad_points)
     
-    def locate_bad_tipper_points(self, tipper, test=5):
+    def locate_bad_tipper_points(self, tipper, test=.2):
         """
         try to locate bad points to remove
         """
@@ -307,8 +307,9 @@ class EMTFStats(object):
                             try:
                                 ls_tmag = interpolate.make_lsq_spline(tip_f, tmag,
                                                                       tip_t, k)
-                            except (ValueError, np.linalg.LinAlgError) as error:    
                                 stat_array[kk]['tipper_{0}_fit'.format(tcomp)] = np.std(tmag-ls_tmag(tip_f))
+                            except (ValueError, np.linalg.LinAlgError) as error:    
+                                
                                 stat_array[kk]['tipper_{0}_fit'.format(tcomp)] = np.NaN
                                 print('{0} {1} {2}'.format(mt_obj.station, 
                                                            tcomp, error))
@@ -374,7 +375,12 @@ class EMTFStats(object):
         
         return qual_df
     
-    def summarize_data_quality(self, quality_df=None, quality_fn=None):
+    def summarize_data_quality(self, quality_df=None, quality_fn=None,
+                               weights={'bad':.35,
+                                        'corr':.2,
+                                        'diff':.2,
+                                        'std':.2,
+                                        'fit':.05}):
         """
         Summarize the data quality into a single number for each station.
         
@@ -400,13 +406,29 @@ class EMTFStats(object):
             raise ValueError("No DataFrame to analyze")
         
         ### compute median value
-        summarized_df = quality_df.median(axis=1).round()
+        ### need to weight things differently
+        bad_df = quality_df[[col for col in quality_df.columns if 'bad' in col]]
+        diff_df = quality_df[[col for col in quality_df.columns if 'diff' in col]]
+        fit_df = quality_df[[col for col in quality_df.columns if 'fit' in col]]
+        corr_df = quality_df[[col for col in quality_df.columns if 'corr' in col]]
+        std_df = quality_df[[col for col in quality_df.columns if 'std' in col]]
         
-        summarized_df.to_csv(os.path.join(self.tf_dir, 'tf_quality.csv'),
+        qf_df = weights['bad']*bad_df.median(axis=1)+\
+                weights['corr']*corr_df.median(axis=1)+\
+                weights['diff']*diff_df.median(axis=1)+\
+                weights['std']*std_df.median(axis=1)+\
+                weights['fit']*fit_df.median(axis=1)
+        
+        qf_df = qf_df.round()
+        qf_df.to_csv(os.path.join(self.tf_dir, 'tf_quality.csv'),
                              header=False)
-        return summarized_df
+        return qf_df
     
-    def estimate_quality_factors(self, tf_dir=None):
+    def estimate_quality_factors(self, tf_dir=None,weights={'bad':.35,
+                                                            'corr':.2,
+                                                            'diff':.2,
+                                                            'std':.2,
+                                                            'fit':.05}):
         """
         Convenience function doing all the steps to estimate quality factor
         """
@@ -418,7 +440,8 @@ class EMTFStats(object):
                
         statistics_df = self.compute_statistics()
         qualities_df = self.estimate_data_quality(stat_df=statistics_df)
-        qf_df = self.summarize_data_quality(quality_df=qualities_df)
+        qf_df = self.summarize_data_quality(quality_df=qualities_df,
+                                            weights=weights)
         
         return qf_df
         
