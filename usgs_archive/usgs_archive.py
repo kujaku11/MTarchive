@@ -17,11 +17,10 @@ Created on Tue Aug 29 16:38:28 2017
 import os
 import time
 import datetime
-from collections import Counter
 import sys
+import glob
 from cStringIO import StringIO
 
-import h5py
 import gzip
 import urllib2 as url
 import xml.etree.ElementTree as ET
@@ -1628,7 +1627,8 @@ def sb_session_login(sb_session, sb_username, sb_password=None):
 
     return sb_session
 
-def sb_get_fn_list(archive_dir):
+def sb_get_fn_list(archive_dir, 
+                   f_types=['.zip', '.edi', '.png', '.xml', '.mth5']):
     """
     Get the list of files to archive looking for .zip, .edi, .png within the
     archive directory.  Sorts in the order of xml, edi, png, zip
@@ -1639,18 +1639,16 @@ def sb_get_fn_list(archive_dir):
     :returns: list of files to archive ordered by xml, edi, png, zip
 
     """
-
-    fn_list = [os.path.join(archive_dir, fn)
-               for fn in os.listdir(archive_dir)
-               if fn.endswith('.zip') or fn.endswith('.xml') or
-               fn.endswith('.edi') or fn.endswith('.png') or 
-               fn.endswith('.mth5')]
+    fn_list = []
+    for f_type in f_types:
+        fn_list += glob.glob(os.path.join(archive_dir, '*{0}'.format(f_type)))
 
     return sb_sort_fn_list(fn_list)
 
 
 def sb_upload_data(sb_page_id, archive_station_dir, sb_username,
-                   sb_password=None):
+                   sb_password=None, f_types=['.zip', '.edi', '.png', '.xml',
+                                              '.mth5']):
     """
     Upload a given archive station directory to a new child item of the given
     sciencebase page.
@@ -1691,7 +1689,7 @@ def sb_upload_data(sb_page_id, archive_station_dir, sb_username,
     station = os.path.basename(archive_station_dir)
 
     ### File to upload
-    upload_fn_list = sb_get_fn_list(archive_station_dir)
+    upload_fn_list = sb_get_fn_list(archive_station_dir, f_types=f_types)
 
     ### check if child item is already created
     child_id = sb_locate_child_item(session, station, sb_page_id)
