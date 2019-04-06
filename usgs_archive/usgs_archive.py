@@ -273,7 +273,7 @@ class Z3DCollection(object):
             start.append(dt_index[0])
             stop.append(dt_index[-1])
             meta_df['{0}_{1}'.format(comp, 'fn')] = fn
-            meta_df['{0}_{1}'.format(comp, 'azmimuth')] = z3d_obj.metadata.ch_azimuth
+            meta_df['{0}_{1}'.format(comp, 'azimuth')] = z3d_obj.metadata.ch_azimuth
             if 'e' in comp:
                 meta_df['{0}_{1}'.format(comp, 'length')] = z3d_obj.metadata.ch_length
             ### get sensor number
@@ -315,6 +315,36 @@ class Z3DCollection(object):
         
         return sch_obj
     
+    def check_start_times(self, ts_list, tol=10):
+        """
+        check to make sure the start times align
+        """
+        dt_index_list = [ts_obj.ts.data.index.astype(np.int64)/10.**9
+                         for ts_obj in ts_list]
+        
+        ### check for unique start times
+        start_list = np.array([dt[0] for dt in dt_index_list])
+        starts, counts = np.unique(start_list, return_counts=True)
+        if len(np.unique(start_list)) > 1:
+            start = starts[np.where(counts == counts.max())][0]
+            off_index = np.where((start_list < start-tol) | (start_list > start+tol))[0]
+            if len(off_index) > 0:
+                for off in off_index:
+                    off = int(off)
+                    print('xxx TS for {0} {1} is off xxx'.format(ts_list[off].station,
+                          ts_list[off].component))
+                    print('xxx Setting time index to match rest of block xxx')
+                    ts_list[off].start_time_epoch_sec = start 
+                
+        dt_index_list = [ts_obj.ts.data.index.astype(np.int64)/10.**9
+                         for ts_obj in ts_list]
+        # get start and stop times
+        start = max([dt[0] for dt in dt_index_list])
+        stop = min([dt[-1] for dt in dt_index_list])
+        
+        return ts_list, start, stop
+        
+    
     def merge_ts_list(self, ts_list, decimate=1):
         """
         Merge time series from a list of TS objects.
@@ -333,12 +363,8 @@ class Z3DCollection(object):
         """
         comp_list = [ts_obj.component.lower() for ts_obj in ts_list]
         df = ts_list[0].sampling_rate
-        dt_index_list = [ts_obj.ts.data.index.astype(np.int64)/10.**9
-                         for ts_obj in ts_list]
         
-        # get start and stop times
-        start = max([dt[0] for dt in dt_index_list])
-        stop = min([dt[-1] for dt in dt_index_list])
+        ts_list, start, stop = self.check_start_times(ts_list)
         
         ### make start time in UTC
         dt_struct = datetime.datetime.utcfromtimestamp(start)
@@ -356,6 +382,7 @@ class Z3DCollection(object):
         ts_db = pd.DataFrame(np.zeros((ts_len, len(comp_list))),
                              columns=comp_list,
                              dtype=np.float32)
+            
         for ts_obj in ts_list:
             comp = ts_obj.component.lower()
             dt_index = ts_obj.ts.data.index.astype(np.int64)/10**9
@@ -1495,7 +1522,8 @@ def write_shp_file(survey_csv_fn, save_path=None):
         crs = {'init':'epsg:4326'}
         #survey_db = survey_db.drop(['latitude', 'longitude'], axis=1)
         survey_db = survey_db.rename(columns={'collected_by':'operator',
-                                              'instrument_id':'instr_id'})
+                                              'instrument_id':'instr_id',
+                                              'station':'siteID'})
 
         # list of columns to take from the database
         col_list = ['siteID',
@@ -1529,7 +1557,7 @@ def write_shp_file(survey_csv_fn, save_path=None):
         geo_db.to_file(save_fn)
 
         print('*** Wrote survey shapefile to {0}'.format(save_fn))
-        return save_fn
+        return survey_db, save_fn
 
 # =============================================================================
 # Science Base Functions
