@@ -1313,11 +1313,17 @@ def get_nm_elev(lat, lon):
         return -666
 
     # read the xml response and convert to a float
-    info = ET.ElementTree(ET.fromstring(response.read()))
-    info = info.getroot()
-    for elev in info.iter('Elevation'):
-        nm_elev = float(elev.text)
-    return nm_elev
+    try:
+        info = ET.ElementTree(ET.fromstring(response.read()))
+        info = info.getroot()
+        for elev in info.iter('Elevation'):
+            nm_elev = float(elev.text)
+        return nm_elev
+    except ET.ParseError as error:
+        print("Something wrong with xml elevation for lat = {0:.5f}, lon = {1:.5f}".format(
+                lat, lon))
+        print(error)
+        return -666
 
 # =============================================================================
 # Functions to analyze csv files
