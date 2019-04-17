@@ -1309,7 +1309,7 @@ def get_nm_elev(lat, lon):
     try:
         response = url.urlopen(nm_url.format(lon, lat))
     except url.HTTPError:
-        print('GET_ELEVATION_ERROR: Could not connect to internet')
+        print('xxx GET_ELEVATION_ERROR: Could not connect to internet')
         return -666
 
     # read the xml response and convert to a float
@@ -1320,7 +1320,7 @@ def get_nm_elev(lat, lon):
             nm_elev = float(elev.text)
         return nm_elev
     except ET.ParseError as error:
-        print("Something wrong with xml elevation for lat = {0:.5f}, lon = {1:.5f}".format(
+        print("xxx Something wrong with xml elevation for lat = {0:.5f}, lon = {1:.5f}".format(
                 lat, lon))
         print(error)
         return -666
@@ -1503,6 +1503,32 @@ def get_station_info_from_csv(survey_csv, station):
 
     return db.iloc[station_index]
 
+def summarize_log_files(station_dir):
+    """
+    summarize the log files to see if there are any errors
+    """
+    lines = []
+    summary_fn = os.path.join(station_dir, 'archive_log_summary.log')
+    for folder in os.listdir(station_dir):
+        try:
+            log_fn = glob.glob(os.path.join(station_dir, folder, '*.log'))[0]
+        except IndexError:
+            print('xxx Did not find log file in {0}'.format(folder))
+            continue
+        lines.append('{0}{1}{0}'.format('-'*10, folder))
+        with open(log_fn, 'r') as fid:
+            log_lines = fid.readlines()
+            for log_line in log_lines:
+                if 'xxx' in log_line:
+                    lines.append(log_line)
+                elif 'error' in log_line.lower():
+                    lines.append(log_line)
+                    
+        with open(summary_fn, 'w') as fid:
+            fid.write('\n'.join(lines))
+            
+    return summary_fn
+                    
 def write_shp_file(survey_csv_fn, save_path=None):
         """
         write a shape file with important information
