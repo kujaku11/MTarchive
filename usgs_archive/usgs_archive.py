@@ -19,10 +19,10 @@ import time
 import datetime
 import sys
 import glob
-from cStringIO import StringIO
+from io import StringIO
 
 import gzip
-import urllib2 as url
+import urllib as url
 import xml.etree.ElementTree as ET
 
 import numpy as np
@@ -115,10 +115,10 @@ class Z3DCollection(object):
         self.meta_notes = None
         self.verbose = True
         self._pd_dt_fmt = '%Y-%m-%d %H:%M:%S.%f'
-        self._meta_dtype = np.dtype([('comp', 'S3'),
+        self._meta_dtype = np.dtype([('comp', 'U3'),
                                      ('start', np.int64),
                                      ('stop', np.int64),
-                                     ('fn', 'S140'),
+                                     ('fn', 'U140'),
                                      ('sampling_rate', np.float32),
                                      ('latitude', np.float32),
                                      ('longitude', np.float32),
@@ -126,17 +126,17 @@ class Z3DCollection(object):
                                      ('ch_azimuth', np.float32),
                                      ('ch_length', np.float32),
                                      ('ch_num', np.int32),
-                                     ('ch_sensor', 'S10'),
+                                     ('ch_sensor', 'U10'),
                                      ('n_samples', np.int32),
                                      ('t_diff', np.int32),
                                      ('standard_deviation', np.float32),
-                                     ('station', 'S12')])
+                                     ('station', 'U12')])
 
     def _empty_meta_arr(self):
         """
         Create an empty pandas Series
         """
-        dtype_list = [('station', 'S10'),
+        dtype_list = [('station', 'U10'),
                       ('latitude', np.float),
                       ('longitude', np.float),
                       ('elevation', np.float),
@@ -145,10 +145,10 @@ class Z3DCollection(object):
                       ('sampling_rate', np.float),
                       ('n_chan', np.int),
                       ('n_samples', np.int),
-                      ('instrument_id', 'S10'),
-                      ('collected_by', 'S30'),
-                      ('notes', 'S200'),
-                      ('comp', 'S24')]
+                      ('instrument_id', 'U10'),
+                      ('collected_by', 'U30'),
+                      ('notes', 'U200'),
+                      ('comp', 'U24')]
         
         for cc in ['ex', 'ey', 'hx', 'hy', 'hz']:
             for name, n_dtype in self._meta_dtype.fields.items():
@@ -446,12 +446,13 @@ class Z3DCollection(object):
         get the median value from a metadata entry
         """
         try:
-            return np.median(value_array[np.nonzero(value_array)])
+            median = np.median(value_array[np.nonzero(value_array)])
         except TypeError:
-            return list(set(value_array))[0]
-        
-
-
+            median = list(set(value_array))[0]
+        if type(median) in [np.bytes_, bytes]:
+            median = median.decode()
+        return median
+            
 # =============================================================================
 #  Metadata for usgs ascii file
 # =============================================================================
@@ -570,7 +571,7 @@ class AsciiMetadata(object):
         try:
             response = url.urlopen(nm_url.format(self._longitude, self._latitude))
         except url.HTTPError:
-            print nm_url.format(self._longitude, self._latitude)
+            print(nm_url.format(self._longitude, self._latitude))
             return -666
 
         # read the xml response and convert to a float
@@ -1307,8 +1308,8 @@ def get_nm_elev(lat, lon):
 
     # call the url and get the response
     try:
-        response = url.urlopen(nm_url.format(lon, lat))
-    except url.HTTPError:
+        response = url.request.urlopen(nm_url.format(lon, lat))
+    except url.error.HTTPError:
         print('xxx GET_ELEVATION_ERROR: Could not connect to internet')
         return -666
 

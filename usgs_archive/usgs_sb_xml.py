@@ -442,8 +442,8 @@ class XMLMetadata(object):
 
         # lineage
         lineage = ET.SubElement(data_quality, 'lineage')
-        step_num = len(self.processing.__dict__.keys())/2
-        for step in range(1, step_num+1, 1):
+        step_num = int(len(self.processing.__dict__.keys())/2)
+        for step in range(1, step_num + 1, 1):
             processing_step = ET.SubElement(lineage, 'procstep')
             ET.SubElement(processing_step, 'procdesc').text = getattr(self.processing,
                                                                          'step_{0:02}'.format(step))
@@ -712,6 +712,8 @@ class XMLMetadata(object):
         xml_str = ET.tostring(self.metadata)
         xml_str = minidom.parseString(xml_str).toprettyxml(indent="    ",
                                                            encoding='UTF-8')
+        if type(xml_str) in [bytes]:
+            xml_str = xml_str.decode()
         with open(self.xml_fn, 'w') as fid:
             fid.write(xml_str)
 

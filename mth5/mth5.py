@@ -874,7 +874,7 @@ class Schedule(object):
         write metadata to a csv file
         """
         csv_fn = self._make_csv_fn(csv_dir)
-        self.meta_df.to_csv(csv_fn)
+        self.meta_df.to_csv(csv_fn, header=False)
 
         return csv_fn
 
