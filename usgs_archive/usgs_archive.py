@@ -497,7 +497,10 @@ class AsciiMetadata(object):
         self.fn = fn
         self.SurveyID = None
         self.RunID = None
-        self.sch_obj = sch_obj
+        if sch_obj is None:
+            self.sch_obj = mth5.Schedule(meta_df=create_empty_meta_arr())
+        else:
+            self.sch_obj = sch_obj
         self.MissingDataFlag = np.NaN
         self.CoordinateSystem = None
         self._time_fmt = '%Y-%m-%dT%H:%M:%S %Z'
@@ -665,7 +668,10 @@ class AsciiMetadata(object):
                     return ii+1
                 elif len(value) < 1:
                     chn_find = True
-                setattr(self, key, value)
+                if 'elev' in key.lower():
+                    pass
+                else:
+                    setattr(self, key, value)
             elif 'coordinate' in line:
                 self.CoordinateSystem = ' '.join(line.strip().split()[-2:])
             else:
@@ -1277,6 +1283,45 @@ class USGSasc(AsciiMetadata):
 
         return save_fn
 
+# =============================================================================
+#  define an empty metadata dataframe
+# =============================================================================
+def create_empty_meta_arr():
+    """
+    Create an empty pandas Series
+    """
+    dtypes = [('station', 'U10'),
+              ('latitude', np.float),
+              ('longitude', np.float),
+              ('elevation', np.float),
+              ('start', np.int64),
+              ('stop', np.int64),
+              ('sampling_rate', np.float),
+              ('n_chan', np.int),
+              ('instrument_id', 'U10'),
+              ('collected_by', 'U30'),
+              ('notes', 'U200')]
+    ch_types =np.dtype([('ch_azimuth', np.float32),
+                       ('ch_length', np.float32),
+                       ('ch_num', np.int32),
+                       ('ch_sensor', 'U10'),
+                       ('n_samples', np.int32),
+                       ('t_diff', np.int32),
+                       ('standard_deviation', np.float32)])
+                       
+    
+    for cc in ['ex', 'ey', 'hx', 'hy', 'hz']:
+        for name, n_dtype in ch_types.fields.items():
+            if 'ch' in name:
+                m_name = name.replace('ch', cc)
+            else:
+                m_name = '{0}_{1}'.format(cc, name)
+            dtypes.append((m_name, n_dtype[0]))
+    ### make an empy data frame, for now just 1 set.
+    df = pd.DataFrame(np.zeros(1, dtype=dtypes))
+    
+    ### return a pandas series, easier to access than dataframe
+    return df.iloc[0]
 # =============================================================================
 # Get national map elevation data from internet
 # =============================================================================
