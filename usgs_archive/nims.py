@@ -640,7 +640,7 @@ class NIMS(NIMSHeader):
                             'end':130}
         self.info_array = None
         self.stamps = None
-        self.data_df = None
+        self.ts = None
         
         self.indices = self._make_index_values()
         
@@ -708,7 +708,7 @@ class NIMS(NIMSHeader):
         beginning of the time series.
         """
         if self.stamps is not None:
-            return self.data_df.index[0]
+            return self.ts.index[0]
         else:
             return None
         
@@ -719,46 +719,46 @@ class NIMS(NIMSHeader):
         beginning of the time series.
         """
         if self.stamps is not None:
-            return self.data_df.index[-1]
+            return self.ts.index[-1]
         else:
             return None
         
     @property
     def hx(self):
         """HX"""
-        if self.data_df is not None:
-            return self.data_df.hx
+        if self.ts is not None:
+            return self.ts.hx
         else:
             return None
     
     @property
     def hy(self):
         """HY"""
-        if self.data_df is not None:
-            return self.data_df.hy
+        if self.ts is not None:
+            return self.ts.hy
         else:
             return None
         
     @property
     def hz(self):
         """HZ"""
-        if self.data_df is not None:
-            return self.data_df.hz
+        if self.ts is not None:
+            return self.ts.hz
         else:
             return None
         
     @property
     def ex(self):
         """EX"""
-        if self.data_df is not None:
-            return self.data_df.ex
+        if self.ts is not None:
+            return self.ts.ex
         else:
             return None
     @property
     def ey(self):
         """EY"""
-        if self.data_df is not None:
-            return self.data_df.ey
+        if self.ts is not None:
+            return self.ts.ey
         else:
             return None        
         
@@ -972,6 +972,7 @@ class NIMS(NIMSHeader):
         if fn is not None:
             self.fn = fn
 
+        st = datetime.datetime.now()
         ### read in header information and get the location of end of header
         self.read_header(self.fn)
         
@@ -1050,7 +1051,10 @@ class NIMS(NIMSHeader):
         for comp in ['ex', 'ey']:
             data_array[comp] *= -1
             
-        self.data_df = self.align_data(data_array, self.stamps) 
+        self.ts = self.align_data(data_array, self.stamps) 
+        et = datetime.datetime.now()
+        
+        print('--> Took {0:.2f} seconds'.format((et-st).total_seconds()))
 
     def _get_first_gps_stamp(self, stamps):
         """
@@ -1168,9 +1172,10 @@ class NIMS(NIMSHeader):
         ### the index value for that stamp.
         ### need to be sure that the first GPS stamp has a date, need GPRMC
         first_stamp = self._get_first_gps_stamp(stamps)
+        # need to add 1 because index starts from 0
         first_index = first_stamp[0]
         start_time = first_stamp[1][0].time_stamp - \
-                            datetime.timedelta(seconds=int(first_index)+1)
+                            datetime.timedelta(seconds=int(first_index))
 
         dt_index = self.make_dt_index(start_time.isoformat(),
                                       self.sampling_rate,
@@ -1178,19 +1183,19 @@ class NIMS(NIMSHeader):
         
         return pd.DataFrame(data_array, index=dt_index)
         
-    def calibrate_data(self, data_df):
+    def calibrate_data(self, ts):
         """
         Apply calibrations to data
         
         .. note:: this needs work, would not use this now.
         """
         
-        data_df[['hx', 'hy', 'hz']] *= self.h_conversion_factor
-        data_df[['ex', 'ey']] *= self.e_conversion_factor
-        data_df['ex'] /= self.ex_length/1000.
-        data_df['ey'] /= self.ey_length/1000.
+        ts[['hx', 'hy', 'hz']] *= self.h_conversion_factor
+        ts[['ex', 'ey']] *= self.e_conversion_factor
+        ts['ex'] /= self.ex_length/1000.
+        ts['ey'] /= self.ey_length/1000.
         
-        return data_df
+        return ts
         
     def make_dt_index(self, start_time, sampling_rate, stop_time=None,
                       n_samples=None):

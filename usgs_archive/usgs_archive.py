@@ -35,6 +35,7 @@ import mtpy.utils.gis_tools as gis_tools
 import mtpy.utils.configfile as mtcfg
 
 import mth5.mth5 as mth5 
+from usgs_archive import nims
 
 # for writing shape file
 import geopandas as gpd
@@ -533,6 +534,9 @@ class AsciiMetadata(object):
                          'InstrumentID':'<12',
                          'Azimuth':'>7.1f',
                          'Dipole_Length':'>14.1f'}
+        
+        self.channel_dict = dict([(comp, dict([(key, None) for key in self._chn_settings]))
+                                   for comp in ['ex', 'ey', 'hx', 'hy', 'hz']])
 
         for key in kwargs.keys():
             setattr(self, key, kwargs[key])
@@ -572,8 +576,8 @@ class AsciiMetadata(object):
 
         # call the url and get the response
         try:
-            response = url.urlopen(nm_url.format(self._longitude, self._latitude))
-        except url.HTTPError:
+            response = url.request.urlopen(nm_url.format(self._longitude, self._latitude))
+        except url.error.HTTPError:
             print(nm_url.format(self._longitude, self._latitude))
             return -666
 
@@ -961,9 +965,59 @@ class USGSasc(AsciiMetadata):
                               delim_whitespace=True,
                               skiprows=data_line,
                               dtype=np.float32)
+        dt_freq = '{0:.0f}N'.format(1./(self.AcqSmpFreq)*1E9)
+        dt_index = pd.date_range(start=self.AcqStartTime,
+                                 periods=self.AcqNumSmp,
+                                 freq=dt_freq)
+        self.ts.index = dt_index
+            
         et = datetime.datetime.now()
         read_time = et-st
         print('Reading took {0}'.format(read_time.total_seconds()))
+        
+    def from_NIMS(self, nims_fn):
+        """
+        read in a NIMS DATA.BIN file
+        """
+        
+        nims_obj = nims.NIMS(nims_fn)
+        
+        self.ts = nims_obj.ts
+        self.SiteLatitude = nims_obj.latitude
+        self.SiteLongitude = nims_obj.longitude
+        self.RunID = nims_obj.run_id
+        self.SiteID = nims_obj.run_id
+        self.SurveyID = '{0}, {1}'.format(nims_obj.state_province, 
+                                          nims_obj.country)
+        self.AcqStartTime = nims_obj.start_time.strftime(self._time_fmt)
+        self.AcqStopTime = nims_obj.end_time.strftime(self._time_fmt)
+        self.AcqSmpFreq = nims_obj.sampling_rate
+        self.AcqNumSmp = self.ts.shape[0]
+        self.Nchan = self.ts.shape[1]
+        
+        chn_num_dict = {'Hx':1, 'Ex':2, 'Hy':3, 'Ey':4, 'Hz':5}
+        self.channel_dict = {}
+        for comp in self.ts.columns:
+            comp = comp.capitalize()
+            self.channel_dict[comp] = {}
+            self.channel_dict[comp]['ChnID'] = comp
+            self.channel_dict[comp]['ChnNum'] = chn_num_dict[comp]
+            self.channel_dict[comp]['InstrumentID'] = nims_obj.box_id
+            if comp == 'Ex':
+                self.channel_dict[comp]['Azimuth'] = nims_obj.ex_azimuth
+                self.channel_dict[comp]['Dipole_Length'] = nims_obj.ex_length
+            elif comp == 'Ey':
+                self.channel_dict[comp]['Azimuth'] = nims_obj.ey_azimuth
+                self.channel_dict[comp]['Dipole_Length'] = nims_obj.ey_length
+            elif comp == 'Hx':
+                self.channel_dict[comp]['Azimuth'] = 0
+                self.channel_dict[comp]['Dipole_Length'] = 0
+            elif comp == 'Hy':
+                self.channel_dict[comp]['Azimuth'] = 90
+                self.channel_dict[comp]['Dipole_Length'] = 0
+            elif comp == 'Hz':
+                self.channel_dict[comp]['Azimuth'] = 90
+                self.channel_dict[comp]['Dipole_Length'] = 0
 
     def convert_electrics(self):
         """
@@ -1020,7 +1074,7 @@ class USGSasc(AsciiMetadata):
 
     def write_asc_file(self, save_fn=None, chunk_size=1024, str_fmt='%15.7e',
                        full=True, compress=False, save_dir=None,
-                       compress_type='zip'):
+                       compress_type='zip', convert_electrics=True):
         """
         Write an ascii file in the USGS ascii format.
 
@@ -1051,7 +1105,8 @@ class USGSasc(AsciiMetadata):
         s_num = int(str_fmt[1:str_fmt.find('.')])
 
         # convert electric fields into mV/km
-        self.convert_electrics()
+        if convert_electrics:
+            self.convert_electrics()
 
         print('==> {0}'.format(save_fn))
         print('START --> {0}'.format(time.ctime()))
