@@ -23,6 +23,8 @@ import dateutil
 import pandas as pd
 import logging
 
+from matplotlib import pyplot as plt
+
 ### setup logger
 logging.basicConfig(filename='ReadNIMSData.log', 
                     filemode='w', 
@@ -641,6 +643,8 @@ class NIMS(NIMSHeader):
         self.info_array = None
         self.stamps = None
         self.ts = None
+        self.gaps = None
+        self.duplicate_list = None
         
         self.indices = self._make_index_values()
         
@@ -824,10 +828,9 @@ class NIMS(NIMSHeader):
             if gps_obj.valid:
                 gps_stamp_list.append(gps_obj)
             
-        return self._gps_match_double_string(gps_stamp_list)
-
+        return self._gps_match_gprmc_gpgga_strings(gps_stamp_list)
             
-    def _gps_match_double_string(self, gps_obj_list):
+    def _gps_match_gprmc_gpgga_strings(self, gps_obj_list):
         """
         match GPRMC and GPGGA strings together into a list
         
@@ -891,16 +894,29 @@ class NIMS(NIMSHeader):
         gps_stamps = []
         for index in stamp_indices:
             stamp_find = False
-            for stamps in gps_list:
+            for ii, stamps in enumerate(gps_list):
+                index_diff = stamps[0].index - index
+                ### check the index value, should be 2 or 74, if it is off by
+                ### a value left or right apply a correction.
+                if index_diff == 1 or index_diff == 73:
+                    index += 1
+                    stamps[0].index += 1
+                elif index_diff == 2 or index_diff == 74:
+                    index = index
+                elif index_diff == 3 or index_diff == 75:
+                    index -= 1
+                    stamps[0].index -= 1
                 if stamps[0].gps_type in ['GPRMC', 'gprmc']:
-                    if stamps[0].index - index == 2:
+                    if index_diff in [1, 2, 3]:
                         gps_stamps.append((index, stamps))
                         stamp_find = True
+                        del gps_list[ii]
                         break
                 elif stamps[0].gps_type in ['GPGGA', 'gpgga']:
-                    if stamps[0].index - index == 74:
+                    if index_diff in [73, 74, 75]:
                         gps_stamps.append((index, stamps))
                         stamp_find = True
+                        del gps_list[ii]
                         break
             if not stamp_find:
                 logging.warning('No good GPS stamp at {0} seconds'.format(index))
@@ -934,6 +950,86 @@ class NIMS(NIMSHeader):
         find_index = np.where(sequence_search == True)[0]
         
         return find_index
+    
+    def unwrap_sequence(self, sequence):
+        """
+        unwrap the sequence to be sequential numbers instead of modulated by
+        256.  sets the first number to 0
+        """
+        count = 0
+        unwrapped = np.zeros_like(sequence)
+        for ii, seq in enumerate(sequence):
+            unwrapped[ii] = seq + count * 256
+            if seq == 255:
+                count += 1
+                
+        unwrapped -= unwrapped[0]
+        
+        return unwrapped
+    
+    def _locate_duplicate_blocks(self, sequence):
+        """
+        locate the sequence number where the duplicates exist
+        """
+        
+        duplicates = np.where(np.abs(np.diff(sequence)) == 0)[0]
+        if len(duplicates) == 0:
+            return None
+        duplicate_list = []
+        for dup in duplicates:
+            dup_dict = {}
+            dup_dict['sequence_index'] = dup
+            dup_dict['ts_index_0'] = dup * self.sampling_rate
+            dup_dict['ts_index_1'] = dup * self.sampling_rate + self.sampling_rate
+            dup_dict['ts_index_2'] = (dup + 1) * self.sampling_rate
+            dup_dict['ts_index_3'] = (dup + 1) * self.sampling_rate + self.sampling_rate
+            duplicate_list.append(dup_dict)
+        return duplicate_list
+    
+    def _check_duplicate_blocks(self, block_01, block_02, info_01, info_02):
+        """
+        make sure the blocks are truly duplicates
+        """
+        if np.array_equal(block_01, block_02):
+            if np.array_equal(info_01, info_02):
+                return True
+            else:
+                return False
+        else:
+            return False
+    
+    def remove_duplicates(self, info_array, data_array):
+        """
+        remove duplicate blocks, removing the first duplicate as suggested by
+        Paul and Anna.  
+        """
+        ### locate 
+        duplicate_test_list = self._locate_duplicate_blocks(self.info_array['sequence'])
+        if duplicate_test_list is None:
+            return info_array, data_array, None
+        
+        duplicate_list = []
+        for d in duplicate_test_list:
+            if self._check_duplicate_blocks(data_array[d['ts_index_0']:d['ts_index_1']],
+                                            data_array[d['ts_index_2']:d['ts_index_3']],
+                                            info_array[d['sequence_index']],
+                                            info_array[d['sequence_index'] + 1]):
+                duplicate_list.append(d)
+        
+        print('    Deleting {0} duplicate blocks'.format(len(duplicate_list)))
+        ### get the index of the blocks to be removed, namely the 1st duplicate
+        ### block
+        remove_sequence_index = [d['sequence_index'] for d in duplicate_list]
+        remove_data_index = np.array([np.arange(d['ts_index_0'], d['ts_index_1'], 1)
+                                    for d in duplicate_list]).flatten() 
+        ### remove the data
+        return_info_array = np.delete(info_array, remove_sequence_index)
+        return_data_array = np.delete(data_array, remove_data_index)
+        
+        ### set sequence to be monotonic
+        return_info_array['sequence'][:] = np.arange(return_info_array.shape[0])
+        
+        return return_info_array, return_data_array, duplicate_list
         
     def read_nims(self, fn=None):
         """
@@ -956,15 +1052,17 @@ class NIMS(NIMSHeader):
            into [N, data_block_length].  Parse this array into the status
            information and the data.
            
-        6. Match the GPS locks from the status with valid GPS stamps.
+        6. Remove duplicate blocks, by removing the first of the duplicates
+           as suggested by Anna and Paul.  
+           
+        7. Match the GPS locks from the status with valid GPS stamps.
                 
-        7. Check to make sure that there is the correct number of seconds
+        8. Check to make sure that there is the correct number of seconds
            between the first and last GPS stamp.  If there is not a warning
            message will appear. 
         
-        .. note::
-            * Need to Figure out a way to deal with data gaps.
-            * Need to check for duplicate data blocks.
+        .. note:: The data and information array returned have the duplicates
+                  removed and the sequence reset to be monotonic.
         
         :param str fn: full path to DATA.BIN file
         
@@ -1022,10 +1120,9 @@ class NIMS(NIMSHeader):
             else:
                 value = data[:, index]
             self.info_array[key][:] = value
-                    
-        ### get GPS stamps with index values
-        self.stamps = self.match_staus_with_gps_stamps(self.info_array['status'],
-                                                       self.gps_list)
+            
+        ### unwrap sequence
+        self.info_array['sequence'] = self.unwrap_sequence(self.info_array['sequence'])
          
         ### get data
         data_array = np.zeros(data.shape[0]*self.sampling_rate,
@@ -1051,6 +1148,13 @@ class NIMS(NIMSHeader):
         for comp in ['ex', 'ey']:
             data_array[comp] *= -1
             
+        ### remove duplicates 
+        self.info_array, data_array, self.duplicate_list = self.remove_duplicates(self.info_array,
+                                                                                  data_array)
+        ### get GPS stamps with index values
+        self.stamps = self.match_staus_with_gps_stamps(self.info_array['status'],
+                                                       self.gps_list)
+        ### align data 
         self.ts = self.align_data(data_array, self.stamps) 
         et = datetime.datetime.now()
         
@@ -1134,10 +1238,12 @@ class NIMS(NIMSHeader):
         
         difference = index_diff - time_diff.total_seconds() 
         if difference != 0:
-            print('-'*50)
-            print('Timing looks to be off by {0} seconds'.format(difference))
+            
             gaps = self._locate_timing_gaps(stamps)
-            print('-'*50)
+            if len(gaps) > 0:
+                print('-'*50)
+                print('Timing might be off by {0} seconds'.format(difference))
+                print('-'*50)
             
             return False, gaps
         else:
@@ -1164,7 +1270,7 @@ class NIMS(NIMSHeader):
                   gap may occur.
         """
         ### check timing first to make sure there is no drift
-        timing_valid, gaps = self.check_timing(stamps)
+        timing_valid, self.gaps = self.check_timing(stamps)
         
         ### first GPS stamp within the data is at a given index that is 
         ### assumed to be the number of seconds from the start of the run.
@@ -1172,7 +1278,6 @@ class NIMS(NIMSHeader):
         ### the index value for that stamp.
         ### need to be sure that the first GPS stamp has a date, need GPRMC
         first_stamp = self._get_first_gps_stamp(stamps)
-        # need to add 1 because index starts from 0
         first_index = first_stamp[0]
         start_time = first_stamp[1][0].time_stamp - \
                             datetime.timedelta(seconds=int(first_index))
@@ -1231,6 +1336,25 @@ class NIMS(NIMSHeader):
             raise ValueError('Need to input either stop_time or n_samples')
 
         return dt_index
+    
+    def plot_time_series(self, fig_num=1, order=['hx', 'hy', 'hz', 'ex', 'ey']):
+        """
+        plot time series
+        """
+        
+        fig = plt.figure(fig_num)
+        ax_list = []
+        n = len(order)
+        for ii, comp in enumerate(order, 1):
+            if ii == 1:
+                ax = fig.add_subplot(n, 1, ii)
+            else:
+                ax = fig.add_subplot(n, 1, ii, sharex=ax_list[0])
+            l1, = ax.plot(getattr(self, comp))
+            ax_list.append(ax)
+            ax.set_ylabel(comp.upper())
+            
+        return ax_list
                  
 class Response(object):
     """
