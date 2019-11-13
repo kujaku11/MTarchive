@@ -1001,7 +1001,17 @@ class NIMS(NIMSHeader):
     def remove_duplicates(self, info_array, data_array):
         """
         remove duplicate blocks, removing the first duplicate as suggested by
-        Paul and Anna.  
+        Paul and Anna. Checks to make sure that the mag data are identical for 
+        the duplicate blocks.  Removes the blocks from the information and
+        data arrays and returns the reduced arrays.  This should sync up the
+        timing of GPS stamps and index values.
+        
+        :param np.array info_array: structured array of block information
+        :param np.array data_array: structured array of the data
+        
+        :returns: reduced information array
+        :returns: reduced data array
+        :returns: index of duplicates in raw data
         """
         ### locate 
         duplicate_test_list = self._locate_duplicate_blocks(self.info_array['sequence'])
@@ -1036,10 +1046,10 @@ class NIMS(NIMSHeader):
         Read NIMS DATA.BIN file.
         
         1. Read in the header information and stores those as attributes
-        with the same names as in the header file.
+           with the same names as in the header file.
         
         2. Locate the beginning of the data blocks by looking for the 
-        first [1, 131, ...] combo.  Anything before that is cut out.
+           first [1, 131, ...] combo.  Anything before that is cut out.
         
         3. Make sure the data is a multiple of the block length, if the
            data is longer the extra bits are cut off.
