@@ -23,6 +23,8 @@ import dateutil
 import pandas as pd
 import logging
 
+from mtpy.core import ts
+
 from matplotlib import pyplot as plt
 
 ### setup logger
@@ -566,8 +568,8 @@ class NIMSHeader(object):
                     self.ey_length = float(value.split()[0])
                     self.ey_azimuth = float(value.split()[1])
             elif 'system' in key:
-                self.box_id = value.split(';')[0]
-                self.mag_id = value.split(';')[1]
+                self.box_id = value.split(';')[0].strip()
+                self.mag_id = value.split(';')[1].strip()
             elif 'gps' in key:
                 gps_list = value.split()
                 self.header_gps_stamp = dateutil.parser.parse(' '.join(gps_list[0:2]),
@@ -731,7 +733,16 @@ class NIMS(NIMSHeader):
     def hx(self):
         """HX"""
         if self.ts is not None:
-            return self.ts.hx
+            ts_obj = ts.MTTS()
+            ts_obj.lat = self.latitude
+            ts_obj.lon = self.longitude
+            ts_obj.elev = self.elevation
+            ts_obj.azimuth = 0
+            ts_obj.component = 'hx'
+            ts_obj.data_logger = self.box_id
+            ts_obj.instrument_id = self.mag_id
+            ts_obj.ts = pd.DataFrame({'data':self.ts.hx})
+            return ts_obj
         else:
             return None
     
