@@ -35,6 +35,7 @@ import mtpy.utils.gis_tools as gis_tools
 import mtpy.utils.configfile as mtcfg
 
 import mth5.mth5 as mth5 
+from usgs_archive import nims
 
 # for writing shape file
 import geopandas as gpd
@@ -501,7 +502,10 @@ class AsciiMetadata(object):
         self.fn = fn
         self.SurveyID = None
         self.RunID = None
-        self.sch_obj = sch_obj
+        if sch_obj is None:
+            self.sch_obj = mth5.Schedule(meta_df=create_empty_meta_arr())
+        else:
+            self.sch_obj = sch_obj
         self.MissingDataFlag = np.NaN
         self.CoordinateSystem = None
         self._time_fmt = '%Y-%m-%dT%H:%M:%S %Z'
@@ -534,6 +538,9 @@ class AsciiMetadata(object):
                          'InstrumentID':'<12',
                          'Azimuth':'>7.1f',
                          'Dipole_Length':'>14.1f'}
+        
+        self.channel_dict = dict([(comp, dict([(key, None) for key in self._chn_settings]))
+                                   for comp in ['ex', 'ey', 'hx', 'hy', 'hz']])
 
         for key in kwargs.keys():
             setattr(self, key, kwargs[key])
@@ -573,8 +580,8 @@ class AsciiMetadata(object):
 
         # call the url and get the response
         try:
-            response = url.urlopen(nm_url.format(self._longitude, self._latitude))
-        except url.HTTPError:
+            response = url.request.urlopen(nm_url.format(self._longitude, self._latitude))
+        except url.error.HTTPError:
             print(nm_url.format(self._longitude, self._latitude))
             return -666
 
@@ -669,7 +676,10 @@ class AsciiMetadata(object):
                     return ii+1
                 elif len(value) < 1:
                     chn_find = True
-                setattr(self, key, value)
+                if 'elev' in key.lower():
+                    pass
+                else:
+                    setattr(self, key, value)
             elif 'coordinate' in line:
                 self.CoordinateSystem = ' '.join(line.strip().split()[-2:])
             else:
@@ -959,9 +969,59 @@ class USGSasc(AsciiMetadata):
                               delim_whitespace=True,
                               skiprows=data_line,
                               dtype=np.float32)
+        dt_freq = '{0:.0f}N'.format(1./(self.AcqSmpFreq)*1E9)
+        dt_index = pd.date_range(start=self.AcqStartTime,
+                                 periods=self.AcqNumSmp,
+                                 freq=dt_freq)
+        self.ts.index = dt_index
+            
         et = datetime.datetime.now()
         read_time = et-st
         print('Reading took {0}'.format(read_time.total_seconds()))
+        
+    def from_NIMS(self, nims_fn):
+        """
+        read in a NIMS DATA.BIN file
+        """
+        
+        nims_obj = nims.NIMS(nims_fn)
+        
+        self.ts = nims_obj.ts
+        self.SiteLatitude = nims_obj.latitude
+        self.SiteLongitude = nims_obj.longitude
+        self.RunID = nims_obj.run_id
+        self.SiteID = nims_obj.run_id
+        self.SurveyID = '{0}, {1}'.format(nims_obj.state_province, 
+                                          nims_obj.country)
+        self.AcqStartTime = nims_obj.start_time.strftime(self._time_fmt)
+        self.AcqStopTime = nims_obj.end_time.strftime(self._time_fmt)
+        self.AcqSmpFreq = nims_obj.sampling_rate
+        self.AcqNumSmp = self.ts.shape[0]
+        self.Nchan = self.ts.shape[1]
+        
+        chn_num_dict = {'Hx':1, 'Ex':2, 'Hy':3, 'Ey':4, 'Hz':5}
+        self.channel_dict = {}
+        for comp in self.ts.columns:
+            comp = comp.capitalize()
+            self.channel_dict[comp] = {}
+            self.channel_dict[comp]['ChnID'] = comp
+            self.channel_dict[comp]['ChnNum'] = chn_num_dict[comp]
+            self.channel_dict[comp]['InstrumentID'] = nims_obj.box_id
+            if comp == 'Ex':
+                self.channel_dict[comp]['Azimuth'] = nims_obj.ex_azimuth
+                self.channel_dict[comp]['Dipole_Length'] = nims_obj.ex_length
+            elif comp == 'Ey':
+                self.channel_dict[comp]['Azimuth'] = nims_obj.ey_azimuth
+                self.channel_dict[comp]['Dipole_Length'] = nims_obj.ey_length
+            elif comp == 'Hx':
+                self.channel_dict[comp]['Azimuth'] = 0
+                self.channel_dict[comp]['Dipole_Length'] = 0
+            elif comp == 'Hy':
+                self.channel_dict[comp]['Azimuth'] = 90
+                self.channel_dict[comp]['Dipole_Length'] = 0
+            elif comp == 'Hz':
+                self.channel_dict[comp]['Azimuth'] = 90
+                self.channel_dict[comp]['Dipole_Length'] = 0
 
     def convert_electrics(self):
         """
@@ -1018,7 +1078,7 @@ class USGSasc(AsciiMetadata):
 
     def write_asc_file(self, save_fn=None, chunk_size=1024, str_fmt='%15.7e',
                        full=True, compress=False, save_dir=None,
-                       compress_type='zip'):
+                       compress_type='zip', convert_electrics=True):
         """
         Write an ascii file in the USGS ascii format.
 
@@ -1049,7 +1109,8 @@ class USGSasc(AsciiMetadata):
         s_num = int(str_fmt[1:str_fmt.find('.')])
 
         # convert electric fields into mV/km
-        self.convert_electrics()
+        if convert_electrics:
+            self.convert_electrics()
 
         print('==> {0}'.format(save_fn))
         print('START --> {0}'.format(time.ctime()))
@@ -1281,6 +1342,45 @@ class USGSasc(AsciiMetadata):
 
         return save_fn
 
+# =============================================================================
+#  define an empty metadata dataframe
+# =============================================================================
+def create_empty_meta_arr():
+    """
+    Create an empty pandas Series
+    """
+    dtypes = [('station', 'U10'),
+              ('latitude', np.float),
+              ('longitude', np.float),
+              ('elevation', np.float),
+              ('start', np.int64),
+              ('stop', np.int64),
+              ('sampling_rate', np.float),
+              ('n_chan', np.int),
+              ('instrument_id', 'U10'),
+              ('collected_by', 'U30'),
+              ('notes', 'U200')]
+    ch_types =np.dtype([('ch_azimuth', np.float32),
+                       ('ch_length', np.float32),
+                       ('ch_num', np.int32),
+                       ('ch_sensor', 'U10'),
+                       ('n_samples', np.int32),
+                       ('t_diff', np.int32),
+                       ('standard_deviation', np.float32)])
+                       
+    
+    for cc in ['ex', 'ey', 'hx', 'hy', 'hz']:
+        for name, n_dtype in ch_types.fields.items():
+            if 'ch' in name:
+                m_name = name.replace('ch', cc)
+            else:
+                m_name = '{0}_{1}'.format(cc, name)
+            dtypes.append((m_name, n_dtype[0]))
+    ### make an empy data frame, for now just 1 set.
+    df = pd.DataFrame(np.zeros(1, dtype=dtypes))
+    
+    ### return a pandas series, easier to access than dataframe
+    return df.iloc[0]
 # =============================================================================
 # Get national map elevation data from internet
 # =============================================================================
