@@ -373,7 +373,11 @@ class Z3DCollection(object):
         # figure out the max length of the array, getting the time difference into
         # seconds and then multiplying by the sampling rate
         max_ts_len = int((stop-start)*df)
+        if max_ts_len < 0:
+            print('Times are odd start = {0}, stop = {1}'.format(start, stop))
+            max_ts_len = abs(max_ts_len)
         ts_len = min([ts_obj.ts.size for ts_obj in ts_list]+[max_ts_len])
+        print(comp_list, ts_len)
         if decimate > 1:
             ts_len /= decimate
 
