@@ -734,6 +734,8 @@ class NIMS(NIMSHeader):
         """HX"""
         if self.ts is not None:
             ts_obj = ts.MTTS()
+            ts_obj.fn = self.fn
+            ts_obj.station = self.run_id
             ts_obj.lat = self.latitude
             ts_obj.lon = self.longitude
             ts_obj.elev = self.elevation
@@ -741,6 +743,8 @@ class NIMS(NIMSHeader):
             ts_obj.component = 'hx'
             ts_obj.data_logger = self.box_id
             ts_obj.instrument_id = self.mag_id
+            ts_obj.chn_num = 1
+            ts_obj.sampling_rate = self.sampling_rate
             ts_obj.ts = pd.DataFrame({'data':self.ts.hx})
             return ts_obj
         else:
@@ -750,7 +754,20 @@ class NIMS(NIMSHeader):
     def hy(self):
         """HY"""
         if self.ts is not None:
-            return self.ts.hy
+            ts_obj = ts.MTTS()
+            ts_obj.fn = self.fn
+            ts_obj.station = self.run_id
+            ts_obj.lat = self.latitude
+            ts_obj.lon = self.longitude
+            ts_obj.elev = self.elevation
+            ts_obj.azimuth = 90
+            ts_obj.component = 'hy'
+            ts_obj.data_logger = self.box_id
+            ts_obj.instrument_id = self.mag_id
+            ts_obj.chn_num = 2
+            ts_obj.sampling_rate = self.sampling_rate
+            ts_obj.ts = pd.DataFrame({'data':self.ts.hy})
+            return ts_obj
         else:
             return None
         
@@ -758,7 +775,20 @@ class NIMS(NIMSHeader):
     def hz(self):
         """HZ"""
         if self.ts is not None:
-            return self.ts.hz
+            ts_obj = ts.MTTS()
+            ts_obj.fn = self.fn
+            ts_obj.station = self.run_id
+            ts_obj.lat = self.latitude
+            ts_obj.lon = self.longitude
+            ts_obj.elev = self.elevation
+            ts_obj.azimuth = 90
+            ts_obj.component = 'hz'
+            ts_obj.data_logger = self.box_id
+            ts_obj.instrument_id = self.mag_id
+            ts_obj.chn_num = 3
+            ts_obj.sampling_rate = self.sampling_rate
+            ts_obj.ts = pd.DataFrame({'data':self.ts.hz})
+            return ts_obj
         else:
             return None
         
@@ -766,14 +796,42 @@ class NIMS(NIMSHeader):
     def ex(self):
         """EX"""
         if self.ts is not None:
-            return self.ts.ex
+            ts_obj = ts.MTTS()
+            ts_obj.fn = self.fn
+            ts_obj.station = self.run_id
+            ts_obj.lat = self.latitude
+            ts_obj.lon = self.longitude
+            ts_obj.elev = self.elevation
+            ts_obj.azimuth = self.ex_azimuth
+            ts_obj.dipole_length = self.ex_length
+            ts_obj.component = 'ex'
+            ts_obj.data_logger = self.box_id
+            ts_obj.instrument_id = 1
+            ts_obj.chn_num = 4
+            ts_obj.sampling_rate = self.sampling_rate
+            ts_obj.ts = pd.DataFrame({'data':self.ts.ex})
+            return ts_obj
         else:
             return None
     @property
     def ey(self):
         """EY"""
         if self.ts is not None:
-            return self.ts.ey
+            ts_obj = ts.MTTS()
+            ts_obj.fn = self.fn
+            ts_obj.station = self.run_id
+            ts_obj.lat = self.latitude
+            ts_obj.lon = self.longitude
+            ts_obj.elev = self.elevation
+            ts_obj.azimuth = self.ey_azimuth
+            ts_obj.dipole_length = self.ey_length
+            ts_obj.component = 'ey'
+            ts_obj.data_logger = self.box_id
+            ts_obj.instrument_id = 1
+            ts_obj.chn_num = 5
+            ts_obj.sampling_rate = self.sampling_rate
+            ts_obj.ts = pd.DataFrame({'data':self.ts.ey})
+            return ts_obj
         else:
             return None        
         
@@ -1371,7 +1429,7 @@ class NIMS(NIMSHeader):
                 ax = fig.add_subplot(n, 1, ii)
             else:
                 ax = fig.add_subplot(n, 1, ii, sharex=ax_list[0])
-            l1, = ax.plot(getattr(self, comp))
+            l1, = ax.plot(getattr(self, comp).ts.data)
             ax_list.append(ax)
             ax.set_ylabel(comp.upper())
             
