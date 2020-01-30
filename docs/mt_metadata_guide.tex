@@ -1,0 +1,540 @@
+\documentclass{article}
+
+\usepackage[hmargin=1in, vmargin=.75in]{geometry}
+\usepackage[citecolor=blue, colorlinks=true, linkcolor=blue, urlcolor=blue]{hyperref}
+\usepackage{natbib}
+\usepackage{graphicx}
+\usepackage{authblk}
+
+\title{MT Metadata Guide}
+\author[1]{IRIS-PASSCAL MT Software Development Committee}
+\affil[1]{IRIS}
+
+\newcommand{\attr}[1]{\textbf{#1}}
+\renewcommand{\arraystretch}{1.35}
+
+\begin{document}
+	
+\maketitle
+
+\tableofcontents
+
+\newpage
+
+\section{Introduction}
+
+The magnetotelluric community is relatively small which has led to various formats for storing the time series data.  Some type of ASCII format seems to be the most prevalent because before large data sets that was the easiest method of storage. Various binary formats exist, some proprietary and some open like the Scripps format, though efficient, these files lack some critical metadata.  Metadata is key to archiving data and as of now there has been no documentation on metadata standards for MT time series data.  
+
+IRIS-PASSCAL is adding MT capabilities to their instrument pool and has setup a committee to develop MT metadata standards for archiving time series.  What follows are the metadata standards developed by that committee.
+
+
+\section{General Structure}
+
+The MT metadata standards are structured to cover details from single channel time series to the full MT survey.  For simplicity each of the different scales of an MT survey and measurements have been categorized starting from largest scale to smallest scale (Figure \ref{fig:example}.  These categories are: \verb|Survey|, \verb|Station|, \verb|Run|, \verb|DataLogger|, \verb|Electric|, and \verb|Magnetic|.  Each of these will be described in the sections below.  
+
+The metadata key names should be self explanatory and they are structured as follows: \verb|name_type| or \verb|category/name_type|, where \verb|name| is the description name, \verb|type| is the data type (Tabel \ref{tab:types}), and \verb|category| refers to a metadata category that has common parameters, such as \verb|location| which will have an x, y, and z $\longrightarrow$ \verb|location/x_d|, \verb|location/y_d|, and \verb|location/z_d|. This will help keep order and help the user understand the metadata without having to consult the documentation all the time. 
+
+\begin{table}[htb!]
+	\caption[Data types]{Permissible values for data types}
+	\begin{tabular}{|l|l|}
+		\hline
+		Data Type & label \\
+		\hline
+		String & s \\ \hline
+		Double (float) & d \\ \hline
+		Integer & i \\
+		\hline
+	\end{tabular}
+	\label{tab:types}
+\end{table}
+
+\begin{figure}[htb!]
+	\centering
+	\includegraphics[height=.9\textheight]{example_mt_file_structure.pdf}
+	\caption{Schematic of a MT time series file structure with appropriate metadata.}
+	\label{fig:example}
+\end{figure}
+
+\newpage
+\section{Survey}
+
+A survey describes an entire MT survey that covers a specific study area.  This may include multiple researchers and research groups or a multi-year campaign, but should be confined to a specific regional area.  The \verb|Survey| metadata category describes the general parameters of the survey. 
+
+\begin{table}[htb!]
+	\caption[Attributes for Survey]{Attributes for Survey category}
+	\begin{tabular}{|l|l|l|l|}
+		\hline
+		\textbf{Metadata Key} & \textbf{Description} & \textbf{Type} & \textbf{Required} \\ \hline
+		name\_s & name of survey & string & compulsory \\ \hline
+		ID\_s & nickname of survey & string & optional \\ \hline
+		net\_code\_s & network code given by IRIS & string & compulsory \\ \hline
+		start\_date/value\_s & start date of survey [ UTC ] & string & compulsory \\ \hline
+		end\_date/value\_s & end date of survey [ UTC ] & string & compulsory \\ \hline
+		northwest\_corner/latitude\_d & location of northwest corner of survey [ degrees (hh.mmss) ] & float & compulsory \\ \hline
+		northwest\_corner/longitude\_d & location of northwest corner of survey [ degrees (hh.mmss) ] & float & compulsory \\ \hline
+		southeast\_corner/latitude\_d & location of southeast corner of survey  [ degrees (hh.mmss) ] & float & compulsory \\ \hline
+		southeast\_corner/longitude\_d & location of southeast corner of survey  [ degrees (hh.mmss) ] & float & compulsory \\ \hline
+		datum\_s & "datum of x and y coordinates [ WGS84 $|$ ...]" & string & compulsory \\ \hline
+		location\_s & location of survey in general terms & string & optional \\ \hline
+		country\_s & country/countries survey located in & string & optional \\ \hline
+		summary\_s & summary paragraph of survey & string & compulsory \\ \hline
+		notes\_s & notes about survey & string & optional \\ \hline
+		acquired\_by/author\_s & principal investigator(s) responsible for survey & string & compulsory \\ \hline
+		acquired\_by/organization\_s & organization(s) associated with survey & string & compulsory \\ \hline
+		acquired\_by/email\_s & email address of PI(s) & string & compulsory \\ \hline
+		acquired\_by/url\_s & url(s) of organization(s) & string & compulsory \\ \hline
+		release\_status\_s & release status [ open $|$ on request $|$ propriatary $|$...] & string & compulsory \\ \hline
+		conditions\_of\_use\_s & condition of use information information including licensing & string & optional \\ \hline
+		citation/dataset doi\_s & citation dataset doi number & string & compulsory \\ \hline
+		citation/journal\_s & citation journal article & string & optional \\ \hline
+		citation/journal doi\_s & citation journal doi & string & optional \\ \hline
+		citation/title\_s & citation title & string & optional \\ \hline
+		citation/author\_s & citation author & string & optional \\ \hline
+		citation/year\_s & citation year & string & optional \\ \hline
+		citation/notes\_s & notes on citation & string & optional \\ \hline
+	\end{tabular}
+	\label{tab:survey}
+\end{table} 
+
+\newpage
+\subsection{Example Survey JSON String}
+
+\begin{verbatim}
+{
+ "name_s": "Long Valley, CA",
+ "ID_s": "Casa Diablo",
+ "net_code_s": "network code given by IRIS",
+ "start_date/value_s": "2020-01-01",
+ "end_date/value_s": "2021-01-01",
+ "northwest_corner/latitude_d": 37.5,
+ "northwest_corner/longitude_d": 122,
+ "southeast_corner/latitude_d": 36.5,
+ "southeast_corner/longitude_d": -121.15,
+ "datum_s": "WGS84",
+ "location_s": "Mammoth, CA",
+ "country_s": "USA",
+ "summary_s": "This survey is meant to image the magmatic and hydrothermal systems.",
+ "notes_s": "Had complications due to snow",
+ "acquired_by/author_s": "M. Tee, T. Luric, S. Spot, and A. Borealis",
+ "acquired_by/organization_s": "MT Gurus",
+ "acquired_by/email_s": "mtee@guru.com",
+ "acquired_by/url_s": "mt_guru.com",
+ "release_status_s": "open",
+ "conditions_of_use_s": "condition of use information information including licensing",
+ "citation/dataset doi_s": "citation dataset doi number",
+ "citation/journal_s": "citation journal article",
+ "citation/journal doi_s": "citation journal doi",
+ "citation/title_s": "citation title",
+ "citation/author_s": "citation author",
+ "citation/year_s": "citation year",
+ "citation/notes_s": "notes on citation"
+}
+\end{verbatim}
+
+\newpage
+\section{Station}
+
+A station is a single location where MT data are collected, if the location of the station is moved during a run, then a new station should be created.  The station metadata includes information about name, location, number of channels, who acquired the data, and what is the provenance of the data.
+
+\begin{table}[htb!]
+	\caption[Attributes for Survey]{Attributes for Survey category}
+	\begin{tabular}{|l|p{3in}|l|l|}
+		\hline
+		\textbf{Metadata Key} & \textbf{Description} & \textbf{Type} & \textbf{Required} \\ \hline
+		sta\_code\_s & 5 char name of station & string & compulsory \\ \hline
+		name\_s & name station site & string & compulsory \\ \hline
+		latitude/value\_d & longitude location [ degrees (hh.mmss) ] & float & compulsory \\ \hline
+		longitude/value\_d & latitude location [ degrees (hh.mmss) ] & float & compulsory \\ \hline
+		z/value\_d & z location [ m ] & float & compulsory \\ \hline
+		notes\_s & any notes about station & string & optional \\ \hline
+		datum\_s & "datum for x, y, z location" & string & compulsory \\ \hline
+		reference\_ellipsoid\_s & reference ellipsoid & string & compulsory \\ \hline
+		start\_time/value\_s & start time of data logging [ UTC ] & string & compulsory \\ \hline
+		end\_time/value\_s & stop time of data logging  [ UTC ] & string & compulsory \\ \hline
+		num\_channels\_i & number of channels recording & int & compulsory \\ \hline
+		channels\_recorded\_s & "list of channels recorded [EX, EY, HX, HY, HZ $|$ ...]" & string & compulsory \\ \hline
+		data\_type\_s & type of data collected [ BB $|$ LP $|$ AMT $|$ Combo $|$ ...] & string & compulsory \\ \hline
+		declination/value\_d & declination value & float & compulsory \\ \hline
+		declination/units\_s & declination units [ deg $|$ radians $|$ ...] & string & compulsory \\ \hline
+		declination/epoch\_s & declination epoch & string & compulsory \\ \hline
+		declination/model\_s & declination model & string & compulsory \\ \hline
+		station\_orientation\_s & orientation coordinate system [ geographic $|$ channel-measurement specific ] & string & compulsory \\ \hline
+		orientation\_method\_s & [ compass $|$ differential GPS $|$ gyroscope $|$...] & string & optional \\ \hline
+		acquired\_by/author\_s & person(s) operating station & string & compulsory \\ \hline
+		acquired\_by/email\_s & email of lead station operator & string & compulsory \\ \hline
+	\end{tabular}
+\label{tab:station01}
+\end{table}	
+
+\newpage
+\begin{table}[htb!]
+	\caption[Attributes for Survey]{Attributes for Survey category continued}
+	\begin{tabular}{|l|p{3in}|l|l|}
+		\hline
+		\textbf{Metadata Key} & \textbf{Description} & \textbf{Type} & \textbf{Required} \\ \hline	
+		provenance/creation\_time\_s & creation time of time series data for storing & string & compulsory \\ \hline
+		provenance/software/name\_s & name of software used to store time series & string & compulsory \\ \hline
+		provenance/software/version\_s & version of software used to store time series & string & compulsory \\ \hline
+		provenance/software/author\_s & author of software used to store time series & string & compulsory \\ \hline
+		provenance/creator/author\_s & name of person or group creating archive data & string & compulsory \\ \hline
+		provenance/creator/organization\_s & name of organization or institution creating archive data & string & compulsory \\ \hline
+		provenance/creator/url\_s & url of group creating archive data & string & compulsory \\ \hline
+		provenance/creator/email\_s & email of person or group creating archive data & string & compulsory \\ \hline
+		provenance/submitter/author\_s & name of person or group submitting archive data & string & compulsory \\ \hline
+		provenance/submitter/organization\_s & name of organization or institution submitting archive data & string & compulsory \\ \hline
+		provenance/submitter/url\_s & url of group submitting archive data & string & compulsory \\ \hline
+		provenance/submitter/email\_s & email of person or group submitting archive data & string & compulsory  \\ \hline
+		provenance/notes\_s & any notes on the history of the data & string & optional \\ \hline
+		provenance/log\_s & log of any changes made to time series data & string & optional \\ \hline
+	\end{tabular}
+	\label{tab:station02}
+\end{table}
+   
+\newpage
+\subsection{Example Station JSON String}
+
+\begin{verbatim}
+{
+ "sta_code_s": "MNP01",
+ "name_s": "Mojave National Preserve Hole-in-the-rock",
+ "latitude/value_d":35.0,
+ "longitude/value_d": -117.0,
+ "z/value_d": 1200,
+ "notes_s": "Donkeys chewed both electric channels",
+ "datum_s": "WGS84",
+ "reference_ellipsoid_s": "reference ellipsoid",
+ "start_time/value_s": "2020-01-01T12:00:00.0000 UTC",
+ "end_time/value_s": "2020-01-12T12:00:00.0000 UTC",
+ "num_channels_i": 5,
+ "channels_recorded_s": "[EX, EY, HX, HY, HZ]",
+ "data_type_s": "BB & LP",
+ "declination/value_d": "11.5",
+ "declination/units_s": "degrees",
+ "declination/epoch_s": "declination epoch",
+ "declination/model_s": "WMM2019-2024",
+ "station_orientation_s": "geographic",
+ "orientation_method_s": "compass",
+ "acquired_by/author_s": "M. Tee and A. Borealis",
+ "acquired_by/email_s": "m.tee@guru.com",
+ "provenance/creation_time_s": "2020-05-01T12:00:00.0000 UTC",
+ "provenance/software/name_s": "MTH5",
+ "provenance/software/version_s": "1.0.0",
+ "provenance/software/author_s": "IRIS",
+ "provenance/creator/author_s": "M. Tee",
+ "provenance/creator/organization_s": "MT Gurus",
+ "provenance/creator/url_s": "mt_guru.com",
+ "provenance/creator/email_s": "m.tee@guru.com",
+ "provenance/submitter/author_s": "M. Tee",
+ "provenance/submitter/organization_s": "MT Gurus",
+ "provenance/submitter/url_s": "mt_guru.com",
+ "provenance/submitter/email_s": "m.tee@guru.com",
+ "provenance/notes_s": "Electrics are good until 2020-01-10",
+ "provenance/log_s": "The data was rotated using an updated declination 2020-05-02."
+}
+\end{verbatim}
+
+\newpage
+\section{Run}
+
+A run is data collected at a single station at a single sampling rate.  If the dipole length or other such station parameters are changed between runs that is ok, just make a new run.  If the station is relocated then a new station should be created.
+
+\begin{table}[htb!]
+	\caption[Attributes for Run]{Attributes for Run category}
+	\begin{tabular}{|l|p{3in}|l|l|}
+		\hline
+		\textbf{Metadata Key} & \textbf{Description} & \textbf{Type} & \textbf{Required} \\ \hline
+		ID\_s & run ID & string & compulsory \\ \hline
+		notes\_s & notes on run & string & optional \\ \hline
+		start\_time/value\_s & start time of data logging [ UTC ] & string & compulsory \\ \hline
+		end\_time/value\_s & stop time of data logging [ UTC ] & string & compulsory \\ \hline
+		sampling\_rate\_d & sampling rate of run (samples/second) & float & compulsory \\ \hline
+		num\_channels\_i & number of channels recorded & int & compulsory \\ \hline
+		channels\_recorded\_s & "list of channels recorded [ [EX, EY, HX, HY] $|$ ...]" & string & compulsory \\ \hline
+		data\_type \_s & type of data collected [ BB $|$ LP $|$ AMT $|$ Combo $|$ ...] & string & compulsory \\ \hline
+		acquired\_by/author\_s & person(s) responsible for run & string & compulsory \\ \hline
+		acquired\_by/email\_s & email of lead run operator & string & compulsory \\ \hline
+		provenance/notes\_s & any notes on the history of the data & string & optional \\ \hline
+		provenance/log\_s & log of any changes made to time series data & string & optional \\ \hline
+	\end{tabular}
+	\label{tab:run}
+\end{table}
+
+\subsection{Example Run JSON String}
+
+\begin{verbatim}
+{
+ "ID_s": "MNP02_b",
+ "notes_s": "Changed north electrode",
+ "start_time/value_s": "2020-01-02T15:30:00.0000 UTC",
+ "end_time/value_s": "2020-01-05T07:05:30.0000 UTC",
+ "sampling_rate_d": 256,
+ "num_channels_i": 5,
+ "channels_recorded_s": "[EX, EY, HX, HY, HZ]",
+ "data_type _s": "BB",
+ "acquired_by/author_s": "T. Luric",
+ "acquired_by/email_s": "t.lurric@guru.com",
+ "provenance/notes_s": "Near a powerline and HZ is clipped",
+ "provenance/log_s": "Clipped data in HZ replaced with zeros 2020-05-01 by T. Luric"
+}
+\end{verbatim}
+
+\newpage
+\section{Data Logger}
+
+Data logger is a the digital acquisition system used to collect time series data at a single station for a single run.  \verb|DataLogger| metadata includes the type of data logger, timing system, firmware, number of channels, calibrations, and power source.
+
+\begin{table}[htb!]
+	\caption[Attributes for DataLogger]{Attributes for DataLogger category}
+	\begin{tabular}{|l|p{3in}|l|l|}
+		\hline
+		\textbf{Metadata Key} & \textbf{Description} & \textbf{Type} & \textbf{Required} \\ \hline
+		manufacturer\_s & manufacturer name & string & compulsory \\ \hline
+		model\_s & model name & string & compulsory \\ \hline
+		serial\_s & serial number & string & compulsory \\ \hline
+		notes\_s & notes about data logger & string & compulsory \\ \hline
+		timing\_system/type\_s & type of timing system [GPS $|$ internal $|$ ... ] & string & compulsory \\ \hline
+		timing\_system/drift\_d & any drift in internal clock & float & compulsory \\ \hline
+		timing\_system/uncertainty\_d & uncertainty associated with internal clock & float & compulsory \\ \hline
+		timing\_system/notes\_s & notes on timing system & string & optional \\ \hline
+		firmware/version\_s & firmware version & string & compulsory \\ \hline
+		firmware/date\_s & date on firmware & string & compulsory \\ \hline
+		firmware/author\_s & author of firmware & string & optional \\ \hline
+		n\_channels\_i & number of channels & int & compulsory \\ \hline
+		n\_channels\_used\_s & number of channels used & int & compulsory \\ \hline
+		calibration/filename\_s & calibration file or link for data logger & string & compulsory \\ \hline
+		calibration/date\_s & calibration date & string & compulsory \\ \hline
+		calibration/notes\_s & notes on calibration & string & optional \\ \hline
+		power\_source/type\_s & power source type [ Pb-acid battery $|$ solar panel $|$ Li battery $|$ ...] & string & compulsory \\ \hline
+		power\_source/start\_voltage\_d & starting voltage of power source & float & compulsory \\ \hline
+		power\_source/end\_voltage\_d & ending voltage of power source & float & compulsory \\ \hline
+		power\_source/notes\_s & notes on power source & string & optional \\ \hline
+	\end{tabular}
+	\label{tab:datalogger}
+\end{table}	
+
+\newpage
+\subsection{Example DataLogger JSON String}
+
+\begin{verbatim}
+{
+ "manufacturer_s": "MT `r Us",
+ "model_s": "Broadband 2000",
+ "serial_s": "0128947850230",
+ "notes_s": "Intern dropped the data logger on a shovel.",
+ "timing_system/type_s": "GPS",
+ "timing_system/drift_d": 0,
+ "timing_system/uncertainty_d": .0000016,
+ "timing_system/notes_s": "only works when sky is clear",
+ "firmware/version_s": "1.0",
+ "firmware/date_s": "2020-01-01",
+ "firmware/author_s": "R. Phase",
+ "n_channels_i": 5,
+ "n_channels_used_s": 4,
+ "calibration/filename_s": "/bb2000.cal",
+ "calibration/date_s": "2020-01-01",
+ "calibration/notes_s": "frequency response of the data logger",
+ "power_source/type_s": "solar panel and battery]",
+ "power_source/start_voltage_d": 13.1,
+ "power_source/end_voltage_d": 12.0,
+ "power_source/notes_s": "Overcast all day reduced recharging"
+}
+\end{verbatim}
+
+\newpage
+\section{Electric Channel}
+
+Electric channel refers to a dipole measurement of the electric field for a single station for a single run.
+ 
+\begin{table}[htb!]
+	\caption[Attributes for Electric Channel]{Attributes for Electric category}
+	\begin{tabular}{|l|p{3in}|l|l|}
+		\hline
+		\textbf{Metadata Key} & \textbf{Description} & \textbf{Type} & \textbf{Required} \\ \hline
+		dipole/length\_d & length of dipole [ m ] & float & compulsory \\ \hline
+		channel\_num\_i & channel number [ 1 $|$ 2 $|$ 3 $|$ 4 $|$ 5 $|$ 6 $|$...] & int & compulsory \\ \hline
+		component\_s & [ Ex $|$ Ey $|$ Ez ] & string  & compulsory \\ \hline
+		azimuth/value\_d & azimuth of dipole N = 0,  E = 90 [ degrees ] & float & compulsory \\ \hline
+		positive/ID\_s & sensor id number & string & compulsory \\ \hline
+		positive/latitude\_d & positive sensor location latitude [ degrees (hh.mmss) ] & float & optional \\ \hline
+		positive/longitude\_d & positive sensor location longitude [ degrees (hh.mmss) ] & float & optional \\ \hline
+		positive/elevation\_d & positive sensor location elevation [ m ] & float & optional \\ \hline
+		positive/datum\_s & "positive datum for x, y, z location [ WGS84 ]" & string & optional \\ \hline
+		positive/sensor\_type\_s & type of electric sensor [ Ag-AgCl $|$ Pb-PbCl $|$ ...] & string & compulsory \\ \hline
+		positive/sensor\_manufacturer\_s & electric sensor manufacturer & string & compulsory \\ \hline
+		positive/sensor\_notes\_s & notes on electric sensor & string & optional \\ \hline
+		negative/ID\_s & sensor id number & string & compulsory \\ \hline
+		negative/longitude\_d & negative sensor location latitude [ degrees (hh.mmss) ] & float & optional \\ \hline
+		negative/latitude\_d & negative sensor location longitude [ degrees (hh.mmss) ] & float & optional \\ \hline
+		negative/elevation\_d & negative sensor location elevation [ m ] & float & optional \\ \hline
+		negative/datum\_s & "negative datum for x, y, z location [ WGS84 ]" & string & optional \\ \hline
+		negative/sensor\_type\_s & type of electric sensor [ Ag-AgCl $|$ Pb-PbCl $|$ ...] & string & compulsory \\ \hline
+		negative/sensor\_manufacturer\_s & electric sensor manufacturer & string & compulsory \\ \hline
+		negative/sensor\_notes\_s & notes on electric sensor & string & optional \\ \hline
+		contact\_resistance/start\_A\_d & contact resistance at beginning of measurement, positive polarity [ Ohm ]" & float & compulsory \\ \hline
+		contact\_resistance/start\_B\_d & contact resistance at beginning of measurement, negative polarity [ Ohm ] & float & compulsory \\ \hline
+		contact\_resistance/end\_A\_d & contact resistance at end of measurement, positive polarity [ Ohm ] & float & compulsory \\ \hline
+		contact\_resistance/end\_B\_d & contact resistance at end of measurement, negative polarity [ Ohm ] & float & compulsory \\ \hline
+		ac/start\_d & AC at start of measurement [ V ] & float & compulsory \\ \hline
+		ac/end\_d & AC at end of measurement [ V ] & float & compulsory \\ \hline
+		dc/start\_d & DC at start of measurement [ V ] & float & compulsory \\ \hline
+		dc/end\_d & DC at end of measurement [ V ] & float & compulsory \\ \hline
+		
+	\end{tabular}
+	\label{tab:electric01}
+\end{table}	
+
+\newpage
+\begin{table}[htb!]
+	\caption[Attributes for Electric Channel cont`d]{Attributes for Electric category continued}
+	\begin{tabular}{|l|p{3in}|l|l|}
+		\hline
+		\textbf{Metadata Key} & \textbf{Description} & \textbf{Type} & \textbf{Required} \\ \hline
+		gain\_d & gain on electric channel & float & optional \\ \hline
+		calibration\_s & how sensor was calibrated  & string & optional \\ \hline
+		units\_s & units of electric field data [ counts $|$ mV $|$ ... ] & string &  \\ \hline
+		sample\_rate\_d & sample rate of electric channel (samples/second) & float & compulsory \\ \hline
+		notes\_s & notes about electric field measurement & string &  \\ \hline
+		data\_quality/rating\_d & data quality rating based on some sort of statistic & float &  \\ \hline
+		data\_quality/warning\_comments\_s & any warnings about data quality & string &  \\ \hline
+		data\_quality/warning\_flags\_s & a value flagging bad data  & float &  \\ \hline
+		data\_quality/author\_s & person who did QC/QA on data & string &  \\ \hline
+		filter/type\_s & any type of filter used durring recording & string &  \\ \hline
+		filter/parameters\_s & filter parameters & string &  \\ \hline
+		filter/notes\_s & any notes on the filtering & string &  \\ \hline
+		\end{tabular}
+		\label{tab:electric02}
+\end{table}	
+
+\newpage
+\subsection{Example Electric Channel JSON String}
+
+\begin{verbatim}
+{
+ "dipole/length_d": 59.7,
+ "channel_num_i": 1",
+ "component_s": EX,
+ "azimuth/value_d": 0,
+ "positive/ID_s": "101",
+ "positive/latitude_d": 35.5578,
+ "positive/longitude_d": -117.38754,
+ "positive/elevation_d": 103.4,
+ "positive/datum_s": "WGS84",
+ "positive/sensor_type_s": "Ag-AgCl"
+ "positive/sensor_manufacturer_s": "Zaps",
+ "positive/sensor_notes_s": "Sitting on the shelf since last year",
+ "negative/ID_s": "102",
+ "negative/latitude_d": 35.5588,
+ "negative/longitude_d": -117.38754,
+ "negative/elevation_d": 105.8,
+ "negative/datum_s": "WGS84",
+ "negative/sensor_type_s": "Ag-AgCl"
+ "negative/sensor_manufacturer_s": "Zaps",
+ "negative/sensor_notes_s": "Sitting on the shelf since last year",
+ "contact_resistance/start_A_d": 1200.0,
+ "contact_resistance/start_B_d": 1210.0,
+ "contact_resistance/end_A_d": 1205.0,
+ "contact_resistance/end_B_d": 1205.0,
+ "ac/start_d": 0.03,
+ "ac/end_d": 0.04,
+ "dc/start_d": 0.001,
+ "dc/end_d": 0.002,
+ "gain_d": 1,
+ "calibration_s": "no calibrations",
+ "units_s": "counts",
+ "sample_rate_d": 256,
+ "notes_s": "cables chewed on 2020-01-07",
+ "data_quality/rating_d": 3,
+ "data_quality/warning_comments_s": "cables chewed 2020-01-07",
+ "data_quality/warning_flags_s": "Nan",
+ "data_quality/author_s": "Q. Sea",
+ "filter/type_s": "any type of filter used durring recording",
+ "filter/parameters_s": "filter parameters",
+ "filter/notes_s": "any notes on the filtering"
+}
+\end{verbatim}
+
+\newpage
+\section{Magnetic Channel}
+
+A magnetic channel is a recording of one component of the magnetic field at a single station for a single run.
+
+\begin{table}[htb!]
+	\caption[Attributes for Magnetic Channel]{Attributes for Magnetic category}
+	\begin{tabular}{|l|p{3in}|l|l|}
+		\hline
+		\textbf{Metadata Key} & \textbf{Description} & \textbf{Type} & \textbf{Required} \\ \hline
+		sensor/type\_s & type of magnetic sensor [ Induction Coil $|$ flux gate $|$ ...] & string & \\ \hline
+		sensor/manufacturer\_s & magnetic sensor manufacturer & string &  \\ \hline
+		sensor/notes\_s & notes on sensor & string &  \\ \hline
+		channel\_num\_i & channel number [ 1 $|$ 2 $|$ 3 $|$ 4 $|$ 5 $|$ 6 $|$...] & int &  \\ \hline
+		component\_s & [ Hx $|$ Hy $|$ Hz ] & string  &  \\ \hline
+		azimuth/value\_s & azimuth N = 0 ,  E = 90 & float &  \\ \hline
+		azimuth/units\_s & units on azimuth [ degrees $|$ radians $|$ ...] & string &  \\ \hline
+		ID\_s & sensor id number & string &  \\ \hline
+		longitude\_d & sensor longitude degrees & float &  \\ \hline
+		latitude\_d & sensor latitude in degrees & float &  \\ \hline
+		elevation\_d & sensor elevation in meters & float &  \\ \hline
+		datum\_s & datum for location [ relative $|$ WGS84 $|$ UTMZone $|$ ...] & string &  \\ \hline
+		gain\_s & gain on magnetic channel & float &  \\ \hline
+		units\_s & units of magnetic field data [ counts $|$ mV $|$ ... ] & string &  \\ \hline
+		sample\_rate\_d & sample rate of magnetic channel (samples/second) & float &  \\ \hline
+		h\_field/min\_start\_d & minimum h-field value at beginning of measurement & float &  \\ \hline
+		h\_field/max\_start\_d & maximum h-field value at beginning of measurement & float &  \\ \hline
+		h\_field/min\_end\_d & minimum h-field value at end of measurement & float &  \\ \hline
+		h\_field/max\_end\_d & maximum h-field value at end of measurement & float &  \\ \hline
+		h\_field/units\_s & units of h-field measurement [ nT $|$ ...] & string &  \\ \hline
+		calibration/file\_name\_s & name or link to calibration data & string &  \\ \hline
+		calibration/date\_s & data of last calibration & string &  \\ \hline
+		calibration/notes\_s & any notes on calibration & string &  \\ \hline
+		notes\_s & notes on magnetic field measurments & string &  \\ \hline
+		data\_quality/rating\_d & data quality rating based on some sort of statistic & float &  \\ \hline
+		data\_quality/warning\_comments\_s & any warnings about data quality & string &  \\ \hline
+		data\_quality/warning\_flags\_s & a value flagging bad data  & float &  \\ \hline
+		data\_quality/author\_s & person who did QC/QA on data & string &  \\ \hline
+		filter/type\_s & any type of filter used during recording & string &  \\ \hline
+		filter/parameters\_s & filter parameters & string &  \\ \hline
+		filter/notes\_s & any notes on the filtering & string &  \\ \hline
+		\end{tabular}
+	\label{tab:magnetic}
+\end{table}
+
+\newpage
+\subsection{Example Magnetic Channel JSON String}
+
+\begin{verbatim}
+{
+ "sensor/type_s": "Induction Coil",
+ "sensor/manufacturer_s": "MT `r Us",
+ "sensor/notes_s": "new coil",
+ "channel_num_i": 5,
+ "component_s": "Hz",
+ "azimuth/value_s": 90,
+ "azimuth/units_s": "degrees",
+ "ID_s": "2149",
+ "longitude_d": -117.0,
+ "latitude_d": 45.0,
+ "elevation_d": 107.4,
+ "datum_s": "WGS84",
+ "gain_s": "1",
+ "units_s": "counts",
+ "sample_rate_d": 256,
+ "h_field/min_start_d": -10,
+ "h_field/max_start_d": 10,
+ "h_field/min_end_d": -9,
+ "h_field/max_end_d": 9,
+ "h_field/units_s": "nT",
+ "calibration/file_name_s": "/bb2149.cal",
+ "calibration/date_s": "2020-10-01",
+ "calibration/notes_s": "Complete sweep of frequencies",
+ "notes_s": "not buried all the way ",
+ "data_quality/rating_d": 4,
+ "data_quality/warning_comments_s": "windy during the day",
+ "data_quality/warning_flags_s": "Nan",
+ "data_quality/author_s": "Q. Sea",
+ "filter/type_s": "any type of filter used during recording",
+ "filter/parameters_s": "filter parameters",
+ "filter/notes_s": "any notes on the filtering"
+}
+\end{verbatim}
+
+\end{document}

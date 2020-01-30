@@ -20,6 +20,7 @@ import datetime
 import sys
 import glob
 from io import StringIO
+import collections
 
 import gzip
 import urllib as url
@@ -374,7 +375,12 @@ class Z3DCollection(object):
         # figure out the max length of the array, getting the time difference into
         # seconds and then multiplying by the sampling rate
         max_ts_len = int((stop-start)*df)
+        if max_ts_len < 0:
+            print('Times are odd start = {0}, stop = {1}'.format(start, stop))
+            max_ts_len = abs(max_ts_len)
+        
         ts_len = min([ts_obj.ts.size for ts_obj in ts_list]+[max_ts_len])
+
         if decimate > 1:
             ts_len /= decimate
 
@@ -387,7 +393,16 @@ class Z3DCollection(object):
         for ts_obj in ts_list:
             comp = ts_obj.component.lower()
             dt_index = ts_obj.ts.data.index.astype(np.int64)/10**9
-            index_0 = np.where(dt_index == start)[0][0]
+            try:
+                index_0 = np.where(dt_index == start)[0][0]
+            except IndexError:
+                try:
+                    index_0 = np.where(np.round(dt_index, decimals=4) == start)[0][0]
+                    print('Start time of {0} is off by {1} seconds'.format(ts_obj.fn, 
+                          abs(start-dt_index[index_0])))
+                except IndexError:
+                    raise ArchiveError('Could not find start time {0} in index of {1}'.format(
+                            start, ts_obj.fn))
             index_1 = min([ts_len-index_0, ts_obj.ts.shape[0]-index_0])
 
             ### check to see what the time difference is, should be 0,
@@ -1409,7 +1424,7 @@ def get_nm_elev(lat, lon):
     # call the url and get the response
     try:
         response = url.request.urlopen(nm_url.format(lon, lat))
-    except url.error.HTTPError:
+    except (url.error.HTTPError, url.request.http.client.RemoteDisconnected):
         print('xxx GET_ELEVATION_ERROR: Could not connect to internet')
         return -666
 
@@ -1491,7 +1506,7 @@ def summarize_station_runs(run_df):
     :returns: single row data frame with summarized information
     :rtype: pd.Series
     """
-    station_dict = pd.compat.OrderedDict() 
+    station_dict = collections.OrderedDict()
     for col in run_df.columns:
         if '_fn' in col:
             continue
