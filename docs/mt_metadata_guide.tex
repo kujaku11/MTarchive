@@ -391,14 +391,14 @@ Electric channel refers to a dipole measurement of the electric field for a sing
 		\textbf{Metadata Key} & \textbf{Description} & \textbf{Type} & \textbf{Required} \\ \hline
 		gain\_d & gain on electric channel & float & optional \\ \hline
 		calibration\_s & how sensor was calibrated  & string & optional \\ \hline
-		units\_s & units of electric field data [ counts $|$ mV $|$ ... ] & string &  \\ \hline
+		units\_s & units of electric field data [ counts $|$ mV/km $|$ ... ] & string &  \\ \hline
 		sample\_rate\_d & sample rate of electric channel (samples/second) & float & compulsory \\ \hline
 		notes\_s & notes about electric field measurement & string &  \\ \hline
 		data\_quality/rating\_d & data quality rating based on some sort of statistic & float &  \\ \hline
 		data\_quality/warning\_comments\_s & any warnings about data quality & string &  \\ \hline
-		data\_quality/warning\_flags\_s & a value flagging bad data  & float &  \\ \hline
+		data\_quality/warning\_flags\_d & a value flagging bad data  & float &  \\ \hline
 		data\_quality/author\_s & person who did QC/QA on data & string &  \\ \hline
-		filter/type\_s & any type of filter used durring recording & string &  \\ \hline
+		filter/type\_s & any type of filter used during recording & string &  \\ \hline
 		filter/parameters\_s & filter parameters & string &  \\ \hline
 		filter/notes\_s & any notes on the filtering & string &  \\ \hline
 		\end{tabular}
@@ -469,7 +469,7 @@ A magnetic channel is a recording of one component of the magnetic field at a si
 		channel\_num\_i & channel number [ 1 $|$ 2 $|$ 3 $|$ 4 $|$ 5 $|$ 6 $|$...] & int &  \\ \hline
 		component\_s & [ Hx $|$ Hy $|$ Hz ] & string  &  \\ \hline
 		azimuth/value\_s & azimuth N = 0 ,  E = 90 & float &  \\ \hline
-		azimuth/units\_s & units on azimuth [ degrees $|$ radians $|$ ...] & string &  \\ \hline
+		azimuth/units\_s & units on azimuth [ degrees ] & string &  \\ \hline
 		ID\_s & sensor id number & string &  \\ \hline
 		longitude\_d & sensor longitude degrees & float &  \\ \hline
 		latitude\_d & sensor latitude in degrees & float &  \\ \hline
