@@ -280,7 +280,7 @@ class Z3DCollection(object):
                 meta_df['{0}_{1}'.format(comp, 'length')] = z3d_obj.metadata.ch_length
             ### get sensor number
             elif 'h' in comp:
-                meta_df['{0}_{1}'.format(comp, 'sensor')] = int(z3d_obj.metadata.ch_number.split('.')[0])
+                meta_df['{0}_{1}'.format(comp, 'sensor')] = int(z3d_obj.coil_num)
             meta_df['{0}_{1}'.format(comp, 'num')] = ii+1
             meta_df['{0}_{1}'.format(comp,'n_samples')] = z3d_obj.ts_obj.ts.shape[0]
             n_samples.append(z3d_obj.ts_obj.ts.shape[0])

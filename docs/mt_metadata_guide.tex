@@ -143,14 +143,14 @@ A station is a single location where MT data are collected, if the location of t
 		\textbf{Metadata Key} & \textbf{Description} & \textbf{Type} & \textbf{Required} \\ \hline
 		sta\_code\_s & 5 char name of station & string & compulsory \\ \hline
 		name\_s & name station site & string & compulsory \\ \hline
-		latitude/value\_d & longitude location [ degrees (hh.mmss) ] & float & compulsory \\ \hline
-		longitude/value\_d & latitude location [ degrees (hh.mmss) ] & float & compulsory \\ \hline
-		z/value\_d & z location [ m ] & float & compulsory \\ \hline
+		latitude\_d & longitude location [ degrees (hh.mmss) ] & float & compulsory \\ \hline
+		longitude\_d & latitude location [ degrees (hh.mmss) ] & float & compulsory \\ \hline
+		z\_d & z location [ m ] & float & compulsory \\ \hline
 		notes\_s & any notes about station & string & optional \\ \hline
 		datum\_s & "datum for x, y, z location" & string & compulsory \\ \hline
 		reference\_ellipsoid\_s & reference ellipsoid & string & compulsory \\ \hline
-		start\_time/value\_s & start time of data logging [ UTC ] & string & compulsory \\ \hline
-		end\_time/value\_s & stop time of data logging  [ UTC ] & string & compulsory \\ \hline
+		start\_time\_s & start time of data logging [ UTC ] & string & compulsory \\ \hline
+		end\_time\_s & stop time of data logging  [ UTC ] & string & compulsory \\ \hline
 		num\_channels\_i & number of channels recording & int & compulsory \\ \hline
 		channels\_recorded\_s & "list of channels recorded [EX, EY, HX, HY, HZ $|$ ...]" & string & compulsory \\ \hline
 		data\_type\_s & type of data collected [ BB $|$ LP $|$ AMT $|$ Combo $|$ ...] & string & compulsory \\ \hline
@@ -176,10 +176,10 @@ A station is a single location where MT data are collected, if the location of t
 		provenance/software/name\_s & name of software used to store time series & string & compulsory \\ \hline
 		provenance/software/version\_s & version of software used to store time series & string & compulsory \\ \hline
 		provenance/software/author\_s & author of software used to store time series & string & compulsory \\ \hline
-		provenance/creator/author\_s & name of person or group creating archive data & string & compulsory \\ \hline
-		provenance/creator/organization\_s & name of organization or institution creating archive data & string & compulsory \\ \hline
-		provenance/creator/url\_s & url of group creating archive data & string & compulsory \\ \hline
-		provenance/creator/email\_s & email of person or group creating archive data & string & compulsory \\ \hline
+%		provenance/creator/author\_s & name of person or group creating archive data & string & compulsory \\ \hline
+%		provenance/creator/organization\_s & name of organization or institution creating archive data & string & compulsory \\ \hline
+%		provenance/creator/url\_s & url of group creating archive data & string & compulsory \\ \hline
+%		provenance/creator/email\_s & email of person or group creating archive data & string & compulsory \\ \hline
 		provenance/submitter/author\_s & name of person or group submitting archive data & string & compulsory \\ \hline
 		provenance/submitter/organization\_s & name of organization or institution submitting archive data & string & compulsory \\ \hline
 		provenance/submitter/url\_s & url of group submitting archive data & string & compulsory \\ \hline
@@ -220,10 +220,6 @@ A station is a single location where MT data are collected, if the location of t
  "provenance/software/name_s": "MTH5",
  "provenance/software/version_s": "1.0.0",
  "provenance/software/author_s": "IRIS",
- "provenance/creator/author_s": "M. Tee",
- "provenance/creator/organization_s": "MT Gurus",
- "provenance/creator/url_s": "mt_guru.com",
- "provenance/creator/email_s": "m.tee@guru.com",
  "provenance/submitter/author_s": "M. Tee",
  "provenance/submitter/organization_s": "MT Gurus",
  "provenance/submitter/url_s": "mt_guru.com",
@@ -232,6 +228,11 @@ A station is a single location where MT data are collected, if the location of t
  "provenance/log_s": "The data was rotated using an updated declination 2020-05-02."
 }
 \end{verbatim}
+
+% "provenance/creator/author_s": "M. Tee",
+%"provenance/creator/organization_s": "MT Gurus",
+%"provenance/creator/url_s": "mt_guru.com",
+%"provenance/creator/email_s": "m.tee@guru.com",
 
 \newpage
 \section{Run}
@@ -245,8 +246,8 @@ A run is data collected at a single station at a single sampling rate.  If the d
 		\textbf{Metadata Key} & \textbf{Description} & \textbf{Type} & \textbf{Required} \\ \hline
 		ID\_s & run ID & string & compulsory \\ \hline
 		notes\_s & notes on run & string & optional \\ \hline
-		start\_time/value\_s & start time of data logging [ UTC ] & string & compulsory \\ \hline
-		end\_time/value\_s & stop time of data logging [ UTC ] & string & compulsory \\ \hline
+		start\_time\_s & start time of data logging [ UTC ] & string & compulsory \\ \hline
+		end\_time\_s & stop time of data logging [ UTC ] & string & compulsory \\ \hline
 		sampling\_rate\_d & sampling rate of run (samples/second) & float & compulsory \\ \hline
 		num\_channels\_i & number of channels recorded & int & compulsory \\ \hline
 		channels\_recorded\_s & "list of channels recorded [ [EX, EY, HX, HY] $|$ ...]" & string & compulsory \\ \hline
@@ -301,13 +302,14 @@ Data logger is a the digital acquisition system used to collect time series data
 		firmware/author\_s & author of firmware & string & optional \\ \hline
 		n\_channels\_i & number of channels & int & compulsory \\ \hline
 		n\_channels\_used\_s & number of channels used & int & compulsory \\ \hline
-		calibration/filename\_s & calibration file or link for data logger & string & compulsory \\ \hline
-		calibration/date\_s & calibration date & string & compulsory \\ \hline
-		calibration/notes\_s & notes on calibration & string & optional \\ \hline
 		power\_source/type\_s & power source type [ Pb-acid battery $|$ solar panel $|$ Li battery $|$ ...] & string & compulsory \\ \hline
 		power\_source/start\_voltage\_d & starting voltage of power source & float & compulsory \\ \hline
 		power\_source/end\_voltage\_d & ending voltage of power source & float & compulsory \\ \hline
 		power\_source/notes\_s & notes on power source & string & optional \\ \hline
+		filter/type\_s & any type of filter used during recording & string &  optional \\ \hline
+		filter/index\_i & filter index in filter table & string &  optional \\ \hline
+		filter/notes\_s & any notes on the filtering & string &  optional \\ \hline
+		filter/applied\_s & have filters been applied [ True $|$ False ] & string & compulsory \\ \hline
 	\end{tabular}
 	\label{tab:datalogger}
 \end{table}	
@@ -330,13 +332,14 @@ Data logger is a the digital acquisition system used to collect time series data
  "firmware/author_s": "R. Phase",
  "n_channels_i": 5,
  "n_channels_used_s": 4,
- "calibration/filename_s": "/bb2000.cal",
- "calibration/date_s": "2020-01-01",
- "calibration/notes_s": "frequency response of the data logger",
  "power_source/type_s": "solar panel and battery]",
  "power_source/start_voltage_d": 13.1,
  "power_source/end_voltage_d": 12.0,
- "power_source/notes_s": "Overcast all day reduced recharging"
+ "power_source/notes_s": "Overcast all day reduced recharging",
+ "filter/type_s": "any type of filter used during recording",
+ "filter/index_i": 8,
+ "filter/notes_s": "any notes on the filtering",
+ "filter/applied_s": "True"
 }
 \end{verbatim}
 
@@ -353,7 +356,7 @@ Electric channel refers to a dipole measurement of the electric field for a sing
 		dipole/length\_d & length of dipole [ m ] & float & compulsory \\ \hline
 		channel\_num\_i & channel number [ 1 $|$ 2 $|$ 3 $|$ 4 $|$ 5 $|$ 6 $|$...] & int & compulsory \\ \hline
 		component\_s & [ Ex $|$ Ey $|$ Ez ] & string  & compulsory \\ \hline
-		azimuth/value\_d & azimuth of dipole N = 0,  E = 90 [ degrees ] & float & compulsory \\ \hline
+		azimuth\_d & azimuth of dipole N = 0,  E = 90 [ degrees ] & float & compulsory \\ \hline
 		positive/ID\_s & sensor id number & string & compulsory \\ \hline
 		positive/latitude\_d & positive sensor location latitude [ degrees (hh.mmss) ] & float & optional \\ \hline
 		positive/longitude\_d & positive sensor location longitude [ degrees (hh.mmss) ] & float & optional \\ \hline
@@ -370,14 +373,14 @@ Electric channel refers to a dipole measurement of the electric field for a sing
 		negative/sensor\_type\_s & type of electric sensor [ Ag-AgCl $|$ Pb-PbCl $|$ ...] & string & compulsory \\ \hline
 		negative/sensor\_manufacturer\_s & electric sensor manufacturer & string & compulsory \\ \hline
 		negative/sensor\_notes\_s & notes on electric sensor & string & optional \\ \hline
-		contact\_resistance/start\_A\_d & contact resistance at beginning of measurement, positive polarity [ Ohm ]" & float & compulsory \\ \hline
-		contact\_resistance/start\_B\_d & contact resistance at beginning of measurement, negative polarity [ Ohm ] & float & compulsory \\ \hline
-		contact\_resistance/end\_A\_d & contact resistance at end of measurement, positive polarity [ Ohm ] & float & compulsory \\ \hline
-		contact\_resistance/end\_B\_d & contact resistance at end of measurement, negative polarity [ Ohm ] & float & compulsory \\ \hline
-		ac/start\_d & AC at start of measurement [ V ] & float & compulsory \\ \hline
-		ac/end\_d & AC at end of measurement [ V ] & float & compulsory \\ \hline
-		dc/start\_d & DC at start of measurement [ V ] & float & compulsory \\ \hline
-		dc/end\_d & DC at end of measurement [ V ] & float & compulsory \\ \hline
+		contact\_resistance/start\_A\_d & contact resistance at beginning of measurement, positive polarity [ Ohm ]" & float & optional \\ \hline
+		contact\_resistance/start\_B\_d & contact resistance at beginning of measurement, negative polarity [ Ohm ] & float & optional \\ \hline
+		contact\_resistance/end\_A\_d & contact resistance at end of measurement, positive polarity [ Ohm ] & float & optional \\ \hline
+		contact\_resistance/end\_B\_d & contact resistance at end of measurement, negative polarity [ Ohm ] & float & optional \\ \hline
+		ac/start\_d & AC at start of measurement [ V ] & float & optional \\ \hline
+		ac/end\_d & AC at end of measurement [ V ] & float & optional \\ \hline
+		dc/start\_d & DC at start of measurement [ V ] & float & optional \\ \hline
+		dc/end\_d & DC at end of measurement [ V ] & float & optional \\ \hline
 		
 	\end{tabular}
 	\label{tab:electric01}
@@ -389,18 +392,17 @@ Electric channel refers to a dipole measurement of the electric field for a sing
 	\begin{tabular}{|l|p{3in}|l|l|}
 		\hline
 		\textbf{Metadata Key} & \textbf{Description} & \textbf{Type} & \textbf{Required} \\ \hline
-		gain\_d & gain on electric channel & float & optional \\ \hline
-		calibration\_s & how sensor was calibrated  & string & optional \\ \hline
-		units\_s & units of electric field data [ counts $|$ mV/km $|$ ... ] & string &  \\ \hline
+		units\_s & units of electric field data [ counts $|$ mV/km $|$ ... ] & string & compulsory \\ \hline
 		sample\_rate\_d & sample rate of electric channel (samples/second) & float & compulsory \\ \hline
-		notes\_s & notes about electric field measurement & string &  \\ \hline
-		data\_quality/rating\_d & data quality rating based on some sort of statistic & float &  \\ \hline
-		data\_quality/warning\_comments\_s & any warnings about data quality & string &  \\ \hline
-		data\_quality/warning\_flags\_d & a value flagging bad data  & float &  \\ \hline
-		data\_quality/author\_s & person who did QC/QA on data & string &  \\ \hline
-		filter/type\_s & any type of filter used during recording & string &  \\ \hline
-		filter/parameters\_s & filter parameters & string &  \\ \hline
-		filter/notes\_s & any notes on the filtering & string &  \\ \hline
+		notes\_s & notes about electric field measurement & string &  optional \\ \hline
+		data\_quality/rating\_d & data quality rating based on some sort of statistic & float & optional \\ \hline
+		data\_quality/warning\_comments\_s & any warnings about data quality & string & optional \\ \hline
+		data\_quality/warning\_flags\_d & a value flagging bad data  & float &  optional \\ \hline
+		data\_quality/author\_s & person who did QC/QA on data & string &  optional \\ \hline
+		filter/type\_s & any type of filter used during recording & string &  optional \\ \hline
+		filter/index\_i & filter index in filter table & string &  optional \\ \hline
+		filter/notes\_s & any notes on the filtering & string &  optional \\ \hline
+		filter/applied\_s & have filters been applied [ True $|$ False ] & string & compulsory \\ \hline
 		\end{tabular}
 		\label{tab:electric02}
 \end{table}	
@@ -439,7 +441,6 @@ Electric channel refers to a dipole measurement of the electric field for a sing
  "dc/start_d": 0.001,
  "dc/end_d": 0.002,
  "gain_d": 1,
- "calibration_s": "no calibrations",
  "units_s": "counts",
  "sample_rate_d": 256,
  "notes_s": "cables chewed on 2020-01-07",
@@ -447,9 +448,10 @@ Electric channel refers to a dipole measurement of the electric field for a sing
  "data_quality/warning_comments_s": "cables chewed 2020-01-07",
  "data_quality/warning_flags_s": "Nan",
  "data_quality/author_s": "Q. Sea",
- "filter/type_s": "any type of filter used durring recording",
- "filter/parameters_s": "filter parameters",
- "filter/notes_s": "any notes on the filtering"
+ "filter/type_s": "any type of filter used during recording",
+ "filter/index_i": 9,
+ "filter/notes_s": "any notes on the filtering",
+ "filter/applied_s": "True"
 }
 \end{verbatim}
 
@@ -468,8 +470,7 @@ A magnetic channel is a recording of one component of the magnetic field at a si
 		sensor/notes\_s & notes on sensor & string &  \\ \hline
 		channel\_num\_i & channel number [ 1 $|$ 2 $|$ 3 $|$ 4 $|$ 5 $|$ 6 $|$...] & int &  \\ \hline
 		component\_s & [ Hx $|$ Hy $|$ Hz ] & string  &  \\ \hline
-		azimuth/value\_s & azimuth N = 0 ,  E = 90 & float &  \\ \hline
-		azimuth/units\_s & units on azimuth [ degrees ] & string &  \\ \hline
+		azimuth\_d & azimuth N = 0 ,  E = 90 & float &  \\ \hline
 		ID\_s & sensor id number & string &  \\ \hline
 		longitude\_d & sensor longitude degrees & float &  \\ \hline
 		latitude\_d & sensor latitude in degrees & float &  \\ \hline
@@ -483,17 +484,15 @@ A magnetic channel is a recording of one component of the magnetic field at a si
 		h\_field/min\_end\_d & minimum h-field value at end of measurement & float &  \\ \hline
 		h\_field/max\_end\_d & maximum h-field value at end of measurement & float &  \\ \hline
 		h\_field/units\_s & units of h-field measurement [ nT $|$ ...] & string &  \\ \hline
-		calibration/file\_name\_s & name or link to calibration data & string &  \\ \hline
-		calibration/date\_s & data of last calibration & string &  \\ \hline
-		calibration/notes\_s & any notes on calibration & string &  \\ \hline
 		notes\_s & notes on magnetic field measurments & string &  \\ \hline
 		data\_quality/rating\_d & data quality rating based on some sort of statistic & float &  \\ \hline
 		data\_quality/warning\_comments\_s & any warnings about data quality & string &  \\ \hline
 		data\_quality/warning\_flags\_s & a value flagging bad data  & float &  \\ \hline
 		data\_quality/author\_s & person who did QC/QA on data & string &  \\ \hline
-		filter/type\_s & any type of filter used during recording & string &  \\ \hline
-		filter/parameters\_s & filter parameters & string &  \\ \hline
-		filter/notes\_s & any notes on the filtering & string &  \\ \hline
+		filter/type\_s & any type of filter used during recording & string &  optional \\ \hline
+		filter/index\_i & filter index in filter table & string &  optional \\ \hline
+		filter/notes\_s & any notes on the filtering & string &  optional \\ \hline
+		filter/applied\_s & have filters been applied [ True $|$ False ] & string & compulsory \\ \hline
 		\end{tabular}
 	\label{tab:magnetic}
 \end{table}
@@ -507,7 +506,7 @@ A magnetic channel is a recording of one component of the magnetic field at a si
  "sensor/manufacturer_s": "MT `r Us",
  "sensor/notes_s": "new coil",
  "channel_num_i": 5,
- "component_s": "Hz",
+ "component_s": "HZ",
  "azimuth/value_s": 90,
  "azimuth/units_s": "degrees",
  "ID_s": "2149",
@@ -523,18 +522,35 @@ A magnetic channel is a recording of one component of the magnetic field at a si
  "h_field/min_end_d": -9,
  "h_field/max_end_d": 9,
  "h_field/units_s": "nT",
- "calibration/file_name_s": "/bb2149.cal",
- "calibration/date_s": "2020-10-01",
- "calibration/notes_s": "Complete sweep of frequencies",
  "notes_s": "not buried all the way ",
  "data_quality/rating_d": 4,
  "data_quality/warning_comments_s": "windy during the day",
  "data_quality/warning_flags_s": "Nan",
  "data_quality/author_s": "Q. Sea",
- "filter/type_s": "any type of filter used during recording",
- "filter/parameters_s": "filter parameters",
- "filter/notes_s": "any notes on the filtering"
+ "filter/type_s": "coil calibrations",
+ "filter/index_i": 10,
+ "filter/notes_s": "Calibrated 2018-01-01",
+ "filter/applied_s": "False"
 }
 \end{verbatim}
+
+\newpage
+\section{Filters}
+
+Filters will be a table that holds information on any filters that need to be applied to get physical units and filters that were applied to the data.  This includes calibrations, notch filters, etc.  
+
+\begin{table}[htb!]
+	\caption[Attributes for Filter]{Attributes for Filters}
+	\begin{tabular}{|l|p{3in}|l|l|}
+		\hline
+		\textbf{Metadata Key} & \textbf{Description} & \textbf{Type} & \textbf{Required} \\ \hline
+		calibration\_date\_s & date of calibration & string &  required \\ \hline
+		type\_s & type of fileter & string &  required \\ \hline
+		notes\_s & any notes on the filtering & string &  optional \\ \hline
+		units\_s & units of electric field data [ counts $|$ mV/km $|$ ... ] & string & compulsory \\ \hline
+	\end{tabular}
+	\label{tab:filter}
+\end{table}
+ 
 
 \end{document}
