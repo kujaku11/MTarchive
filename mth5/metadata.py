@@ -1,19 +1,44 @@
 # -*- coding: utf-8 -*-
 """
 ==================
-MTH5
+metadata
 ==================
 
-This module deals with reading and writing MTH5 files, which are HDF5 files
-developed for magnetotelluric (MT) data.  The code is based on h5py and
-attributes use JSON encoding.
+This module deals with metadata as defined by the MT metadata standards.
 
-.. note:: Currently the convenience methods support read only.  
-          Working on developing the write convenience methods.
+There are multiple containers for each type of metadata, named appropriately.
 
-Created on Sun Dec  9 20:50:41 2018
+Each container will be able to read and write:
+    * dictionary
+    * json
+    * xml?
+    * csv
+    * pandas 
+    * anything else?
+    
+Because a lot of the key words in the metadata are split by '/' there are some
+issues we need to deal with.  I wrote in get and set attribute functions
+to handle these types of keys so the user shouldn't have to work about 
+splitting the keys themselves.  
+
+These containers will be the building blocks for the metadata and how they are
+interchanged between the HDF5 file and the user.  A lot of the metadata you
+can get directly from the raw time series files, but the user will need to 
+input a decent amount on their own.  Dictionaries are the most fundamental
+type we should be dealing with.  
+
+Each container has an attribute called _attr_dict which dictates if the 
+attribute is included in output objects, the data type and whether it is a
+required parameter.  This should help down the road with validation and 
+keeping the data types consistent.  And if things change you should only have
+to changes these dictionaries. 
+
+Created on Sun Apr 24 20:50:41 2020
 
 @author: J. Peacock
+@email: jpeacock@usgs.gov
+
+
 """
 # =============================================================================
 # Imports
@@ -69,7 +94,7 @@ class Generic(object):
         class objects contained within the given object.
         """
         
-        return to_json(self)
+        return json.dumps(self.to_dict(), cls=NumpyEncoder)
 
     def from_json(self, json_str):
         """
@@ -79,7 +104,7 @@ class Generic(object):
         :type json_str: string
     
         """
-        from_json(json_str, self)
+        self.from_dict(json.loads(json_str))
         
     def to_dict(self):
         """
@@ -127,15 +152,21 @@ class Generic(object):
 # ==============================================================================
 # Location class, be sure to put locations in decimal degrees, and note datum
 # ==============================================================================       
-class Declination(object):
+class Declination(Generic):
     """
     declination container
     """
     def __init__(self, **kwargs):
+        super(Declination, self).__init__()
         self.value_d = None
         self.units_s = None
         self.epoch_s = None
         self.model_s = None
+        
+        self._attr_dict = {'value_d': {'type': float, 'required': True},
+                           'units_s': {'type': str, 'required': True},
+                           'epoch_s': {'type': str, 'required': True},
+                           'model_s': {'type': str, 'required': True}}
         
 class Location(Generic):
     """
@@ -149,7 +180,7 @@ class Location(Generic):
     """
 
     def __init__(self, **kwargs):
-        #super(Location, self).__init__()
+        super(Location, self).__init__()
         self.datum_s = 'WGS84'
         self.declination = Declination()
 
@@ -157,11 +188,21 @@ class Location(Generic):
         self._latitude = None
         self._longitude = None
 
-        self.elev_units = 'm'
-        self.coordinate_system_s = 'Geographic North'
-
         for key, value in kwargs.items():
             setattr(self, key, value)
+            
+        self._attr_dict = {'datum_s': {'type': str, 'required': True},
+                           'latitude_d': {'type': float, 'required': True},
+                           'longitude_d': {'type': float, 'required': True},
+                           'elevation_d': {'type': float, 'required': True},
+                           'declination/value_d':{'type':float,
+                                                  'required':True},
+                           'declination/units_s':{'type':str,
+                                                  'required':True},
+                           'declination/epoch_s':{'type':str, 
+                                                  'required':True},
+                           'declination/model_s':{'type':str, 
+                                                  'required':True}}
 
     @property
     def latitude_d(self):
@@ -357,6 +398,10 @@ class Instrument(Generic):
         self.id_s = None
         self.manufacturer_s = None
         self.type_s = None
+        
+        self._attr_dict = {'id_s': {'type': str, 'required': True},
+                           'manufacturer_s': {'type': str, 'required': True},
+                           'type_s': {'type': str, 'required': True}}
 
         for key, value in kwargs.items():
             setattr(self, key, value)
@@ -430,6 +475,8 @@ class Citation(Generic):
         self.volume_s = None
         self.doi_s = None
         self.year_s = None
+        
+        self._attr_dict = {'doi_s': {'type': str, 'required': True}}
 
         for key, value in kwargs.items():
             setattr(self, key, value)
@@ -743,6 +790,19 @@ class Station(Location):
                                                'required':True}}
         
         
+# =============================================================================
+# Run
+# =============================================================================
+class Run(Generic):
+    """
+    container to hold run metadata
+    """
+    
+    def __init__(self, **kwargs):
+        super(Run, self).__init__()
+        
+        
+
 # =============================================================================
 # schedule
 # =============================================================================
@@ -1120,64 +1180,3 @@ class NumpyEncoder(json.JSONEncoder):
             return obj.tolist()
 
         return json.JSONEncoder.default(self, obj)
-
-def to_json(obj):
-    """
-    write a json string from a given object, taking into account other class
-    objects contained within the given object.
-
-    :param obj: class object to transform into string
-    """
-    if isinstance(obj, (Station, Calibration)):
-        keys = obj._attrs_list
-    else:
-        keys = obj.__dict__.keys()
-
-    obj_dict = {}
-    for key in keys:
-        if key.find('_') == 0:
-            continue
-        value = getattr(obj, key)
-
-        if isinstance(value, (Instrument, DataQuality, Citation, 
-                              Provenance, Person, Software)):
-            obj_dict[key] = {}
-            for o_key, o_value in value.__dict__.items():
-                if o_key.find('_') == 0:
-                    continue
-                obj_dict[key][o_key] = o_value
-
-        elif isinstance(value, (Station, Calibration)):
-            obj_dict[key] = {}
-            for o_key in value._attrs_list:
-                if o_key.find('_') == 0:
-                    continue
-                obj_dict[key][o_key] = getattr(obj, o_key)
-        else:
-            obj_dict[key] = value
-
-    return json.dumps(obj_dict, cls=NumpyEncoder)
-
-def from_json(json_str, obj):
-    """
-    read in a json string and update attributes of an object
-
-    :param json_str: json string
-    :type json_str:string
-
-    :param obj: class object to update
-    :type obj: class object
-
-    :returns obj:
-    """
-
-    obj_dict = json.loads(json_str)
-
-    for key, value in obj_dict.items():
-        if isinstance(value, dict):
-            for o_key, o_value in value.items():
-                setattr(getattr(obj, key), o_key, o_value)
-        else:
-            setattr(obj, key, value)
-
-    return obj
