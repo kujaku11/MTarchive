@@ -15,4 +15,4 @@ Note: This is a work in progress.  Feel free to comment or send me a message at 
 * **usgs_archive** --> includes tools for archiving data on Science Base including xml metadata files, uploading to Science Base, changing JSON files, converting .z3d files to MTH5 files.
   
 ## MTH5 Format
-![MTH5 Format](https://github.com/kujaku11/MTarchive/blob/master/docs/example_mt_file_structure.png)
+![MTH5 Format](https://github.com/kujaku11/MTarchive/blob/tables/docs/example_mt_file_structure.png)
