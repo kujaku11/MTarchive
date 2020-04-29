@@ -87,5 +87,24 @@ class MTH5(object):
         
         print('INFO: Closed {0}'.format(self.mth5_fn))
         
+    def _initiate_file_structure(self):
+        """
+        build the general file structure
+        
+        Groups
+            * Receivers
+            * Sources
+            * Reports
+            * Filters
+            
+        Tables
+            * Survey 
+            * Receivers/Receivers_table
+            * Sources/Sources_table
+            * Reports/Reports_table
+        """
+        
+        pass
+        
         
     
