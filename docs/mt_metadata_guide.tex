@@ -30,32 +30,32 @@ IRIS-PASSCAL is adding MT capabilities to their instrument pool and has setup a 
 
 \section{General Structure}
 
-The MT metadata standards are structured to cover details from single channel time series to the full MT survey.  For simplicity each of the different scales of an MT survey and measurements have been categorized starting from largest scale to smallest scale (Figure \ref{fig:example}.  These categories are: \verb|Survey|, \verb|Station|, \verb|Run|, \verb|DataLogger|, \verb|Electric|, and \verb|Magnetic|.  Each of these will be described in the sections below.  
+The MT metadata standards are structured to cover details from single channel time series to the full MT survey.  For simplicity each of the different scales of an MT survey and measurements have been categorized starting from largest scale to smallest scale (Figure \ref{fig:example}).  These categories are: \verb|Survey|, \verb|Station|, \verb|Run|, \verb|DataLogger|, \verb|Channel| which has different attributes depending on what type of channel it is, magnetic, electric, auxiliary.  Each of these will be described in the sections below.  
 
-The metadata key names should be self explanatory and they are structured as follows: \verb|name_type| or \verb|category/name_type|, where \verb|name| is the description name, \verb|type| is the data type (Tabel \ref{tab:types}), and \verb|category| refers to a metadata category that has common parameters, such as \verb|location| which will have an x, y, and z $\longrightarrow$ \verb|location/x_d|, \verb|location/y_d|, and \verb|location/z_d|. This will help keep order and help the user understand the metadata without having to consult the documentation all the time. 
+\begin{figure}[htb!]
+	\centering
+	\includegraphics[height=.625\textheight]{example_mt_file_structure.pdf}
+	\caption{Schematic of a MT time series file structure with appropriate metadata.}
+	\label{fig:example}
+\end{figure}
+
+\subsection{Metadata Keyword Format}
+
+The metadata key names should be self explanatory and they are structured as follows: \verb|name_type| or \verb|category/name_type|, where \verb|name| is the description name, \verb|type| is the data type (Table \ref{tab:types}), and \verb|category| refers to a metadata category that has common parameters, such as \verb|location| which will have an x, y, and z $\longrightarrow$ \verb|location/x_d|, \verb|location/y_d|, and \verb|location/z_d|. This will help keep order and help users understand the metadata without having to consult the documentation all the time. 
 
 \begin{table}[htb!]
 	\caption[Data types]{Permissible values for data types}
 	\begin{tabular}{|l|l|}
 		\hline
-		Data Type & label \\
+		\textbf{Data Type} & \textbf{Label} \\
 		\hline
 		String & s \\ \hline
 		Double (float) & d \\ \hline
 		Integer & i \\ \hline
 		Boolean & b \\ \hline
-		\hline
 	\end{tabular}
 	\label{tab:types}
 \end{table}
-
-
-\begin{figure}[htb!]
-	\centering
-	\includegraphics[height=.9\textheight]{example_mt_file_structure.pdf}
-	\caption{Schematic of a MT time series file structure with appropriate metadata.}
-	\label{fig:example}
-\end{figure}
 
 \subsection{Formatting Standards}
 
@@ -63,15 +63,18 @@ There are certain formatting standards that need to be adhered to, specifically 
 
 \subsubsection{Time and Date Format}
 
-All time and dates are given as an ISO formatted date-time string in the UTC time zone.  The ISO date time format is \verb|YYYY-MM-DDThh:mm:ss.ms UTC|.  Milliseconds should be accurate to 4 decimal places.  Dates are formatted \verb|YYYY-MM-DD|.
+All time and dates are given as an ISO formatted date-time string in the UTC time zone.  The ISO date time format is \verb|YYYY-MM-DDThh:mm:ss.ms+00:00|.  Milliseconds can be accurate to 6 decimal places.  Dates are formatted \verb|YYYY-MM-DD|.  Other formats can be input but only ISO format will be output.  Internally, all date time strings are converted to a \verb|datetime| object which can output various formats like epoch seconds, which will keep date-times self consistent.
 
 \subsubsection{Location}
 
-All latitude and longitude locations are given in decimal degrees. All latitude values must be $<|90|$ and all longitude values must be $<|180|$.
+All latitude and longitude locations are given in decimal degrees. Other formats can be input but will only be output as decimal degrees.
 
-Elevation and other distance values are given in meters.  
-
-Datum should be one of the well known datums, WGS84 is preferred, but others are acceptable. 
+\begin{itemize}
+	\setlength\itemsep{0em}
+	\item All latitude values must be $<|90|$ and all longitude values must be $<|180|$.
+	\item Elevation and other distance values are given in meters.
+	\item Datum should be one of the well known datums, WGS84 is preferred, but others are acceptable.
+\end{itemize} 
 
 \textbf{Note:} The one exception is sensor location which can be in units relative to the station location?  
 
@@ -90,7 +93,7 @@ A survey describes an entire MT survey that covers a specific study area.  This 
 		\hline
 		\textbf{Metadata Key} & \textbf{Description} & \textbf{Type} & \textbf{Required} \\ \hline
 		name\_s & name of survey & string & compulsory \\ \hline
-		ID\_s & nickname of survey & string & optional \\ \hline
+		id\_s & nickname of survey & string & optional \\ \hline
 		net\_code\_s & network code given by IRIS & string & compulsory \\ \hline
 		start\_date\_s & start date of survey [ UTC ] & string & compulsory \\ \hline
 		end\_date\_s & end date of survey [ UTC ] & string & compulsory \\ \hline
@@ -121,7 +124,7 @@ A survey describes an entire MT survey that covers a specific study area.  This 
 \begin{verbatim}
 {
  "name_s": "Long Valley, CA",
- "ID_s": "Casa Diablo",
+ "id_s": "Casa Diablo",
  "net_code_s": "network code given by IRIS",
  "start_date_s": "2020-01-01",
  "end_date_s": "2021-01-01",
@@ -241,7 +244,7 @@ A run is data collected at a single station at a single sampling rate.  If the d
 	\begin{tabular}{|l|p{3in}|l|l|}
 		\hline
 		\textbf{Metadata Key} & \textbf{Description} & \textbf{Type} & \textbf{Required} \\ \hline
-		ID\_s & run ID & string & compulsory \\ \hline
+		id\_s & run ID & string & compulsory \\ \hline
 		notes\_s & notes on run & string & optional \\ \hline
 		start\_s & start date and time of data logging [ UTC ] & string & compulsory \\ \hline
 		end\_s & stop date and time of data logging [ UTC ] & string & compulsory \\ \hline
@@ -261,14 +264,14 @@ A run is data collected at a single station at a single sampling rate.  If the d
 
 \begin{verbatim}
 {
- "ID_s": "MNP02_b",
+ "id_s": "MNP02_b",
  "notes_s": "Changed north electrode",
  "start_s": "2020-01-02T15:30:00.0000 UTC",
  "end_s": "2020-01-05T07:05:30.0000 UTC",
  "sampling_rate_d": 256,
  "num_channels_i": 5,
  "channels_recorded_s": "[EX, EY, HX, HY, HZ]",
- "data_type _s": "BB",
+ "data_type_s": "BB",
  "acquired_by/author_s": "T. Luric",
  "acquired_by/email_s": "t.lurric@guru.com",
  "provenance/notes_s": "Near a powerline and HZ is clipped",
@@ -404,7 +407,7 @@ Electric channel refers to a dipole measurement of the electric field for a sing
  "channel_num_i": 1",
  "component_s": EX,
  "azimuth/value_d": 0,
- "positive/ID_s": "101",
+ "positive/id_s": "101",
  "positive/latitude_d": 35.5578,
  "positive/longitude_d": -117.38754,
  "positive/elevation_d": 103.4,
@@ -412,7 +415,7 @@ Electric channel refers to a dipole measurement of the electric field for a sing
  "positive/sensor_type_s": "Ag-AgCl"
  "positive/sensor_manufacturer_s": "Zaps",
  "positive/sensor_notes_s": "Sitting on the shelf since last year",
- "negative/ID_s": "102",
+ "negative/id_s": "102",
  "negative/latitude_d": 35.5588,
  "negative/longitude_d": -117.38754,
  "negative/elevation_d": 105.8,
@@ -428,7 +431,6 @@ Electric channel refers to a dipole measurement of the electric field for a sing
  "ac/end_d": 0.04,
  "dc/start_d": 0.001,
  "dc/end_d": 0.002,
- "gain_d": 1,
  "units_s": "counts",
  "sample_rate_d": 256,
  "notes_s": "cables chewed on 2020-01-07",
@@ -490,7 +492,7 @@ A magnetic channel is a recording of one component of the magnetic field at a si
  "sensor/type_s": "Induction Coil",
  "sensor/manufacturer_s": "MT `r Us",
  "sensor/notes_s": "new coil",
- "sensor/ID_s": "2149",
+ "sensor/id_s": "2149",
  "channel_num_i": 5,
  "component_s": "HZ",
  "azimuth/value_s": 90,

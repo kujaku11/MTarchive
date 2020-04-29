@@ -28,10 +28,12 @@ input a decent amount on their own.  Dictionaries are the most fundamental
 type we should be dealing with.  
 
 Each container has an attribute called _attr_dict which dictates if the 
-attribute is included in output objects, the data type and whether it is a
-required parameter.  This should help down the road with validation and 
-keeping the data types consistent.  And if things change you should only have
-to changes these dictionaries. 
+attribute is included in output objects, the data type, whether it is a
+required parameter, and the style of output.  This should help down the road
+with validation and keeping the data types consistent.  And if things change
+you should only have to changes these dictionaries.
+
+self._attr_dict = {'keyword':{'type': str, 'required': True, 'style': 'name'}} 
 
 Created on Sun Apr 24 20:50:41 2020
 
@@ -44,34 +46,15 @@ Created on Sun Apr 24 20:50:41 2020
 # Imports
 # =============================================================================
 
-import datetime
 import json
 import pandas as pd
 import numpy as np
-from dateutil import parser as dtparser
 from pathlib import Path
-
+from mth5.utils import MTime, ATTR_DICT
 
 # =============================================================================
 #  global parameters
 # =============================================================================
-dt_fmt = '%Y-%m-%dT%H:%M:%S.%f %Z'
-
-#==============================================================================
-# Need a dummy utc time zone for the date time format
-#==============================================================================
-class UTC(datetime.tzinfo):
-    """
-    An class to hold information about UTC
-    """
-    def utcoffset(self, df):
-        return datetime.timedelta(hours=0)
-    def dst(self, df):
-        return datetime.timedelta(0)
-    def tzname(self, df):
-        return "UTC"
-
-
 class Generic(object):
     """
     A generic class that is common to most of the Metadata objects
@@ -84,6 +67,8 @@ class Generic(object):
     """
     
     def __init__(self, **kwargs):
+        
+        self.notes_s = None
         
         for key, value in kwargs.items():
             setattr(self, key, value)
@@ -147,7 +132,16 @@ class Generic(object):
                                 attr_class), attr_key, value)
         else:
             setattr(self, key, value)
+            
+    def validate_type(self, key, value, dtype):
+        """
+        """
         
+        if isinstance(value, dtype):
+            return value
+        
+        else:
+            pass
             
 # ==============================================================================
 # Location class, be sure to put locations in decimal degrees, and note datum
@@ -163,10 +157,7 @@ class Declination(Generic):
         self.epoch_s = None
         self.model_s = None
         
-        self._attr_dict = {'value_d': {'type': float, 'required': True},
-                           'units_s': {'type': str, 'required': True},
-                           'epoch_s': {'type': str, 'required': True},
-                           'model_s': {'type': str, 'required': True}}
+        self._attr_dict = ATTR_DICT['declination']
         
 class Location(Generic):
     """
@@ -191,18 +182,7 @@ class Location(Generic):
         for key, value in kwargs.items():
             setattr(self, key, value)
             
-        self._attr_dict = {'datum_s': {'type': str, 'required': True},
-                           'latitude_d': {'type': float, 'required': True},
-                           'longitude_d': {'type': float, 'required': True},
-                           'elevation_d': {'type': float, 'required': True},
-                           'declination/value_d':{'type':float,
-                                                  'required':True},
-                           'declination/units_s':{'type':str,
-                                                  'required':True},
-                           'declination/epoch_s':{'type':str, 
-                                                  'required':True},
-                           'declination/model_s':{'type':str, 
-                                                  'required':True}}
+        self._attr_dict = ATTR_DICT['location']
 
     @property
     def latitude_d(self):
@@ -399,9 +379,7 @@ class Instrument(Generic):
         self.manufacturer_s = None
         self.type_s = None
         
-        self._attr_dict = {'id_s': {'type': str, 'required': True},
-                           'manufacturer_s': {'type': str, 'required': True},
-                           'type_s': {'type': str, 'required': True}}
+        self._attr_dict = ATTR_DICT['instrument']
 
         for key, value in kwargs.items():
             setattr(self, key, value)
@@ -476,7 +454,7 @@ class Citation(Generic):
         self.doi_s = None
         self.year_s = None
         
-        self._attr_dict = {'doi_s': {'type': str, 'required': True}}
+        self._attr_dict = ATTR_DICT['citation']
 
         for key, value in kwargs.items():
             setattr(self, key, value)
@@ -554,16 +532,23 @@ class Provenance(Generic):
 
     def __init__(self, **kwargs):
         super(Provenance, self).__init__()
-        self.creation_time_s = datetime.datetime.utcnow().isoformat()
+        self._creation_dt = MTime()
         self.creating_application_s = 'MTH5'
         self.creator= Person()
         self.submitter = Person()
         self.software = Software()
         self.log_s = None
-        self.notes_s = None
 
         for key, value in kwargs.items():
             setattr(self, key, value)
+            
+    @property
+    def creation_time_s(self):
+        return self._creation_dt.iso_str
+
+    @creation_time_s.setter
+    def creation_time_s(self, dt_str):
+        self._creation_dt.from_str(dt_str)
 
 # ==============================================================================
 # Person
@@ -597,6 +582,21 @@ class Person(Generic):
 
         for key, value in kwargs.items():
             setattr(self, key, value)
+
+# =============================================================================
+# Battery
+# =============================================================================
+class Battery(Generic):
+    """
+    Batter information
+    """
+    
+    def __init__(self, **kwargs):
+        super(Battery, self).__init__()
+        
+        self.type_s = None
+        self.start_voltage_d = None
+        self.end_voldage_d = None
 
 # ==============================================================================
 # Software
@@ -636,8 +636,8 @@ class Survey(Generic):
         
         super(Survey, self).__init__()
         self.acquired_by = Person()
-        self._start_date = None
-        self._end_date = None
+        self._start_dt = MTime()
+        self._end_dt = MTime()
         self.name_s = None
         self.id_s = None
         self.net_code_s = None
@@ -647,74 +647,32 @@ class Survey(Generic):
         self.location_s = None
         self.country_s = None
         self.summary_s = None
-        self.notes_s = None
         self.acquired_by = Person()
         self.conditions_of_use_s = None
         self.release_status_s = None
         self.citation_dataset = Citation()
         self.citation_journal = Citation()
        
-        self._attr_dict = {'name_s': {'type':str, 'required':True},
-                           'id_s': {'type':str, 'required':True},
-                           'net_code_s': {'type':str, 'required':True},
-                           'start_date_s': {'type':str, 'required':True},
-                           'end_date_s': {'type':str, 'required':True},
-                           'northwest_corner/latitude_d': {'type':float,
-                                                           'required':True},
-                           'northwest_corner/longitude_d': {'type':float, 
-                                                            'required':True},
-                           'southeast_corner/latitude_d': {'type':float, 
-                                                           'required':True},
-                           'southeast_corner/longitude_d': {'type':float,
-                                                           'required':True},
-                           'datum_s': {'type':str, 'required':True},
-                           'location_s': {'type':str, 'required':True},
-                           'country_s': {'type':str, 'required':True},
-                           'summary_s': {'type':str, 'required':True},
-                           'notes_s': {'type':str, 'required':True},
-                           'acquired_by/author_s': {'type':str,
-                                                    'required':True},
-                           'acquired_by/organization_s': {'type':str, 
-                                                          'required':True},
-                           'acquired_by/email_s': {'type':str, 
-                                                   'required':True},
-                           'acquired_by/url_s': {'type':str, 'required':True},
-                           'release_status_s': {'type':str, 'required':True},
-                           'conditions_of_use_s': {'type':str,
-                                                   'required':True},
-                           'citation_dataset/doi_s': {'type':str,
-                                                      'required':True},
-                           'citation_journal/doi_s': {'type':str, 
-                                                      'required':True}}
+        self._attr_dict = ATTR_DICT['survey']
 
         for key, value in kwargs.items():
             setattr(self, key, value)
             
     @property
     def start_date_s(self):
-        try:
-            return self._start_date.date().isoformat()
-        except (TypeError, AttributeError):
-            return None
+        return self._start_dt.date
 
     @start_date_s.setter
     def start_date_s(self, start_date):
-        self._start_date = dtparser.parse(start_date)
-        if self._start_date.tzname() is None:
-            self._start_date = self._start_date.replace(tzinfo=UTC())
+        self._start_dt.from_str(start_date)
 
     @property
     def end_date_s(self):
-        try:
-            return self._stop_date.date().isoformat()
-        except (TypeError, AttributeError):
-            return None
+        return self._end_dt.date
 
     @end_date_s.setter
     def end_date_s(self, stop_date):
-        self._stop_date = dtparser.parse(stop_date)
-        if self._stop_date.tzname() is None:
-            self._stop_date = self._stop_date.replace(tzinfo=UTC())
+        self._stop_dt.from_str(stop_date)
 
 # =============================================================================
 # Station Class
@@ -727,10 +685,9 @@ class Station(Location):
         super(Station, self).__init__()
         self.sta_code_s = None
         self.name_s = None
-        self.notes_s = None
         self.datum_s = None
-        self.start_s = None
-        self.end_s = None
+        self._start_dt = MTime()
+        self._end_dt = MTime()
         self.num_channels_i = None
         self.channels_recorded_s = None
         self.data_type_s = None
@@ -739,56 +696,23 @@ class Station(Location):
         self.acquired_by = Person()
         self.provenance = Provenance() 
         
-        self._attr_dict = {'sta_code_s': {'type':str, 'required':True},
-                           'name_s':{'type':str, 'required':True},
-                           'latitude_d':{'type':str, 'required':True},
-                           'longitude_d':{'type':float, 'required':True},
-                           'elevation_d':{'type':float, 'required':True},
-                           'notes_s':{'type':str, 'required':True},
-                           'datum_s':{'type':str, 'required':True},
-                           'start_s':{'type':str, 'required':True},
-                           'end_s':{'type':str, 'required':True},
-                           'num_channels_i':{'type':int, 'required':True},
-                           'channels_recorded_s':{'type':str, 
-                                                  'required':True},
-                           'data_type_s':{'type':str, 'required':True},
-                           'declination/value_d':{'type':float,
-                                                  'required':True},
-                           'declination/units_s':{'type':str,
-                                                  'required':True},
-                           'declination/epoch_s':{'type':str, 
-                                                  'required':True},
-                           'declination/model_s':{'type':str, 
-                                                  'required':True},
-                           'station_orientation_s':{'type':str,
-                                                    'required':True},
-                           'orientation_method_s':{'type':str,
-                                                   'required':True},
-                           'acquired_by/author_s':{'type':str,
-                                                   'required':True},
-                           'acquired_by/email_s':{'type':str,
-                                                  'required':True},
-                           'provenance/creation_time_s':{'type':str,
-                                                         'required':True},
-                           'provenance/software/name_s':{'type':str,
-                                                         'required':True},
-                           'provenance/software/version_s':{'type':str,
-                                                            'required':True},
-                           'provenance/software/author_s':{'type':str, 
-                                                           'required':True},
-                           'provenance/submitter/author_s':{'type':str, 
-                                                            'required':True},
-                           'provenance/submitter/organization_s':{'type':str, 
-                                                                  'required':True},
-                           'provenance/submitter/url_s':{'type':str, 
-                                                         'required':True},
-                           'provenance/submitter/email_s':{'type':str, 
-                                                           'required':True},
-                           'provenance/notes_s':{'type':str,
-                                                 'required':True},
-                           'provenance/log_s':{'type':str,
-                                               'required':True}}
+        self._attr_dict = ATTR_DICT['station']
         
+    @property
+    def start_s(self):
+        return self._start_dt.iso_str
+
+    @start_s.setter
+    def start_s(self, start_date):
+        self._start_dt.from_str(start_date)
+
+    @property
+    def end_s(self):
+        return self._end_dt.iso_str
+
+    @end_s.setter
+    def end_s(self, stop_date):
+        self._stop_dt.from_str(stop_date)
         
 # =============================================================================
 # Run
@@ -801,7 +725,40 @@ class Run(Generic):
     def __init__(self, **kwargs):
         super(Run, self).__init__()
         
+        self.id_s = None
+        self._start_dt = MTime()
+        self._end_dt = MTime()
+        self.sampling_rate_d = None
+        self.num_channels_i = None
+        self.channels_recorded_s = None
+        self.data_type_s = None
+        self.acquired_by = Person()
+        self.provenance = Provenance()
         
+        self._attr_dict = ATTR_DICT['run']
+    
+    @property
+    def start_s(self):
+        return self._start_dt.iso_str
+
+    @start_s.setter
+    def start_s(self, start_date):
+        self._start_dt.from_str(start_date)
+
+    @property
+    def end_s(self):
+        return self._end_dt.iso_str
+
+    @end_s.setter
+    def end_s(self, stop_date):
+        self._stop_dt.from_str(stop_date)
+        
+# =============================================================================
+# Channel
+# =============================================================================
+class Channel(Generic):
+    pass
+
 
 # =============================================================================
 # schedule

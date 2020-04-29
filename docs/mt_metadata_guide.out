@@ -1,22 +1,23 @@
 \BOOKMARK [1][-]{section.1}{Introduction}{}% 1
 \BOOKMARK [1][-]{section.2}{General Structure}{}% 2
-\BOOKMARK [2][-]{subsection.2.1}{Formatting Standards}{section.2}% 3
-\BOOKMARK [3][-]{subsubsection.2.1.1}{Time and Date Format}{subsection.2.1}% 4
-\BOOKMARK [3][-]{subsubsection.2.1.2}{Location}{subsection.2.1}% 5
-\BOOKMARK [3][-]{subsubsection.2.1.3}{Angles}{subsection.2.1}% 6
-\BOOKMARK [1][-]{section.3}{Survey}{}% 7
-\BOOKMARK [2][-]{subsection.3.1}{Example Survey JSON String}{section.3}% 8
-\BOOKMARK [1][-]{section.4}{Station}{}% 9
-\BOOKMARK [2][-]{subsection.4.1}{Example Station JSON String}{section.4}% 10
-\BOOKMARK [1][-]{section.5}{Run}{}% 11
-\BOOKMARK [2][-]{subsection.5.1}{Example Run JSON String}{section.5}% 12
-\BOOKMARK [1][-]{section.6}{Data Logger}{}% 13
-\BOOKMARK [2][-]{subsection.6.1}{Example DataLogger JSON String}{section.6}% 14
-\BOOKMARK [1][-]{section.7}{Electric Channel}{}% 15
-\BOOKMARK [2][-]{subsection.7.1}{Example Electric Channel JSON String}{section.7}% 16
-\BOOKMARK [1][-]{section.8}{Magnetic Channel}{}% 17
-\BOOKMARK [2][-]{subsection.8.1}{Example Magnetic Channel JSON String}{section.8}% 18
-\BOOKMARK [1][-]{section.9}{Filters}{}% 19
-\BOOKMARK [2][-]{subsection.9.1}{Example Filter JSON String}{section.9}% 20
-\BOOKMARK [1][-]{section.10}{Auxiliary Channels}{}% 21
-\BOOKMARK [2][-]{subsection.10.1}{Example Auxiliary JSON String}{section.10}% 22
+\BOOKMARK [2][-]{subsection.2.1}{Metadata Keyword Format}{section.2}% 3
+\BOOKMARK [2][-]{subsection.2.2}{Formatting Standards}{section.2}% 4
+\BOOKMARK [3][-]{subsubsection.2.2.1}{Time and Date Format}{subsection.2.2}% 5
+\BOOKMARK [3][-]{subsubsection.2.2.2}{Location}{subsection.2.2}% 6
+\BOOKMARK [3][-]{subsubsection.2.2.3}{Angles}{subsection.2.2}% 7
+\BOOKMARK [1][-]{section.3}{Survey}{}% 8
+\BOOKMARK [2][-]{subsection.3.1}{Example Survey JSON String}{section.3}% 9
+\BOOKMARK [1][-]{section.4}{Station}{}% 10
+\BOOKMARK [2][-]{subsection.4.1}{Example Station JSON String}{section.4}% 11
+\BOOKMARK [1][-]{section.5}{Run}{}% 12
+\BOOKMARK [2][-]{subsection.5.1}{Example Run JSON String}{section.5}% 13
+\BOOKMARK [1][-]{section.6}{Data Logger}{}% 14
+\BOOKMARK [2][-]{subsection.6.1}{Example DataLogger JSON String}{section.6}% 15
+\BOOKMARK [1][-]{section.7}{Electric Channel}{}% 16
+\BOOKMARK [2][-]{subsection.7.1}{Example Electric Channel JSON String}{section.7}% 17
+\BOOKMARK [1][-]{section.8}{Magnetic Channel}{}% 18
+\BOOKMARK [2][-]{subsection.8.1}{Example Magnetic Channel JSON String}{section.8}% 19
+\BOOKMARK [1][-]{section.9}{Filters}{}% 20
+\BOOKMARK [2][-]{subsection.9.1}{Example Filter JSON String}{section.9}% 21
+\BOOKMARK [1][-]{section.10}{Auxiliary Channels}{}% 22
+\BOOKMARK [2][-]{subsection.10.1}{Example Auxiliary JSON String}{section.10}% 23
