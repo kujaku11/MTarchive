@@ -20,9 +20,11 @@ Created on Sun Dec  9 20:50:41 2018
 # =============================================================================
 
 import datetime
+import json
 import pandas as pd
 import numpy as np
 from dateutil import parser as dtparser
+from pathlib import Path
 
 
 # =============================================================================
@@ -66,6 +68,7 @@ class Generic(object):
         Write a json string from a given object, taking into account other
         class objects contained within the given object.
         """
+        
         return to_json(self)
 
     def from_json(self, json_str):
@@ -82,25 +85,41 @@ class Generic(object):
         """
         make a dictionary from attributes, makes dictionary from _attr_list.
         """
-        pass
-    
-    def from_dict(self):
+        meta_dict = {}
+        for key in list(self._attr_dict.keys()):
+            meta_dict[key] = self.get_attribute(key)
+                                                
+        return meta_dict
+                
+    def from_dict(self, meta_dict):
         """
         fill attributes from a dictionary
         """
-        pass
+        for key, value in meta_dict.items():
+            self.set_attribute(key, value)
     
     def get_attribute(self, key):
         if '/'  in key:
-            attr_class, attr_key = key.split('/')
-            return getattr(getattr(self, attr_class), attr_key)
+            if key.count('/') == 1:
+                attr_class, attr_key = key.split('/')
+                return getattr(getattr(self, attr_class), attr_key)
+            elif key.count('/') == 2:
+                attr_master, attr_class, attr_key = key.split('/')
+                return getattr(getattr(getattr(self, attr_master), 
+                                       attr_class), 
+                               attr_key)
         else:
             return getattr(self, key)
         
     def set_attribute(self, key, value):
         if '/'  in key:
-            attr_class, attr_key = key.split('/')
-            setattr(getattr(self, attr_class), attr_key, value)
+            if key.count('/') == 1:
+                attr_class, attr_key = key.split('/')
+                setattr(getattr(self, attr_class), attr_key, value)
+            elif key.count('/') == 2:
+                attr_master, attr_class, attr_key = key.split('/')
+                setattr(getattr(getattr(self, attr_master), 
+                                attr_class), attr_key, value)
         else:
             setattr(self, key, value)
         
@@ -488,9 +507,9 @@ class Provenance(Generic):
 
     def __init__(self, **kwargs):
         super(Provenance, self).__init__()
-        self.creation_time = datetime.datetime.utcnow().isoformat()
-        self.creating_application = 'MTH5'
-        self.creator = Person()
+        self.creation_time_s = datetime.datetime.utcnow().isoformat()
+        self.creating_application_s = 'MTH5'
+        self.creator= Person()
         self.submitter = Person()
         self.software = Software()
         self.log_s = None
@@ -524,10 +543,10 @@ class Person(Generic):
 
     def __init__(self, **kwargs):
         super(Person, self).__init__()
-        self.email = None
-        self.name = None
-        self.organization = None
-        self.organization_url = None
+        self.email_s = None
+        self.author_s = None
+        self.organization_s = None
+        self.url_s = None
 
         for key, value in kwargs.items():
             setattr(self, key, value)
@@ -542,19 +561,27 @@ class Software(Generic):
 
     def __init__(self, **kwargs):
         super(Software, self).__init__()
-        self.name = None
-        self.version = None
+        self.name_s = None
+        self.version_s = None
         self.author = Person()
 
         for key, value in kwargs.items():
             setattr(self, key, value)
 
+    @property
+    def author_s(self):
+        return self.author.author_s
+    
+    @author_s.setter
+    def author_s(self, value):
+        self.author.author_s = value
 # ==============================================================================
 # Site details
 # ==============================================================================
 class Survey(Generic):
     """
     Information on the survey, including location, id, etc.
+    
 
     """
 
@@ -576,31 +603,42 @@ class Survey(Generic):
         self.notes_s = None
         self.acquired_by = Person()
         self.conditions_of_use_s = None
+        self.release_status_s = None
         self.citation_dataset = Citation()
         self.citation_journal = Citation()
        
-        self._attr_list = ['name_s',
-                           'id_s',
-                           'net_code_s',
-                           'start_date_s',
-                           'end_date_s',
-                           'northwest_corner/latitude_d',
-                           'northwest_corner/longitude_d',
-                           'southeast_corner/latitude_d',
-                           'southeast_corner/longitude_d',
-                           'datum_s',
-                           'location_s',
-                           'country_s',
-                           'summary_s',
-                           'notes_s',
-                           'acquired_by/author_s',
-                           'acquired_by/organization_s',
-                           'acquired_by/email_s',
-                           'acquired_by/url_s',
-                           'release_status_s',
-                           'conditions_of_use_s',
-                           'citation_dataset/doi_s',
-                           'citation_journal/doi_s']
+        self._attr_dict = {'name_s': {'type':str, 'required':True},
+                           'id_s': {'type':str, 'required':True},
+                           'net_code_s': {'type':str, 'required':True},
+                           'start_date_s': {'type':str, 'required':True},
+                           'end_date_s': {'type':str, 'required':True},
+                           'northwest_corner/latitude_d': {'type':float,
+                                                           'required':True},
+                           'northwest_corner/longitude_d': {'type':float, 
+                                                            'required':True},
+                           'southeast_corner/latitude_d': {'type':float, 
+                                                           'required':True},
+                           'southeast_corner/longitude_d': {'type':float,
+                                                           'required':True},
+                           'datum_s': {'type':str, 'required':True},
+                           'location_s': {'type':str, 'required':True},
+                           'country_s': {'type':str, 'required':True},
+                           'summary_s': {'type':str, 'required':True},
+                           'notes_s': {'type':str, 'required':True},
+                           'acquired_by/author_s': {'type':str,
+                                                    'required':True},
+                           'acquired_by/organization_s': {'type':str, 
+                                                          'required':True},
+                           'acquired_by/email_s': {'type':str, 
+                                                   'required':True},
+                           'acquired_by/url_s': {'type':str, 'required':True},
+                           'release_status_s': {'type':str, 'required':True},
+                           'conditions_of_use_s': {'type':str,
+                                                   'required':True},
+                           'citation_dataset/doi_s': {'type':str,
+                                                      'required':True},
+                           'citation_journal/doi_s': {'type':str, 
+                                                      'required':True}}
 
         for key, value in kwargs.items():
             setattr(self, key, value)
@@ -642,7 +680,6 @@ class Station(Location):
         super(Station, self).__init__()
         self.sta_code_s = None
         self.name_s = None
-        # self._Location = Location()
         self.notes_s = None
         self.datum_s = None
         self.start_s = None
@@ -655,59 +692,55 @@ class Station(Location):
         self.acquired_by = Person()
         self.provenance = Provenance() 
         
-        self._attr_list = ['sta_code_s',
-                           'name_s',
-                           'latitude_d',
-                           'longitude_d',
-                           'elevation_d',
-                           'notes_s',
-                           'datum_s',
-                           'start_s',
-                           'end_s',
-                           'num_channels_i',
-                           'channels_recorded_s',
-                           'data_type_s',
-                           'declination/value_d',
-                           'declination/units_s',
-                           'declination/epoch_s',
-                           'declination/model_s',
-                           'station_orientation_s',
-                           'orientation_method_s',
-                           'acquired_by/author_s',
-                           'acquired_by/email_s',
-                           'provenance/creation_time_s',
-                           'provenance/software/name_s',
-                           'provenance/software/version_s',
-                           'provenance/software/author_s',
-                           'provenance/submitter/author_s',
-                           'provenance/submitter/organization_s',
-                           'provenance/submitter/url_s',
-                           'provenance/submitter/email_s',
-                           'provenance/notes_s',
-                           'provenance/log_s']
-        
-    # @property
-    # def latitude_d(self):
-    #     return self._Location.latitude_d
-    
-    # @latitude_d.setter
-    # def latitude_d(self, value):
-    #     self._Location.latitude_d = value
-        
-    # @property
-    # def longitude_d(self):
-    #     return self._Location.longitude_d
-    
-    # @longitude_d.setter
-    # def longitude_d(self, value):
-    #     self._Location.longitude_d = value
-        
-    # @property
-    # def elevation_d(self):
-    #     return self._Location.elevation_d
-    # @elevation_d.setter
-    # def elevation_d(self, value):
-    #     self._Location.elevation_d = value
+        self._attr_dict = {'sta_code_s': {'type':str, 'required':True},
+                           'name_s':{'type':str, 'required':True},
+                           'latitude_d':{'type':str, 'required':True},
+                           'longitude_d':{'type':float, 'required':True},
+                           'elevation_d':{'type':float, 'required':True},
+                           'notes_s':{'type':str, 'required':True},
+                           'datum_s':{'type':str, 'required':True},
+                           'start_s':{'type':str, 'required':True},
+                           'end_s':{'type':str, 'required':True},
+                           'num_channels_i':{'type':int, 'required':True},
+                           'channels_recorded_s':{'type':str, 
+                                                  'required':True},
+                           'data_type_s':{'type':str, 'required':True},
+                           'declination/value_d':{'type':float,
+                                                  'required':True},
+                           'declination/units_s':{'type':str,
+                                                  'required':True},
+                           'declination/epoch_s':{'type':str, 
+                                                  'required':True},
+                           'declination/model_s':{'type':str, 
+                                                  'required':True},
+                           'station_orientation_s':{'type':str,
+                                                    'required':True},
+                           'orientation_method_s':{'type':str,
+                                                   'required':True},
+                           'acquired_by/author_s':{'type':str,
+                                                   'required':True},
+                           'acquired_by/email_s':{'type':str,
+                                                  'required':True},
+                           'provenance/creation_time_s':{'type':str,
+                                                         'required':True},
+                           'provenance/software/name_s':{'type':str,
+                                                         'required':True},
+                           'provenance/software/version_s':{'type':str,
+                                                            'required':True},
+                           'provenance/software/author_s':{'type':str, 
+                                                           'required':True},
+                           'provenance/submitter/author_s':{'type':str, 
+                                                            'required':True},
+                           'provenance/submitter/organization_s':{'type':str, 
+                                                                  'required':True},
+                           'provenance/submitter/url_s':{'type':str, 
+                                                         'required':True},
+                           'provenance/submitter/email_s':{'type':str, 
+                                                           'required':True},
+                           'provenance/notes_s':{'type':str,
+                                                 'required':True},
+                           'provenance/log_s':{'type':str,
+                                               'required':True}}
         
         
 # =============================================================================
@@ -948,7 +981,7 @@ class Schedule(object):
                                               self.dt_index[0].strftime('%H%M%S'),
                                               int(self.sampling_rate))
 
-        return os.path.join(csv_dir, csv_fn)
+        return Path(csv_dir).joinpath(csv_fn)
 
 # =============================================================================
 # Calibrations
@@ -1070,6 +1103,24 @@ class Calibration(Generic):
             self.name
         self.from_dataframe(cal_df)
         
+class NumpyEncoder(json.JSONEncoder):
+    """
+    Need to encode numpy ints and floats for json to work
+    """
+    def default(self, obj):
+        if isinstance(obj, (np.int_, np.intc, np.intp, np.int8,
+                            np.int16, np.int32, np.int64, np.uint8,
+                            np.uint16, np.uint32, np.uint64)):
+            return int(obj)
+
+        elif isinstance(obj, (np.float_, np.float16, np.float32, np.float64)):
+            return float(obj)
+
+        elif isinstance(obj,(np.ndarray)):
+            return obj.tolist()
+
+        return json.JSONEncoder.default(self, obj)
+
 def to_json(obj):
     """
     write a json string from a given object, taking into account other class
@@ -1077,7 +1128,7 @@ def to_json(obj):
 
     :param obj: class object to transform into string
     """
-    if isinstance(obj, (Site, Calibration)):
+    if isinstance(obj, (Station, Calibration)):
         keys = obj._attrs_list
     else:
         keys = obj.__dict__.keys()
@@ -1088,7 +1139,7 @@ def to_json(obj):
             continue
         value = getattr(obj, key)
 
-        if isinstance(value, (FieldNotes, Instrument, DataQuality, Citation, 
+        if isinstance(value, (Instrument, DataQuality, Citation, 
                               Provenance, Person, Software)):
             obj_dict[key] = {}
             for o_key, o_value in value.__dict__.items():
@@ -1096,7 +1147,7 @@ def to_json(obj):
                     continue
                 obj_dict[key][o_key] = o_value
 
-        elif isinstance(value, (Site, Calibration)):
+        elif isinstance(value, (Station, Calibration)):
             obj_dict[key] = {}
             for o_key in value._attrs_list:
                 if o_key.find('_') == 0:
