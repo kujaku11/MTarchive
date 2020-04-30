@@ -412,11 +412,12 @@ class DataQuality(Generic):
 
     def __init__(self, **kwargs):
         super(DataQuality, self).__init__()
-        self.comments = None
-        self.rating = None
-        self.warnings_comments = None
-        self.warnings_flag = 0
+        self.rating_i = None
+        self.warnings_notes_s = None
+        self.warnings_flag_i = 0
         self.author = None
+        
+        self._attr_dict = ATTR_DICT['data_quality']
 
         for key, value in kwargs.items():
             setattr(self, key, value)
@@ -485,23 +486,25 @@ class Copyright(Generic):
     def __init__(self, **kwargs):
         super(Copyright, self).__init__()
         self.citation = Citation()
-        self.conditions_of_use = ''.join(['All data and metadata for this survey are ',
-                                          'available free of charge and may be copied ',
-                                          'freely, duplicated and further distributed ',
-                                          'provided this data set is cited as the ',
-                                          'reference. While the author(s) strive to ',
-                                          'provide data and metadata of best possible ',
-                                          'quality, neither the author(s) of this data ',
-                                          'set, not IRIS make any claims, promises, or ',
-                                          'guarantees about the accuracy, completeness, ',
-                                          'or adequacy of this information, and expressly ',
-                                          'disclaim liability for errors and omissions in ',
-                                          'the contents of this file. Guidelines about ',
-                                          'the quality or limitations of the data and ',
-                                          'metadata, as obtained from the author(s), are ',
-                                          'included for informational purposes only.'])
-        self.release_status = None
-        self.additional_info = None
+        self.conditions_of_use_s = ''.join(['All data and metadata for this survey are ',
+                                            'available free of charge and may be copied ',
+                                            'freely, duplicated and further distributed ',
+                                            'provided this data set is cited as the ',
+                                            'reference. While the author(s) strive to ',
+                                            'provide data and metadata of best possible ',
+                                            'quality, neither the author(s) of this data ',
+                                            'set, not IRIS make any claims, promises, or ',
+                                            'guarantees about the accuracy, completeness, ',
+                                            'or adequacy of this information, and expressly ',
+                                            'disclaim liability for errors and omissions in ',
+                                            'the contents of this file. Guidelines about ',
+                                            'the quality or limitations of the data and ',
+                                            'metadata, as obtained from the author(s), are ',
+                                            'included for informational purposes only.'])
+        self.release_status_s = None
+        self.additional_info_s = None
+        
+        self._attr_dict = ATTR_DICT['copyright']
 
         for key, value in kwargs.items():
             setattr(self, key, value)
@@ -538,6 +541,8 @@ class Provenance(Generic):
         self.submitter = Person()
         self.software = Software()
         self.log_s = None
+        
+        self._attr_dict = ATTR_DICT['provenance']
 
         for key, value in kwargs.items():
             setattr(self, key, value)
@@ -579,10 +584,30 @@ class Person(Generic):
         self.author_s = None
         self.organization_s = None
         self.url_s = None
+        
+        self._attr_dict = ATTR_DICT['person']
 
         for key, value in kwargs.items():
             setattr(self, key, value)
 
+# =============================================================================
+# diagnostic
+# =============================================================================
+class Diagnostic(Generic):
+    """
+    diagnostic measurements like voltage, contact resistance, etc.
+    """
+    
+    def __init__(self, **kwargs):
+        super(Diagnostic, self).__init__()
+        self.start_d = None
+        self.end_d = None
+        
+        self._attr_dict = ATTR_DICT['diagnostic']
+        
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+        
 # =============================================================================
 # Battery
 # =============================================================================
@@ -597,6 +622,22 @@ class Battery(Generic):
         self.type_s = None
         self.start_voltage_d = None
         self.end_voldage_d = None
+        
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+        
+# =============================================================================
+# Electrode
+# =============================================================================
+class Electrode(Location, Instrument):
+    """
+    electrode container
+    """
+    
+    def __init__(self, **kwargs):
+        
+        for key, value in kwargs.items():
+            setattr(self, key, value)
 
 # ==============================================================================
 # Software
@@ -622,6 +663,35 @@ class Software(Generic):
     @author_s.setter
     def author_s(self, value):
         self.author.author_s = value
+        
+# =============================================================================
+# filter
+# =============================================================================
+class Filter(Generic):
+    """
+    container for filters
+    """
+    
+    def __init__(self, **kwargs):
+        self.name_s = None
+        self.applied_b = False
+        
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+        
+    def to_poles_zeros(self):
+        pass
+    
+    def from_poles_zeros(self, pz_arr):
+        pass
+    
+    def from_file(self, fn):
+        pass
+    
+    def to_file(self, fn):
+        pass
+    
+
 # ==============================================================================
 # Site details
 # ==============================================================================
@@ -757,249 +827,17 @@ class Run(Generic):
 # Channel
 # =============================================================================
 class Channel(Generic):
-    pass
-
-
-# =============================================================================
-# schedule
-# =============================================================================
-class Schedule(object):
     """
-    Container for a single schedule item
-
-    :Metadata keywords:
-
-          ===================== =======================================
-          name                  description
-          ===================== =======================================
-          station               station name
-          latitude              latitude of station (decimal degrees)
-          longitude             longitude of station (decimal degrees)
-          hx_azimuth            azimuth of HX (degrees from north=0)
-          hy_azimuth            azimuth of HY (degrees from north=0)
-          hz_azimuth            azimuth of HZ (degrees from horizon=0)
-          ex_azimuth            azimuth of EX (degrees from north=0)
-          ey_azimuth            azimuth of EY (degrees from north=0)
-          hx_sensor             instrument id number for HX
-          hy_sensor             instrument id number for HY
-          hz_sensor             instrument id number for HZ
-          ex_sensor             instrument id number for EX
-          ey_sensor             instrument id number for EY
-          ex_length             dipole length (m) for EX
-          ey_length             dipole length (m) for EX
-          ex_num                channel number of EX
-          ey_num                channel number of EX
-          hx_num                channel number of EX
-          hy_num                channel number of EX
-          hz_num                channel number of EX
-          instrument_id         instrument id
-          ===================== =======================================
+    generic channel container
     """
-
-    def __init__(self, name=None, meta_df=None):
-
-        self.ex = None
-        self.ey = None
-        self.hx = None
-        self.hy = None
-        self.hz = None
-        self.dt_index = None
-        self.name = name
-
-        self._comp_list = ['ex', 'ey', 'hx', 'hy', 'hz']
-        self._attrs_list = ['name',
-                            'start_time',
-                            'stop_time',
-                            'start_seconds_from_epoch',
-                            'stop_seconds_from_epoch',
-                            'n_samples',
-                            'n_channels',
-                            'sampling_rate']
-
-        #self.ts_df = time_series_dataframe
-        self.meta_df = meta_df
-
-    @property
-    def start_time(self):
-        """
-        Start time in UTC string format
-        """
-        return '{0}'.format(self.dt_index[0].strftime(dt_fmt))
-
-    @property
-    def stop_time(self):
-        """
-        Stop time in UTC string format
-        """
-        return '{0}'.format(self.dt_index[-1].strftime(dt_fmt))
-
-    @property
-    def start_seconds_from_epoch(self):
-        """
-        Start time in epoch seconds
-        """
-        return self.dt_index[0].to_datetime64().astype(np.int64)/1e9
-
-    @property
-    def stop_seconds_from_epoch(self):
-        """
-        sopt time in epoch seconds
-        """
-        return self.dt_index[-1].to_datetime64().astype(np.int64)/1e9
-
-    @property
-    def n_channels(self):
-        """
-        number of channels
-        """
-
-        return len(self.comp_list)
-
-    @property
-    def sampling_rate(self):
-        """
-        sampling rate
-        """
-        return np.round(1.0e9/self.dt_index[0].freq.nanos, decimals=1)
-
-    @property
-    def n_samples(self):
-        """
-        number of samples
-        """
-        return self.dt_index.shape[0]
-
-    @property
-    def comp_list(self):
-        """
-        component list for the given schedule
-        """
-        return [comp for comp in self._comp_list
-                if getattr(self, comp) is not None]
-
-    def make_dt_index(self, start_time, sampling_rate, stop_time=None,
-                      n_samples=None):
-        """
-        make time index array
-
-        .. note:: date-time format should be YYYY-M-DDThh:mm:ss.ms UTC
-
-        :param start_time: start time
-        :type start_time: string
-
-        :param end_time: end time
-        :type end_time: string
-
-        :param sampling_rate: sampling_rate in samples/second
-        :type sampling_rate: float
-        """
-
-        # set the index to be UTC time
-        dt_freq = '{0:.0f}N'.format(1./(sampling_rate)*1E9)
-        if stop_time is not None:
-            dt_index = pd.date_range(start=start_time,
-                                     end=stop_time,
-                                     freq=dt_freq,
-                                     closed='left',
-                                     tz='UTC')
-        elif n_samples is not None:
-            dt_index = pd.date_range(start=start_time,
-                                     periods=n_samples,
-                                     freq=dt_freq,
-                                     tz='UTC')
-        else:
-            raise ValueError('Need to input either stop_time or n_samples')
-
-        return dt_index
-
-    def from_dataframe(self, ts_dataframe):
-        """
-        update attributes from a pandas dataframe.
-
-        Dataframe should have columns:
-            * ex
-            * ey
-            * hx
-            * hy
-            * hz
-        and should be indexed by time.
-
-        :param ts_dataframe: dataframe holding the data
-        :type ts_datarame: pandas.DataFrame
-        """
-        try:
-            assert isinstance(ts_dataframe, pd.DataFrame) is True
-        except AssertionError:
-            raise TypeError('ts_dataframe is not a pandas.DataFrame object.\n',
-                            'ts_dataframe is {0}'.format(type(ts_dataframe)))
-
-        for col in ts_dataframe.columns:
-            try:
-                setattr(self, col.lower(), ts_dataframe[col])
-            except AttributeError:
-                print("\t xxx skipping {0} xxx".format(col))
-        self.dt_index = ts_dataframe.index
-
-        return
-
-    def from_mth5(self, mth5_obj, name):
-        """
-        make a schedule object from mth5 file
-
-        :param mth5_obj: an open mth5 object
-        :type mth5_obj: mth5.MTH5 open object
-
-        :param name: name of schedule to use
-        :type name: string
-        """
-        mth5_schedule = mth5_obj[name]
-
-        self.name = name
-
-        for comp in self._comp_list:
-            try:
-                setattr(self, comp, mth5_schedule[comp])
-            except KeyError:
-                print('\t xxx No {0} data for {1} xxx'.format(comp, self.name))
-                continue
-
-        self.dt_index = self.make_dt_index(mth5_schedule.attrs['start_time'],
-                                           mth5_schedule.attrs['sampling_rate'],
-                                           n_samples=mth5_schedule.attrs['n_samples'])
-        assert self.dt_index.shape[0] == getattr(self, self.comp_list[0]).shape[0]
-        return
-
-    def from_numpy_array(self, schedul_np_array, start_time, stop_time,
-                         sampling_rate):
-        """
-        TODO
-        update attributes from a numpy array
-        """
-        pass
-
-
-    def write_metadata_csv(self, csv_dir):
-        """
-        write metadata to a csv file
-        """
-        csv_fn = self._make_csv_fn(csv_dir)
-        self.meta_df.to_csv(csv_fn, header=False)
-
-        return csv_fn
-
-    def _make_csv_fn(self, csv_dir):
-        """
-        create csv file name from data.
-        """
-        if not isinstance(self.meta_df, pd.Series):
-            raise ValueError('meta_df is not a Pandas Series, {0}'.format(type(self.meta_df)))
-        csv_fn = '{0}_{1}_{2}_{3}.csv'.format(self.meta_df.station,
-                                              self.dt_index[0].strftime('%Y%m%d'),
-                                              self.dt_index[0].strftime('%H%M%S'),
-                                              int(self.sampling_rate))
-
-        return Path(csv_dir).joinpath(csv_fn)
-
+    
+    def __init__(self, **kwargs):
+        self.type_s = None
+        self.units_s = None
+        self.channel_number_i = None
+        self.sample_rate_d = None
+        self.filter = Filter()
+    
 # =============================================================================
 # Calibrations
 # =============================================================================

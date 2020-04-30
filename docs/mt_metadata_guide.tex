@@ -354,17 +354,17 @@ Electric channel refers to a dipole measurement of the electric field for a sing
 		positive/longitude\_d & positive sensor location longitude [ degrees (hh.mmss) ] & float & optional \\ \hline
 		positive/elevation\_d & positive sensor location elevation [ m ] & float & optional \\ \hline
 		positive/datum\_s & "positive datum for x, y, z location [ WGS84 ]" & string & optional \\ \hline
-		positive/sensor\_type\_s & type of electric sensor [ Ag-AgCl $|$ Pb-PbCl $|$ ...] & string & compulsory \\ \hline
-		positive/sensor\_manufacturer\_s & electric sensor manufacturer & string & compulsory \\ \hline
-		positive/sensor\_notes\_s & notes on electric sensor & string & optional \\ \hline
+		positive/type\_s & type of electric sensor [ Ag-AgCl $|$ Pb-PbCl $|$ ...] & string & compulsory \\ \hline
+		positive/manufacturer\_s & electric sensor manufacturer & string & compulsory \\ \hline
+		positive/notes\_s & notes on electric sensor & string & optional \\ \hline
 		negative/ID\_s & sensor id number & string & compulsory \\ \hline
 		negative/longitude\_d & negative sensor location latitude [ degrees (hh.mmss) ] & float & optional \\ \hline
 		negative/latitude\_d & negative sensor location longitude [ degrees (hh.mmss) ] & float & optional \\ \hline
 		negative/elevation\_d & negative sensor location elevation [ m ] & float & optional \\ \hline
 		negative/datum\_s & "negative datum for x, y, z location [ WGS84 ]" & string & optional \\ \hline
-		negative/sensor\_type\_s & type of electric sensor [ Ag-AgCl $|$ Pb-PbCl $|$ ...] & string & compulsory \\ \hline
-		negative/sensor\_manufacturer\_s & electric sensor manufacturer & string & compulsory \\ \hline
-		negative/sensor\_notes\_s & notes on electric sensor & string & optional \\ \hline
+		negative/type\_s & type of electric sensor [ Ag-AgCl $|$ Pb-PbCl $|$ ...] & string & compulsory \\ \hline
+		negative/manufacturer\_s & electric sensor manufacturer & string & compulsory \\ \hline
+		negative/notes\_s & notes on electric sensor & string & optional \\ \hline
 		contact\_resistance/start\_A\_d & contact resistance at beginning of measurement, positive polarity [ Ohm ]" & float & optional \\ \hline
 		contact\_resistance/start\_B\_d & contact resistance at beginning of measurement, negative polarity [ Ohm ] & float & optional \\ \hline
 		contact\_resistance/end\_A\_d & contact resistance at end of measurement, positive polarity [ Ohm ] & float & optional \\ \hline
@@ -388,7 +388,7 @@ Electric channel refers to a dipole measurement of the electric field for a sing
 		sample\_rate\_d & sample rate of electric channel (samples/second) & float & compulsory \\ \hline
 		notes\_s & notes about electric field measurement & string &  optional \\ \hline
 		data\_quality/rating\_d & data quality rating based on some sort of statistic & float & optional \\ \hline
-		data\_quality/warning\_comments\_s & any warnings about data quality & string & optional \\ \hline
+		data\_quality/warning\_notes\_s & any warnings about data quality & string & optional \\ \hline
 		data\_quality/warning\_flags\_d & a value flagging bad data  & float &  optional \\ \hline
 		data\_quality/author\_s & person who did QC/QA on data & string &  optional \\ \hline
 		filter/name\_s & filter name in filter table, can be a list. Needs to be ordered in which filters were applied & string &  optional \\ \hline
@@ -412,17 +412,17 @@ Electric channel refers to a dipole measurement of the electric field for a sing
  "positive/longitude_d": -117.38754,
  "positive/elevation_d": 103.4,
  "positive/datum_s": "WGS84",
- "positive/sensor_type_s": "Ag-AgCl"
- "positive/sensor_manufacturer_s": "Zaps",
- "positive/sensor_notes_s": "Sitting on the shelf since last year",
+ "positive/type_s": "Ag-AgCl"
+ "positive/manufacturer_s": "Zaps",
+ "positive/notes_s": "Sitting on the shelf since last year",
  "negative/id_s": "102",
  "negative/latitude_d": 35.5588,
  "negative/longitude_d": -117.38754,
  "negative/elevation_d": 105.8,
  "negative/datum_s": "WGS84",
- "negative/sensor_type_s": "Ag-AgCl"
- "negative/sensor_manufacturer_s": "Zaps",
- "negative/sensor_notes_s": "Sitting on the shelf since last year",
+ "negative/type_s": "Ag-AgCl"
+ "negative/manufacturer_s": "Zaps",
+ "negative/notes_s": "Sitting on the shelf since last year",
  "contact_resistance/start_A_d": 1200.0,
  "contact_resistance/start_B_d": 1210.0,
  "contact_resistance/end_A_d": 1205.0,
@@ -435,7 +435,7 @@ Electric channel refers to a dipole measurement of the electric field for a sing
  "sample_rate_d": 256,
  "notes_s": "cables chewed on 2020-01-07",
  "data_quality/rating_d": 3,
- "data_quality/warning_comments_s": "cables chewed 2020-01-07",
+ "data_quality/warning_notes_s": "cables chewed 2020-01-07",
  "data_quality/warning_flags_s": "Nan",
  "data_quality/author_s": "Q. Sea",
  "filter/name_s": "[counts2mv, datalogger024]",
@@ -474,7 +474,7 @@ A magnetic channel is a recording of one component of the magnetic field at a si
 		h\_field/units\_s & units of h-field measurement [ nT $|$ ...] & string &   optional \\ \hline
 		notes\_s & notes on magnetic field measurments & string &  optional \\ \hline
 		data\_quality/rating\_d & data quality rating based on some sort of statistic & float &  optional \\ \hline
-		data\_quality/warning\_comments\_s & any warnings about data quality & string &   optional \\ \hline
+		data\_quality/warning\_notes\_s & any warnings about data quality & string &   optional \\ \hline
 		data\_quality/warning\_flags\_s & a value flagging bad data  & float &  optional \\ \hline
 		data\_quality/author\_s & person who did QC/QA on data & string &   optional \\ \hline
 		filter/name\_s & filter name in filter table, can be a list. Needs to be ordered in which filters were applied & string &  optional \\ \hline
@@ -510,7 +510,7 @@ A magnetic channel is a recording of one component of the magnetic field at a si
  "h_field/units_s": "nT",
  "notes_s": "not buried all the way ",
  "data_quality/rating_d": 4,
- "data_quality/warning_comments_s": "windy during the day",
+ "data_quality/warning_notes_s": "windy during the day",
  "data_quality/warning_flags_s": "Nan",
  "data_quality/author_s": "Q. Sea",
  "filter/name_s": "[counts2mv, datalogger024, coil2149]"
@@ -578,6 +578,10 @@ Auxiliary channels include state of health channels, temperature, etc.
 		channel\_num\_i & channel number [ 1 $|$ 2 $|$ 3 $|$ 4 $|$ 5 $|$ 6 $|$...] & int &  compulsory \\ \hline
 		sample\_rate\_d & sample rate (samples/second) & float &  compulsory \\ \hline
 		notes\_s & any notes on the auxillary channel & string &  optional \\ \hline
+		data\_quality/rating\_d & data quality rating based on some sort of statistic & float &  optional \\ \hline
+		data\_quality/warning\_notes\_s & any warnings about data quality & string &   optional \\ \hline
+		data\_quality/warning\_flags\_s & a value flagging bad data  & float &  optional \\ \hline
+		data\_quality/author\_s & person who did QC/QA on data & string &   optional \\ \hline
 		filter/name\_s & filter name in filter table, can be a list. Needs to be ordered in which filters were applied & string &  optional \\ \hline
 		filter/notes\_s & any notes on the filtering & string &  optional \\ \hline
 		filter/applied\_b & have filters been applied [ True $|$ False ] & string & compulsory \\ \hline
@@ -594,6 +598,10 @@ Auxiliary channels include state of health channels, temperature, etc.
 "channel_number_i": "6",
 "sample_rate_d": "256",
 "notes_s": "internal data logger temperature"
+"data_quality/rating_d": 4,
+"data_quality/warning_notes_s": "windy during the day",
+"data_quality/warning_flags_s": "Nan",
+"data_quality/author_s": "Q. Sea",
 "filter/name_s": "[counts2c]"
 "filter/notes_s": "Calibrated 2018-01-01",
 "filter/applied_b": "True"
