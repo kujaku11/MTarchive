@@ -345,7 +345,7 @@ Electric channel refers to a dipole measurement of the electric field for a sing
 	\begin{tabular}{|l|p{3in}|l|l|}
 		\hline
 		\textbf{Metadata Key} & \textbf{Description} & \textbf{Type} & \textbf{Required} \\ \hline
-		dipole/length\_d & length of dipole [ m ] & float & compulsory \\ \hline
+		dipole\_length\_d & length of dipole [ m ] & float & compulsory \\ \hline
 		channel\_num\_i & channel number [ 1 $|$ 2 $|$ 3 $|$ 4 $|$ 5 $|$ 6 $|$...] & int & compulsory \\ \hline
 		component\_s & [ Ex $|$ Ey $|$ Ez ] & string  & compulsory \\ \hline
 		azimuth\_d & azimuth of dipole N = 0,  E = 90 [ degrees ] & float & compulsory \\ \hline
@@ -403,16 +403,16 @@ Electric channel refers to a dipole measurement of the electric field for a sing
 
 \begin{verbatim}
 {
- "dipole/length_d": 59.7,
- "channel_num_i": 1",
- "component_s": EX,
- "azimuth/value_d": 0,
+ "dipole_length_d": 59.7,
+ "channel_num_i": "1",
+ "component_s": "EX",
+ "azimuth_d": 0,
  "positive/id_s": "101",
  "positive/latitude_d": 35.5578,
  "positive/longitude_d": -117.38754,
  "positive/elevation_d": 103.4,
  "positive/datum_s": "WGS84",
- "positive/type_s": "Ag-AgCl"
+ "positive/type_s": "Ag-AgCl",
  "positive/manufacturer_s": "Zaps",
  "positive/notes_s": "Sitting on the shelf since last year",
  "negative/id_s": "102",
@@ -467,10 +467,10 @@ A magnetic channel is a recording of one component of the magnetic field at a si
 		datum\_s & datum for location [ WGS84 $|$ ... ] & string &  compulsory\\ \hline
 		units\_s & units of magnetic field data [ counts $|$ mV $|$ ... ] & string &  compulsory \\ \hline
 		sample\_rate\_d & sample rate of magnetic channel (samples/second) & float &  compulsory \\ \hline
-		h\_field/min\_start\_d & minimum h-field value at beginning of measurement & float &  optional \\ \hline
-		h\_field/max\_start\_d & maximum h-field value at beginning of measurement & float &  optional\\ \hline
-		h\_field/min\_end\_d & minimum h-field value at end of measurement & float &  optional\\ \hline
-		h\_field/max\_end\_d & maximum h-field value at end of measurement & float &  optional\\ \hline
+		h\_field/start\_min\_d & minimum h-field value at beginning of measurement & float &  optional \\ \hline
+		h\_field/start\_max\_d & maximum h-field value at beginning of measurement & float &  optional\\ \hline
+		h\_field/end\_min\_d & minimum h-field value at end of measurement & float &  optional\\ \hline
+		h\_field/end\_max\_d & maximum h-field value at end of measurement & float &  optional\\ \hline
 		h\_field/units\_s & units of h-field measurement [ nT $|$ ...] & string &   optional \\ \hline
 		notes\_s & notes on magnetic field measurments & string &  optional \\ \hline
 		data\_quality/rating\_d & data quality rating based on some sort of statistic & float &  optional \\ \hline
@@ -503,17 +503,17 @@ A magnetic channel is a recording of one component of the magnetic field at a si
  "datum_s": "WGS84",
  "units_s": "counts",
  "sample_rate_d": 256,
- "h_field/min_start_d": -10,
- "h_field/max_start_d": 10,
- "h_field/min_end_d": -9,
- "h_field/max_end_d": 9,
+ "h_field/start_min_d": -10,
+ "h_field/start_max_d": 10,
+ "h_field/end_min_d": -9,
+ "h_field/end_max_d": 9,
  "h_field/units_s": "nT",
  "notes_s": "not buried all the way ",
  "data_quality/rating_d": 4,
  "data_quality/warning_notes_s": "windy during the day",
  "data_quality/warning_flags_s": "Nan",
  "data_quality/author_s": "Q. Sea",
- "filter/name_s": "[counts2mv, datalogger024, coil2149]"
+ "filter/name_s": "[counts2mv, datalogger024, coil2149]",
  "filter/notes_s": "Calibrated 2018-01-01",
  "filter/applied_b": "False"
 }

@@ -66,12 +66,19 @@ class Generic(object):
         * from_dict
     """
     
-    def __init__(self, **kwargs):
+    def __init__(self, *args, **kwargs):
         
         self.notes_s = None
+        self._attr_dict = {}
         
         for key, value in kwargs.items():
             setattr(self, key, value)
+            
+    def __str__(self):
+        return self.to_json()
+    
+    def __repr__(self):
+        return self.to_json()
             
     def to_json(self):
         """
@@ -598,30 +605,44 @@ class Diagnostic(Generic):
     diagnostic measurements like voltage, contact resistance, etc.
     """
     
-    def __init__(self, **kwargs):
+    def __init__(self, measurement, **kwargs):
         super(Diagnostic, self).__init__()
-        self.start_d = None
-        self.end_d = None
-        
-        self._attr_dict = ATTR_DICT['diagnostic']
-        
+        self.units_s = None
+
+        self._set_measurement(measurement)
+
+        self._attr_dict = {}
         for key, value in kwargs.items():
             setattr(self, key, value)
-        
+            
+    def _set_measurement(self, measurement):
+        if isinstance(measurement, str):
+            for key in ['start', 'end']:
+                setattr(self, '{0}_{1}_d'.format(key, measurement), 0.0)
+        elif isinstance(measurement, list):
+            for m in measurement:
+                for key in ['start', 'end']:
+                    setattr(self, '{0}_{1}_d'.format(key, m), 0.0)
+        else:
+            raise ValueError('Measurement needs to be a string or list not' +
+                             '{0}'.format(type(measurement)))
+                    
+
 # =============================================================================
 # Battery
 # =============================================================================
-class Battery(Generic):
+class Battery(Diagnostic):
     """
     Batter information
     """
     
     def __init__(self, **kwargs):
-        super(Battery, self).__init__()
+        super(Battery, self).__init__('voltage')
         
         self.type_s = None
-        self.start_voltage_d = None
-        self.end_voldage_d = None
+        self.id_s = None
+        
+        self._attr_dict = ATTR_DICT['battery']
         
         for key, value in kwargs.items():
             setattr(self, key, value)
@@ -635,7 +656,9 @@ class Electrode(Location, Instrument):
     """
     
     def __init__(self, **kwargs):
+        super(Electrode, self).__init__()
         
+        self._attr_dict = ATTR_DICT['electrode']
         for key, value in kwargs.items():
             setattr(self, key, value)
 
@@ -824,7 +847,7 @@ class Run(Generic):
         self._stop_dt.from_str(stop_date)
         
 # =============================================================================
-# Channel
+# Generic Channel
 # =============================================================================
 class Channel(Generic):
     """
@@ -836,8 +859,56 @@ class Channel(Generic):
         self.units_s = None
         self.channel_number_i = None
         self.sample_rate_d = None
+        self.data_quality = DataQuality()
         self.filter = Filter()
+        
+# =============================================================================
+# Electric Channel
+# =============================================================================
+class Electric(Channel):
+    """
+    electric channel
+    """
     
+    def __init__(self, **kwargs):
+        self.dipole_length_d = 0.0
+        self.channel_num_i = 0
+        self.component_s = None
+        self.azimuth_d = 0.0
+        self.positive = Electrode()
+        self.negative = Electrode()
+        self.contact_resistance = Diagnostic(['A', 'B']) 
+        self.ac = Diagnostic('')
+        self.dc = Diagnostic('')
+        self.units_s = None
+        
+        self._attr_dict = ATTR_DICT['electric']
+    
+# =============================================================================
+# Magnetic Channel
+# =============================================================================
+class Magnetic(Channel, Location):
+    """
+    
+    """
+    
+    def __init__(self, **kwargs):
+        super(Magnetic, self).__init__()
+        self.sensor = Instrument()
+        'self.h_field/min_start_d = ',
+        'self.h_field/max_start_d = ',
+        'self.h_field/min_end_d = ',
+        'self.h_field/max_end_d = ',
+        'self.h_field/units_s = ',
+        'self.notes_s = ',
+        'self.data_quality/rating_d = ',
+        'self.data_quality/warning_notes_s = ',
+        'self.data_quality/warning_flags_s = ',
+        'self.data_quality/author_s = ',
+        'self.filter/name_s = ',
+        'self.filter/notes_s = ',
+        'self.filter/applied_b = '
+
 # =============================================================================
 # Calibrations
 # =============================================================================
