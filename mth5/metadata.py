@@ -420,9 +420,9 @@ class DataQuality(Generic):
     def __init__(self, **kwargs):
         super(DataQuality, self).__init__()
         self.rating_i = None
-        self.warnings_notes_s = None
-        self.warnings_flag_i = 0
-        self.author = None
+        self.warning_notes_s = None
+        self.warning_flags_s = None
+        self.author_s = None
         
         self._attr_dict = ATTR_DICT['data_quality']
 
@@ -607,6 +607,7 @@ class Diagnostic(Generic):
     
     def __init__(self, measurement, **kwargs):
         super(Diagnostic, self).__init__()
+        
         self.units_s = None
 
         self._set_measurement(measurement)
@@ -696,6 +697,7 @@ class Filter(Generic):
     """
     
     def __init__(self, **kwargs):
+        super().__init__()
         self.name_s = None
         self.applied_b = False
         
@@ -858,7 +860,9 @@ class Channel(Generic):
         self.type_s = None
         self.units_s = None
         self.channel_number_i = None
+        self.component_s = None
         self.sample_rate_d = None
+        self.azimuth_d = 0.0
         self.data_quality = DataQuality()
         self.filter = Filter()
         
@@ -872,9 +876,6 @@ class Electric(Channel):
     
     def __init__(self, **kwargs):
         self.dipole_length_d = 0.0
-        self.channel_num_i = 0
-        self.component_s = None
-        self.azimuth_d = 0.0
         self.positive = Electrode()
         self.negative = Electrode()
         self.contact_resistance = Diagnostic(['A', 'B']) 
@@ -893,142 +894,19 @@ class Magnetic(Channel, Location):
     """
     
     def __init__(self, **kwargs):
-        super(Magnetic, self).__init__()
+        super().__init__()
         self.sensor = Instrument()
-        'self.h_field/min_start_d = ',
-        'self.h_field/max_start_d = ',
-        'self.h_field/min_end_d = ',
-        'self.h_field/max_end_d = ',
-        'self.h_field/units_s = ',
-        'self.notes_s = ',
-        'self.data_quality/rating_d = ',
-        'self.data_quality/warning_notes_s = ',
-        'self.data_quality/warning_flags_s = ',
-        'self.data_quality/author_s = ',
-        'self.filter/name_s = ',
-        'self.filter/notes_s = ',
-        'self.filter/applied_b = '
+        Location.__init__(self)
+        self.h_field = Diagnostic(['min', 'max'])
 
+        self._attr_dict = ATTR_DICT['magnetic']
+        
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+        
 # =============================================================================
-# Calibrations
+# Helper function to be sure everything is encoded properly
 # =============================================================================
-class Calibration(Generic):
-    """
-    container for insturment calibrations
-
-    Each instrument should be a separate class
-
-    Metadata should be:
-        * instrument_id
-        * calibration_date
-        * calibration_person
-        * units
-    """
-
-    def __init__(self, name=None):
-        super(Calibration, self).__init__()
-        self.name = name
-        self.instrument_id = None
-        self.units = None
-        self.calibration_date = None
-        self.calibration_person = Person()
-        self.frequency = None
-        self.real = None
-        self.imaginary = None
-        self._col_list = ['frequency', 'real', 'imaginary']
-        self._attrs_list = ['name',
-                           'instrument_id',
-                           'units',
-                           'calibration_date',
-                           'calibration_person']
-        
-
-
-    def from_dataframe(self, cal_dataframe, name=None):
-        """
-        updated attributes from a pandas DataFrame
-
-        :param cal_dataframe: dataframe with columns frequency, real, imaginary
-        :type cal_dataframe: pandas.DataFrame
-
-        """
-        assert isinstance(cal_dataframe, pd.DataFrame) is True
-
-        if name is not None:
-            self.name = name
-
-        for col in cal_dataframe.columns:
-            setattr(self, col, cal_dataframe[col])
-
-    def from_numpy_array(self, cal_np_array, name=None):
-        """
-        update attributes from a numpy array
-
-        :param cal_np_array: array of values for calibration, see below
-        :type cal_np_array: numpy.ndarray
-
-        if array is a numpy structured array names need to be:
-            * frequency
-            * real
-            * imaginary
-
-        if array is just columns, needs to be ordered:
-            * frequency (index 0)
-            * real (index 1)
-            * imaginary (index 2)
-
-        """
-        if name is not None:
-            self.name = name
-
-        ### assume length of 1 is a structured array
-        if len(cal_np_array.shape) == 1:
-            assert cal_np_array.dtype.names == ('frequency', 'real', 'imaginary')
-            for key in cal_np_array.dtype.names:
-                setattr(self, key, cal_np_array[key])
-
-        ### assume an unstructured array (f, r, i)
-        if len(cal_np_array.shape) == 2 and cal_np_array.shape[0] == 3:
-            for ii, key in enumerate(['frequency', 'real', 'imaginary']):
-                setattr(self, key, cal_np_array[ii, :])
-
-        return
-
-    def from_mth5(self, mth5_obj, name):
-        """
-        update attribues from mth5 file
-        """
-        self.name = name
-        for key in mth5_obj['/calibrations/{0}'.format(self.name)].keys():
-            setattr(self, key, mth5_obj['/calibrations/{0}/{1}'.format(self.name,
-                                                                       key)])
-
-        ### read in attributes
-        self.from_json(mth5_obj['/calibrations/{0}'.format(self.name)].attrs['metadata'])
-        
-    def from_csv(self, cal_csv, name=None, header=False):
-        """
-        Read a csv file that is in the format frequency,real,imaginary
-        
-        :param cal_csv: full path to calibration csv file
-        :type cal_csv: string
-        
-        :param name: instrument id
-        :type name: string
-        
-        :param header: boolean if there is a header in the csv file
-        :type header: [ True | False ]
-        
-        """
-        if not header:
-            cal_df = pd.read_csv(cal_csv, header=None, names=self._col_list)
-        else:
-            cal_df = pd.read_csv(cal_csv, names=self._col_list)
-            
-        if name is not None:
-            self.name
-        self.from_dataframe(cal_df)
-        
 class NumpyEncoder(json.JSONEncoder):
     """
     Need to encode numpy ints and floats for json to work

@@ -346,7 +346,7 @@ Electric channel refers to a dipole measurement of the electric field for a sing
 		\hline
 		\textbf{Metadata Key} & \textbf{Description} & \textbf{Type} & \textbf{Required} \\ \hline
 		dipole\_length\_d & length of dipole [ m ] & float & compulsory \\ \hline
-		channel\_num\_i & channel number [ 1 $|$ 2 $|$ 3 $|$ 4 $|$ 5 $|$ 6 $|$...] & int & compulsory \\ \hline
+		channel\_number\_i & channel number [ 1 $|$ 2 $|$ 3 $|$ 4 $|$ 5 $|$ 6 $|$...] & int & compulsory \\ \hline
 		component\_s & [ Ex $|$ Ey $|$ Ez ] & string  & compulsory \\ \hline
 		azimuth\_d & azimuth of dipole N = 0,  E = 90 [ degrees ] & float & compulsory \\ \hline
 		positive/ID\_s & sensor id number & string & compulsory \\ \hline
@@ -404,7 +404,7 @@ Electric channel refers to a dipole measurement of the electric field for a sing
 \begin{verbatim}
 {
  "dipole_length_d": 59.7,
- "channel_num_i": "1",
+ "channel_number_i": "1",
  "component_s": "EX",
  "azimuth_d": 0,
  "positive/id_s": "101",
@@ -458,7 +458,7 @@ A magnetic channel is a recording of one component of the magnetic field at a si
 		sensor/manufacturer\_s & magnetic sensor manufacturer & string &  compulsory \\ \hline
 		sensor/notes\_s & notes on sensor & string & compulsory \\ \hline
 		sensor/ID\_s & sensor id number & string &  compulsory \\ \hline
-		channel\_num\_i & channel number [ 1 $|$ 2 $|$ 3 $|$ 4 $|$ 5 $|$ 6 $|$...] & int &  compulsory \\ \hline
+		channel\_number\_i & channel number [ 1 $|$ 2 $|$ 3 $|$ 4 $|$ 5 $|$ 6 $|$...] & int &  compulsory \\ \hline
 		component\_s & [ Hx $|$ Hy $|$ Hz ] & string  &  compulsory \\ \hline
 		azimuth\_d & azimuth in \verb|station\_coordinates_s| [ degrees ]& float & compulsory \\ \hline
 		longitude\_d & sensor longitude degrees & float & compulsory \\ \hline
@@ -493,10 +493,9 @@ A magnetic channel is a recording of one component of the magnetic field at a si
  "sensor/manufacturer_s": "MT `r Us",
  "sensor/notes_s": "new coil",
  "sensor/id_s": "2149",
- "channel_num_i": 5,
+ "channel_number_i": 5,
  "component_s": "HZ",
- "azimuth/value_s": 90,
- "azimuth/units_s": "degrees",
+ "azimuth_d": 90,
  "longitude_d": -117.0,
  "latitude_d": 45.0,
  "elevation_d": 107.4,
