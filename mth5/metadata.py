@@ -75,7 +75,10 @@ class Base(object):
             setattr(self, key, value)
             
     def __str__(self):
-        return self.to_json()
+        lines = []
+        for key, value in self.to_dict().items():
+            lines.append('{0} = {1}'.format(key, value))
+        return '\n'.join(lines)
     
     def __repr__(self):
         return self.to_json()
