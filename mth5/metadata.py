@@ -584,41 +584,30 @@ class Diagnostic(Base):
     diagnostic measurements like voltage, contact resistance, etc.
     """
     
-    def __init__(self, measurement, **kwargs):
+    def __init__(self, **kwargs):
         super(Diagnostic, self).__init__(**kwargs)
         
         self.units_s = None
-
-        self._set_measurement(measurement)
+        self.start_d = None
+        self.end_d = None
 
         self._attr_dict = {}
             
-    def _set_measurement(self, measurement):
-        if isinstance(measurement, str):
-            for key in ['start', 'end']:
-                setattr(self, '{0}_{1}_d'.format(key, measurement), 0.0)
-        elif isinstance(measurement, list):
-            for m in measurement:
-                for key in ['start', 'end']:
-                    setattr(self, '{0}_{1}_d'.format(key, m), 0.0)
-        else:
-            raise ValueError('Measurement needs to be a string or list not' +
-                             '{0}'.format(type(measurement)))
-                    
-
+        
 # =============================================================================
 # Battery
 # =============================================================================
-class Battery(Diagnostic):
+class Battery(Base):
     """
     Batter information
     """
     
     def __init__(self, **kwargs):
-        super(Battery, self).__init__('voltage', **kwargs)
+        super(Battery, self).__init__(**kwargs)
         
         self.type_s = None
         self.id_s = None
+        self.voltage = Diagnostic(**{'units_s':'Volts'})
         
         self._attr_dict = ATTR_DICT['battery']
         
@@ -668,9 +657,8 @@ class Software(Base):
         self.name_s = None
         self.version_s = None
         self.author = Person()
-
-        for key, value in kwargs.items():
-            setattr(self, key, value)
+        
+        self._attr_dict = ATTR_DICT['timing_system']
 
     @property
     def author_s(self):
@@ -692,6 +680,8 @@ class Filter(Base):
         super().__init__()
         self.name_s = None
         self.applied_b = False
+        
+        self._attr_dict = ATTR_DICT['filter']
         
     def to_poles_zeros(self):
         pass
@@ -846,6 +836,7 @@ class Channel(Base):
     """
     
     def __init__(self, **kwargs):
+        super(Channel, self).__init__(**kwargs)
         self.type_s = None
         self.units_s = None
         self.channel_number_i = None
@@ -864,12 +855,14 @@ class Electric(Channel):
     """
     
     def __init__(self, **kwargs):
+        super(Electric, self).__init__(**kwargs)
         self.dipole_length_d = 0.0
         self.positive = Electrode()
         self.negative = Electrode()
-        self.contact_resistance = Diagnostic(['A', 'B']) 
-        self.ac = Diagnostic('')
-        self.dc = Diagnostic('')
+        self.contact_resistance_A = Diagnostic()
+        self.contact_resistance_B = Diagnostic()
+        self.ac = Diagnostic()
+        self.dc = Diagnostic()
         self.units_s = None
         
         self._attr_dict = ATTR_DICT['electric']
@@ -886,7 +879,8 @@ class Magnetic(Channel, Location):
         super().__init__()
         self.sensor = Instrument()
         Location.__init__(self)
-        self.h_field = Diagnostic(['min', 'max'])
+        self.h_field_min = Diagnostic()
+        self.h_field_max = Diagnostic()
 
         self._attr_dict = ATTR_DICT['magnetic']
         
