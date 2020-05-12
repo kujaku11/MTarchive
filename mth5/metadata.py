@@ -16,7 +16,7 @@ Each container will be able to read and write:
     * pandas 
     * anything else?
     
-Because a lot of the key words in the metadata are split by '/' there are some
+Because a lot of the key words in the metadata are split by '.' there are some
 issues we need to deal with.  I wrote in get and set attribute functions
 to handle these types of keys so the user shouldn't have to work about 
 splitting the keys themselves.  
@@ -50,14 +50,14 @@ import json
 import pandas as pd
 import numpy as np
 from pathlib import Path
-from mth5.utils import MTime, ATTR_DICT
+from mth5.schema import MTime, ATTR_DICT
 
 # =============================================================================
 #  global parameters
 # =============================================================================
-class Generic(object):
+class Base(object):
     """
-    A generic class that is common to most of the Metadata objects
+    A Base class that is common to most of the Metadata objects
     
     Includes:
         * to_json
@@ -116,12 +116,12 @@ class Generic(object):
             self.set_attribute(key, value)
     
     def get_attribute(self, key):
-        if '/'  in key:
-            if key.count('/') == 1:
-                attr_class, attr_key = key.split('/')
+        if '.'  in key:
+            if key.count('.') == 1:
+                attr_class, attr_key = key.split('.')
                 return getattr(getattr(self, attr_class), attr_key)
-            elif key.count('/') == 2:
-                attr_master, attr_class, attr_key = key.split('/')
+            elif key.count('.') == 2:
+                attr_master, attr_class, attr_key = key.split('.')
                 return getattr(getattr(getattr(self, attr_master), 
                                        attr_class), 
                                attr_key)
@@ -129,12 +129,12 @@ class Generic(object):
             return getattr(self, key)
         
     def set_attribute(self, key, value):
-        if '/'  in key:
-            if key.count('/') == 1:
-                attr_class, attr_key = key.split('/')
+        if '.'  in key:
+            if key.count('.') == 1:
+                attr_class, attr_key = key.split('.')
                 setattr(getattr(self, attr_class), attr_key, value)
-            elif key.count('/') == 2:
-                attr_master, attr_class, attr_key = key.split('/')
+            elif key.count('.') == 2:
+                attr_master, attr_class, attr_key = key.split('.')
                 setattr(getattr(getattr(self, attr_master), 
                                 attr_class), attr_key, value)
         else:
@@ -153,12 +153,12 @@ class Generic(object):
 # ==============================================================================
 # Location class, be sure to put locations in decimal degrees, and note datum
 # ==============================================================================       
-class Declination(Generic):
+class Declination(Base):
     """
     declination container
     """
     def __init__(self, **kwargs):
-        super(Declination, self).__init__()
+        super(Declination, self).__init__(**kwargs)
         self.value_d = None
         self.units_s = None
         self.epoch_s = None
@@ -166,7 +166,7 @@ class Declination(Generic):
         
         self._attr_dict = ATTR_DICT['declination']
         
-class Location(Generic):
+class Location(Base):
     """
     location details including:
         * latitude
@@ -178,16 +178,13 @@ class Location(Generic):
     """
 
     def __init__(self, **kwargs):
-        super(Location, self).__init__()
+        super(Location, self).__init__(**kwargs)
         self.datum_s = 'WGS84'
         self.declination = Declination()
 
         self._elevation = None
         self._latitude = None
         self._longitude = None
-
-        for key, value in kwargs.items():
-            setattr(self, key, value)
             
         self._attr_dict = ATTR_DICT['location']
 
@@ -320,7 +317,7 @@ class Location(Generic):
         """
         Convert a position string in the format of DD:MM:SS to decimal degrees
         
-         :param position: latitude or longitude om DD:MM:SS.ms
+        :param position: latitude or longitude om DD:MM:SS.ms
         :type position: float
                            
         :returns: latitude or longitude as a float
@@ -361,7 +358,7 @@ class Location(Generic):
 # ==============================================================================
 # Instrument
 # ==============================================================================
-class Instrument(Generic):
+class Instrument(Base):
     """
     Information on an instrument that was used.
 
@@ -381,21 +378,18 @@ class Instrument(Generic):
     """
 
     def __init__(self, **kwargs):
-        super(Instrument, self).__init__()
+        super(Instrument, self).__init__(**kwargs)
         self.id_s = None
         self.manufacturer_s = None
         self.type_s = None
         
         self._attr_dict = ATTR_DICT['instrument']
-
-        for key, value in kwargs.items():
-            setattr(self, key, value)
             
 
 # ==============================================================================
 # Data Quality
 # ==============================================================================
-class DataQuality(Generic):
+class DataQuality(Base):
     """
     Information on data quality.
 
@@ -418,7 +412,7 @@ class DataQuality(Generic):
     """
 
     def __init__(self, **kwargs):
-        super(DataQuality, self).__init__()
+        super(DataQuality, self).__init__(**kwargs)
         self.rating_i = None
         self.warning_notes_s = None
         self.warning_flags_s = None
@@ -426,13 +420,10 @@ class DataQuality(Generic):
         
         self._attr_dict = ATTR_DICT['data_quality']
 
-        for key, value in kwargs.items():
-            setattr(self, key, value)
-
 # ==============================================================================
 # Citation
 # ==============================================================================
-class Citation(Generic):
+class Citation(Base):
     """
     Information for a citation.
 
@@ -454,7 +445,7 @@ class Citation(Generic):
     """
 
     def __init__(self, **kwargs):
-        super(Citation, self).__init__()
+        super(Citation, self).__init__(**kwargs)
         self.author_s = None
         self.title_s = None
         self.journal_s = None
@@ -464,13 +455,10 @@ class Citation(Generic):
         
         self._attr_dict = ATTR_DICT['citation']
 
-        for key, value in kwargs.items():
-            setattr(self, key, value)
-
 # ==============================================================================
 # Copyright
 # ==============================================================================
-class Copyright(Generic):
+class Copyright(Base):
     """
     Information of copyright, mainly about how someone else can use these
     data. Be sure to read over the conditions_of_use.
@@ -491,7 +479,7 @@ class Copyright(Generic):
     """
 
     def __init__(self, **kwargs):
-        super(Copyright, self).__init__()
+        super(Copyright, self).__init__(**kwargs)
         self.citation = Citation()
         self.conditions_of_use_s = ''.join(['All data and metadata for this survey are ',
                                             'available free of charge and may be copied ',
@@ -513,13 +501,10 @@ class Copyright(Generic):
         
         self._attr_dict = ATTR_DICT['copyright']
 
-        for key, value in kwargs.items():
-            setattr(self, key, value)
-
 # ==============================================================================
 # Provenance
 # ==============================================================================
-class Provenance(Generic):
+class Provenance(Base):
     """
     Information of the file history, how it was made
 
@@ -541,7 +526,7 @@ class Provenance(Generic):
     """
 
     def __init__(self, **kwargs):
-        super(Provenance, self).__init__()
+        super(Provenance, self).__init__(**kwargs)
         self._creation_dt = MTime()
         self.creating_application_s = 'MTH5'
         self.creator= Person()
@@ -550,9 +535,6 @@ class Provenance(Generic):
         self.log_s = None
         
         self._attr_dict = ATTR_DICT['provenance']
-
-        for key, value in kwargs.items():
-            setattr(self, key, value)
             
     @property
     def creation_time_s(self):
@@ -565,7 +547,7 @@ class Provenance(Generic):
 # ==============================================================================
 # Person
 # ==============================================================================
-class Person(Generic):
+class Person(Base):
     """
     Information for a person
 
@@ -586,7 +568,7 @@ class Person(Generic):
     """
 
     def __init__(self, **kwargs):
-        super(Person, self).__init__()
+        super(Person, self).__init__(**kwargs)
         self.email_s = None
         self.author_s = None
         self.organization_s = None
@@ -594,27 +576,22 @@ class Person(Generic):
         
         self._attr_dict = ATTR_DICT['person']
 
-        for key, value in kwargs.items():
-            setattr(self, key, value)
-
 # =============================================================================
 # diagnostic
 # =============================================================================
-class Diagnostic(Generic):
+class Diagnostic(Base):
     """
     diagnostic measurements like voltage, contact resistance, etc.
     """
     
     def __init__(self, measurement, **kwargs):
-        super(Diagnostic, self).__init__()
+        super(Diagnostic, self).__init__(**kwargs)
         
         self.units_s = None
 
         self._set_measurement(measurement)
 
         self._attr_dict = {}
-        for key, value in kwargs.items():
-            setattr(self, key, value)
             
     def _set_measurement(self, measurement):
         if isinstance(measurement, str):
@@ -638,15 +615,12 @@ class Battery(Diagnostic):
     """
     
     def __init__(self, **kwargs):
-        super(Battery, self).__init__('voltage')
+        super(Battery, self).__init__('voltage', **kwargs)
         
         self.type_s = None
         self.id_s = None
         
         self._attr_dict = ATTR_DICT['battery']
-        
-        for key, value in kwargs.items():
-            setattr(self, key, value)
         
 # =============================================================================
 # Electrode
@@ -657,22 +631,40 @@ class Electrode(Location, Instrument):
     """
     
     def __init__(self, **kwargs):
-        super(Electrode, self).__init__()
+        super(Electrode, self).__init__(**kwargs)
         
         self._attr_dict = ATTR_DICT['electrode']
-        for key, value in kwargs.items():
-            setattr(self, key, value)
-
+            
+# =============================================================================
+# Timing System
+# =============================================================================
+class TimingSystem(Base):
+    """
+    Timing System
+    """
+    
+    def __init__(self, **kwargs):
+        super(TimingSystem, self).__init__(**kwargs)
+        
+        self.type_s = None
+        self.drift_d = None
+        self.drift_units_d = None
+        self.uncertainty_d = None
+        self.uncertainty_units_d = None
+        self.notes_s = None
+        
+        self._attr_dict['timing_system']
+        
 # ==============================================================================
 # Software
 # ==============================================================================
-class Software(Generic):
+class Software(Base):
     """
     software
     """
 
     def __init__(self, **kwargs):
-        super(Software, self).__init__()
+        super(Software, self).__init__(**kwargs)
         self.name_s = None
         self.version_s = None
         self.author = Person()
@@ -691,7 +683,7 @@ class Software(Generic):
 # =============================================================================
 # filter
 # =============================================================================
-class Filter(Generic):
+class Filter(Base):
     """
     container for filters
     """
@@ -700,9 +692,6 @@ class Filter(Generic):
         super().__init__()
         self.name_s = None
         self.applied_b = False
-        
-        for key, value in kwargs.items():
-            setattr(self, key, value)
         
     def to_poles_zeros(self):
         pass
@@ -720,7 +709,7 @@ class Filter(Generic):
 # ==============================================================================
 # Site details
 # ==============================================================================
-class Survey(Generic):
+class Survey(Base):
     """
     Information on the survey, including location, id, etc.
     
@@ -812,7 +801,7 @@ class Station(Location):
 # =============================================================================
 # Run
 # =============================================================================
-class Run(Generic):
+class Run(Base):
     """
     container to hold run metadata
     """
@@ -849,11 +838,11 @@ class Run(Generic):
         self._stop_dt.from_str(stop_date)
         
 # =============================================================================
-# Generic Channel
+# Base Channel
 # =============================================================================
-class Channel(Generic):
+class Channel(Base):
     """
-    generic channel container
+    Base channel container
     """
     
     def __init__(self, **kwargs):

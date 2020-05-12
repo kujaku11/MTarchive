@@ -12,6 +12,12 @@ Created on Wed Apr 29 11:11:31 2020
 import datetime
 from dateutil import parser as dtparser
 
+# =============================================================================
+# Error container
+# =============================================================================
+class MTSchemaError(Exception):
+    pass
+
 #==============================================================================
 # convenience date-time container
 #==============================================================================    
@@ -117,32 +123,78 @@ class MTime(object):
 
         """
         self.dt_object = self.validate_tzinfo(datetime.datetime.utcnow())
+        
+# =============================================================================
+# Helper functions
+# =============================================================================
+def add_attr_dict(original_dict, new_dict, name):
+    """
+    Add an attribute dictionary from another container
+    
+    :param original_dict: DESCRIPTION
+    :type original_dict: TYPE
+    :param new_dict: DESCRIPTION
+    :type new_dict: TYPE
+    :param name: DESCRIPTION
+    :type name: TYPE
+    :return: DESCRIPTION
+    :rtype: TYPE
+
+    """
+    for key, v_dict in new_dict.items():
+        if name is not None:
+            key = '{0}.{1}'.format(name, key)
+        original_dict[key] = v_dict
+        
+    return original_dict
+
+def add_attr_to_dict(original_dict, key, value_dict):
+    """
+    Add an attribute to an existing attribute dictionary
+    
+    :param original_dict: DESCRIPTION
+    :type original_dict: TYPE
+    :param key: DESCRIPTION
+    :type key: TYPE
+    :param value: DESCRIPTION
+    :type value: TYPE
+    :return: DESCRIPTION
+    :rtype: TYPE
+
+    """
+    
+    original_dict[key] = validate_value_dict(value_dict)
+    
+    return original_dict
+    
+def validate_value_dict(value_dict):
+    """
+    Validate an input value dictionary
+    
+    Must be of the form:
+        {'type': str, 'required': True, 'style': 'name'}
+        
+    :param value_dict: DESCRIPTION
+    :type value_dict: TYPE
+    :return: DESCRIPTION
+    :rtype: TYPE
+
+    """
+    assert isinstance(value_dict, dict), "Input must be a dictionary"
+    
+    default_keys = sorted(['type', 'required', 'style'])
+    
+    new_keys = sorted(list(value_dict.keys())) 
+    
+    if default_keys != new_keys:
+        msg = ', '.join(default_keys)
+        raise MTSchemaError("Dictionary must have keys: ({0})".format(msg))
+    else:
+        return value_dict
     
 # =============================================================================
 #     Attribute dictionaries
 # =============================================================================
-LOCATION_ATTR = {'datum_s': {'type': str, 
-                             'required': True},
-                 'latitude_d': {'type': float,
-                                'required': True},
-                 'longitude_d': {'type': float,
-                                 'required': True},
-                 'elevation_d': {'type': float,
-                                 'required': True},
-                 'declination/value_d':{'type': float,
-                                        'required': True,
-                                        'style': 'name'},
-                 'declination/units_s':{'type': str,
-                                        'required': True, 
-                                        'style': 'name'},
-                 'declination/epoch_s':{'type': str, 
-                                        'required': True,
-                                        'style': 'name'},
-                 'declination/model_s':{'type': str, 
-                                        'required': True, 
-                                        'style': 'name'}}
-
-# ----------------------------------------------------------------------
 DECLINATION_ATTR = {'value_d': {'type': float,
                                 'required': True, 
                                 'style': '%.2f'},
@@ -168,7 +220,7 @@ INSTRUMENT_ATTR = {'id_s': {'type': str,
                               'style': 'name'}}
 
 # ----------------------------------------------------------------------
-DATAQUALITY_ATTR = {'rating_i': {'type': str, 
+DATA_QUALITY_ATTR = {'rating_i': {'type': str, 
                                  'required': True,
                                  'style': 'name'},
                     'warning_notes_s': {'type': float,
@@ -206,13 +258,22 @@ PERSON_ATTR = {'author_s':{'type': str,
                'email_s':{'type': str, 
                           'required': True,
                           'style': 'name'}}
+SOFTWARE_ATTR = {'author_s':{'type': str, 
+                           'required': True,
+                           'style': 'name'},
+                 'version_s':{'type': str, 
+                              'required': True,
+                              'style': 'name'},
+                 'name_s':{'type': str, 
+                           'required': True,
+                           'style': 'name'}}
 
 DIAGNOSTIC_ATTR = {'start_d': {'type': float,
                                'required': True,
                                'style': 'name'}, 
-                  'end_d': {'type': float,
-                            'required': True,
-                            'style': 'name'}}
+                   'end_d': {'type': float,
+                             'required': True,
+                             'style': 'name'}}
 
 BATTERY_ATTR = {'type_s': {'type': str,
                            'required': True,
@@ -227,29 +288,74 @@ BATTERY_ATTR = {'type_s': {'type': str,
                                   'required': True,
                                   'style': 'name'}}
 
+TIMING_SYSTEM_ATTR = {'type_s': {'type': str,
+                                 'required': True,
+                                 'style': 'name'},
+                      'drift_d': {'type': float,
+                                  'required': True,
+                                  'style': 'name'},
+                      'drift_units_s': {'type': float,
+                                        'required': True,
+                                        'style': 'name'},
+                      'uncertainty_d': {'type': float,
+                                        'required': True,
+                                        'style': 'name'},
+                      'undertainty_units_d': {'type': float,
+                                              'required': True,
+                                              'style': 'name'},
+                      'notes_s': {'type': str,
+                                  'required': True,
+                                  'style': 'name'}}
+
+FILTER_ATTR = {'names_s': {'type': str,
+                           'required': True,
+                           'style': 'name'},
+               'applied_b': {'type': bool,
+                             'required': True,
+                             'style': 'name'},
+               'notes_s': {'type': str,
+                           'required': True,
+                           'style': 'name'}}
+# ----------------------------------------------------------------------
+LOCATION_ATTR = {'datum_s': {'type': str, 
+                             'required': True,
+                             'style': 'name'},
+                 'latitude_d': {'type': float,
+                                'required': True,
+                                'style': 'name'},
+                 'longitude_d': {'type': float,
+                                 'required': True,
+                                 'style': 'name'},
+                 'elevation_d': {'type': float,
+                                 'required': True,
+                                 'style': 'name'}}
+for key, v_dict in DECLINATION_ATTR.items():
+    key = '{0}.{1}'.format('declination', key)
+    LOCATION_ATTR[key] = v_dict
+
 # ----------------------------------------------------------------------
 PROVENANCE_ATTR = {'creation_time_s':{'type': str,
                                       'required': True,
                                       'style': 'name'},
-                   'software/name_s':{'type': str,
+                   'software.name_s':{'type': str,
                                       'required': True,
                                       'style': 'name'},
-                   'software/version_s':{'type': str,
+                   'software.version_s':{'type': str,
                                          'required': True,
                                          'style': 'name'},
-                   'software/author_s':{'type': str, 
+                   'software.author_s':{'type': str, 
                                         'required': True,
                                         'style': 'name'},
-                   'submitter/author_s':{'type': str, 
+                   'submitter.author_s':{'type': str, 
                                          'required': True,
                                          'style': 'name'},
-                   'submitter/organization_s':{'type': str, 
+                   'submitter.organization_s':{'type': str, 
                                                'required': True,
                                                'style': 'name'},
-                   'submitter/url_s':{'type': str, 
+                   'submitter.url_s':{'type': str, 
                                       'required': True,
                                       'style': 'name'},
-                   'submitter/email_s':{'type': str, 
+                   'submitter.email_s':{'type': str, 
                                         'required': True,
                                         'style': 'name'},
                    'notes_s':{'type': str, 'required': True,
@@ -257,8 +363,10 @@ PROVENANCE_ATTR = {'creation_time_s':{'type': str,
                    'log_s':{'type': str,
                             'required': True,
                             'style': 'name'}}
+PROVENANCE_ATTR = add_attr_dict(PROVENANCE_ATTR, SOFTWARE_ATTR, 'software')
+PROVENANCE_ATTR = add_attr_dict(PROVENANCE_ATTR, PERSON_ATTR, 'submitter')
 
-# ----------------------------------------------------------------------
+# ---------------------------------------------------------------------------
 DATALOGGER_ATTR = {"manufacturer_s": {'type': str,
                                       'required': True,
                                       'style': 'name'},
@@ -271,61 +379,22 @@ DATALOGGER_ATTR = {"manufacturer_s": {'type': str,
                    "notes_s": {'type': str,
                                'required': True,
                                'style': 'name'},
-                   "timing_system/type_s": {'type': str,
-                                            'required': True,
-                                            'style': 'name'},
-                   "timing_system/drift_d": {'type': str,
-                                             'required': True,
-                                             'style': 'name'},
-                   "timing_system/uncertainty_d": {'type': str,
-                                                   'required': True,
-                                                   'style': 'name'},
-                   "timing_system/notes_s": {'type': str,
-                                             'required': True,
-                                             'style': 'name'},
-                   "firmware/version_s": {'type': str,
-                                          'required': True,
-                                          'style': 'name'},
-                   "firmware/date_s": {'type': str,
-                                       'required': True,
-                                       'style': 'name'},
-                   "firmware/author_s": {'type': str,
-                                         'required': True,
-                                         'style': 'name'},
                    "n_channels_i": {'type': str,
                                     'required': True,
                                     'style': 'name'},
                    "n_channels_used_s": {'type': str,
                                          'required': True,
-                                         'style': 'name'},
-                   "power_source/type_s": {'type': str,
-                                           'required': True,
-                                           'style': 'name'},
-                   "power_source/start_voltage_d": {'type': str,
-                                                    'required': True,
-                                                    'style': 'name'},
-                   "power_source/end_voltage_d": {'type': str,
-                                                  'required': True,
-                                                  'style': 'name'},
-                   "power_source/notes_s": {'type': str,
-                                            'required': True,
-                                            'style': 'name'}}  
-
+                                         'style': 'name'}}  
+DATALOGGER_ATTR = add_attr_dict(DATALOGGER_ATTR, TIMING_SYSTEM_ATTR,
+                                'timing_system')
+DATALOGGER_ATTR = add_attr_dict(DATALOGGER_ATTR, SOFTWARE_ATTR,
+                                'firmware')
+DATALOGGER_ATTR = add_attr_dict(DATALOGGER_ATTR, BATTERY_ATTR,
+                                'power_source')
+# -----------------------------------------------------------------------------
 ELECTRODE_ATTR = {"id_s": {'type': str, 
                            'required': True,
                            'style': 'name'},
-                 "latitude_d": {'type': str, 
-                                'required': True,
-                                'style': 'name'},
-                 "longitude_d": {'type': str, 
-                                 'required': True,
-                                 'style': 'name'},
-                 "elevation_d": {'type': str, 
-                                 'required': True,
-                                 'style': 'name'},
-                 "datum_s": {'type': str, 
-                             'required': True,
-                             'style': 'name'},
                  "type_s": {'type': str, 
                             'required': True,
                             'style': 'name'},
@@ -334,8 +403,12 @@ ELECTRODE_ATTR = {"id_s": {'type': str,
                                     'style': 'name'},
                  "notes_s": {'type': str, 
                              'required': True,
-                             'style': 'name'}} 
+                             'style': 'name'}}
 
+for key, v_dict in LOCATION_ATTR.items():
+    if 'declination' not in key:
+        ELECTRODE_ATTR = add_attr_to_dict(ELECTRODE_ATTR, key, v_dict)
+ 
 # ----------------------------------------------------------------------
 SURVEY_ATTR = {'name_s': {'type': str, 
                           'required': True,
@@ -352,16 +425,16 @@ SURVEY_ATTR = {'name_s': {'type': str,
                'end_date_s': {'type': str,
                               'required': True,
                               'style': 'name'},
-               'northwest_corner/latitude_d': {'type':float,
+               'northwest_corner.latitude_d': {'type':float,
                                                'required': True,
                                                'style': 'name'},
-               'northwest_corner/longitude_d': {'type':float, 
+               'northwest_corner.longitude_d': {'type':float, 
                                                 'required': True, 
                                                 'style': 'name'},
-               'southeast_corner/latitude_d': {'type':float, 
+               'southeast_corner.latitude_d': {'type':float, 
                                                'required': True, 
                                                'style': 'name'},
-               'southeast_corner/longitude_d': {'type':float,
+               'southeast_corner.longitude_d': {'type':float,
                                             'required': True,
                                             'style': 'name'},
                'datum_s': {'type': str,
@@ -379,30 +452,20 @@ SURVEY_ATTR = {'name_s': {'type': str,
                'notes_s': {'type': str, 
                            'required': True, 
                            'style': 'name'},
-               'acquired_by/author_s': {'type': str,
-                                        'required': True, 
-                                        'style': 'name'},
-               'acquired_by/organization_s': {'type': str, 
-                                              'required': True, 
-                                              'style': 'name'},
-               'acquired_by/email_s': {'type': str, 
-                                       'required': True,
-                                       'style': 'name'},
-               'acquired_by/url_s': {'type': str, 
-                                     'required': True, 
-                                     'style': 'name'},
                'release_status_s': {'type': str,
                                     'required': True, 
                                     'style': 'name'},
                'conditions_of_use_s': {'type': str,
                                        'required': True, 
                                        'style': 'name'},
-               'citation_dataset/doi_s': {'type': str,
+               'citation_dataset.doi_s': {'type': str,
                                           'required': True,
                                           'style': 'name'},
-               'citation_journal/doi_s': {'type': str, 
+               'citation_journal.doi_s': {'type': str, 
                                           'required': True, 
                                           'style': 'name'}}
+
+SURVEY_ATTR = add_attr_dict(SURVEY_ATTR, PERSON_ATTR, 'acquired_by')
 
 # ----------------------------------------------------------------------
 STATION_ATTR = {'sta_code_s': {'type': str, 
@@ -411,21 +474,6 @@ STATION_ATTR = {'sta_code_s': {'type': str,
                 'name_s':{'type': str, 
                           'required': True,
                           'style': 'name'},
-                'latitude_d':{'type': str,
-                              'required': True,
-                              'style': 'name'},
-                'longitude_d':{'type': float,
-                               'required': True, 
-                               'style': 'name'},
-                'elevation_d':{'type': float,
-                               'required': True, 
-                               'style': 'name'},
-                'notes_s':{'type': str,
-                           'required': True,
-                           'style': 'name'},
-                'datum_s':{'type': str, 
-                           'required': True, 
-                           'style': 'name'},
                 'start_s':{'type': str,
                            'required': True,
                            'style': 'name'},
@@ -441,58 +489,20 @@ STATION_ATTR = {'sta_code_s': {'type': str,
                 'data_type_s':{'type': str,
                                'required': True, 
                                'style': 'name'},
-                'declination/value_d':{'type': float,
-                                       'required': True,
-                                       'style': 'name'},
-                'declination/units_s':{'type': str,
-                                       'required': True,
-                                       'style': 'name'},
-                'declination/epoch_s':{'type': str, 
-                                       'required': True, 
-                                       'style': 'name'},
-                'declination/model_s':{'type': str, 
-                                       'required': True,
-                                       'style': 'name'},
-                'station_orientation_s':{'type': str,
-                                         'required': True, 
-                                         'style': 'name'},
-                'orientation_method_s':{'type': str,
-                                        'required': True,
-                                        'style': 'name'},
-                'acquired_by/author_s':{'type': str,
-                                        'required': True,
-                                        'style': 'name'},
-                'acquired_by/email_s':{'type': str,
-                                       'required': True,
-                                       'style': 'name'},
-                'provenance/creation_time_s':{'type': str,
+                'provenance.creation_time_s':{'type': str,
                                               'required': True,
                                               'style': 'name'},
-                'provenance/software/name_s':{'type': str,
-                                              'required': True,
-                                              'style': 'name'},
-                'provenance/software/version_s':{'type': str,
-                                                 'required': True,
-                                                 'style': 'name'},
-                'provenance/software/author_s':{'type': str, 
-                                                'required': True,
-                                                'style': 'name'},
-                'provenance/submitter/author_s':{'type': str, 
-                                                 'required': True,
-                                                 'style': 'name'},
-                'provenance/submitter/organization_s':{'type': str, 
-                                                       'required': True,
-                                                       'style': 'name'},
-                'provenance/submitter/url_s':{'type': str, 
-                                              'required': True,
-                                              'style': 'name'},
-                'provenance/submitter/email_s':{'type': str, 
-                                                'required': True,
-                                                'style': 'name'},
-                'provenance/notes_s':{'type': str, 'required': True,
+                'provenance.notes_s':{'type': str, 'required': True,
                                       'style': 'name'},
-                'provenance/log_s':{'type': str, 'required': True,
+                'provenance.log_s':{'type': str, 'required': True,
                                     'style': 'name'}}
+
+STATION_ATTR = add_attr_dict(STATION_ATTR, LOCATION_ATTR, None)
+STATION_ATTR = add_attr_dict(STATION_ATTR, PERSON_ATTR, 'acquired_by')
+STATION_ATTR = add_attr_dict(STATION_ATTR, SOFTWARE_ATTR,
+                             'provenance.software')
+STATION_ATTR = add_attr_dict(STATION_ATTR, PERSON_ATTR,
+                             'provenance.submitter')
 
 # ----------------------------------------------------------------------
 RUN_ATTR = {"id_s": {'type': str, 
@@ -520,16 +530,16 @@ RUN_ATTR = {"id_s": {'type': str,
             "data_type_s": {'type': str, 
                             'required': True,
                             'style': 'name'},
-            "acquired_by/author_s": {'type': str, 
+            "acquired_by.author_s": {'type': str, 
                                      'required': True, 
                                      'style': 'name'},
-            "acquired_by/email_s": {'type': str, 
+            "acquired_by.email_s": {'type': str, 
                                     'required': True, 
                                     'style': 'name'},
-            "provenance/notes_s": {'type': str, 
+            "provenance.notes_s": {'type': str, 
                                    'required': True, 
                                    'style': 'name'},
-            "provenance/log_s": {'type': str, 
+            "provenance.log_s": {'type': str, 
                                  'required': True,
                                  'style': 'name'}}
     
@@ -548,16 +558,8 @@ AUXILIARY_ATTR = {"type_s": {'type': str,
                                     'style': 'name'},
                   "notes_s": {'type': str, 
                               'required': True,
-                              'style': 'name'},
-                  "filter/name_s": {'type': str, 
-                                    'required': True,
-                                    'style': 'name'},
-                  "filter/notes_s": {'type': str, 
-                                     'required': True,
-                                     'style': 'name'},
-                  "filter/applied_b": {'type': str, 
-                                       'required': True,
-                                       'style': 'name'}}
+                              'style': 'name'}}
+AUXILIARY_ATTR = add_attr_dict(AUXILIARY_ATTR, FILTER_ATTR, 'filter')
 
 # ------------------------------------------------------------------
 ELECTRIC_ATTR = {"dipole_length_d": {'type': str, 
@@ -572,78 +574,6 @@ ELECTRIC_ATTR = {"dipole_length_d": {'type': str,
                  "azimuth_d": {'type': str, 
                                      'required': True,
                                      'style': 'name'},
-                 "positive/id_s": {'type': str, 
-                                   'required': True,
-                                   'style': 'name'},
-                 "positive/latitude_d": {'type': str, 
-                                         'required': True,
-                                         'style': 'name'},
-                 "positive/longitude_d": {'type': str, 
-                                          'required': True,
-                                          'style': 'name'},
-                 "positive/elevation_d": {'type': str, 
-                                          'required': True,
-                                          'style': 'name'},
-                 "positive/datum_s": {'type': str, 
-                                      'required': True,
-                                      'style': 'name'},
-                 "positive/sensor_type_s": {'type': str, 
-                                            'required': True,
-                                            'style': 'name'},
-                 "positive/sensor_manufacturer_s": {'type': str, 
-                                                    'required': True,
-                                                    'style': 'name'},
-                 "positive/sensor_notes_s": {'type': str, 
-                                             'required': True,
-                                             'style': 'name'},
-                 "negative/id_s": {'type': str, 
-                                   'required': True,
-                                   'style': 'name'},
-                 "negative/latitude_d": {'type': str, 
-                                         'required': True,
-                                         'style': 'name'},
-                 "negative/longitude_d": {'type': str, 
-                                          'required': True,
-                                          'style': 'name'},
-                 "negative/elevation_d": {'type': str, 
-                                          'required': True,
-                                          'style': 'name'},
-                 "negative/datum_s": {'type': str, 
-                                      'required': True,
-                                      'style': 'name'},
-                 "negative/sensor_type_s": {'type': str, 
-                                            'required': True,
-                                            'style': 'name'},
-                 "negative/sensor_manufacturer_s": {'type': str, 
-                                                    'required': True,
-                                                    'style': 'name'},
-                 "negative/sensor_notes_s": {'type': str, 
-                                             'required': True,
-                                             'style': 'name'},
-                 "contact_resistance/start_A_d": {'type': str, 
-                                                  'required': True,
-                                                  'style': 'name'},
-                 "contact_resistance/start_B_d": {'type': str, 
-                                                  'required': True,
-                                                  'style': 'name'},
-                 "contact_resistance/end_A_d": {'type': str, 
-                                                'required': True,
-                                                'style': 'name'},
-                 "contact_resistance/end_B_d": {'type': str, 
-                                                'required': True,
-                                                'style': 'name'},
-                 "ac/start_d": {'type': str, 
-                                'required': True,
-                                'style': 'name'},
-                 "ac/end_d": {'type': str, 
-                              'required': True,
-                              'style': 'name'},
-                 "dc/start_d": {'type': str, 
-                                'required': True,
-                                'style': 'name'},
-                 "dc/end_d": {'type': str, 
-                              'required': True,
-                              'style': 'name'},
                  "units_s": {'type': str, 
                              'required': True,
                              'style': 'name'},
@@ -652,39 +582,31 @@ ELECTRIC_ATTR = {"dipole_length_d": {'type': str,
                                    'style': 'name'},
                  "notes_s": {'type': str, 
                              'required': True,
-                             'style': 'name'},
-                 "data_quality/rating_d": {'type': str, 
-                                           'required': True,
-                                           'style': 'name'},
-                 "data_quality/warning_comments_s": {'type': str, 
-                                                     'required': True,
-                                                     'style': 'name'},
-                 "data_quality/warning_flags_s": {'type': str, 
-                                                  'required': True,
-                                                  'style': 'name'},
-                 "data_quality/author_s": {'type': str, 
-                                           'required': True,
-                                           'style': 'name'},
-                 "filter/name_s": {'type': str, 
-                                   'required': True,
-                                   'style': 'name'},
-                 "filter/notes_s": {'type': str, 
-                                    'required': True,
-                                    'style': 'name'},
-                 "filter/applied_b": {'type': str, 
-                                      'required': True,
-                                      'style': 'name'}}
+                             'style': 'name'}}
 
-MAGNETIC_ATTR = {"sensor/type_s": {'type': str,
+ELECTRIC_ATTR = add_attr_dict(ELECTRIC_ATTR, DIAGNOSTIC_ATTR,
+                              'contact_resistance_A')
+ELECTRIC_ATTR = add_attr_dict(ELECTRIC_ATTR, DIAGNOSTIC_ATTR,
+                              'contact_resistance_B')
+ELECTRIC_ATTR = add_attr_dict(ELECTRIC_ATTR, DIAGNOSTIC_ATTR, 'ac')
+ELECTRIC_ATTR = add_attr_dict(ELECTRIC_ATTR, DIAGNOSTIC_ATTR, 'dc')
+ELECTRIC_ATTR = add_attr_dict(ELECTRIC_ATTR, ELECTRODE_ATTR, 'positive')
+ELECTRIC_ATTR = add_attr_dict(ELECTRIC_ATTR, ELECTRODE_ATTR, 'negative')
+ELECTRIC_ATTR = add_attr_dict(ELECTRIC_ATTR, DATA_QUALITY_ATTR,
+                              'data_quality')
+ELECTRIC_ATTR = add_attr_dict(ELECTRIC_ATTR, FILTER_ATTR, 'filter')
+
+#-----------------------------------------------------------------------------
+MAGNETIC_ATTR = {"sensor.type_s": {'type': str,
                                    'required': True, 
                                    'style': 'name'},
-                 "sensor/manufacturer_s":{'type': str,
+                 "sensor.manufacturer_s":{'type': str,
                                           'required': True,
                                           'style': 'name'},
-                 "sensor/notes_s":{'type': str,
+                 "sensor.notes_s":{'type': str,
                                    'required': True,
                                    'style': 'name'},
-                 "sensor/id_s":{'type': str,
+                 "sensor.id_s":{'type': str,
                                 'required': True,
                                 'style': 'name'},
                  "channel_number_i":{'type': str,
@@ -714,43 +636,43 @@ MAGNETIC_ATTR = {"sensor/type_s": {'type': str,
                  "sample_rate_d":{'type': str, 
                                   'required': True,
                                   'style': 'name'},
-                 "h_field/start_min_d":{'type': str, 
+                 "h_field.start_min_d":{'type': str, 
                                         'required': True,
                                         'style': 'name'},
-                 "h_field/start_max_d":{'type': str, 
+                 "h_field.start_max_d":{'type': str, 
                                         'required': True, 
                                         'style': 'name'},
-                 "h_field/end_min_d":{'type': str, 
+                 "h_field.end_min_d":{'type': str, 
                                       'required': True, 
                                       'style': 'name'},
-                 "h_field/end_max_d":{'type': str,
+                 "h_field.end_max_d":{'type': str,
                                       'required': True,
                                       'style': 'name'},
-                 "h_field/units_s":{'type': str, 
+                 "h_field.units_s":{'type': str, 
                                     'required': True, 
                                     'style': 'name'},
                  "notes_s":{'type': str, 
                             'required': True, 
                             'style': 'name'},
-                 "data_quality/rating_i":{'type': str, 
+                 "data_quality.rating_i":{'type': str, 
                                           'required': True,
                                           'style': 'name'},
-                 "data_quality/warning_notes_s":{'type': str,
+                 "data_quality.warning_notes_s":{'type': str,
                                                  'required': True, 
                                                  'style': 'name'},
-                 "data_quality/warning_flags_s":{'type': str, 
+                 "data_quality.warning_flags_s":{'type': str, 
                                                  'required': True,
                                                  'style': 'name'},
-                 "data_quality/author_s":{'type': str, 
+                 "data_quality.author_s":{'type': str, 
                                           'required': True,
                                           'style': 'name'},
-                 "filter/name_s":{'type': str, 
+                 "filter.name_s":{'type': str, 
                                   'required': True, 
                                   'style': 'name'},
-                 "filter/notes_s":{'type': str, 
+                 "filter.notes_s":{'type': str, 
                                    'required': True, 
                                    'style': 'name'},
-                 "filter/applied_b":{'type': str, 
+                 "filter.applied_b":{'type': str, 
                                      'required': True,
                                      'style': 'name'}}
 
@@ -758,7 +680,7 @@ MAGNETIC_ATTR = {"sensor/type_s": {'type': str,
 ATTR_DICT = {'location': LOCATION_ATTR,
              'declination': DECLINATION_ATTR,
              'instrument': INSTRUMENT_ATTR,
-             'data_quality': DATAQUALITY_ATTR,
+             'data_quality': DATA_QUALITY_ATTR,
              'citation': CITATION_ATTR,
              'copyright': COPYRIGHT_ATTR,
              'person': PERSON_ATTR,
@@ -773,3 +695,4 @@ ATTR_DICT = {'location': LOCATION_ATTR,
              'electric': ELECTRIC_ATTR,
              'auxiliary': AUXILIARY_ATTR,
              'magnetic': MAGNETIC_ATTR}
+
