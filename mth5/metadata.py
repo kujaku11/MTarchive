@@ -50,7 +50,7 @@ import json
 import pandas as pd
 import numpy as np
 from pathlib import Path
-from mth5.schema import MTime, ATTR_DICT
+from mth5.standards.schema import MTime, ATTR_DICT
 
 # =============================================================================
 #  global parameters
