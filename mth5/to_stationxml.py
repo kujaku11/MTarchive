@@ -21,4 +21,4 @@ def to_inventory_channel(mt_channel):
     :param mt_channel: An mt metadata.Channel object
     """
     
-        
+    pass        
