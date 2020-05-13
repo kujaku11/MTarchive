@@ -1,0 +1,4 @@
+attribute,type,required,style,units
+creation_time_s,str,TRUE,name,none
+notes_s,str,TRUE,name,none
+log_s,str,TRUE,name,none

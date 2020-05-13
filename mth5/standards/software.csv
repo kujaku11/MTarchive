@@ -1,0 +1,4 @@
+attribute,type,required,style,units
+author_s,str,TRUE,name,none
+version_s,str,TRUE,name,none
+name_s,str,TRUE,name,none

@@ -1,0 +1,23 @@
+attribute,type,required,style,units
+name_s,str,TRUE,name,None
+id_s,str,TRUE,name,None
+net_code_s,str,TRUE,net_code,None
+start_date_s,str,TRUE,date,None
+end_date_s,str,TRUE,date,None
+northwest_corner.latitude_d,float,TRUE,number,decimal degrees
+northwest_corner.longitude_d,float,TRUE,number,decimal degrees
+southeast_corner.latitude_d,float,TRUE,number,decimal degrees
+southeast_corner.longitude_d,float,TRUE,number,decimal degrees
+datum_s,str,TRUE,name,none
+location_s,str,TRUE,name,none
+country_s,str,TRUE,name,none
+summary_s,str,TRUE,name,none
+notes_s,str,TRUE,name,none
+release_status_s,str,TRUE,name,none
+conditions_of_use_s,str,TRUE,name,none
+citation_dataset.doi_s,str,TRUE,url,none
+citation_journal.doi_s,str,TRUE,url,none
+acquired_by.author_s,str,TRUE,name,none
+acquired_by.organization_s,str,TRUE,name,none
+acquired_by.url_s,str,TRUE,url,none
+acquired_by.email_s,str,TRUE,email,none

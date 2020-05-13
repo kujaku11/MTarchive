@@ -1,0 +1,2 @@
+attribute,type,required,style,units
+notes_s,str,FALSE,name,none

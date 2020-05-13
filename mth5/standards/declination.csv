@@ -1,0 +1,5 @@
+attribute,type,required,style,units
+value_d,float,TRUE,number,degrees
+units_s,str,TRUE,name,None
+epoch_s,str,TRUE,name,None
+model_s,str,TRUE,name,None

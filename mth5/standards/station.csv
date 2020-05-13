@@ -1,0 +1,11 @@
+attribute,type,required,style,units
+sta_code_s,str,TRUE,name,
+name_s,str,TRUE,name,
+start_s,str,TRUE,name,
+end_s,str,TRUE,name,
+num_channels_i,int,TRUE,name,
+channels_recorded_s,str,TRUE,name,
+data_type_s,str,TRUE,name,
+provenance.creation_time_s,str,TRUE,name,
+provenance.notes_s,str,TRUE,name,
+provenance.log_s,str,TRUE,name,

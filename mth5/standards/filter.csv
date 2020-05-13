@@ -1,0 +1,4 @@
+attribute,type,required,style,units
+name_s,str,TRUE,name_list,none
+applied_b,bool,TRUE,name_list,none
+notes_s,str,FALSE,name,none

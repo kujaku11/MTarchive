@@ -1,0 +1,3 @@
+attribute,type,required,style,units
+power_source.voltage.start_d,float,TRUE,number,volts
+power_source.voltage.end_d,float,TRUE,number,volts

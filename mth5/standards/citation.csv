@@ -1,0 +1,2 @@
+attribute,type,required,style,units
+doi_s,str,TRUE,url,none

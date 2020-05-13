@@ -1,0 +1,5 @@
+attribute,type,required,style,units
+rating_i,int,FALSE,number,none
+warning_notes_s,str,FALSE,name,none
+warning_flags_s,str,FALSE,name,none
+author_s,str,FALSE,name,none

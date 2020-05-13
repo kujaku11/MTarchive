@@ -1,0 +1,3 @@
+attribute,type,required,style,units
+release_status_s,str,TRUE,name,none
+conditions_of_use_s,str,TRUE,name,none
