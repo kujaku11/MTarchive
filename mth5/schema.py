@@ -10,8 +10,10 @@ Created on Wed Apr 29 11:11:31 2020
 # Imports
 # =============================================================================
 import datetime
-from dateutil import parser as dtparser
+import pandas as pd
 
+from dateutil import parser as dtparser
+from pathlib import Path
 # =============================================================================
 # Error container
 # =============================================================================
@@ -127,470 +129,599 @@ class MTime(object):
 # =============================================================================
 # Helper functions
 # =============================================================================
-def add_attr_dict(original_dict, new_dict, name):
+class Standards(object):
     """
-    Add an attribute dictionary from another container
+    """
     
-    :param original_dict: DESCRIPTION
-    :type original_dict: TYPE
-    :param new_dict: DESCRIPTION
-    :type new_dict: TYPE
-    :param name: DESCRIPTION
-    :type name: TYPE
-    :return: DESCRIPTION
-    :rtype: TYPE
-
-    """
-    for key, v_dict in new_dict.items():
-        if name is not None:
-            key = '{0}.{1}'.format(name, key)
-        original_dict[key] = v_dict
+    def __init__(self):
+        self.standards_dict = {}
+        self.required_keys = ['attribute', 'type', 'required', 'style',
+                              'units']
+        self.accepted_styles = ['name', 'url', 'email', 'number', 'date',
+                                'time', 'date-time']
         
-    return original_dict
-
-def add_attr_to_dict(original_dict, key, value_dict):
-    """
-    Add an attribute to an existing attribute dictionary
-    
-    :param original_dict: DESCRIPTION
-    :type original_dict: TYPE
-    :param key: DESCRIPTION
-    :type key: TYPE
-    :param value: DESCRIPTION
-    :type value: TYPE
-    :return: DESCRIPTION
-    :rtype: TYPE
-
-    """
-    
-    original_dict[key] = validate_value_dict(value_dict)
-    
-    return original_dict
-    
-def validate_value_dict(value_dict):
-    """
-    Validate an input value dictionary
-    
-    Must be of the form:
-        {'type': str, 'required': True, 'style': 'name'}
         
-    :param value_dict: DESCRIPTION
-    :type value_dict: TYPE
-    :return: DESCRIPTION
-    :rtype: TYPE
-
-    """
-    assert isinstance(value_dict, dict), "Input must be a dictionary"
+    def from_csv(self, csv_fn, name=None):
+        """
+        
+        :param csv_fn: csv file to read metadata standards from
+        :type csv_fn: TYPE
+        :return: DESCRIPTION
+        :rtype: TYPE
     
-    default_keys = sorted(['type', 'required', 'style'])
+        """
+        if not isinstance(csv_fn, Path):
+            csv_fn = Path(csv_fn)
+
+        if not name:
+            name = csv_fn.name
+            
+        with open(csv_fn, 'r') as fid:
+            lines = fid.readlines()
+            
+        header = self._validate_header([ss.strip().lower() for ss in 
+                                        lines[0].strip().split(',')])
+        attribute_dict = {}
+        for line in lines[1:]:
+            line_dict = dict([(key, ss.strip()) for key, ss in
+                              zip(header, line.strip().split(','))])
+
+            key_name = line_dict['attribute']
+            line_dict.pop('attribute')
+            line_dict['required'] = self._validate_required(line_dict['required'])
+            line_dict['type'] = self._validate_type(line_dict['type'])
+            line_dict['units'] = self._validate_units(line_dict['units'])
+
+            attribute_dict[key_name] = line_dict
+        
+        return attribute_dict
     
-    new_keys = sorted(list(value_dict.keys())) 
+    def _validate_header(self, header):
+        """
+        
+        :param header: DESCRIPTION
+        :type header: TYPE
+        :return: DESCRIPTION
+        :rtype: TYPE
+
+        """
+        assert(isinstance(header, list)), 'header must be a list'
+        test = []
+        for key in header:
+            if key.lower() in self.required_keys:
+                test.append(True)
+            else:
+                test.append(False)
+        
+        if test.count(False) > 0:
+            raise MTSchemaError('CSV header must inlcude {0}'.format(
+                                self.required_keys))
+            
+        return header
+        
     
-    if default_keys != new_keys:
-        msg = ', '.join(default_keys)
-        raise MTSchemaError("Dictionary must have keys: ({0})".format(msg))
-    else:
-        return value_dict
+    def _validate_required(self, value):
+        """
+        
+        :param value: DESCRIPTION
+        :type value: TYPE
+        :return: DESCRIPTION
+        :rtype: TYPE
+
+        """
+        if isinstance(value, bool):
+            return value
+
+        if isinstance(value, str):
+            if value.lower() in ['false']:
+                return False
+            elif value.lower() in ['true']:
+                return True
+        else:
+            raise MTSchemaError("'required' must be bool [ True | False ]")
+            
+    def _validate_type(self, value):
+        """
+        
+        :param value: DESCRIPTION
+        :type value: TYPE
+        :return: DESCRIPTION
+        :rtype: TYPE
+
+        """
+        
+        if isinstance(value, str):
+            if 'int' in value.lower():
+                return int
+            elif 'float' in value.lower():
+                return float
+            elif 'str' in value.lower():
+                return str
+            elif 'bool' in value.lower():
+                return bool
+        elif isinstance(value, (int, str, bool, float)):
+            return value
+        else:
+            raise MTSchemaError("'type' must be a [ int | float | str | bool ]")
+            
+    def _validate_units(self, value):
+        """
+        """
+        if value is None:
+            return value
+        if isinstance(value, str):
+            if value.lower() in ['none', 'empty', '']:
+                return None
+        else:
+            raise MTSchemaError("'units' must be a string or None")
+            
+    def _validate_style(self, value):
+        """
+        
+        :param value: DESCRIPTION
+        :type value: TYPE
+        :return: DESCRIPTION
+        :rtype: TYPE
+
+        """
+        
+        assert isinstance(value, str), "'value' must be a string"
+        if value.lower() not in self.accepted_styles:
+            raise MTSchemaError("style {0} unknown, must be {1}".format(
+                                value, self.accepted_styles))
+            
+        return value.lower()
+            
+    def add_attr_dict(self, original_dict, new_dict, name):
+        """
+        Add an attribute dictionary from another container
+        
+        :param original_dict: DESCRIPTION
+        :type original_dict: TYPE
+        :param new_dict: DESCRIPTION
+        :type new_dict: TYPE
+        :param name: DESCRIPTION
+        :type name: TYPE
+        :return: DESCRIPTION
+        :rtype: TYPE
     
-# =============================================================================
-#     Attribute dictionaries
-# =============================================================================
-DECLINATION_ATTR = {'value_d': {'type': float,
-                                'required': True, 
-                                'style': '%.2f'},
-                    'units_s': {'type': str, 
-                                'required': True,
-                                'style': 'name'},
-                    'epoch_s': {'type': str, 
-                                'required': True,
-                                'style': 'name'},
-                    'model_s': {'type': str,
-                                'required': True,
-                                'style': 'name'}}
+        """
+        for key, v_dict in new_dict.items():
+            if name is not None:
+                key = '{0}.{1}'.format(name, key)
+            original_dict[key] = v_dict
+            
+        return original_dict
+    
+    def add_attr_to_dict(self, original_dict, key, value_dict):
+        """
+        Add an attribute to an existing attribute dictionary
+        
+        :param original_dict: DESCRIPTION
+        :type original_dict: TYPE
+        :param key: DESCRIPTION
+        :type key: TYPE
+        :param value: DESCRIPTION
+        :type value: TYPE
+        :return: DESCRIPTION
+        :rtype: TYPE
+    
+        """
+        
+        original_dict[key] = self.validate_value_dict(value_dict)
+        
+        return original_dict
+        
+    def validate_value_dict(self, value_dict):
+        """
+        Validate an input value dictionary
+        
+        Must be of the form:
+            {'type': str, 'required': True, 'style': 'name'}
+            
+        :param value_dict: DESCRIPTION
+        :type value_dict: TYPE
+        :return: DESCRIPTION
+        :rtype: TYPE
+    
+        """
+        assert isinstance(value_dict, dict), "Input must be a dictionary"
+        
+        default_keys = sorted(['type', 'required', 'style'])
+        
+        new_keys = sorted(list(value_dict.keys())) 
+        
+        if default_keys != new_keys:
+            msg = ', '.join(default_keys)
+            raise MTSchemaError("Dictionary must have keys: ({0})".format(msg))
+        else:
+            return value_dict
+    
+# # =============================================================================
+# #     Attribute dictionaries
+# # =============================================================================
+# DECLINATION_ATTR = {'value_d': {'type': float,
+#                                 'required': True, 
+#                                 'style': '%.2f'},
+#                     'units_s': {'type': str, 
+#                                 'required': True,
+#                                 'style': 'name'},
+#                     'epoch_s': {'type': str, 
+#                                 'required': True,
+#                                 'style': 'name'},
+#                     'model_s': {'type': str,
+#                                 'required': True,
+#                                 'style': 'name'}}
 
-# ----------------------------------------------------------------------
-INSTRUMENT_ATTR = {'id_s': {'type': str,
-                            'required': True,
-                            'style': 'name'},
-                   'manufacturer_s': {'type': str, 
-                                      'required': True,
-                                      'style': 'name'},
-                   'type_s': {'type': str, 
-                              'required': True, 
-                              'style': 'name'}}
+# # ----------------------------------------------------------------------
+# INSTRUMENT_ATTR = {'id_s': {'type': str,
+#                             'required': True,
+#                             'style': 'name'},
+#                    'manufacturer_s': {'type': str, 
+#                                       'required': True,
+#                                       'style': 'name'},
+#                    'type_s': {'type': str, 
+#                               'required': True, 
+#                               'style': 'name'}}
 
-# ----------------------------------------------------------------------
-DATA_QUALITY_ATTR = {'rating_i': {'type': str, 
-                                 'required': True,
-                                 'style': 'name'},
-                    'warning_notes_s': {'type': float,
-                                        'required': True, 
-                                        'style': '%.2f'},
-                    'warning_flags_s': {'type': str, 
-                                        'required': True,
-                                        'style': 'name'},
-                    'author_s': {'type': str,
-                                 'required': True,
-                                 'style': 'name'}}
+# # ----------------------------------------------------------------------
+# DATA_QUALITY_ATTR = {'rating_i': {'type': str, 
+#                                  'required': True,
+#                                  'style': 'name'},
+#                     'warning_notes_s': {'type': float,
+#                                         'required': True, 
+#                                         'style': '%.2f'},
+#                     'warning_flags_s': {'type': str, 
+#                                         'required': True,
+#                                         'style': 'name'},
+#                     'author_s': {'type': str,
+#                                  'required': True,
+#                                  'style': 'name'}}
 
-# ----------------------------------------------------------------------
-CITATION_ATTR = {'doi_s': {'type': str,
-                           'required': True,
-                           'style': 'name'}}
+# # ----------------------------------------------------------------------
+# CITATION_ATTR = {'doi_s': {'type': str,
+#                            'required': True,
+#                            'style': 'name'}}
 
 
-COPYRIGHT_ATTR = {'release_status_s': {'type': str,
-                                       'required': True,
-                                       'style': 'name'}, 
-                  'conditions_of_use_s': {'type': str,
-                                           'required': True,
-                                           'style': 'name'}}
+# COPYRIGHT_ATTR = {'release_status_s': {'type': str,
+#                                        'required': True,
+#                                        'style': 'name'}, 
+#                   'conditions_of_use_s': {'type': str,
+#                                            'required': True,
+#                                            'style': 'name'}}
 
-PERSON_ATTR = {'author_s':{'type': str, 
-                           'required': True,
-                           'style': 'name'},
-               'organization_s':{'type': str, 
-                                 'required': True,
-                                 'style': 'name'},
-               'url_s':{'type': str, 
-                        'required': True,
-                        'style': 'name'},
-               'email_s':{'type': str, 
-                          'required': True,
-                          'style': 'name'}}
-SOFTWARE_ATTR = {'author_s':{'type': str, 
-                           'required': True,
-                           'style': 'name'},
-                 'version_s':{'type': str, 
-                              'required': True,
-                              'style': 'name'},
-                 'name_s':{'type': str, 
-                           'required': True,
-                           'style': 'name'}}
+# PERSON_ATTR = {'author_s':{'type': str, 
+#                            'required': True,
+#                            'style': 'name'},
+#                'organization_s':{'type': str, 
+#                                  'required': True,
+#                                  'style': 'name'},
+#                'url_s':{'type': str, 
+#                         'required': True,
+#                         'style': 'name'},
+#                'email_s':{'type': str, 
+#                           'required': True,
+#                           'style': 'name'}}
+# SOFTWARE_ATTR = {'author_s':{'type': str, 
+#                            'required': True,
+#                            'style': 'name'},
+#                  'version_s':{'type': str, 
+#                               'required': True,
+#                               'style': 'name'},
+#                  'name_s':{'type': str, 
+#                            'required': True,
+#                            'style': 'name'}}
 
-DIAGNOSTIC_ATTR = {'start_d': {'type': float,
-                               'required': True,
-                               'style': 'name'}, 
-                   'end_d': {'type': float,
-                             'required': True,
-                             'style': 'name'}}
+# DIAGNOSTIC_ATTR = {'start_d': {'type': float,
+#                                'required': True,
+#                                'style': 'name'}, 
+#                    'end_d': {'type': float,
+#                              'required': True,
+#                              'style': 'name'}}
 
-BATTERY_ATTR = {'type_s': {'type': str,
-                           'required': True,
-                           'style': 'name'},
-                'id_s': {'type': str,
-                         'required': True,
-                         'style': 'name'}}
-BATTERY_ATTR = add_attr_dict(BATTERY_ATTR, DIAGNOSTIC_ATTR, 'voltage')
+# BATTERY_ATTR = {'type_s': {'type': str,
+#                            'required': True,
+#                            'style': 'name'},
+#                 'id_s': {'type': str,
+#                          'required': True,
+#                          'style': 'name'}}
+# BATTERY_ATTR = add_attr_dict(BATTERY_ATTR, DIAGNOSTIC_ATTR, 'voltage')
 
-TIMING_SYSTEM_ATTR = {'type_s': {'type': str,
-                                 'required': True,
-                                 'style': 'name'},
-                      'drift_d': {'type': float,
-                                  'required': True,
-                                  'style': 'name'},
-                      'drift_units_s': {'type': float,
-                                        'required': True,
-                                        'style': 'name'},
-                      'uncertainty_d': {'type': float,
-                                        'required': True,
-                                        'style': 'name'},
-                      'undertainty_units_d': {'type': float,
-                                              'required': True,
-                                              'style': 'name'},
-                      'notes_s': {'type': str,
-                                  'required': True,
-                                  'style': 'name'}}
+# TIMING_SYSTEM_ATTR = {'type_s': {'type': str,
+#                                  'required': True,
+#                                  'style': 'name'},
+#                       'drift_d': {'type': float,
+#                                   'required': True,
+#                                   'style': 'name'},
+#                       'drift_units_s': {'type': float,
+#                                         'required': True,
+#                                         'style': 'name'},
+#                       'uncertainty_d': {'type': float,
+#                                         'required': True,
+#                                         'style': 'name'},
+#                       'undertainty_units_d': {'type': float,
+#                                               'required': True,
+#                                               'style': 'name'},
+#                       'notes_s': {'type': str,
+#                                   'required': True,
+#                                   'style': 'name'}}
 
-FILTER_ATTR = {'name_s': {'type': str,
-                           'required': True,
-                           'style': 'name'},
-               'applied_b': {'type': bool,
-                             'required': True,
-                             'style': 'name'},
-               'notes_s': {'type': str,
-                           'required': True,
-                           'style': 'name'}}
-# ----------------------------------------------------------------------
-LOCATION_ATTR = {'datum_s': {'type': str, 
-                             'required': True,
-                             'style': 'name'},
-                 'latitude_d': {'type': float,
-                                'required': True,
-                                'style': 'name'},
-                 'longitude_d': {'type': float,
-                                 'required': True,
-                                 'style': 'name'},
-                 'elevation_d': {'type': float,
-                                 'required': True,
-                                 'style': 'name'}}
-for key, v_dict in DECLINATION_ATTR.items():
-    key = '{0}.{1}'.format('declination', key)
-    LOCATION_ATTR[key] = v_dict
+# FILTER_ATTR = {'name_s': {'type': str,
+#                            'required': True,
+#                            'style': 'name'},
+#                'applied_b': {'type': bool,
+#                              'required': True,
+#                              'style': 'name'},
+#                'notes_s': {'type': str,
+#                            'required': True,
+#                            'style': 'name'}}
+# # ----------------------------------------------------------------------
+# LOCATION_ATTR = {'datum_s': {'type': str, 
+#                              'required': True,
+#                              'style': 'name'},
+#                  'latitude_d': {'type': float,
+#                                 'required': True,
+#                                 'style': 'name'},
+#                  'longitude_d': {'type': float,
+#                                  'required': True,
+#                                  'style': 'name'},
+#                  'elevation_d': {'type': float,
+#                                  'required': True,
+#                                  'style': 'name'}}
+# for key, v_dict in DECLINATION_ATTR.items():
+#     key = '{0}.{1}'.format('declination', key)
+#     LOCATION_ATTR[key] = v_dict
 
-# ----------------------------------------------------------------------
-PROVENANCE_ATTR = {'creation_time_s':{'type': str,
-                                      'required': True,
-                                      'style': 'name'},
-                   'notes_s':{'type': str, 'required': True,
-                              'style': 'name'},
-                   'log_s':{'type': str,
-                            'required': True,
-                            'style': 'name'}}
-PROVENANCE_ATTR = add_attr_dict(PROVENANCE_ATTR, SOFTWARE_ATTR, 'software')
-PROVENANCE_ATTR = add_attr_dict(PROVENANCE_ATTR, PERSON_ATTR, 'submitter')
+# # ----------------------------------------------------------------------
+# PROVENANCE_ATTR = {'creation_time_s':{'type': str,
+#                                       'required': True,
+#                                       'style': 'name'},
+#                    'notes_s':{'type': str, 'required': True,
+#                               'style': 'name'},
+#                    'log_s':{'type': str,
+#                             'required': True,
+#                             'style': 'name'}}
+# PROVENANCE_ATTR = add_attr_dict(PROVENANCE_ATTR, SOFTWARE_ATTR, 'software')
+# PROVENANCE_ATTR = add_attr_dict(PROVENANCE_ATTR, PERSON_ATTR, 'submitter')
 
-# ---------------------------------------------------------------------------
-DATALOGGER_ATTR = {"manufacturer_s": {'type': str,
-                                      'required': True,
-                                      'style': 'name'},
-                   "model_s": {'type': str,
-                               'required': True,
-                               'style': 'name'},
-                   "serial_s": {'type': str,
-                                'required': True,
-                                'style': 'name'},
-                   "notes_s": {'type': str,
-                               'required': True,
-                               'style': 'name'},
-                   "n_channels_i": {'type': str,
-                                    'required': True,
-                                    'style': 'name'},
-                   "n_channels_used_s": {'type': str,
-                                         'required': True,
-                                         'style': 'name'}}  
-DATALOGGER_ATTR = add_attr_dict(DATALOGGER_ATTR, TIMING_SYSTEM_ATTR,
-                                'timing_system')
-DATALOGGER_ATTR = add_attr_dict(DATALOGGER_ATTR, SOFTWARE_ATTR,
-                                'firmware')
-DATALOGGER_ATTR = add_attr_dict(DATALOGGER_ATTR, BATTERY_ATTR,
-                                'power_source')
-# -----------------------------------------------------------------------------
-ELECTRODE_ATTR = {"id_s": {'type': str, 
-                           'required': True,
-                           'style': 'name'},
-                 "type_s": {'type': str, 
-                            'required': True,
-                            'style': 'name'},
-                 "manufacturer_s": {'type': str, 
-                                    'required': True,
-                                    'style': 'name'},
-                 "notes_s": {'type': str, 
-                             'required': True,
-                             'style': 'name'}}
+# # ---------------------------------------------------------------------------
+# DATALOGGER_ATTR = {"notes_s": {'type': str,
+#                                'required': True,
+#                                'style': 'name'},
+#                    "n_channels_i": {'type': str,
+#                                     'required': True,
+#                                     'style': 'name'},
+#                    "n_channels_used_s": {'type': str,
+#                                          'required': True,
+#                                          'style': 'name'}}  
 
-for key, v_dict in LOCATION_ATTR.items():
-    if 'declination' not in key:
-        ELECTRODE_ATTR = add_attr_to_dict(ELECTRODE_ATTR, key, v_dict)
+# DATALOGGER_ATTR = add_attr_dict(DATALOGGER_ATTR, INSTRUMENT_ATTR,
+#                                 None)
+# DATALOGGER_ATTR = add_attr_dict(DATALOGGER_ATTR, TIMING_SYSTEM_ATTR,
+#                                 'timing_system')
+# DATALOGGER_ATTR = add_attr_dict(DATALOGGER_ATTR, SOFTWARE_ATTR,
+#                                 'firmware')
+# DATALOGGER_ATTR = add_attr_dict(DATALOGGER_ATTR, BATTERY_ATTR,
+#                                 'power_source')
+# # -----------------------------------------------------------------------------
+# ELECTRODE_ATTR = {"notes_s": {'type': str, 
+#                               'required': True,
+#                               'style': 'name'}}
+
+# ELECTRODE_ATTR = add_attr_dict(ELECTRODE_ATTR, INSTRUMENT_ATTR, None)
+# for key, v_dict in LOCATION_ATTR.items():
+#     if 'declination' not in key:
+#         ELECTRODE_ATTR = add_attr_to_dict(ELECTRODE_ATTR, key, v_dict)
  
-# ----------------------------------------------------------------------
-SURVEY_ATTR = {'name_s': {'type': str, 
-                          'required': True,
-                          'style': 'name'},
-               'id_s': {'type': str, 
-                        'required': True, 
-                        'style': 'name'},
-               'net_code_s': {'type': str,
-                              'required': True, 
-                              'style': 'name'},
-               'start_date_s': {'type': str, 
-                                'required': True,
-                                'style': 'name'},
-               'end_date_s': {'type': str,
-                              'required': True,
-                              'style': 'name'},
-               'northwest_corner.latitude_d': {'type':float,
-                                               'required': True,
-                                               'style': 'name'},
-               'northwest_corner.longitude_d': {'type':float, 
-                                                'required': True, 
-                                                'style': 'name'},
-               'southeast_corner.latitude_d': {'type':float, 
-                                               'required': True, 
-                                               'style': 'name'},
-               'southeast_corner.longitude_d': {'type':float,
-                                            'required': True,
-                                            'style': 'name'},
-               'datum_s': {'type': str,
-                           'required': True,
-                           'style': 'name'},
-               'location_s': {'type': str,
-                              'required': True, 
-                              'style': 'name'},
-               'country_s': {'type': str, 
-                             'required': True,
-                             'style': 'name'},
-               'summary_s': {'type': str,
-                             'required': True,
-                             'style': 'name'},
-               'notes_s': {'type': str, 
-                           'required': True, 
-                           'style': 'name'},
-               'release_status_s': {'type': str,
-                                    'required': True, 
-                                    'style': 'name'},
-               'conditions_of_use_s': {'type': str,
-                                       'required': True, 
-                                       'style': 'name'},
-               'citation_dataset.doi_s': {'type': str,
-                                          'required': True,
-                                          'style': 'name'},
-               'citation_journal.doi_s': {'type': str, 
-                                          'required': True, 
-                                          'style': 'name'}}
+# # ----------------------------------------------------------------------
+# SURVEY_ATTR = {'name_s': {'type': str, 
+#                           'required': True,
+#                           'style': 'name'},
+#                'id_s': {'type': str, 
+#                         'required': True, 
+#                         'style': 'name'},
+#                'net_code_s': {'type': str,
+#                               'required': True, 
+#                               'style': 'name'},
+#                'start_date_s': {'type': str, 
+#                                 'required': True,
+#                                 'style': 'name'},
+#                'end_date_s': {'type': str,
+#                               'required': True,
+#                               'style': 'name'},
+#                'northwest_corner.latitude_d': {'type':float,
+#                                                'required': True,
+#                                                'style': 'name'},
+#                'northwest_corner.longitude_d': {'type':float, 
+#                                                 'required': True, 
+#                                                 'style': 'name'},
+#                'southeast_corner.latitude_d': {'type':float, 
+#                                                'required': True, 
+#                                                'style': 'name'},
+#                'southeast_corner.longitude_d': {'type':float,
+#                                             'required': True,
+#                                             'style': 'name'},
+#                'datum_s': {'type': str,
+#                            'required': True,
+#                            'style': 'name'},
+#                'location_s': {'type': str,
+#                               'required': True, 
+#                               'style': 'name'},
+#                'country_s': {'type': str, 
+#                              'required': True,
+#                              'style': 'name'},
+#                'summary_s': {'type': str,
+#                              'required': True,
+#                              'style': 'name'},
+#                'notes_s': {'type': str, 
+#                            'required': True, 
+#                            'style': 'name'},
+#                'release_status_s': {'type': str,
+#                                     'required': True, 
+#                                     'style': 'name'},
+#                'conditions_of_use_s': {'type': str,
+#                                        'required': True, 
+#                                        'style': 'name'},
+#                'citation_dataset.doi_s': {'type': str,
+#                                           'required': True,
+#                                           'style': 'name'},
+#                'citation_journal.doi_s': {'type': str, 
+#                                           'required': True, 
+#                                           'style': 'name'}}
 
-SURVEY_ATTR = add_attr_dict(SURVEY_ATTR, PERSON_ATTR, 'acquired_by')
+# SURVEY_ATTR = add_attr_dict(SURVEY_ATTR, PERSON_ATTR, 'acquired_by')
 
-# ----------------------------------------------------------------------
-STATION_ATTR = {'sta_code_s': {'type': str, 
-                               'required': True, 
-                               'style': 'name'},
-                'name_s':{'type': str, 
-                          'required': True,
-                          'style': 'name'},
-                'start_s':{'type': str,
-                           'required': True,
-                           'style': 'name'},
-                'end_s':{'type': str, 
-                         'required': True,
-                         'style': 'name'},
-                'num_channels_i':{'type':int,
-                                  'required': True,
-                                  'style': 'name'},
-                'channels_recorded_s':{'type': str, 
-                                       'required': True,
-                                       'style': 'name'},
-                'data_type_s':{'type': str,
-                               'required': True, 
-                               'style': 'name'},
-                'provenance.creation_time_s':{'type': str,
-                                              'required': True,
-                                              'style': 'name'},
-                'provenance.notes_s':{'type': str, 'required': True,
-                                      'style': 'name'},
-                'provenance.log_s':{'type': str, 'required': True,
-                                    'style': 'name'}}
+# # ----------------------------------------------------------------------
+# STATION_ATTR = {'sta_code_s': {'type': str, 
+#                                'required': True, 
+#                                'style': 'name'},
+#                 'name_s':{'type': str, 
+#                           'required': True,
+#                           'style': 'name'},
+#                 'start_s':{'type': str,
+#                            'required': True,
+#                            'style': 'name'},
+#                 'end_s':{'type': str, 
+#                          'required': True,
+#                          'style': 'name'},
+#                 'num_channels_i':{'type':int,
+#                                   'required': True,
+#                                   'style': 'name'},
+#                 'channels_recorded_s':{'type': str, 
+#                                        'required': True,
+#                                        'style': 'name'},
+#                 'data_type_s':{'type': str,
+#                                'required': True, 
+#                                'style': 'name'},
+#                 'provenance.creation_time_s':{'type': str,
+#                                               'required': True,
+#                                               'style': 'name'},
+#                 'provenance.notes_s':{'type': str, 'required': True,
+#                                       'style': 'name'},
+#                 'provenance.log_s':{'type': str, 'required': True,
+#                                     'style': 'name'}}
 
-STATION_ATTR = add_attr_dict(STATION_ATTR, LOCATION_ATTR, None)
-STATION_ATTR = add_attr_dict(STATION_ATTR, PERSON_ATTR, 'acquired_by')
-STATION_ATTR = add_attr_dict(STATION_ATTR, SOFTWARE_ATTR,
-                             'provenance.software')
-STATION_ATTR = add_attr_dict(STATION_ATTR, PERSON_ATTR,
-                             'provenance.submitter')
+# STATION_ATTR = add_attr_dict(STATION_ATTR, LOCATION_ATTR, None)
+# STATION_ATTR = add_attr_dict(STATION_ATTR, PERSON_ATTR, 'acquired_by')
+# STATION_ATTR = add_attr_dict(STATION_ATTR, SOFTWARE_ATTR,
+#                              'provenance.software')
+# STATION_ATTR = add_attr_dict(STATION_ATTR, PERSON_ATTR,
+#                              'provenance.submitter')
 
-# ----------------------------------------------------------------------
-RUN_ATTR = {"id_s": {'type': str, 
-                     'required': True, 
-                     'style': 'name'},
-            "notes_s": {'type': str, 
-                        'required': True, 
-                        'style': 
-                            'name'},
-            "start_s": {'type': str,
-                        'required': True,
-                        'style': 'name'},
-            "end_s": {'type': str, 
-                      'required': True,
-                      'style': 'name'},
-            "sampling_rate_d": {'type': str,
-                                'required': True,
-                                'style': 'name'},
-            "num_channels_i": {'type': str, 
-                               'required': True,
-                               'style': 'name'},
-            "channels_recorded_s": {'type': str, 
-                                    'required': True,
-                                    'style': 'name'},
-            "data_type_s": {'type': str, 
-                            'required': True,
-                            'style': 'name'},
-            "acquired_by.author_s": {'type': str, 
-                                     'required': True, 
-                                     'style': 'name'},
-            "acquired_by.email_s": {'type': str, 
-                                    'required': True, 
-                                    'style': 'name'},
-            "provenance.notes_s": {'type': str, 
-                                   'required': True, 
-                                   'style': 'name'},
-            "provenance.log_s": {'type': str, 
-                                 'required': True,
-                                 'style': 'name'}}
+# # ----------------------------------------------------------------------
+# RUN_ATTR = {"id_s": {'type': str, 
+#                      'required': True, 
+#                      'style': 'name'},
+#             "notes_s": {'type': str, 
+#                         'required': True, 
+#                         'style': 
+#                             'name'},
+#             "start_s": {'type': str,
+#                         'required': True,
+#                         'style': 'name'},
+#             "end_s": {'type': str, 
+#                       'required': True,
+#                       'style': 'name'},
+#             "sampling_rate_d": {'type': str,
+#                                 'required': True,
+#                                 'style': 'name'},
+#             "num_channels_i": {'type': str, 
+#                                'required': True,
+#                                'style': 'name'},
+#             "channels_recorded_s": {'type': str, 
+#                                     'required': True,
+#                                     'style': 'name'},
+#             "data_type_s": {'type': str, 
+#                             'required': True,
+#                             'style': 'name'},
+#             "acquired_by.author_s": {'type': str, 
+#                                      'required': True, 
+#                                      'style': 'name'},
+#             "acquired_by.email_s": {'type': str, 
+#                                     'required': True, 
+#                                     'style': 'name'},
+#             "provenance.notes_s": {'type': str, 
+#                                    'required': True, 
+#                                    'style': 'name'},
+#             "provenance.log_s": {'type': str, 
+#                                  'required': True,
+#                                  'style': 'name'}}
     
-#-----------------------------------------------------------------------------
-CHANNEL_ATTR = {"type_s": {'type': str, 
-                           'required': True,
-                           'style': 'name'},
-                "units_s": {'type': str, 
-                            'required': True,
-                            'style': 'name'},
-                "channel_number_i": {'type': str, 
-                                     'required': True,
-                                     'style': 'name'},
-                "component_s":{'type': str, 
-                                'required': True,
-                                'style': 'name'},
-                "sample_rate_d": {'type': str, 
-                                  'required': True,
-                                  'style': 'name'},
-                "azimuth_d": {'type': str, 
-                              'required': True,
-                              'style': 'name'},
-                "notes_s": {'type': str, 
-                            'required': True,
-                            'style': 'name'}}
-CHANNEL_ATTR = add_attr_dict(CHANNEL_ATTR, DATA_QUALITY_ATTR, 'data_quality')
-CHANNEL_ATTR = add_attr_dict(CHANNEL_ATTR, FILTER_ATTR, 'filter')
+# #-----------------------------------------------------------------------------
+# CHANNEL_ATTR = {"type_s": {'type': str, 
+#                            'required': True,
+#                            'style': 'name'},
+#                 "units_s": {'type': str, 
+#                             'required': True,
+#                             'style': 'name'},
+#                 "channel_number_i": {'type': str, 
+#                                      'required': True,
+#                                      'style': 'name'},
+#                 "component_s":{'type': str, 
+#                                 'required': True,
+#                                 'style': 'name'},
+#                 "sample_rate_d": {'type': str, 
+#                                   'required': True,
+#                                   'style': 'name'},
+#                 "azimuth_d": {'type': str, 
+#                               'required': True,
+#                               'style': 'name'},
+#                 "notes_s": {'type': str, 
+#                             'required': True,
+#                             'style': 'name'}}
+# CHANNEL_ATTR = add_attr_dict(CHANNEL_ATTR, DATA_QUALITY_ATTR, 'data_quality')
+# CHANNEL_ATTR = add_attr_dict(CHANNEL_ATTR, FILTER_ATTR, 'filter')
     
-# ------------------------------------------------------------------
-AUXILIARY_ATTR = {}
-AUXILIARY_ATTR = add_attr_dict(AUXILIARY_ATTR, CHANNEL_ATTR, None)
+# # ------------------------------------------------------------------
+# AUXILIARY_ATTR = {}
+# AUXILIARY_ATTR = add_attr_dict(AUXILIARY_ATTR, CHANNEL_ATTR, None)
 
-# ------------------------------------------------------------------
-ELECTRIC_ATTR = {"dipole_length_d": {'type': str, 
-                                     'required': True,
-                                     'style': 'name'}}
-ELECTRIC_ATTR = add_attr_dict(ELECTRIC_ATTR, CHANNEL_ATTR, None)
-ELECTRIC_ATTR = add_attr_dict(ELECTRIC_ATTR, DIAGNOSTIC_ATTR,
-                              'contact_resistance_A')
-ELECTRIC_ATTR = add_attr_dict(ELECTRIC_ATTR, DIAGNOSTIC_ATTR,
-                              'contact_resistance_B')
-ELECTRIC_ATTR = add_attr_dict(ELECTRIC_ATTR, DIAGNOSTIC_ATTR, 'ac')
-ELECTRIC_ATTR = add_attr_dict(ELECTRIC_ATTR, DIAGNOSTIC_ATTR, 'dc')
-ELECTRIC_ATTR = add_attr_dict(ELECTRIC_ATTR, ELECTRODE_ATTR, 'positive')
-ELECTRIC_ATTR = add_attr_dict(ELECTRIC_ATTR, ELECTRODE_ATTR, 'negative')
+# # ------------------------------------------------------------------
+# ELECTRIC_ATTR = {"dipole_length_d": {'type': str, 
+#                                      'required': True,
+#                                      'style': 'name'}}
+# ELECTRIC_ATTR = add_attr_dict(ELECTRIC_ATTR, CHANNEL_ATTR, None)
+# ELECTRIC_ATTR = add_attr_dict(ELECTRIC_ATTR, DIAGNOSTIC_ATTR,
+#                               'contact_resistance_A')
+# ELECTRIC_ATTR = add_attr_dict(ELECTRIC_ATTR, DIAGNOSTIC_ATTR,
+#                               'contact_resistance_B')
+# ELECTRIC_ATTR = add_attr_dict(ELECTRIC_ATTR, DIAGNOSTIC_ATTR, 'ac')
+# ELECTRIC_ATTR = add_attr_dict(ELECTRIC_ATTR, DIAGNOSTIC_ATTR, 'dc')
+# ELECTRIC_ATTR = add_attr_dict(ELECTRIC_ATTR, ELECTRODE_ATTR, 'positive')
+# ELECTRIC_ATTR = add_attr_dict(ELECTRIC_ATTR, ELECTRODE_ATTR, 'negative')
 
-#-----------------------------------------------------------------------------
-MAGNETIC_ATTR = {}
+# #-----------------------------------------------------------------------------
+# MAGNETIC_ATTR = {}
 
-MAGNETIC_ATTR = add_attr_dict(MAGNETIC_ATTR, CHANNEL_ATTR, None)
-MAGNETIC_ATTR = add_attr_dict(MAGNETIC_ATTR, INSTRUMENT_ATTR, 'sensor')
-for key, v_dict in LOCATION_ATTR.items():
-    if 'declination' not in key:
-        MAGNETIC_ATTR = add_attr_to_dict(MAGNETIC_ATTR, key, v_dict)
-MAGNETIC_ATTR = add_attr_dict(MAGNETIC_ATTR, DIAGNOSTIC_ATTR, 'h_field_min')
-MAGNETIC_ATTR = add_attr_dict(MAGNETIC_ATTR, DIAGNOSTIC_ATTR, 'h_field_max')
+# MAGNETIC_ATTR = add_attr_dict(MAGNETIC_ATTR, CHANNEL_ATTR, None)
+# MAGNETIC_ATTR = add_attr_dict(MAGNETIC_ATTR, INSTRUMENT_ATTR, 'sensor')
+# for key, v_dict in LOCATION_ATTR.items():
+#     if 'declination' not in key:
+#         MAGNETIC_ATTR = add_attr_to_dict(MAGNETIC_ATTR, key, v_dict)
+# MAGNETIC_ATTR = add_attr_dict(MAGNETIC_ATTR, DIAGNOSTIC_ATTR, 'h_field_min')
+# MAGNETIC_ATTR = add_attr_dict(MAGNETIC_ATTR, DIAGNOSTIC_ATTR, 'h_field_max')
 
-# ------------------------------------------------------------------
-ATTR_DICT = {'location': LOCATION_ATTR,
-             'declination': DECLINATION_ATTR,
-             'instrument': INSTRUMENT_ATTR,
-             'data_quality': DATA_QUALITY_ATTR,
-             'citation': CITATION_ATTR,
-             'copyright': COPYRIGHT_ATTR,
-             'person': PERSON_ATTR,
-             'diagnostic': DIAGNOSTIC_ATTR,
-             'provenance': PROVENANCE_ATTR,
-             'battery': BATTERY_ATTR,
-             'electrode': ELECTRODE_ATTR,
-             'filter': FILTER_ATTR,
-             'software': SOFTWARE_ATTR,
-             'timing_system': TIMING_SYSTEM_ATTR, 
-             'survey': SURVEY_ATTR,
-             'station': STATION_ATTR,
-             'run': RUN_ATTR,
-             'datalogger': DATALOGGER_ATTR,
-             'electric': ELECTRIC_ATTR,
-             'auxiliary': AUXILIARY_ATTR,
-             'magnetic': MAGNETIC_ATTR}
+# # ------------------------------------------------------------------
+# ATTR_DICT = {'location': LOCATION_ATTR,
+#              'declination': DECLINATION_ATTR,
+#              'instrument': INSTRUMENT_ATTR,
+#              'data_quality': DATA_QUALITY_ATTR,
+#              'citation': CITATION_ATTR,
+#              'copyright': COPYRIGHT_ATTR,
+#              'person': PERSON_ATTR,
+#              'diagnostic': DIAGNOSTIC_ATTR,
+#              'provenance': PROVENANCE_ATTR,
+#              'battery': BATTERY_ATTR,
+#              'electrode': ELECTRODE_ATTR,
+#              'filter': FILTER_ATTR,
+#              'software': SOFTWARE_ATTR,
+#              'timing_system': TIMING_SYSTEM_ATTR, 
+#              'survey': SURVEY_ATTR,
+#              'station': STATION_ATTR,
+#              'run': RUN_ATTR,
+#              'datalogger': DATALOGGER_ATTR,
+#              'electric': ELECTRIC_ATTR,
+#              'auxiliary': AUXILIARY_ATTR,
+#              'magnetic': MAGNETIC_ATTR}
 
