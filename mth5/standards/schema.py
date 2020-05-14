@@ -13,8 +13,9 @@ import datetime
 
 from dateutil import parser as dtparser
 from pathlib import Path
+from copy import deepcopy
 
-from mth5.standards import CSV_LIST, CSV_PATH
+from mth5.standards import CSV_FN_PATHS
 
 # =============================================================================
 # Error container
@@ -140,9 +141,26 @@ class Standards(object):
         self.required_keys = ['attribute', 'type', 'required', 'style',
                               'units']
         self.accepted_styles = ['name', 'url', 'email', 'number', 'date',
-                                'time', 'date-time']
+                                'time', 'date_time', 'net_code', 'name_list']
         
         
+        
+    def _get_level_fn(self, level):
+        """
+        
+        :param level: DESCRIPTION
+        :type level: TYPE
+        :return: DESCRIPTION
+        :rtype: TYPE
+
+        """
+    
+        for fn in CSV_FN_PATHS:
+            if level in fn.stem:
+                if not fn.exists():
+                    raise MTSchemaError("Can not find file {0}".format(fn))
+                return fn
+    
     def from_csv(self, csv_fn, name=None):
         """
         
@@ -154,7 +172,6 @@ class Standards(object):
         """
         if not isinstance(csv_fn, Path):
             csv_fn = Path(csv_fn)
-
         if not name:
             name = csv_fn.name
             
@@ -228,8 +245,11 @@ class Standards(object):
         :rtype: TYPE
 
         """
-        
+        if isinstance(value, type):
+            value = '{0}'.format(value)
+
         if isinstance(value, str):
+            value = value.replace('<class', '').replace('>', '')
             if 'int' in value.lower():
                 return int
             elif 'float' in value.lower():
@@ -238,10 +258,13 @@ class Standards(object):
                 return str
             elif 'bool' in value.lower():
                 return bool
+            
         elif isinstance(value, (int, str, bool, float)):
             return value
+        
         else:
-            raise MTSchemaError("'type' must be a [ int | float | str | bool ]")
+            raise MTSchemaError("'type' must be a [ int | float | str | bool ]"+\
+                                " Not {0}".format(value))
             
     def _validate_units(self, value):
         """
@@ -267,7 +290,8 @@ class Standards(object):
         assert isinstance(value, str), "'value' must be a string"
         if value.lower() not in self.accepted_styles:
             raise MTSchemaError("style {0} unknown, must be {1}".format(
-                                value, self.accepted_styles))
+                                value, self.accepted_styles) + 
+                                '. Not {0}'.format(value))
             
         return value.lower()
     
@@ -288,10 +312,9 @@ class Standards(object):
         
         header = self._validate_header(list(value_dict.keys()))
         for key in header:
-            value_dict[key] = getattr(self, '_validate_{0}'.format(key))(value_dict[key])
-        # value_dict['type'] = self._validate_type(value_dict['type'])
-        # value_dict['required'] = self._validate_required(value_dict['required'])
-        # value_dict['style'] = self._validate_style(value_dict['style'])
+            value_dict[key] = getattr(self,
+                                      '_validate_{0}'.format(key))(value_dict[key])
+
         return value_dict
             
     def add_attr_dict(self, original_dict, new_dict, name):
@@ -330,23 +353,10 @@ class Standards(object):
     
         """
         
-        original_dict[key] = self.validate_value_dict(value_dict)
+        original_dict[key] = self._validate_value_dict(value_dict)
         
         return original_dict
-    
-    def _get_level_fn(self, level):
-        """
-        
-        :param level: DESCRIPTION
-        :type level: TYPE
-        :return: DESCRIPTION
-        :rtype: TYPE
 
-        """
-    
-        for fn in CSV_LIST:
-            if level in fn:
-                return CSV_PATH.joinpath(Path(fn))
     
     @property
     def declination_dict(self):
@@ -354,329 +364,143 @@ class Standards(object):
     
     @property
     def instrument_dict(self):
-        return self.from_csv((self._get_level_fn('instrument')))
+        return self.from_csv(self._get_level_fn('instrument'))
 
     @property
-    def data_quailty_dict(self):
-        return self.from_csv((self._get_level_fn('data_quality')))
+    def data_quality_dict(self):
+        return self.from_csv(self._get_level_fn('data_quality'))
         
     @property
     def citation_dict(self):
-        return self.from_csv((self._get_level_fn('citation')))
+        return self.from_csv(self._get_level_fn('citation'))
     
     @property
     def copyright_dict(self):
-        return self.from_csv((self._get_level_fn('copyright')))
+        return self.from_csv(self._get_level_fn('copyright'))
     
     @property
     def person_dict(self):
-        return self.from_csv((self._get_level_fn('person')))
+        return self.from_csv(self._get_level_fn('person'))
     
     @property
     def software_dict(self):
-        return self.from_csv((self._get_level_fn('software')))
+        return self.from_csv(self._get_level_fn('software'))
     
     @property
     def diagnostic_dict(self):
-        return self.from_csv((self._get_level_fn('diagnostic')))
+        return self.from_csv(self._get_level_fn('diagnostic'))
     
     @property
     def battery_dict(self):
-        return self.from_csv((self._get_level_fn('battery')))
+        return self.from_csv(self._get_level_fn('battery'))
     
     @property
     def timing_system_dict(self):
-        return self.from_csv((self._get_level_fn('timing_system')))
+        return self.from_csv(self._get_level_fn('timing_system'))
     
     @property
     def filter_dict(self):
-        return self.from_csv((self._get_level_fn('filter')))
+        return self.from_csv(self._get_level_fn('filter'))
     
     @property
     def location_dict(self):
-        for key, v_dict in DECLINATION_ATTR.items():
-#     key = '{0}.{1}'.format('declination', key)
-#     LOCATION_ATTR[key] = v_dict
-        return self.from_csv((self._get_level_fn('location')))
-# # =============================================================================
-# #     Attribute dictionaries
-# # =============================================================================
-
-# FILTER_ATTR = {'name_s': {'type': str,
-#                            'required': True,
-#                            'style': 'name'},
-#                'applied_b': {'type': bool,
-#                              'required': True,
-#                              'style': 'name'},
-#                'notes_s': {'type': str,
-#                            'required': True,
-#                            'style': 'name'}}
-# # ----------------------------------------------------------------------
-# LOCATION_ATTR = {'datum_s': {'type': str, 
-#                              'required': True,
-#                              'style': 'name'},
-#                  'latitude_d': {'type': float,
-#                                 'required': True,
-#                                 'style': 'name'},
-#                  'longitude_d': {'type': float,
-#                                  'required': True,
-#                                  'style': 'name'},
-#                  'elevation_d': {'type': float,
-#                                  'required': True,
-#                                  'style': 'name'}}
-# for key, v_dict in DECLINATION_ATTR.items():
-#     key = '{0}.{1}'.format('declination', key)
-#     LOCATION_ATTR[key] = v_dict
-
-# # ----------------------------------------------------------------------
-# PROVENANCE_ATTR = {'creation_time_s':{'type': str,
-#                                       'required': True,
-#                                       'style': 'name'},
-#                    'notes_s':{'type': str, 'required': True,
-#                               'style': 'name'},
-#                    'log_s':{'type': str,
-#                             'required': True,
-#                             'style': 'name'}}
-# PROVENANCE_ATTR = add_attr_dict(PROVENANCE_ATTR, SOFTWARE_ATTR, 'software')
-# PROVENANCE_ATTR = add_attr_dict(PROVENANCE_ATTR, PERSON_ATTR, 'submitter')
-
-# # ---------------------------------------------------------------------------
-# DATALOGGER_ATTR = {"notes_s": {'type': str,
-#                                'required': True,
-#                                'style': 'name'},
-#                    "n_channels_i": {'type': str,
-#                                     'required': True,
-#                                     'style': 'name'},
-#                    "n_channels_used_s": {'type': str,
-#                                          'required': True,
-#                                          'style': 'name'}}  
-
-# DATALOGGER_ATTR = add_attr_dict(DATALOGGER_ATTR, INSTRUMENT_ATTR,
-#                                 None)
-# DATALOGGER_ATTR = add_attr_dict(DATALOGGER_ATTR, TIMING_SYSTEM_ATTR,
-#                                 'timing_system')
-# DATALOGGER_ATTR = add_attr_dict(DATALOGGER_ATTR, SOFTWARE_ATTR,
-#                                 'firmware')
-# DATALOGGER_ATTR = add_attr_dict(DATALOGGER_ATTR, BATTERY_ATTR,
-#                                 'power_source')
-# # -----------------------------------------------------------------------------
-# ELECTRODE_ATTR = {"notes_s": {'type': str, 
-#                               'required': True,
-#                               'style': 'name'}}
-
-# ELECTRODE_ATTR = add_attr_dict(ELECTRODE_ATTR, INSTRUMENT_ATTR, None)
-# for key, v_dict in LOCATION_ATTR.items():
-#     if 'declination' not in key:
-#         ELECTRODE_ATTR = add_attr_to_dict(ELECTRODE_ATTR, key, v_dict)
- 
-# # ----------------------------------------------------------------------
-# SURVEY_ATTR = {'name_s': {'type': str, 
-#                           'required': True,
-#                           'style': 'name'},
-#                'id_s': {'type': str, 
-#                         'required': True, 
-#                         'style': 'name'},
-#                'net_code_s': {'type': str,
-#                               'required': True, 
-#                               'style': 'name'},
-#                'start_date_s': {'type': str, 
-#                                 'required': True,
-#                                 'style': 'name'},
-#                'end_date_s': {'type': str,
-#                               'required': True,
-#                               'style': 'name'},
-#                'northwest_corner.latitude_d': {'type':float,
-#                                                'required': True,
-#                                                'style': 'name'},
-#                'northwest_corner.longitude_d': {'type':float, 
-#                                                 'required': True, 
-#                                                 'style': 'name'},
-#                'southeast_corner.latitude_d': {'type':float, 
-#                                                'required': True, 
-#                                                'style': 'name'},
-#                'southeast_corner.longitude_d': {'type':float,
-#                                             'required': True,
-#                                             'style': 'name'},
-#                'datum_s': {'type': str,
-#                            'required': True,
-#                            'style': 'name'},
-#                'location_s': {'type': str,
-#                               'required': True, 
-#                               'style': 'name'},
-#                'country_s': {'type': str, 
-#                              'required': True,
-#                              'style': 'name'},
-#                'summary_s': {'type': str,
-#                              'required': True,
-#                              'style': 'name'},
-#                'notes_s': {'type': str, 
-#                            'required': True, 
-#                            'style': 'name'},
-#                'release_status_s': {'type': str,
-#                                     'required': True, 
-#                                     'style': 'name'},
-#                'conditions_of_use_s': {'type': str,
-#                                        'required': True, 
-#                                        'style': 'name'},
-#                'citation_dataset.doi_s': {'type': str,
-#                                           'required': True,
-#                                           'style': 'name'},
-#                'citation_journal.doi_s': {'type': str, 
-#                                           'required': True, 
-#                                           'style': 'name'}}
-
-# SURVEY_ATTR = add_attr_dict(SURVEY_ATTR, PERSON_ATTR, 'acquired_by')
-
-# # ----------------------------------------------------------------------
-# STATION_ATTR = {'sta_code_s': {'type': str, 
-#                                'required': True, 
-#                                'style': 'name'},
-#                 'name_s':{'type': str, 
-#                           'required': True,
-#                           'style': 'name'},
-#                 'start_s':{'type': str,
-#                            'required': True,
-#                            'style': 'name'},
-#                 'end_s':{'type': str, 
-#                          'required': True,
-#                          'style': 'name'},
-#                 'num_channels_i':{'type':int,
-#                                   'required': True,
-#                                   'style': 'name'},
-#                 'channels_recorded_s':{'type': str, 
-#                                        'required': True,
-#                                        'style': 'name'},
-#                 'data_type_s':{'type': str,
-#                                'required': True, 
-#                                'style': 'name'},
-#                 'provenance.creation_time_s':{'type': str,
-#                                               'required': True,
-#                                               'style': 'name'},
-#                 'provenance.notes_s':{'type': str, 'required': True,
-#                                       'style': 'name'},
-#                 'provenance.log_s':{'type': str, 'required': True,
-#                                     'style': 'name'}}
-
-# STATION_ATTR = add_attr_dict(STATION_ATTR, LOCATION_ATTR, None)
-# STATION_ATTR = add_attr_dict(STATION_ATTR, PERSON_ATTR, 'acquired_by')
-# STATION_ATTR = add_attr_dict(STATION_ATTR, SOFTWARE_ATTR,
-#                              'provenance.software')
-# STATION_ATTR = add_attr_dict(STATION_ATTR, PERSON_ATTR,
-#                              'provenance.submitter')
-
-# # ----------------------------------------------------------------------
-# RUN_ATTR = {"id_s": {'type': str, 
-#                      'required': True, 
-#                      'style': 'name'},
-#             "notes_s": {'type': str, 
-#                         'required': True, 
-#                         'style': 
-#                             'name'},
-#             "start_s": {'type': str,
-#                         'required': True,
-#                         'style': 'name'},
-#             "end_s": {'type': str, 
-#                       'required': True,
-#                       'style': 'name'},
-#             "sampling_rate_d": {'type': str,
-#                                 'required': True,
-#                                 'style': 'name'},
-#             "num_channels_i": {'type': str, 
-#                                'required': True,
-#                                'style': 'name'},
-#             "channels_recorded_s": {'type': str, 
-#                                     'required': True,
-#                                     'style': 'name'},
-#             "data_type_s": {'type': str, 
-#                             'required': True,
-#                             'style': 'name'},
-#             "acquired_by.author_s": {'type': str, 
-#                                      'required': True, 
-#                                      'style': 'name'},
-#             "acquired_by.email_s": {'type': str, 
-#                                     'required': True, 
-#                                     'style': 'name'},
-#             "provenance.notes_s": {'type': str, 
-#                                    'required': True, 
-#                                    'style': 'name'},
-#             "provenance.log_s": {'type': str, 
-#                                  'required': True,
-#                                  'style': 'name'}}
+        location_dict = self.from_csv(self._get_level_fn('location'))
+        location_dict = self.add_attr_dict(location_dict, 
+                                           self.declination_dict,
+                                           'declination')
+        return location_dict
     
-# #-----------------------------------------------------------------------------
-# CHANNEL_ATTR = {"type_s": {'type': str, 
-#                            'required': True,
-#                            'style': 'name'},
-#                 "units_s": {'type': str, 
-#                             'required': True,
-#                             'style': 'name'},
-#                 "channel_number_i": {'type': str, 
-#                                      'required': True,
-#                                      'style': 'name'},
-#                 "component_s":{'type': str, 
-#                                 'required': True,
-#                                 'style': 'name'},
-#                 "sample_rate_d": {'type': str, 
-#                                   'required': True,
-#                                   'style': 'name'},
-#                 "azimuth_d": {'type': str, 
-#                               'required': True,
-#                               'style': 'name'},
-#                 "notes_s": {'type': str, 
-#                             'required': True,
-#                             'style': 'name'}}
-# CHANNEL_ATTR = add_attr_dict(CHANNEL_ATTR, DATA_QUALITY_ATTR, 'data_quality')
-# CHANNEL_ATTR = add_attr_dict(CHANNEL_ATTR, FILTER_ATTR, 'filter')
+    @property
+    def provenance_dict(self):
+        provenance_dict = self.from_csv(self._get_level_fn('provenance'))
+        provenance_dict = self.add_attr_dict(provenance_dict, 
+                                             self.software_dict, 
+                                             'software')
+        provenance_dict = self.add_attr_dict(provenance_dict, 
+                                             self.person_dict, 
+                                             'person')
+        return provenance_dict
     
-# # ------------------------------------------------------------------
-# AUXILIARY_ATTR = {}
-# AUXILIARY_ATTR = add_attr_dict(AUXILIARY_ATTR, CHANNEL_ATTR, None)
+    
+    @property
+    def datalogger_dict(self):
+        dl_dict = self.from_csv(self._get_level_fn('datalogger'))
+        dl_dict = self.add_attr_dict(dl_dict, self.instrument_dict, None)
+        dl_dict = self.add_attr_dict(dl_dict, self.timing_system_dict, 
+                                     'timing_system')
+        dl_dict = self.add_attr_dict(dl_dict, self.software_dict, 'firmware')
+        dl_dict = self.add_attr_dict(dl_dict, self.battery_dict,
+                                     'power_source')
+        return dl_dict
+    
+    @property
+    def electrode_dict(self):
+        elec_dict = self.from_csv(self._get_level_fn('electrode'))
+        for key, v_dict in self.location_dict.items():
+            if 'declination' not in key:
+                elec_dict = self.add_attr_to_dict(elec_dict, key, v_dict)
+        return elec_dict
+    
+    @property
+    def survey_dict(self):
+        survey_dict = self.from_csv(self._get_level_fn('survey'))
+        survey_dict = self.add_attr_dict(survey_dict, self.person_dict, 'acquired_by')
+        return survey_dict
+        
+    @property
+    def station_dict(self):
+        station_dict = self.from_csv(self._get_level_fn('station'))
+        station_dict = self.add_attr_dict(station_dict, self.location_dict, None)
+        station_dict = self.add_attr_dict(station_dict, self.person_dict, 'acquired_by')
+        station_dict = self.add_attr_dict(station_dict, self.software_dict, 
+                                    'provenance.software')
+        station_dict = self.add_attr_dict(station_dict, self.person_dict, 
+                                    'provenance.submitter')
+        return station_dict
+    
+    @property
+    def run_dict(self):
+        return self.from_csv(self._get_level_fn('run'))
+    
+    @property
+    def channel_dict(self):
+        channel_dict = self.from_csv(self._get_level_fn('channel'))
+        channel_dict = self.add_attr_dict(channel_dict, self.data_quality_dict,
+                                    'data_quality')
+        channel_dict = self.add_attr_dict(channel_dict, self.filter_dict, 'filter')
+        return channel_dict
+    
+    @property
+    def auxiliary_dict(self):
+        return self.channel_dict
+    
+    @property
+    def electric_dict(self):
+        electric_dict = self.from_csv(self._get_level_fn('electric'))
+        electric_dict = self.add_attr_dict(electric_dict, self.channel_dict,
+                                           None)
+        electric_dict = self.add_attr_dict(electric_dict, self.electrode_dict,
+                                           'positive')
+        electric_dict = self.add_attr_dict(electric_dict, self.electrode_dict,
+                                           'negative')
+        return electric_dict
+    
+    @property
+    def magnetic_dict(self):
+        magnetic_dict = self.from_csv(self._get_level_fn('magnetic'))
+        for key, v_dict in self.location_dict.items():
+            if 'declination' not in key:
+                magnetic_dict = self.add_attr_to_dict(magnetic_dict, key,
+                                                      v_dict)
+        magnetic_dict = self.add_attr_dict(magnetic_dict, self.instrument_dict,
+                                           'sensor')
+        return magnetic_dict
+# =============================================================================
+# Make ATTR_DICT
+# =============================================================================
+m_obj = Standards()
 
-# # ------------------------------------------------------------------
-# ELECTRIC_ATTR = {"dipole_length_d": {'type': str, 
-#                                      'required': True,
-#                                      'style': 'name'}}
-# ELECTRIC_ATTR = add_attr_dict(ELECTRIC_ATTR, CHANNEL_ATTR, None)
-# ELECTRIC_ATTR = add_attr_dict(ELECTRIC_ATTR, DIAGNOSTIC_ATTR,
-#                               'contact_resistance_A')
-# ELECTRIC_ATTR = add_attr_dict(ELECTRIC_ATTR, DIAGNOSTIC_ATTR,
-#                               'contact_resistance_B')
-# ELECTRIC_ATTR = add_attr_dict(ELECTRIC_ATTR, DIAGNOSTIC_ATTR, 'ac')
-# ELECTRIC_ATTR = add_attr_dict(ELECTRIC_ATTR, DIAGNOSTIC_ATTR, 'dc')
-# ELECTRIC_ATTR = add_attr_dict(ELECTRIC_ATTR, ELECTRODE_ATTR, 'positive')
-# ELECTRIC_ATTR = add_attr_dict(ELECTRIC_ATTR, ELECTRODE_ATTR, 'negative')
-
-# #-----------------------------------------------------------------------------
-# MAGNETIC_ATTR = {}
-
-# MAGNETIC_ATTR = add_attr_dict(MAGNETIC_ATTR, CHANNEL_ATTR, None)
-# MAGNETIC_ATTR = add_attr_dict(MAGNETIC_ATTR, INSTRUMENT_ATTR, 'sensor')
-# for key, v_dict in LOCATION_ATTR.items():
-#     if 'declination' not in key:
-#         MAGNETIC_ATTR = add_attr_to_dict(MAGNETIC_ATTR, key, v_dict)
-# MAGNETIC_ATTR = add_attr_dict(MAGNETIC_ATTR, DIAGNOSTIC_ATTR, 'h_field_min')
-# MAGNETIC_ATTR = add_attr_dict(MAGNETIC_ATTR, DIAGNOSTIC_ATTR, 'h_field_max')
-
-# # ------------------------------------------------------------------
-# ATTR_DICT = {'location': LOCATION_ATTR,
-#              'declination': DECLINATION_ATTR,
-#              'instrument': INSTRUMENT_ATTR,
-#              'data_quality': DATA_QUALITY_ATTR,
-#              'citation': CITATION_ATTR,
-#              'copyright': COPYRIGHT_ATTR,
-#              'person': PERSON_ATTR,
-#              'diagnostic': DIAGNOSTIC_ATTR,
-#              'provenance': PROVENANCE_ATTR,
-#              'battery': BATTERY_ATTR,
-#              'electrode': ELECTRODE_ATTR,
-#              'filter': FILTER_ATTR,
-#              'software': SOFTWARE_ATTR,
-#              'timing_system': TIMING_SYSTEM_ATTR, 
-#              'survey': SURVEY_ATTR,
-#              'station': STATION_ATTR,
-#              'run': RUN_ATTR,
-#              'datalogger': DATALOGGER_ATTR,
-#              'electric': ELECTRIC_ATTR,
-#              'auxiliary': AUXILIARY_ATTR,
-#              'magnetic': MAGNETIC_ATTR}
+keys = [fn.stem for fn in CSV_FN_PATHS]
+ATTR_DICT = dict([(key, deepcopy(getattr(m_obj, '{0}_dict'.format(key)))) 
+                   for key in keys])
 
