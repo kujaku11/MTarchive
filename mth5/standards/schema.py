@@ -1,6 +1,14 @@
 # -*- coding: utf-8 -*-
 """
-Convenience Classes and Functions
+=======================
+schema
+=======================
+
+Convenience Classes and Functions to deal with the base metadata standards
+described by the csv file.  
+
+The hope is that only the csv files will need to be changed as the standards 
+are modified.  The attribute dictionaries are stored in ATTR_DICT
 
 Created on Wed Apr 29 11:11:31 2020
 
@@ -9,131 +17,24 @@ Created on Wed Apr 29 11:11:31 2020
 # =============================================================================
 # Imports
 # =============================================================================
-import datetime
 
-from dateutil import parser as dtparser
 from pathlib import Path
 from copy import deepcopy
 
 from mth5.standards import CSV_FN_PATHS
-
-# =============================================================================
-# Error container
-# =============================================================================
-class MTSchemaError(Exception):
-    pass
-
-#==============================================================================
-# convenience date-time container
-#==============================================================================    
-class MTime(object):
-    """
-    date and time container
-    """
-    
-    def __init__(self):
-        self.dt_object = self.from_str('1980-01-01 00:00:00')
-           
-    @property
-    def iso_str(self):
-        return self.dt_object.isoformat()
-        
-    @property
-    def epoch_sec(self):
-        return self.dt_object.timestamp()
-    
-    def from_str(self, dt_str):
-        return self.validate_tzinfo(dtparser.parse(dt_str))
-        
-    def validate_tzinfo(self, dt_object):
-        """
-        make sure the timezone is UTC
-        """
-        
-        if dt_object.tzinfo == datetime.timezone.utc:
-            return dt_object
-        
-        elif dt_object.tzinfo is None:
-            return dt_object.replace(tzinfo=datetime.timezone.utc)
-        
-        elif dt_object.tzinfo != datetime.timezone.utc:
-            raise ValueError('Time zone must be UTC')
-            
-    @property
-    def date(self):
-        return self.dt_object.date().isoformat()
-            
-    @property
-    def year(self):
-        return self.dt_object.year
-    
-    @year.setter
-    def year(self, value):
-        self.dt_object = self.dt_object.replace(year=value)
-        
-    @property
-    def month(self):
-        return self.dt_object.month
-    
-    @month.setter
-    def month(self, value):
-        self.dt_object = self.dt_object.replace(month=value)
-        
-    @property
-    def day(self):
-        return self.dt_object.day
-    
-    @day.setter
-    def day(self, value):
-        self.dt_object = self.dt_object.replace(day=value)
-        
-    @property
-    def hour(self):
-        return self.dt_object.hour
-    
-    @hour.setter
-    def hour(self, value):
-        self.dt_object = self.dt_object.replace(hour=value)
-        
-    @property
-    def minutes(self):
-        return self.dt_object.minute
-    
-    @minutes.setter
-    def minutes(self, value):
-        self.dt_object = self.dt_object.replace(minute=value)
-        
-    @property
-    def seconds(self):
-        return self.dt_object.second
-    
-    @seconds.setter
-    def seconds(self, value):
-        self.dt_object = self.dt_object.replace(second=value)
-        
-    @property
-    def microseconds(self):
-        return self.dt_object.microsecond
-    
-    @microseconds.setter
-    def microseconds(self, value):
-        self.dt_object = self.dt_object.replace(microsecond=value)
-        
-    def now(self):
-        """
-        set date time to now
-        
-        :return: DESCRIPTION
-        :rtype: TYPE
-
-        """
-        self.dt_object = self.validate_tzinfo(datetime.datetime.utcnow())
-        
+from mth5.utils.exceptions import MTSchemaError
+      
 # =============================================================================
 # Helper functions
 # =============================================================================
 class Standards(object):
     """
+    Helper container to read in csv files and make the appropriate 
+    dictionaries used in metadata.  
+    
+    The thought is that only the csv files need to be changed if there is 
+    a change in standards.
+    
     """
     
     def __init__(self):
