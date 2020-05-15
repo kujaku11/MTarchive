@@ -16,10 +16,10 @@ Each container will be able to read and write:
     * pandas 
     * anything else?
     
-Because a lot of the key words in the metadata are split by '.' there are some
+Because a lot of the name words in the metadata are split by '.' there are some
 issues we need to deal with.  I wrote in get and set attribute functions
-to handle these types of keys so the user shouldn't have to work about 
-splitting the keys themselves.  
+to handle these types of names so the user shouldn't have to work about 
+splitting the names themselves.  
 
 These containers will be the building blocks for the metadata and how they are
 interchanged between the HDF5 file and the user.  A lot of the metadata you
@@ -33,7 +33,7 @@ required parameter, and the style of output.  This should help down the road
 with validation and keeping the data types consistent.  And if things change
 you should only have to changes these dictionaries.
 
-self._attr_dict = {'keyword':{'type': str, 'required': True, 'style': 'name'}} 
+self._attr_dict = {'nameword':{'type': str, 'required': True, 'style': 'name'}} 
 
 Created on Sun Apr 24 20:50:41 2020
 
@@ -73,13 +73,13 @@ class Base(object):
         self.notes_s = None
         self._attr_dict = {}
         
-        for key, value in kwargs.items():
-            self.set_attribute(key, value)
+        for name, value in kwargs.items():
+            self.set_attribute(name, value)
             
     def __str__(self):
         lines = []
-        for key, value in self.to_dict().items():
-            lines.append('{0} = {1}'.format(key, value))
+        for name, value in self.to_dict().items():
+            lines.append('{0} = {1}'.format(name, value))
         return '\n'.join(lines)
     
     def __repr__(self):
@@ -108,8 +108,8 @@ class Base(object):
         make a dictionary from attributes, makes dictionary from _attr_list.
         """
         meta_dict = {}
-        for key in list(self._attr_dict.keys()):
-            meta_dict[key] = self.get_attribute(key)
+        for name in list(self._attr_dict.keys()):
+            meta_dict[name] = self.get_attr_from_name(name)
                                                 
         return meta_dict
                 
@@ -117,34 +117,34 @@ class Base(object):
         """
         fill attributes from a dictionary
         """
-        for key, value in meta_dict.items():
-            self.set_attribute(key, value)
+        for name, value in meta_dict.items():
+            self.set_attr_from_name(name, value)
             
-    def _validate_key(self, key):
+    def _validate_name(self, name):
         """
-        validate the key name to conform to the standards
-        key must be:
+        validate the name name to conform to the standards
+        name must be:
             * all lower case {a-z; 1-9}
             * must start with a letter
             * categories are separated by '.'
             * words separated by '_'
             
-        {object}.{key_name}
+        {object}.{name_name}
         
         '/' will be replaced with '.'
         converted to all lower case
         
-        :param key: key name
-        :type key: string
-        :return: valid key name
+        :param name: name name
+        :type name: string
+        :return: valid name name
         :rtype: string
 
         """
-        assert(isinstance(key, str)), "key must be a string"
-        key = key.lower().replace('/', '.')
-        if key[0] in [str(ii) for ii in range(10)]:
-            raise MTSchemaError('key name must start with a character {a-z}')
-        return key
+        assert(isinstance(name, str)), "name must be a string"
+        name = name.lower().replace('/', '.')
+        if name[0] in [str(ii) for ii in range(10)]:
+            raise MTSchemaError('name name must start with a character {a-z}')
+        return name
 
     def __setattr__(self, name, value):
         """
@@ -152,66 +152,101 @@ class Base(object):
 
         """
         if hasattr(self, '_attr_dict'):
-            try:
-                standards = self._attr_dict[name]
-                value = self._validate_type(value, standards['type'])
-                super().__setattr__(name, value)
-                
-            except KeyError:
-                if name[0] != '_':
-                    msg = 'WARNING: {0} is not defined in the standards. '+\
-                          ' Assuming type and style are correct'
-                    print(msg.format(name))
-                  
-                super().__setattr__(name, value)
-            else:
-                try:
-                    standards = self._attr_dict[name]
-                except KeyError:
-                    super().__setattr__(name, value)
-        else:
-           super().__setattr__(name, value) 
-    
-    def get_attribute(self, key):
+            v_type = self._get_standard_type(name)
+            value = self._validate_type(value, v_type)
+
+        super().__setattr__(name, value) 
+           
+    def _get_standard_type(self, name):
         """
-        Access attribute from the given key.
+        helper function to get the standard type for the given name  
+        """
+        name = self._validate_name(name)
+        try:
+            standards = self._attr_dict[name]
+            return standards['type']
+        except KeyError:
+            if name[0] != '_':
+                msg = ('WARNING: {0} is not defined in the standards. '+\
+                      ' Assuming type and style are correct')
+                print(msg.format(name))
+            return None
+    
+    def get_attr_from_name(self, name):
+        """
+        Access attribute from the given name.
         
-        The key can contain the name of an object which must be separated
-        by a '.' for  e.g. {object_name}.{key} --> location.latitude
+        The name can contain the name of an object which must be separated
+        by a '.' for  e.g. {object_name}.{name} --> location.latitude
         
-        ..note:: this is a helper function for keys with '.' in the name for
+        ..note:: this is a helper function for names with '.' in the name for
                  easier getting when reading from dictionary.
         
-        :param key: name of attribute to get. 
-        :type key: string
+        :param name: name of attribute to get. 
+        :type name: string
         :return: attribute value
         :rtype: type is defined by the attribute name
         
         :Example: ::
             
             >>> b = Base(**{'category.test_attr':10})
-            >>> b.get_attribute('category.test_attr')
+            >>> b.get_attr_from_name('category.test_attr')
             10
 
         """
-        key = self._validate_key(key)
+        name = self._validate_name(name)
+        v_type = self._get_standard_type(name)
         
-        if '.'  in key:
-            if key.count('.') == 1:
-                attr_class, attr_key = key.split('.')
-                return self._validate_type(key,
-                                           getattr(getattr(self, 
+        if '.'  in name:
+            if name.count('.') == 1:
+                attr_class, attr_name = name.split('.')
+            
+                return self._validate_type(getattr(getattr(self, 
                                                            attr_class), 
-                                                   attr_key))
-            elif key.count('.') == 2:
-                attr_master, attr_class, attr_key = key.split('.')
-                return self._validate_type(key, 
-                                           getattr(getattr(getattr(self,
+                                                   attr_name), 
+                                           v_type)
+            elif name.count('.') == 2:
+                attr_master, attr_class, attr_name = name.split('.')
+                return self._validate_type(getattr(getattr(getattr(self,
                                                                    attr_master), 
                                                            attr_class), 
-                                                   attr_key))
+                                                   attr_name),
+                                           v_type)
         else:
-            return self._validate_type(key, getattr(self, key))
+            return self._validate_type(name, getattr(self, name))
+        
+    def set_attr_from_name(self, name, value):
+        """
+        Helper function to set attribute from the given name.
+        
+        The name can contain the name of an object which must be separated
+        by a '.' for  e.g. {object_name}.{name} --> location.latitude
+        
+        ..note:: this is a helper function for names with '.' in the name for
+                 easier getting when reading from dictionary.
+        
+        :param name: name of attribute to get. 
+        :type name: string
+        :param value: attribute value
+        :type value: type is defined by the attribute name
+        
+        :Example: ::
+            
+            >>> b = Base(**{'category.test_attr':10})
+            >>> b.set_attr_from_name('category.test_attr', '10')
+            >>> print(b.category.test_attr)
+            '10'
+        """
+        if '.'  in name:
+            if name.count('.') == 1:
+                attr_class, attr_name = name.split('.')
+                self.__setattr__(getattr(self, attr_class), attr_name, value)
+            elif name.count('.') == 2:
+                attr_master, attr_class, attr_name = name.split('.')
+                self.__setattr__(getattr(getattr(self, attr_master), 
+                                attr_class), attr_name, value)
+        else:
+            self.__setattr__(self, name, value)
 
             
     def _validate_type(self, value, v_type, style=None):
@@ -219,7 +254,7 @@ class Base(object):
         validate type from standards
         """
 
-        if value is None:
+        if value is None or v_type is None:
             return value
         # for some reason storing types in ATTR_DICT gets messed up
         # when read in, so a work around is to make a dictionary 
@@ -494,7 +529,7 @@ class Instrument(Base):
     type              string      Broadband, long period, something else
     ================= =========== =============================================
 
-    More attributes can be added by inputing a key word dictionary
+    More attributes can be added by inputing a name word dictionary
 
     >>> Instrument(**{'ports':'5', 'gps':'time_stamped'})
     """
@@ -529,7 +564,7 @@ class DataQuality(Base):
     warnings_flag     int         [0-#of warnings]
     ================= =========== =============================================
 
-    More attributes can be added by inputing a key word dictionary
+    More attributes can be added by inputing a name word dictionary
 
     >>> DataQuality(**{'time_series_comments':'Periodic Noise'})
     """
@@ -563,7 +598,7 @@ class Citation(Base):
     year              int         year published
     ================= =========== =============================================
 
-    More attributes can be added by inputing a key word dictionary
+    More attributes can be added by inputing a name word dictionary
 
     >>> Citation(**{'volume':56, 'pages':'234--214'})
     """
@@ -597,7 +632,7 @@ class Copyright(Base):
     release_status    string      release status [ open | public | proprietary]
     ================= =========== =============================================
 
-    More attributes can be added by inputing a key word dictionary
+    More attributes can be added by inputing a name word dictionary
 
     >>> Copyright(**{'owner':'University of MT', 'contact':'Cagniard'})
     """
@@ -644,7 +679,7 @@ class Provenance(Base):
                                        archiving
     ====================== =========== ========================================
 
-    More attributes can be added by inputing a key word dictionary
+    More attributes can be added by inputing a name word dictionary
 
     >>> Provenance(**{'archive':'IRIS', 'reprocessed_by':'grad_student'})
     """
@@ -687,7 +722,7 @@ class Person(Base):
     organization_url  string      organizations web address
     ================= =========== =============================================
 
-    More attributes can be added by inputing a key word dictionary
+    More attributes can be added by inputing a name word dictionary
 
     >>> Person(**{'phone':'650-888-6666'})
     """
