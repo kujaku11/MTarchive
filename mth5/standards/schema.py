@@ -147,21 +147,18 @@ class Standards(object):
 
         """
         if isinstance(value, type):
-            value = '{0}'.format(value)
+            value = '{0}'.format(value).replace('<class', '').replace('>', '')
 
         if isinstance(value, str):
             value = value.replace('<class', '').replace('>', '')
             if 'int' in value.lower():
-                return int
+                return 'integer'
             elif 'float' in value.lower():
-                return float
+                return 'float'
             elif 'str' in value.lower():
-                return str
+                return 'string'
             elif 'bool' in value.lower():
-                return bool
-            
-        elif isinstance(value, (int, str, bool, float)):
-            return value
+                return 'boolean'
         
         else:
             raise MTSchemaError("'type' must be a [ int | float | str | bool ]"+\

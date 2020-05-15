@@ -52,6 +52,7 @@ import numpy as np
 from pathlib import Path
 from mth5.standards.schema import ATTR_DICT
 from mth5.utils.mttime import MTime
+from mth5.utils.exceptions import MTSchemaError
 
 # =============================================================================
 #  global parameters
@@ -73,7 +74,7 @@ class Base(object):
         self._attr_dict = {}
         
         for key, value in kwargs.items():
-            setattr(self, key, value)
+            self.set_attribute(key, value)
             
     def __str__(self):
         lines = []
@@ -118,41 +119,155 @@ class Base(object):
         """
         for key, value in meta_dict.items():
             self.set_attribute(key, value)
+            
+    def _validate_key(self, key):
+        """
+        validate the key name to conform to the standards
+        key must be:
+            * all lower case {a-z; 1-9}
+            * must start with a letter
+            * categories are separated by '.'
+            * words separated by '_'
+            
+        {object}.{key_name}
+        
+        '/' will be replaced with '.'
+        converted to all lower case
+        
+        :param key: key name
+        :type key: string
+        :return: valid key name
+        :rtype: string
+
+        """
+        assert(isinstance(key, str)), "key must be a string"
+        key = key.lower().replace('/', '.')
+        if key[0] in [str(ii) for ii in range(10)]:
+            raise MTSchemaError('key name must start with a character {a-z}')
+        return key
+
+    def __setattr__(self, name, value):
+        """
+        set attribute based on metadata standards
+
+        """
+        if hasattr(self, '_attr_dict'):
+            try:
+                standards = self._attr_dict[name]
+                value = self._validate_type(value, standards['type'])
+                super().__setattr__(name, value)
+                
+            except KeyError:
+                if name[0] != '_':
+                    msg = 'WARNING: {0} is not defined in the standards. '+\
+                          ' Assuming type and style are correct'
+                    print(msg.format(name))
+                  
+                super().__setattr__(name, value)
+            else:
+                try:
+                    standards = self._attr_dict[name]
+                except KeyError:
+                    super().__setattr__(name, value)
+        else:
+           super().__setattr__(name, value) 
     
     def get_attribute(self, key):
-        if '.'  in key:
-            if key.count('.') == 1:
-                attr_class, attr_key = key.split('.')
-                return getattr(getattr(self, attr_class), attr_key)
-            elif key.count('.') == 2:
-                attr_master, attr_class, attr_key = key.split('.')
-                return getattr(getattr(getattr(self, attr_master), 
-                                       attr_class), 
-                               attr_key)
-        else:
-            return getattr(self, key)
+        """
+        Access attribute from the given key.
         
-    def set_attribute(self, key, value):
-        if '.'  in key:
-            if key.count('.') == 1:
-                attr_class, attr_key = key.split('.')
-                setattr(getattr(self, attr_class), attr_key, value)
-            elif key.count('.') == 2:
-                attr_master, attr_class, attr_key = key.split('.')
-                setattr(getattr(getattr(self, attr_master), 
-                                attr_class), attr_key, value)
-        else:
-            setattr(self, key, value)
+        The key can contain the name of an object which must be separated
+        by a '.' for  e.g. {object_name}.{key} --> location.latitude
+        
+        ..note:: this is a helper function for keys with '.' in the name for
+                 easier getting when reading from dictionary.
+        
+        :param key: name of attribute to get. 
+        :type key: string
+        :return: attribute value
+        :rtype: type is defined by the attribute name
+        
+        :Example: ::
             
-    def validate_type(self, key, value, dtype):
+            >>> b = Base(**{'category.test_attr':10})
+            >>> b.get_attribute('category.test_attr')
+            10
+
         """
-        """
+        key = self._validate_key(key)
         
-        if isinstance(value, dtype):
+        if '.'  in key:
+            if key.count('.') == 1:
+                attr_class, attr_key = key.split('.')
+                return self._validate_type(key,
+                                           getattr(getattr(self, 
+                                                           attr_class), 
+                                                   attr_key))
+            elif key.count('.') == 2:
+                attr_master, attr_class, attr_key = key.split('.')
+                return self._validate_type(key, 
+                                           getattr(getattr(getattr(self,
+                                                                   attr_master), 
+                                                           attr_class), 
+                                                   attr_key))
+        else:
+            return self._validate_type(key, getattr(self, key))
+
+            
+    def _validate_type(self, value, v_type, style=None):
+        """
+        validate type from standards
+        """
+
+        if value is None:
+            return value
+        # for some reason storing types in ATTR_DICT gets messed up
+        # when read in, so a work around is to make a dictionary 
+        # locally.
+        type_dict = {'float': float,
+                     'string': str,
+                     'integer': int,
+                     'boolean': bool}
+        v_type = type_dict[v_type]
+        
+        if isinstance(value, v_type):
             return value
         
         else:
-            pass
+            msg = ' must be {0} not {1}'
+            if isinstance(value, str):
+                if v_type is int:
+                    try:
+                        return int(value)
+                    except ValueError:
+                        raise MTSchemaError(msg.format(v_type, type(value)))
+                elif v_type is float:
+                    try:
+                        return float(value)
+                    except ValueError:
+                        raise MTSchemaError(msg.format(v_type, type(value)))
+                elif v_type is bool:
+                    if value.lower() in ['false']:
+                        return False
+                    elif value.lower() in ['true']:
+                        return True
+                    else:
+                        raise MTSchemaError(msg.format(v_type, type(value)))
+                elif v_type is str:
+                    return value
+            elif isinstance(value, int):
+                if v_type is float:
+                    return float(value)
+                elif v_type is str:
+                    return '{0:.0f}'.format(value)
+            elif isinstance(value, float):
+                if v_type is int:
+                    return int(value)
+                elif v_type is str:
+                    return '{0}'.format(value)
+            else:
+                raise MTSchemaError(msg.format(v_type, type(value)))
+                        
             
 # ==============================================================================
 # Location class, be sure to put locations in decimal degrees, and note datum
@@ -162,11 +277,12 @@ class Declination(Base):
     declination container
     """
     def __init__(self, **kwargs):
-        super(Declination, self).__init__(**kwargs)
+        
         self.value_d = None
         self.units_s = None
         self.epoch_s = None
         self.model_s = None
+        super(Declination, self).__init__(**kwargs)
         
         self._attr_dict = ATTR_DICT['declination']
         
@@ -182,13 +298,15 @@ class Location(Base):
     """
 
     def __init__(self, **kwargs):
-        super(Location, self).__init__(**kwargs)
+        
         self.datum_s = 'WGS84'
         self.declination = Declination()
 
         self._elevation = None
         self._latitude = None
         self._longitude = None
+        
+        super(Location, self).__init__(**kwargs)
             
         self._attr_dict = ATTR_DICT['location']
 
@@ -382,10 +500,11 @@ class Instrument(Base):
     """
 
     def __init__(self, **kwargs):
-        super(Instrument, self).__init__(**kwargs)
+        
         self.id_s = None
         self.manufacturer_s = None
         self.type_s = None
+        super(Instrument, self).__init__(**kwargs)
         
         self._attr_dict = ATTR_DICT['instrument']
             
@@ -416,11 +535,12 @@ class DataQuality(Base):
     """
 
     def __init__(self, **kwargs):
-        super(DataQuality, self).__init__(**kwargs)
+        
         self.rating_i = None
         self.warning_notes_s = None
         self.warning_flags_s = None
         self.author_s = None
+        super(DataQuality, self).__init__(**kwargs)
         
         self._attr_dict = ATTR_DICT['data_quality']
 
@@ -449,13 +569,13 @@ class Citation(Base):
     """
 
     def __init__(self, **kwargs):
-        super(Citation, self).__init__(**kwargs)
         self.author_s = None
         self.title_s = None
         self.journal_s = None
         self.volume_s = None
         self.doi_s = None
         self.year_s = None
+        super(Citation, self).__init__(**kwargs)
         
         self._attr_dict = ATTR_DICT['citation']
 
@@ -483,7 +603,6 @@ class Copyright(Base):
     """
 
     def __init__(self, **kwargs):
-        super(Copyright, self).__init__(**kwargs)
         self.citation = Citation()
         self.conditions_of_use_s = ''.join(['All data and metadata for this survey are ',
                                             'available free of charge and may be copied ',
@@ -502,6 +621,7 @@ class Copyright(Base):
                                             'included for informational purposes only.'])
         self.release_status_s = None
         self.additional_info_s = None
+        super(Copyright, self).__init__(**kwargs)
         
         self._attr_dict = ATTR_DICT['copyright']
 
@@ -530,13 +650,14 @@ class Provenance(Base):
     """
 
     def __init__(self, **kwargs):
-        super(Provenance, self).__init__(**kwargs)
+        
         self._creation_dt = MTime()
         self.creating_application_s = 'MTH5'
         self.creator= Person()
         self.submitter = Person()
         self.software = Software()
         self.log_s = None
+        super(Provenance, self).__init__(**kwargs)
         
         self._attr_dict = ATTR_DICT['provenance']
             
@@ -572,11 +693,12 @@ class Person(Base):
     """
 
     def __init__(self, **kwargs):
-        super(Person, self).__init__(**kwargs)
+        
         self.email_s = None
         self.author_s = None
         self.organization_s = None
         self.url_s = None
+        super(Person, self).__init__(**kwargs)
         
         self._attr_dict = ATTR_DICT['person']
 
@@ -589,11 +711,10 @@ class Diagnostic(Base):
     """
     
     def __init__(self, **kwargs):
-        super(Diagnostic, self).__init__(**kwargs)
-        
         self.units_s = None
         self.start_d = None
         self.end_d = None
+        super(Diagnostic, self).__init__(**kwargs)
 
         self._attr_dict = {}
             
@@ -607,11 +728,13 @@ class Battery(Base):
     """
     
     def __init__(self, **kwargs):
-        super(Battery, self).__init__(**kwargs)
         
         self.type_s = None
         self.id_s = None
+        super(Battery, self).__init__(**kwargs)
+        
         self.voltage = Diagnostic(**{'units_s':'Volts'})
+        
         
         self._attr_dict = ATTR_DICT['battery']
         
@@ -624,6 +747,7 @@ class Electrode(Location, Instrument):
     """
     
     def __init__(self, **kwargs):
+        
         super(Electrode, self).__init__(**kwargs)
         
         self._attr_dict = ATTR_DICT['electrode']
@@ -637,14 +761,14 @@ class TimingSystem(Base):
     """
     
     def __init__(self, **kwargs):
-        super(TimingSystem, self).__init__(**kwargs)
-        
+
         self.type_s = None
         self.drift_d = None
         self.drift_units_d = None
         self.uncertainty_d = None
         self.uncertainty_units_d = None
         self.notes_s = None
+        super(TimingSystem, self).__init__(**kwargs)
         
         self._attr_dict['timing_system']
         
@@ -657,10 +781,11 @@ class Software(Base):
     """
 
     def __init__(self, **kwargs):
-        super(Software, self).__init__(**kwargs)
         self.name_s = None
         self.version_s = None
         self.author = Person()
+        
+        super(Software, self).__init__(**kwargs)
         
         self._attr_dict = ATTR_DICT['timing_system']
 
@@ -681,9 +806,9 @@ class Filter(Base):
     """
     
     def __init__(self, **kwargs):
-        super().__init__()
         self.name_s = None
         self.applied_b = False
+        super().__init__()
         
         self._attr_dict = ATTR_DICT['filter']
         
@@ -712,7 +837,6 @@ class Survey(Base):
 
     def __init__(self, **kwargs):
         
-        super(Survey, self).__init__()
         self.acquired_by = Person()
         self._start_dt = MTime()
         self._end_dt = MTime()
@@ -730,11 +854,9 @@ class Survey(Base):
         self.release_status_s = None
         self.citation_dataset = Citation()
         self.citation_journal = Citation()
+        super(Survey, self).__init__()
        
         self._attr_dict = ATTR_DICT['survey']
-
-        for key, value in kwargs.items():
-            setattr(self, key, value)
             
     @property
     def start_date_s(self):
@@ -760,7 +882,6 @@ class Station(Location):
     station object
     """
     def __init__(self, **kwargs):
-        super(Station, self).__init__()
         self.sta_code_s = None
         self.name_s = None
         self.datum_s = None
@@ -773,6 +894,8 @@ class Station(Location):
         self.orientation_method_s = None
         self.acquired_by = Person()
         self.provenance = Provenance() 
+        
+        super(Station, self).__init__()
         
         self._attr_dict = ATTR_DICT['station']
         
@@ -801,8 +924,6 @@ class Run(Base):
     """
     
     def __init__(self, **kwargs):
-        super(Run, self).__init__()
-        
         self.id_s = None
         self._start_dt = MTime()
         self._end_dt = MTime()
@@ -812,6 +933,8 @@ class Run(Base):
         self.data_type_s = None
         self.acquired_by = Person()
         self.provenance = Provenance()
+        
+        super(Run, self).__init__()
         
         self._attr_dict = ATTR_DICT['run']
     
@@ -847,7 +970,6 @@ class Channel(Base):
     """
     
     def __init__(self, **kwargs):
-        super(Channel, self).__init__(**kwargs)
         self.type_s = None
         self.units_s = None
         self.channel_number_i = None
@@ -856,6 +978,8 @@ class Channel(Base):
         self.azimuth_d = 0.0
         self.data_quality = DataQuality()
         self.filter = Filter()
+        
+        super(Channel, self).__init__(**kwargs)
         
 # =============================================================================
 # Electric Channel
@@ -866,7 +990,6 @@ class Electric(Channel):
     """
     
     def __init__(self, **kwargs):
-        super(Electric, self).__init__(**kwargs)
         self.dipole_length_d = 0.0
         self.positive = Electrode()
         self.negative = Electrode()
@@ -876,7 +999,11 @@ class Electric(Channel):
         self.dc = Diagnostic()
         self.units_s = None
         
+        super(Electric, self).__init__(**kwargs)
+        
         self._attr_dict = ATTR_DICT['electric']
+        
+        
     
 # =============================================================================
 # Magnetic Channel
@@ -887,16 +1014,15 @@ class Magnetic(Channel, Location):
     """
     
     def __init__(self, **kwargs):
-        super().__init__()
         self.sensor = Instrument()
-        Location.__init__(self)
         self.h_field_min = Diagnostic()
         self.h_field_max = Diagnostic()
-
+        
+        super().__init__()
+        Location.__init__(self)
+        
         self._attr_dict = ATTR_DICT['magnetic']
         
-        for key, value in kwargs.items():
-            setattr(self, key, value)
         
 # =============================================================================
 # Helper function to be sure everything is encoded properly
