@@ -1,0 +1,16 @@
+MTH5 ISSUE NOTES
+==================
+
+1. ‘/’ in metadata keys should be replaced with ‘.’
+2. _type could be removed as it does not conform with existing standards like Climate Forecasting, NASA, FDSN, FGDC.  If we want MTH5 to be compatible with other readers, we should try to conform to existing standards.
+3. Add uncertainty_units_s and drift_units_s to data_logger.timing_system
+4. Change electric.contact_resistance.start_B_d to electric.contact_resitance_2.start_d, could change to contact_resistance_positive.start_d
+5. Change magnetic.h_field.start_min_d to magnetic.h_field_min.start_d
+6. Add type_s to electric and magnetic channels to describe what type of channel it is
+7. Should we add the start and end time to the channel in case there is a case where a channel goes down?
+8. How do you organize a run with channels of different length?
+9. Change battery.start_voltage_d to battery.voltage.start_d
+10. Notes or Comments? (FDSN uses comments)
+11. Dipole electrode locations: if they are not given can the lat, lon, elevation be estimated given azimuth and dipole_length?  Should there be a layout key in Station where the user can specify X, L, something else?  Or is this not important.
+12. Change ID to id for consistency in capitalization, we should adopt no capitalization to conform to existing standards.
+13. Need more explanation on data quality and warning flags.

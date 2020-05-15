@@ -870,8 +870,8 @@ class Electric(Channel):
         self.dipole_length_d = 0.0
         self.positive = Electrode()
         self.negative = Electrode()
-        self.contact_resistance_A = Diagnostic()
-        self.contact_resistance_B = Diagnostic()
+        self.contact_resistance_1 = Diagnostic()
+        self.contact_resistance_2 = Diagnostic()
         self.ac = Diagnostic()
         self.dc = Diagnostic()
         self.units_s = None

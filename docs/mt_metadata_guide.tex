@@ -6,9 +6,14 @@
 \usepackage{graphicx}
 \usepackage{authblk}
 
-\title{MT Metadata Guide}
-\author[1]{IRIS-PASSCAL MT Software Development Committee}
-\affil[1]{IRIS}
+\title{A Standard for Exchangeable Magnetotelluric Data and Metadata}
+\date{\textbf{Version 0.0.1 -- May 2020}\footnote{\noindent\textbf{\textit{Corresponding Authors:}}
+		
+		Jared Peacock (\url{jpeacock@usgs.gov})
+		
+		Andy Frassetto (\url{andy.frassetto@iris.edu})}}
+\author[1]{Working Group for Data Handling and Software - PASSCAL Magnetotelluric Program}
+\affil[1]{Portable Array Seismic Studies of the Continental Lithosphere, Incorporated Research Institutions for Seismology}
 
 \newcommand{\attr}[1]{\textbf{#1}}
 \renewcommand{\arraystretch}{1.35}
@@ -18,20 +23,28 @@
 \maketitle
 
 \tableofcontents
+\vspace{1cm}
 
+
+
+%\noindent\textbf{\textit{Corresponding Authors:}}
+%
+%Jared Peacock (\url{jpeacock@usgs.gov})
+%
+%Andy Frassetto (\url{andy.frassetto@iris.edu})
 \newpage
 
 \section{Introduction}
 
-The magnetotelluric community is relatively small which has led to various formats for storing the time series data.  Some type of ASCII format seems to be the most prevalent because before large data sets that was the easiest method of storage. Various binary formats exist, some proprietary and some open like the Scripps format, though efficient, these files lack some critical metadata.  Metadata is key to archiving data and as of now there has been no documentation on metadata standards for MT time series data.  
+Researchers using magnetotelluric (MT) methods lack a standardized format for storing time series data and metadata. Commercially available MT instruments produce data in formats that range from proprietary binary to ASCII, and recent datasets from the U.S. MT community have utilized institutional formats or heavily adapted formats like miniSEED. In many cases, the available metadata for these time series are incomplete and only loosely standardized, and overall these datasets are not "user friendly". This lack of resources impedes the exchange and broader use of these data beyond a small community of specialists.
 
-IRIS-PASSCAL is adding MT capabilities to their instrument pool and has setup a committee to develop MT metadata standards for archiving time series.  What follows are the metadata standards developed by that committee.
+The \href{https://www.iris.edu/hq/programs/passcal/magnetotelluric_instrumentation}{IRIS PASSCAL MT facility} maintains a pool of MT instruments that are freely available to U.S. Principal Investigators (PIs). Datasets collected with these instruments are subject to data sharing requirements, and an IRIS \href{https://www.iris.edu/hq/about_iris/governance/mt_soft}{working group} advises the development of sustainable data formats and workflows for this facility. Following in the spirit of the standard created for \href{https://library.seg.org/doi/10.1190/geo2018-0679.1}{MT transfer function} datasets, this document outlines a new metadata standard for MT time series. This standard is a key pillar of MTH5, a new data format which we propose for the international community of MT practitioners. Further information regarding MTH5 will be available later in 2020.
 
 The Python 3 module written for these standards are found at \url{https://github.com/kujaku11/MTarchive/tree/tables}.
 
 \section{General Structure}
 
-The MT metadata standards are structured to cover details from single channel time series to the full MT survey.  For simplicity each of the different scales of an MT survey and measurements have been categorized starting from largest scale to smallest scale (Figure \ref{fig:example}).  These categories are: \verb|Survey|, \verb|Station|, \verb|Run|, \verb|DataLogger|, \verb|Channel| which has different attributes depending on what type of channel it is, magnetic, electric, auxiliary.  Each of these will be described in the sections below.  
+The metadata for a full MT dataset are structured to cover details from single channel time series to the full survey. For simplicity each of the different scales of an MT survey and measurements have been categorized starting from largest to smallest (Figure \ref{fig:example}. These categories are: \verb|Survey|, \verb|Station|, \verb|Run|, \verb|DataLogger|, \verb|Electric Channel|, \verb|Magnetic Channel|, and \verb|Auxiliary Channels|. Each of these are described in subsequent sections.  
 
 \begin{figure}[htb!]
 	\centering
@@ -65,7 +78,7 @@ The metadata key names should be self explanatory and they are structured as fol
 
 \subsection{Formatting Standards}
 
-There are certain formatting standards that need to be adhered to, specifically location, time and date, and angles.
+Specific and required formatting standards for location, time and date, and angle are defined below.
 
 \subsubsection{Time and Date Format}
 
@@ -82,16 +95,39 @@ All latitude and longitude locations are given in decimal degrees. Other formats
 	\item Datum should be one of the well known datums, WGS84 is preferred, but others are acceptable.
 \end{itemize} 
 
-\textbf{Note:} The one exception is sensor location which can be in units relative to the station location?  
-
 \subsubsection{Angles}
 
 All angles of orientation are given in degrees.  Orientation of dipoles and magnetometers are relative to \verb|station_orientation_s|.  Otherwise angles are assumed to be clockwise positive from Geographic North = 0.  
 
+\subsection{Units}
+Units should all be from the metric system.  Abbreviations and full names are acceptable, for example \verb|mV| and \verb|millivolts|.  Below are the acceptable units
+
+
+\begin{table}[htb!]
+	\centering
+	\caption[Acceptable units]{Acceptable units}
+	\begin{tabular}{|l|c|c|}
+		\hline
+		\textbf{Measurement Type} & \textbf{Unit Long name}  & \textbf{Unit Long name} \\ \hline
+		Angles & degrees & deg \\ \hline
+		
+		Distance &  meters & m \\ \hline
+		Latitude/Longitude & decimal degrees & deg \\ \hline
+		Resistance & Ohms  &  Ohms \\ \hline
+		Resistivity & Ohm-meters & Ohm-m, Ohmm \\ \hline
+		Temperature & Celsius & C \\ \hline
+		Time &  seconds & s \\ \hline
+		Voltage & Volts & V \\ \hline
+		
+		
+	\end{tabular}
+	\label{tab:units}
+\end{table}
+
 \newpage
 \section{Survey}
 
-A survey describes an entire MT survey that covers a specific study area.  This may include multiple researchers and research groups or a multi-year campaign, but should be confined to a specific regional area.  The \verb|Survey| metadata category describes the general parameters of the survey. 
+A survey describes an entire dataset that covers a specific time span and region. This may include multiple PIs in multiple data collection episodes but should be confined to a specific experiment. The \verb|Survey| metadata category describes the general parameters of the survey.
 
 \begin{table}[htb!]
 	\caption[Attributes for Survey]{Attributes for Survey category}
@@ -100,16 +136,16 @@ A survey describes an entire MT survey that covers a specific study area.  This 
 		\textbf{Metadata Key} & \textbf{Description} & \textbf{Type} & \textbf{Required} \\ \hline
 		name\_s & name of survey & string & compulsory \\ \hline
 		id\_s & nickname of survey & string & optional \\ \hline
-		net\_code\_s & network code given by IRIS & string & compulsory \\ \hline
+		net\_code\_s & network code given by PASSCAL/IRIS/FDSN & string & compulsory \\ \hline
 		start\_date\_s & start date of survey [ UTC ] & string & compulsory \\ \hline
 		end\_date\_s & end date of survey [ UTC ] & string & compulsory \\ \hline
 		northwest\_corner.latitude\_d & location of northwest corner of survey [ degrees (hh.mmss) ] & float & compulsory \\ \hline
 		northwest\_corner.longitude\_d & location of northwest corner of survey [ degrees (hh.mmss) ] & float & compulsory \\ \hline
 		southeast\_corner.latitude\_d & location of southeast corner of survey  [ degrees (hh.mmss) ] & float & compulsory \\ \hline
 		southeast\_corner.longitude\_d & location of southeast corner of survey  [ degrees (hh.mmss) ] & float & compulsory \\ \hline
-		datum\_s & "datum of x and y coordinates [ WGS84 ]" & string & compulsory \\ \hline
+		datum\_s & datum of latitude and longitude coordinates [ WGS84 ] & string & compulsory \\ \hline
 		location\_s & location of survey in general terms & string & optional \\ \hline
-		country\_s & country.countries survey located in & string & optional \\ \hline
+		country\_s & country/countries survey located in & string & optional \\ \hline
 		summary\_s & summary paragraph of survey & string & compulsory \\ \hline
 		notes\_s & notes about survey & string & optional \\ \hline
 		acquired\_by.author\_s & principal investigator(s) responsible for survey & string & compulsory \\ \hline
@@ -131,7 +167,7 @@ A survey describes an entire MT survey that covers a specific study area.  This 
 {
  "name_s": "Long Valley, CA",
  "id_s": "Casa Diablo",
- "net_code_s": "network code given by IRIS",
+ "net_code_s": "XE",
  "start_date_s": "2020-01-01",
  "end_date_s": "2021-01-01",
  "northwest_corner.latitude_d": 37.5,
@@ -157,14 +193,14 @@ A survey describes an entire MT survey that covers a specific study area.  This 
 \newpage
 \section{Station}
 
-A station is a single location where MT data are collected, if the location of the station is moved during a run, then a new station should be created. If the sensors, cables, data logger, battery were replaced during a run but the station remained at the same location, that can be recorded in the \verb|Run| metadata, but is still considered a station.
+A station encompasses a site where data are collected. If the location changes during a run, then a new station should be created. If the sensors, cables, data logger, battery are replaced during a run but the station remains stations, then this can be recorded in the \verb|Run| metadata but does not require a new station entry.
 
 \begin{table}[htb!]
 	\caption[Attributes for Station]{Attributes for Station category}
 	\begin{tabular}{|l|p{3in}|l|l|}
 		\hline
 		\textbf{Metadata Key} & \textbf{Description} & \textbf{Type} & \textbf{Required} \\ \hline
-		sta\_code\_s & 5 char name of station & string & compulsory \\ \hline
+		sta\_code\_s & 5 char name {A-Z; 1-9} of station & string & compulsory \\ \hline
 		name\_s & name station site & string & compulsory \\ \hline
 		latitude\_d & longitude location [ degrees (hh.mmss) ] & float & compulsory \\ \hline
 		longitude\_d & latitude location [ degrees (hh.mmss) ] & float & compulsory \\ \hline
@@ -231,14 +267,15 @@ A station is a single location where MT data are collected, if the location of t
  "provenance.submitter.url_s": "mt_guru.com",
  "provenance.submitter.email_s": "m.tee@guru.com",
  "provenance.notes_s": "Electrics are good until 2020-01-10",
- "provenance.log_s": "The data was rotated using an updated declination 2020-05-02."
+ "provenance.log_s": "2020-05-02T12:00:00+00:00: The data rotated with updated
+                     declination of N13.78W."
 }
 \end{verbatim}
 
 \newpage
 \section{Run}
 
-A run is data collected at a single station at a single sampling rate.  If the dipole length or other such station parameters are changed between runs that is ok, just make a new run.  If the station is relocated then a new station should be created.
+A run represents data collected at a single station with a single sampling rate. If the dipole length or other such station parameters are changed between runs, this would require adding a new run.  If the station is relocated then a new station should be created.
 
 \begin{table}[htb!]
 	\caption[Attributes for Run]{Attributes for Run category}
@@ -247,11 +284,11 @@ A run is data collected at a single station at a single sampling rate.  If the d
 		\textbf{Metadata Key} & \textbf{Description} & \textbf{Type} & \textbf{Required} \\ \hline
 		id\_s & run ID & string & compulsory \\ \hline
 		notes\_s & notes on run & string & optional \\ \hline
-		start\_s & start date and time of data logging [ UTC ] & string & compulsory \\ \hline
-		end\_s & stop date and time of data logging [ UTC ] & string & compulsory \\ \hline
+		start\_s & start date and time of data logging [ ISO UTC ] & string & compulsory \\ \hline
+		end\_s & stop date and time of data logging [ ISO UTC ] & string & compulsory \\ \hline
 		sampling\_rate\_d & sampling rate of run (samples.second) & float & compulsory \\ \hline
 		num\_channels\_i & number of channels recorded & int & compulsory \\ \hline
-		channels\_recorded\_s & "list of channels recorded [ [EX, EY, HX, HY] $|$ ...]" & string & compulsory \\ \hline
+		channels\_recorded\_s & list of channels recorded [ [EX, EY, HX, HY] $|$ ...] & string & compulsory \\ \hline
 		data\_type \_s & type of data collected [ BB $|$ LP $|$ AMT $|$ Combo $|$ ...] & string & compulsory \\ \hline
 		acquired\_by.author\_s & person(s) responsible for run & string & compulsory \\ \hline
 		acquired\_by.email\_s & email of lead run operator & string & compulsory \\ \hline
@@ -276,7 +313,7 @@ A run is data collected at a single station at a single sampling rate.  If the d
  "acquired_by.author_s": "T. Luric",
  "acquired_by.email_s": "t.lurric@guru.com",
  "provenance.notes_s": "Near a powerline and HZ is clipped",
- "provenance.log_s": "Clipped data in HZ replaced with zeros 2020-05-01 by T. Luric"
+ "provenance.log_s": "2020-05-01T12:00:00+00:00: Clipped data in HZ replaced with zeros by T. Luric."
 }
 \end{verbatim}
 
@@ -295,8 +332,8 @@ Data logger is a the digital acquisition system used to collect time series data
 		serial\_s & serial number & string & compulsory \\ \hline
 		notes\_s & notes about data logger & string & compulsory \\ \hline
 		timing\_system.type\_s & type of timing system [GPS $|$ internal $|$ ... ] & string & compulsory \\ \hline
-		timing\_system.drift\_d & any drift in internal clock & float & compulsory \\ \hline
-		timing\_system.uncertainty\_d & uncertainty associated with internal clock & float & compulsory \\ \hline
+		timing\_system.drift\_d & any drift in internal clock [ seconds ] & float & compulsory \\ \hline
+		timing\_system.uncertainty\_d & uncertainty associated with internal clock [seconds] & float & compulsory \\ \hline
 		timing\_system.notes\_s & notes on timing system & string & optional \\ \hline
 		firmware.version\_s & firmware version & string & compulsory \\ \hline
 		firmware.date\_s & date on firmware & string & compulsory \\ \hline
@@ -323,14 +360,14 @@ Data logger is a the digital acquisition system used to collect time series data
  "notes_s": "Intern dropped the data logger on a shovel.",
  "timing_system.type_s": "GPS",
  "timing_system.drift_d": 0,
- "timing_system.uncertainty_d": .0000016,
+ "timing_system.uncertainty_d": 0.0016,
  "timing_system.notes_s": "only works when sky is clear",
  "firmware.version_s": "1.0",
  "firmware.date_s": "2020-01-01",
  "firmware.author_s": "R. Phase",
  "n_channels_i": 5,
  "n_channels_used_s": 4,
- "power_source.type_s": "solar panel and battery]",
+ "power_source.type_s": "solar panel and battery",
  "power_source.voltage.start_d": 13.1,
  "power_source.voltage.end_d": 12.0,
  "power_source.notes_s": "Overcast all day reduced recharging"
@@ -340,7 +377,7 @@ Data logger is a the digital acquisition system used to collect time series data
 \newpage
 \section{Electric Channel}
 
-Electric channel refers to a dipole measurement of the electric field for a single station for a single run.
+Electric channel refers to a dipole measurement of the electric field for a single station for a single run.   
  
 \begin{table}[htb!]
 	\caption[Attributes for Electric Channel]{Attributes for Electric category}
@@ -351,26 +388,26 @@ Electric channel refers to a dipole measurement of the electric field for a sing
 		channel\_number\_i & channel number [ 1 $|$ 2 $|$ 3 $|$ 4 $|$ 5 $|$ 6 $|$...] & int & compulsory \\ \hline
 		component\_s & [ Ex $|$ Ey $|$ Ez ] & string  & compulsory \\ \hline
 		azimuth\_d & azimuth of dipole N = 0,  E = 90 [ degrees ] & float & compulsory \\ \hline
-		positive.ID\_s & sensor id number & string & compulsory \\ \hline
+		positive.id\_s & sensor id number & string & compulsory \\ \hline
 		positive.latitude\_d & positive sensor location latitude [ degrees (hh.mmss) ] & float & optional \\ \hline
 		positive.longitude\_d & positive sensor location longitude [ degrees (hh.mmss) ] & float & optional \\ \hline
 		positive.elevation\_d & positive sensor location elevation [ m ] & float & optional \\ \hline
-		positive.datum\_s & "positive datum for x, y, z location [ WGS84 ]" & string & optional \\ \hline
+		positive.datum\_s & positive datum for location [ WGS84 ] & string & optional \\ \hline
 		positive.type\_s & type of electric sensor [ Ag-AgCl $|$ Pb-PbCl $|$ ...] & string & compulsory \\ \hline
 		positive.manufacturer\_s & electric sensor manufacturer & string & compulsory \\ \hline
 		positive.notes\_s & notes on electric sensor & string & optional \\ \hline
-		negative.ID\_s & sensor id number & string & compulsory \\ \hline
+		negative.id\_s & sensor id number & string & compulsory \\ \hline
 		negative.longitude\_d & negative sensor location latitude [ degrees (hh.mmss) ] & float & optional \\ \hline
 		negative.latitude\_d & negative sensor location longitude [ degrees (hh.mmss) ] & float & optional \\ \hline
 		negative.elevation\_d & negative sensor location elevation [ m ] & float & optional \\ \hline
-		negative.datum\_s & "negative datum for x, y, z location [ WGS84 ]" & string & optional \\ \hline
+		negative.datum\_s & negative datum for location [ WGS84 ] & string & optional \\ \hline
 		negative.type\_s & type of electric sensor [ Ag-AgCl $|$ Pb-PbCl $|$ ...] & string & compulsory \\ \hline
 		negative.manufacturer\_s & electric sensor manufacturer & string & compulsory \\ \hline
 		negative.notes\_s & notes on electric sensor & string & optional \\ \hline
-		contact\_resistance.start\_A\_d & contact resistance at beginning of measurement, positive polarity [ Ohm ]" & float & optional \\ \hline
-		contact\_resistance.start\_B\_d & contact resistance at beginning of measurement, negative polarity [ Ohm ] & float & optional \\ \hline
-		contact\_resistance.end\_A\_d & contact resistance at end of measurement, positive polarity [ Ohm ] & float & optional \\ \hline
-		contact\_resistance.end\_B\_d & contact resistance at end of measurement, negative polarity [ Ohm ] & float & optional \\ \hline
+		contact\_resistance\_1.start\_d & contact resistance at beginning of measurement, positive polarity [ Ohm ]" & float & optional \\ \hline
+		contact\_resistance\_2.start\_d & contact resistance at beginning of measurement, negative polarity [ Ohm ] & float & optional \\ \hline
+		contact\_resistance\_1.end\_d & contact resistance at end of measurement, positive polarity [ Ohm ] & float & optional \\ \hline
+		contact\_resistance\_2.end\_d & contact resistance at end of measurement, negative polarity [ Ohm ] & float & optional \\ \hline
 		ac.start\_d & AC at start of measurement [ V ] & float & optional \\ \hline
 		ac.end\_d & AC at end of measurement [ V ] & float & optional \\ \hline
 		dc.start\_d & DC at start of measurement [ V ] & float & optional \\ \hline
@@ -389,9 +426,9 @@ Electric channel refers to a dipole measurement of the electric field for a sing
 		units\_s & units of electric field data [ counts $|$ mV/km $|$ ... ] & string & compulsory \\ \hline
 		sample\_rate\_d & sample rate of electric channel (samples.second) & float & compulsory \\ \hline
 		notes\_s & notes about electric field measurement & string &  optional \\ \hline
-		data\_quality.rating\_d & data quality rating based on some sort of statistic & float & optional \\ \hline
+		data\_quality.rating\_i & data quality rating based on some sort of statistic & integer & optional \\ \hline
 		data\_quality.warning\_notes\_s & any warnings about data quality & string & optional \\ \hline
-		data\_quality.warning\_flags\_d & a value flagging bad data  & float &  optional \\ \hline
+		data\_quality.warning\_flags\_i & a value flagging bad data  & float &  integer \\ \hline
 		data\_quality.author\_s & person who did QA/QC on data & string &  optional \\ \hline
 		filter.name\_s & filter name in filter table, can be a list. Needs to be ordered in which filters were applied & string &  optional \\ \hline
 		filter.notes\_s & any notes on the filtering & string &  optional \\ \hline
@@ -425,10 +462,10 @@ Electric channel refers to a dipole measurement of the electric field for a sing
  "negative.type_s": "Ag-AgCl"
  "negative.manufacturer_s": "Zaps",
  "negative.notes_s": "Sitting on the shelf since last year",
- "contact_resistance.start_A_d": 1200.0,
- "contact_resistance.start_B_d": 1210.0,
- "contact_resistance.end_A_d": 1205.0,
- "contact_resistance.end_B_d": 1205.0,
+ "contact_resistance_1.start_d": 1200.0,
+ "contact_resistance_2.start_d": 1210.0,
+ "contact_resistance_1.end_d": 1205.0,
+ "contact_resistance_2.end_d": 1205.0,
  "ac.start_d": 0.03,
  "ac.end_d": 0.04,
  "dc.start_d": 0.001,
@@ -459,7 +496,7 @@ A magnetic channel is a recording of one component of the magnetic field at a si
 		sensor.type\_s & type of magnetic sensor [ Induction Coil $|$ flux gate $|$ ...] & string & compulsory \\ \hline
 		sensor.manufacturer\_s & magnetic sensor manufacturer & string &  compulsory \\ \hline
 		sensor.notes\_s & notes on sensor & string & compulsory \\ \hline
-		sensor.ID\_s & sensor id number & string &  compulsory \\ \hline
+		sensor.id\_s & sensor id number & string &  compulsory \\ \hline
 		channel\_number\_i & channel number [ 1 $|$ 2 $|$ 3 $|$ 4 $|$ 5 $|$ 6 $|$...] & int &  compulsory \\ \hline
 		component\_s & [ Hx $|$ Hy $|$ Hz ] & string  &  compulsory \\ \hline
 		azimuth\_d & azimuth in \verb|station\_coordinates_s| [ degrees ]& float & compulsory \\ \hline
@@ -475,9 +512,9 @@ A magnetic channel is a recording of one component of the magnetic field at a si
 		h\_field\_max.end\_d & maximum h-field value at end of measurement & float &  optional\\ \hline
 		h\_field.units\_s & units of h-field measurement [ nT $|$ ...] & string &   optional \\ \hline
 		notes\_s & notes on magnetic field measurments & string &  optional \\ \hline
-		data\_quality.rating\_d & data quality rating based on some sort of statistic & float &  optional \\ \hline
+		data\_quality.rating\_i & data quality rating based on some sort of statistic & integer &  optional \\ \hline
 		data\_quality.warning\_notes\_s & any warnings about data quality & string &   optional \\ \hline
-		data\_quality.warning\_flags\_s & a value flagging bad data  & float &  optional \\ \hline
+		data\_quality.warning\_flags\_i & a value flagging bad data  & integer &  optional \\ \hline
 		data\_quality.author\_s & person who did QC.QA on data & string &   optional \\ \hline
 		filter.name\_s & filter name in filter table, can be a list. Needs to be ordered in which filters were applied & string &  optional \\ \hline
 		filter.notes\_s & any notes on the filtering & string &  optional \\ \hline
@@ -512,7 +549,7 @@ A magnetic channel is a recording of one component of the magnetic field at a si
  "notes_s": "not buried all the way ",
  "data_quality.rating_d": 4,
  "data_quality.warning_notes_s": "windy during the day",
- "data_quality.warning_flags_s": "Nan",
+ "data_quality.warning_flags_s": 0,
  "data_quality.author_s": "Q. Sea",
  "filter.name_s": "[counts2mv, datalogger024, coil2149]",
  "filter.notes_s": "Calibrated 2018-01-01",
@@ -542,11 +579,11 @@ In each channel there are keys to identify filters that can or have been applied
 	\begin{tabular}{|l|p{3.5in}|l|l|}
 		\hline
 		\textbf{Metadata Key} & \textbf{Description} & \textbf{Type} & \textbf{Required} \\ \hline
-		type\_s & type of filter [look up $|$ poles-zeros $|$ converter $|$ ...]& string &  required \\ \hline
+		type\_s & type of filter [look up $|$ poles-zeros $|$ converter $|$ FIR $|$ ...]& string &  compulsory \\ \hline
 		name\_s & unique name for the filter such that it is easy to query & string & compulsory \\ \hline
 		units\_in\_s & units of data going in [ counts $|$ mV/km $|$ ... ] & string & compulsory \\ \hline
 		units\_out\_s & units of data coming out [ counts $|$ mV/km $|$ ... ] & string & compulsory \\ \hline
-		calibration\_date\_s & date of calibration & string &  required \\ \hline
+		calibration\_date\_s & date of calibration & string &  compulsory \\ \hline
 		notes\_s & any notes on the filtering & string &  optional \\ \hline
 	\end{tabular}
 	\label{tab:filter}
@@ -582,9 +619,9 @@ Auxiliary channels include state of health channels, temperature, etc.
 		component\_s & channel number [ `None' $|$ ... ] & string &  compulsory \\ \hline
 		sample\_rate\_d & sample rate (samples.second) & float &  compulsory \\ \hline
 		notes\_s & any notes on the auxillary channel & string &  optional \\ \hline
-		data\_quality.rating\_d & data quality rating based on some sort of statistic & float &  optional \\ \hline
+		data\_quality.rating\_i & data quality rating based on some sort of statistic & integer &  optional \\ \hline
 		data\_quality.warning\_notes\_s & any warnings about data quality & string &   optional \\ \hline
-		data\_quality.warning\_flags\_s & a value flagging bad data  & float &  optional \\ \hline
+		data\_quality.warning\_flags\_i & a value flagging bad data  & integer &  optional \\ \hline
 		data\_quality.author\_s & person who did QC.QA on data & string &   optional \\ \hline
 		filter.name\_s & filter name in filter table, can be a list. Needs to be ordered in which filters were applied & string &  optional \\ \hline
 		filter.notes\_s & any notes on the filtering & string &  optional \\ \hline
