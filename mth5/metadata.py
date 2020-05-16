@@ -55,7 +55,7 @@ from mth5.utils.mttime import MTime
 from mth5.utils.exceptions import MTSchemaError
 
 # =============================================================================
-#  global parameters
+#  Base class that everything else will inherit
 # =============================================================================
 class Base():
     """
@@ -796,10 +796,8 @@ class Battery(Base):
 
         self.type_s = None
         self.id_s = None
+        self.voltage = Diagnostic()
         super(Battery, self).__init__(**kwargs)
-
-        self.voltage = Diagnostic(**{'units_s':'Volts'})
-
 
         self._attr_dict = ATTR_DICT['battery']
 
@@ -1022,10 +1020,17 @@ class Run(Base):
 # =============================================================================
 # Data logger
 # =============================================================================
-class DataLogger(Base):
+class DataLogger(Instrument):
     """
     """
-    pass
+    def __init__(self, **kwargs):
+        self.timing_system = TimingSystem()
+        self.firmware = Software()
+        self.power_source = Battery()
+        super().__init__(**kwargs)
+        
+        self._attr_dict = ATTR_DICT['datalogger']
+        
 # =============================================================================
 # Base Channel
 # =============================================================================
@@ -1045,6 +1050,7 @@ class Channel(Base):
         self.filter = Filter()
 
         super(Channel, self).__init__(**kwargs)
+        self._attr_dict = ATTR_DICT['channel']
 
 # =============================================================================
 # Electric Channel
