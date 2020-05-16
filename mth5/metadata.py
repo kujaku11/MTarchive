@@ -50,6 +50,7 @@ import json
 import pandas as pd
 import numpy as np
 from pathlib import Path
+from collections import OrderedDict
 from mth5.standards.schema import ATTR_DICT
 from mth5.utils.mttime import MTime
 from mth5.utils.exceptions import MTSchemaError
@@ -87,70 +88,6 @@ class Base():
     def __repr__(self):
         return self.to_json()
 
-    def to_json(self):
-        """
-        Write a json string from a given object, taking into account other
-        class objects contained within the given object.
-        """
-
-        return json.dumps(self.to_dict(), cls=NumpyEncoder)
-
-    def from_json(self, json_str):
-        """
-        read in a json string and update attributes of an object
-
-        :param json_str: json string
-        :type json_str: string
-
-        """
-        assert isinstance(json_str, str), "Input must be valid JSON string"
-        self.from_dict(json.loads(json_str))
-
-    def to_dict(self):
-        """
-        make a dictionary from attributes, makes dictionary from _attr_list.
-        """
-        meta_dict = {}
-        for name in list(self._attr_dict.keys()):
-            meta_dict[name] = self.get_attr_from_name(name)
-
-        return meta_dict
-
-    def from_dict(self, meta_dict):
-        """
-        fill attributes from a dictionary
-        
-        :param meta_dict: dictionary with keys equal to metadata.
-        :type meta_dict: dictionary
-        
-        """
-        assert isinstance(meta_dict, dict), "Input must be a dictionary" 
-        for name, value in meta_dict.items():
-            self.set_attr_from_name(name, value)
-
-    def from_series(self, pd_series):
-        """
-        Fill attributes from a Pandas series
-        
-        :param pd_series: Series containing metadata information
-        :type pd_series: pandas.Series
-        
-        ..todo:: Force types in series
-        """
-        assert isinstance(pd_series, pd.Series), "Input must be a Pandas.Series"
-        for key, value in pd_series.iteritems():
-            self.set_attr_from_name(key, value)
-            
-    def to_series(self):
-        """
-        Convert attribute list to a pandas.Series
-        
-        :return: pandas.Series
-        :rtype: pandas.Series
-
-        """
-        
-        return pd.Series(self.to_dict())
 
     def _validate_name(self, name):
         """
@@ -184,7 +121,9 @@ class Base():
 
         """
         if hasattr(self, '_attr_dict'):
-            if not name in ['latitude_d', 'longitude_d', 'elevation_d']:
+            if not name in ['latitude_d', 'longitude_d', 'elevation_d',
+                            'start_date_s', 'end_date_s', 'start_s',
+                            'end_s'] or name[0] != '_':
                 v_type = self._get_standard_type(name)
                 value = self._validate_type(value, v_type)
 
@@ -332,6 +271,71 @@ class Base():
                     return '{0}'.format(value)
             else:
                 raise MTSchemaError(msg.format(v_type, type(value)))
+                
+    def to_json(self):
+        """
+        Write a json string from a given object, taking into account other
+        class objects contained within the given object.
+        """
+
+        return json.dumps(self.to_dict(), cls=NumpyEncoder)
+
+    def from_json(self, json_str):
+        """
+        read in a json string and update attributes of an object
+
+        :param json_str: json string
+        :type json_str: string
+
+        """
+        assert isinstance(json_str, str), "Input must be valid JSON string"
+        self.from_dict(json.loads(json_str))
+
+    def to_dict(self):
+        """
+        make a dictionary from attributes, makes dictionary from _attr_list.
+        """
+        meta_dict = {}
+        for name in list(self._attr_dict.keys()):
+            meta_dict[name] = self.get_attr_from_name(name)
+
+        return meta_dict
+
+    def from_dict(self, meta_dict):
+        """
+        fill attributes from a dictionary
+        
+        :param meta_dict: dictionary with keys equal to metadata.
+        :type meta_dict: dictionary
+        
+        """
+        assert isinstance(meta_dict, (dict, OrderedDict)), "Input must be a dictionary" 
+        for name, value in meta_dict.items():
+            self.set_attr_from_name(name, value)
+
+    def from_series(self, pd_series):
+        """
+        Fill attributes from a Pandas series
+        
+        :param pd_series: Series containing metadata information
+        :type pd_series: pandas.Series
+        
+        ..todo:: Force types in series
+        """
+        assert isinstance(pd_series, pd.Series), "Input must be a Pandas.Series"
+        for key, value in pd_series.iteritems():
+            self.set_attr_from_name(key, value)
+            
+    def to_series(self):
+        """
+        Convert attribute list to a pandas.Series
+        
+        :return: pandas.Series
+        :rtype: pandas.Series
+
+        """
+        
+        return pd.Series(self.to_dict())
 
 
 # ==============================================================================
@@ -732,7 +736,7 @@ class Provenance(Base):
 
     @creation_time_s.setter
     def creation_time_s(self, dt_str):
-        self._creation_dt.from_str(dt_str)
+        self._creation_dt.dt_object = self._creation_dt.from_str(dt_str)
 
 # ==============================================================================
 # Person
@@ -927,7 +931,7 @@ class Survey(Base):
 
     @start_date_s.setter
     def start_date_s(self, start_date):
-        self._start_dt.from_str(start_date)
+        self._start_dt.dt_object = self._start_dt.from_str(start_date)
 
     @property
     def end_date_s(self):
@@ -935,7 +939,7 @@ class Survey(Base):
 
     @end_date_s.setter
     def end_date_s(self, stop_date):
-        self._end_dt.from_str(stop_date)
+        self._end_dt.dt_object = self._end_dt.from_str(stop_date)
 
 # =============================================================================
 # Station Class
@@ -968,7 +972,7 @@ class Station(Location):
 
     @start_s.setter
     def start_s(self, start_date):
-        self._start_dt.from_str(start_date)
+        self._start_dt.dt_object = self._start_dt.from_str(start_date)
 
     @property
     def end_s(self):
@@ -976,7 +980,7 @@ class Station(Location):
 
     @end_s.setter
     def end_s(self, stop_date):
-        self._end_dt.from_str(stop_date)
+        self._end_dt.dt_object = self._end_dt.from_str(stop_date)
 
 # =============================================================================
 # Run

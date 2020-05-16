@@ -6,6 +6,7 @@ Created on Wed May 13 19:10:46 2020
 """
 import datetime
 from dateutil import parser as dtparser
+from dateutil.tz.tz import tzutc
 
 #==============================================================================
 # convenience date-time container
@@ -36,6 +37,9 @@ class MTime(object):
         
         if dt_object.tzinfo == datetime.timezone.utc:
             return dt_object
+        
+        elif isinstance(dt_object.tzinfo, tzutc):
+            return dt_object.replace(tzinfo=datetime.timezone.utc)
         
         elif dt_object.tzinfo is None:
             return dt_object.replace(tzinfo=datetime.timezone.utc)

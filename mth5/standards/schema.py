@@ -342,14 +342,20 @@ class Standards(object):
     @property
     def survey_dict(self):
         survey_dict = self.from_csv(self._get_level_fn('survey'))
-        survey_dict = self.add_attr_dict(survey_dict, self.person_dict, 'acquired_by')
+        survey_dict = self.add_attr_dict(survey_dict, self.person_dict,
+                                         'acquired_by')
         return survey_dict
         
     @property
     def station_dict(self):
         station_dict = self.from_csv(self._get_level_fn('station'))
         station_dict = self.add_attr_dict(station_dict, self.location_dict, None)
-        station_dict = self.add_attr_dict(station_dict, self.person_dict, 'acquired_by')
+        for key, v_dict in self.person_dict.items():
+            if key in ['author_s', 'email_s']:
+                station_dict = self.add_attr_to_dict(station_dict, 
+                                                     'acquired_by.{0}'.format(key),
+                                                     v_dict)
+
         station_dict = self.add_attr_dict(station_dict, self.software_dict, 
                                     'provenance.software')
         station_dict = self.add_attr_dict(station_dict, self.person_dict, 
