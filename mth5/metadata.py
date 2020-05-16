@@ -66,6 +66,8 @@ class Base():
         * from_json
         * to_dict
         * from_dict
+        * to_series
+        * from_series
     """
 
     def __init__(self, **kwargs):
@@ -101,6 +103,7 @@ class Base():
         :type json_str: string
 
         """
+        assert isinstance(json_str, str), "Input must be valid JSON string"
         self.from_dict(json.loads(json_str))
 
     def to_dict(self):
@@ -116,19 +119,38 @@ class Base():
     def from_dict(self, meta_dict):
         """
         fill attributes from a dictionary
+        
+        :param meta_dict: dictionary with keys equal to metadata.
+        :type meta_dict: dictionary
+        
         """
+        assert isinstance(meta_dict, dict), "Input must be a dictionary" 
         for name, value in meta_dict.items():
             self.set_attr_from_name(name, value)
 
     def from_series(self, pd_series):
         """
         Fill attributes from a Pandas series
-        :param pd_series: DESCRIPTION
-        :type pd_series: TYPE
-        :return: DESCRIPTION
-        :rtype: TYPE
+        
+        :param pd_series: Series containing metadata information
+        :type pd_series: pandas.Series
+        
+        ..todo:: Force types in series
+        """
+        assert isinstance(pd_series, pd.Series), "Input must be a Pandas.Series"
+        for key, value in pd_series.iteritems():
+            self.set_attr_from_name(key, value)
+            
+    def to_series(self):
+        """
+        Convert attribute list to a pandas.Series
+        
+        :return: pandas.Series
+        :rtype: pandas.Series
 
         """
+        
+        return pd.Series(self.to_dict())
 
     def _validate_name(self, name):
         """
