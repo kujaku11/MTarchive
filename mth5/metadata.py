@@ -122,12 +122,15 @@ class Base():
         set attribute based on metadata standards
 
         """
+        # skip these attribute because they are validated in the property 
+        # setter.
+        skip_list = ['latitude_d', 'longitude_d',  'elevation_d',
+                     'start_date_s', 'end_date_s', 'start_s', 'end_s']
         if hasattr(self, '_attr_dict'):
-            if not name in ['latitude_d', 'longitude_d', 'elevation_d',
-                            'start_date_s', 'end_date_s', 'start_s',
-                            'end_s'] or name[0] != '_':
-                v_type = self._get_standard_type(name)
-                value = self._validate_type(value, v_type)
+            if name[0] != '_':
+                if not name in skip_list: 
+                    v_type = self._get_standard_type(name)
+                    value = self._validate_type(value, v_type)
 
         super().__setattr__(name, value)
 

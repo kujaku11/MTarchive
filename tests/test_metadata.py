@@ -75,6 +75,11 @@ class TestSurveyMetadata(unittest.TestCase):
         self.survey_object.start_date_s = '01-02-2020T12:20:30.45Z'
         self.assertEqual(self.survey_object.start_date_s, '2020-01-02')
         
+    def test_lat(self):
+        self.survey_object.southeast_corner.latitude_d = '40:10:05.123'
+        self.assertTrue(np.isclose(self.survey_object.southeast_corner.latitude_d,
+                                   40.1680897))
+        
 class TestStationMetadata(unittest.TestCase):
     """
     test station metadata
