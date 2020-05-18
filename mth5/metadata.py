@@ -1019,7 +1019,7 @@ class Run(Base):
 
     @start_s.setter
     def start_s(self, start_date):
-        self._start_dt.from_str(start_date)
+        self._start_dt.dt_object = self._start_dt.from_str(start_date)
 
     @property
     def end_s(self):
@@ -1027,7 +1027,7 @@ class Run(Base):
 
     @end_s.setter
     def end_s(self, stop_date):
-        self._end_dt.from_str(stop_date)
+        self._end_dt.dt_object = self._end_dt.from_str(stop_date)
 
 # =============================================================================
 # Data logger

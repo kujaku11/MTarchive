@@ -49,17 +49,14 @@ class TestSurveyMetadata(unittest.TestCase):
                           'conditions_of_use_s': 'freedom',
                           'citation_dataset.doi_s': 'https:doi.adfa12',
                           'citation_journal.doi_s': None} 
+        self.meta_dict = key =  OrderedDict(sorted(self.meta_dict.items(),
+                                                   key=itemgetter(0)))
     
         self.survey_object = metadata.Survey()
     
     def test_in_out(self):
-        key = itemgetter(0)
-        input_dict = OrderedDict(sorted(self.meta_dict.items(), key=key))
-
-        self.survey_object.from_dict(input_dict)
-        out_dict = self.survey_object.to_dict()
-        
-        self.assertEqual(input_dict, out_dict)
+        self.survey_object.from_dict(self.meta_dict)
+        self.assertEqual(self.meta_dict, self.survey_object.to_dict())
         
     def test_start_date(self):
         self.survey_object.start_date_s = '2020/01/02'
@@ -75,10 +72,15 @@ class TestSurveyMetadata(unittest.TestCase):
         self.survey_object.start_date_s = '01-02-2020T12:20:30.45Z'
         self.assertEqual(self.survey_object.start_date_s, '2020-01-02')
         
-    def test_lat(self):
+    def test_latitude(self):
         self.survey_object.southeast_corner.latitude_d = '40:10:05.123'
         self.assertTrue(np.isclose(self.survey_object.southeast_corner.latitude_d,
                                    40.1680897))
+        
+    def test_longitude(self):
+        self.survey_object.southeast_corner.longitude_d = '-115:34:24.9786'
+        self.assertTrue(np.isclose(self.survey_object.southeast_corner.longitude_d,
+                                   -115.5736))
         
 class TestStationMetadata(unittest.TestCase):
     """
@@ -119,13 +121,84 @@ class TestStationMetadata(unittest.TestCase):
                           'provenance.notes_s': 'goats',
                           'provenance.log_s': 'EY flipped'}
               
-        
+        self.meta_dict = key =  OrderedDict(sorted(self.meta_dict.items(),
+                                                   key=itemgetter(0)))
     def test_in_out(self):
-        key = itemgetter(0)
-        input_dict = OrderedDict(sorted(self.meta_dict.items(), key=key))
-        self.station_object.from_dict(input_dict)
+        self.station_object.from_dict(self.meta_dict)
         out_dict = self.station_object.to_dict()
-        self.assertEqual(input_dict, out_dict)
+        self.assertEqual(self.meta_dict, out_dict)
+        
+    def test_start(self):
+        self.station_object.start_s = '2020/01/02T12:20:40.4560Z'
+        self.assertEqual(self.station_object.start_s, 
+                         '2020-01-02T12:20:40.456000+00:00')
+        
+        self.station_object.start_s = '01/02/20T12:20:40.4560'
+        self.assertEqual(self.station_object.start_s, 
+                         '2020-01-02T12:20:40.456000+00:00')
+
+    def test_end_date(self):
+        self.station_object.end_s = '2020/01/02T12:20:40.4560Z'
+        self.assertEqual(self.station_object.end_s, 
+                         '2020-01-02T12:20:40.456000+00:00')
+        
+        self.station_object.end_s = '01/02/20T12:20:40.4560'
+        self.assertEqual(self.station_object.end_s, 
+                         '2020-01-02T12:20:40.456000+00:00')
+        
+    def test_latitude(self):
+        self.station_object.latitude_d = '40:10:05.123'
+        self.assertTrue(np.isclose(self.station_object.latitude_d,
+                                   40.1680897))
+        
+    def test_longitude(self):
+        self.station_object.longitude_d = '-115:34:24.9786'
+        self.assertTrue(np.isclose(self.station_object.longitude_d,
+                                   -115.5736))
+        
+    def test_declination(self):
+        self.station_object.declination.value_d = '10.980'
+        self.assertEqual(self.station_object.declination.value_d, 10.980)
+        
+class TestRun(unittest.TestCase):
+    def setUp(self):
+        self.meta_dict = OrderedDict([('acquired_by.author_s', 'mt'),
+                                      ('acquired_by.email_s', 'mt@mt.org'),
+                                      ('channels_recorded_s', 'EX, EY, HX, HY'),
+                                      ('data_type_s', 'MT'),
+                                      ('end_s', '1980-01-01T00:00:00+00:00'),
+                                      ('id_s', 'mt01'),
+                                      ('notes_s', 'cables chewed by gophers'),
+                                      ('num_channels_i', 4),
+                                      ('provenance.log_s', None),
+                                      ('provenance.notes_s', None),
+                                      ('sampling_rate_d', None),
+                                      ('start_s', '1980-01-01T00:00:00+00:00')])
+        self.meta_dict = OrderedDict(sorted(self.meta_dict.items(), 
+                                            key=itemgetter(0)))
+        self.run_object = metadata.Run()
+   
+    def test_in_out(self):
+        self.run_object.from_dict(self.meta_dict)
+        self.assertEqual(self.meta_dict, self.run_object.to_dict())
+        
+    def test_start(self):
+        self.run_object.start_s = '2020/01/02T12:20:40.4560Z'
+        self.assertEqual(self.run_object.start_s, 
+                         '2020-01-02T12:20:40.456000+00:00')
+        
+        self.run_object.start_s = '01/02/20T12:20:40.4560'
+        self.assertEqual(self.run_object.start_s, 
+                         '2020-01-02T12:20:40.456000+00:00')
+
+    def test_end_date(self):
+        self.run_object.end_s = '2020/01/02T12:20:40.4560Z'
+        self.assertEqual(self.run_object.end_s, 
+                         '2020-01-02T12:20:40.456000+00:00')
+        
+        self.run_object.end_s = '01/02/20T12:20:40.4560'
+        self.assertEqual(self.run_object.end_s, 
+                         '2020-01-02T12:20:40.456000+00:00')
         
 # =============================================================================
 # run
