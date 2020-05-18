@@ -45,12 +45,14 @@ Created on Sun Apr 24 20:50:41 2020
 # =============================================================================
 # Imports
 # =============================================================================
-
 import json
 import pandas as pd
 import numpy as np
+
 from pathlib import Path
 from collections import OrderedDict
+from operator import itemgetter
+
 from mth5.standards.schema import ATTR_DICT
 from mth5.utils.mttime import MTime
 from mth5.utils.exceptions import MTSchemaError
@@ -272,6 +274,31 @@ class Base():
             else:
                 raise MTSchemaError(msg.format(v_type, type(value)))
                 
+    def to_dict(self):
+        """
+        make a dictionary from attributes, makes dictionary from _attr_list.
+        """
+        meta_dict = {}
+        for name in list(self._attr_dict.keys()):
+            meta_dict[name] = self.get_attr_from_name(name)
+
+        # sort the output dictionary for convience
+        key = itemgetter(0)
+        meta_dict = OrderedDict(sorted(meta_dict.items(), key=key))
+        return meta_dict
+
+    def from_dict(self, meta_dict):
+        """
+        fill attributes from a dictionary
+        
+        :param meta_dict: dictionary with keys equal to metadata.
+        :type meta_dict: dictionary
+        
+        """
+        assert isinstance(meta_dict, (dict, OrderedDict)), "Input must be a dictionary" 
+        for name, value in meta_dict.items():
+            self.set_attr_from_name(name, value)
+                
     def to_json(self):
         """
         Write a json string from a given object, taking into account other
@@ -290,28 +317,6 @@ class Base():
         """
         assert isinstance(json_str, str), "Input must be valid JSON string"
         self.from_dict(json.loads(json_str))
-
-    def to_dict(self):
-        """
-        make a dictionary from attributes, makes dictionary from _attr_list.
-        """
-        meta_dict = {}
-        for name in list(self._attr_dict.keys()):
-            meta_dict[name] = self.get_attr_from_name(name)
-
-        return meta_dict
-
-    def from_dict(self, meta_dict):
-        """
-        fill attributes from a dictionary
-        
-        :param meta_dict: dictionary with keys equal to metadata.
-        :type meta_dict: dictionary
-        
-        """
-        assert isinstance(meta_dict, (dict, OrderedDict)), "Input must be a dictionary" 
-        for name, value in meta_dict.items():
-            self.set_attr_from_name(name, value)
 
     def from_series(self, pd_series):
         """

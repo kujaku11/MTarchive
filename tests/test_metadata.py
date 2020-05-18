@@ -57,10 +57,23 @@ class TestSurveyMetadata(unittest.TestCase):
         input_dict = OrderedDict(sorted(self.meta_dict.items(), key=key))
 
         self.survey_object.from_dict(input_dict)
-        out_dict = OrderedDict(sorted(self.survey_object.to_dict().items(), 
-                                      key=key))
+        out_dict = self.survey_object.to_dict()
         
         self.assertEqual(input_dict, out_dict)
+        
+    def test_start_date(self):
+        self.survey_object.start_date_s = '2020/01/02'
+        self.assertEqual(self.survey_object.start_date_s, '2020-01-02')
+        
+        self.survey_object.start_date_s = '01-02-2020T12:20:30.45Z'
+        self.assertEqual(self.survey_object.start_date_s, '2020-01-02')
+
+    def test_end_date(self):
+        self.survey_object.start_date_s = '2020/01/02'
+        self.assertEqual(self.survey_object.start_date_s, '2020-01-02')
+        
+        self.survey_object.start_date_s = '01-02-2020T12:20:30.45Z'
+        self.assertEqual(self.survey_object.start_date_s, '2020-01-02')
         
 class TestStationMetadata(unittest.TestCase):
     """
@@ -106,8 +119,7 @@ class TestStationMetadata(unittest.TestCase):
         key = itemgetter(0)
         input_dict = OrderedDict(sorted(self.meta_dict.items(), key=key))
         self.station_object.from_dict(input_dict)
-        out_dict = OrderedDict(sorted(self.station_object.to_dict().items(), 
-                                      key=key))
+        out_dict = self.station_object.to_dict()
         self.assertEqual(input_dict, out_dict)
         
 # =============================================================================
