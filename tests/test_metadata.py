@@ -200,6 +200,12 @@ class TestRun(unittest.TestCase):
         self.assertEqual(self.run_object.end_s, 
                          '2020-01-02T12:20:40.456000+00:00')
         
+    def test_n_channels(self):
+        self.run_object.channels_recorded_s = None
+        self.assertEqual(self.run_object.num_channels_i, None)
+        
+        self.run_object.channels_recorded_s = 'EX, EY, HX, HY, HZ'
+        self.assertEqual(self.run_object.num_channels_i, 5)
 # =============================================================================
 # run
 # =============================================================================

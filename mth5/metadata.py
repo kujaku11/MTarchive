@@ -1003,7 +1003,6 @@ class Run(Base):
         self._start_dt = MTime()
         self._end_dt = MTime()
         self.sampling_rate_d = None
-        self.num_channels_i = None
         self.channels_recorded_s = None
         self.data_type_s = None
         self.acquired_by = Person()
@@ -1028,6 +1027,12 @@ class Run(Base):
     @end_s.setter
     def end_s(self, stop_date):
         self._end_dt.dt_object = self._end_dt.from_str(stop_date)
+        
+    @property
+    def num_channels_i(self):
+        if self.channels_recorded_s is None:
+            return None
+        return len(self.channels_recorded_s.split(','))
 
 # =============================================================================
 # Data logger
@@ -1060,9 +1065,27 @@ class Channel(Base):
         self.azimuth_d = 0.0
         self.data_quality = DataQuality()
         self.filter = Filter()
+        self._start_dt = MTime()
+        self._end_dt = MTime()
 
         super(Channel, self).__init__(**kwargs)
         self._attr_dict = ATTR_DICT['channel']
+        
+    @property
+    def start_s(self):
+        return self._start_dt.iso_str
+
+    @start_s.setter
+    def start_s(self, start_date):
+        self._start_dt.dt_object = self._start_dt.from_str(start_date)
+
+    @property
+    def end_s(self):
+        return self._end_dt.iso_str
+
+    @end_s.setter
+    def end_s(self, stop_date):
+        self._end_dt.dt_object = self._end_dt.from_str(stop_date)
 
 # =============================================================================
 # Electric Channel
@@ -1085,7 +1108,6 @@ class Electric(Channel):
         super(Electric, self).__init__(**kwargs)
 
         self._attr_dict = ATTR_DICT['electric']
-
 
 
 # =============================================================================
