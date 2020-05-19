@@ -17,18 +17,320 @@ Created on Wed Apr 29 11:11:31 2020
 # =============================================================================
 # Imports
 # =============================================================================
+import logging
+import sys
 
 from pathlib import Path
 from copy import deepcopy
 
 from mth5.standards import CSV_FN_PATHS
 from mth5.utils.exceptions import MTSchemaError
-from mth5.utils.mth5logger import MTH5Logger
+
+
+logger = logging.getLogger(__name__)
+# =============================================================================
+# Variables
+# =============================================================================
+ACCEPTED_STYLES = ['name', 'url', 'email', 'number', 'date',
+                   'time', 'date_time', 'net_code', 'name_list']
+
+REQUIRED_KEYS = ['attribute', 'type', 'required', 'style', 'units']
 
 # =============================================================================
 # Helper functions
 # =============================================================================
-class Standards(object):
+def validate_header(header, attribute=False):
+    """
+    validate header to make sure it includes the required keys:
+        * 'attribute'
+        * 'type'
+        * 'required'
+        * 'style'
+        * 'units'
+        
+    :param header: list of header names
+    :type header: list
+    
+    :param attribute: include attribute in test or not
+    :type attribute: [ True | False ]
+    
+    :return: validated header
+    :rtype: list
+
+    """
+    assert(isinstance(header, list)), 'header must be a list'
+    
+    if attribute:
+        if sorted(header) != sorted(REQUIRED_KEYS):
+            logger.error('CSV Header is not correct, must include {0}'.format(
+                         REQUIRED_KEYS))
+            raise MTSchemaError('CSV header must inlcude {0}'.format(
+                                REQUIRED_KEYS))
+    else:
+        required_keys = [key for key in REQUIRED_KEYS if key != 'attribute']
+        if sorted(header) != sorted(required_keys):
+            logger.error('CSV Header is not correct, must include {0}'.format(
+                         REQUIRED_KEYS))
+            raise MTSchemaError('CSV header must inlcude {0}'.format(
+                                REQUIRED_KEYS))
+    logger.info('Validate header')
+    return header
+
+
+def validate_required(value):
+    """
+    
+    Validate required, must be True or False
+    
+    :param value: required value
+    :type value: [ string | bool ] 
+    :return: validated required value
+    :rtype: boolean
+
+    """
+    if isinstance(value, bool):
+        return value
+
+    if isinstance(value, str):
+        if value.lower() in ['false']:
+            return False
+        elif value.lower() in ['true']:
+            return True
+    else:
+        logger.error('Required value must be True or False')
+        raise MTSchemaError("'required' must be bool [ True | False ]")
+        
+def validate_type(value):
+    """
+    
+    Validate required type. Must be:
+        * str
+        * float
+        * int
+        * bool
+    
+    :param value: required type
+    :type value: [ type | string ]
+    :return: validated type
+    :rtype: string
+
+    """
+    if isinstance(value, type):
+        value = '{0}'.format(value).replace('<class', '').replace('>', '')
+
+    if isinstance(value, str):
+        value = value.replace('<class', '').replace('>', '')
+        if 'int' in value.lower():
+            return 'integer'
+        elif 'float' in value.lower():
+            return 'float'
+        elif 'str' in value.lower():
+            return 'string'
+        elif 'bool' in value.lower():
+            return 'boolean'
+    
+        else:
+            logging.error("'type' must be a [ int | float | str | bool ]"+\
+                                " Not {0}".format(value))
+            raise MTSchemaError("'type' must be a [ int | float | str | bool ]"+\
+                                " Not {0}".format(value))
+        
+def validate_units(value):
+    """
+    Validate units
+    
+    ..todo:: make a list of acceptable unit names
+    
+    :param value: unit value to be validated
+    :type value: string
+    
+    :return: validated units
+    :rtype: string
+    
+    """
+    if value is None:
+        return value
+    if isinstance(value, str):
+        if value.lower() in ['none', 'empty', '']:
+            return None
+        else:
+            return value.lower()
+    else:
+        logger.error("'units' must be a string or None")
+        raise MTSchemaError("'units' must be a string or None")
+        
+def validate_style(value):
+    """
+    Validate string style
+    
+    ..todo:: make list of accepted style formats
+    
+    :param value: style to be validated
+    :type value: string
+    :return: validated style
+    :rtype: string
+
+    """
+    
+    assert isinstance(value, str), "'value' must be a string"
+    if value.lower() not in ACCEPTED_STYLES:
+        raise MTSchemaError("style {0} unknown, must be {1}".format(
+                            value, ACCEPTED_STYLES) + 
+                            '. Not {0}'.format(value))
+        
+    return value.lower()
+
+def validate_value_dict(value_dict):
+    """
+    Validate an input value dictionary
+    
+    Must be of the form:
+        {'type': str, 'required': True, 'style': 'name'}
+        
+    :param value_dict: DESCRIPTION
+    :type value_dict: TYPE
+    :return: DESCRIPTION
+    :rtype: TYPE
+
+    """
+    assert isinstance(value_dict, dict), "Input must be a dictionary"
+    
+    header = validate_header(list(value_dict.keys()))
+    for key in header:
+        
+        value_dict[key] = getattr(sys.modules[__name__], 
+                                  'validate_{0}'.format(key))(value_dict[key])
+
+    return value_dict
+
+def get_level_fn(level):
+    """
+    
+    Get the filename that corresponds to level of metadata
+    
+    acceptable names are:
+        * 'auxiliary'
+        * 'battery'
+        * 'channel'
+        * 'citation'
+        * 'copyright'
+        * 'datalogger,
+        * 'data_quality'
+        * 'declination'
+        * 'diagnostic'
+        * 'electric'
+        * 'electrode'
+        * 'filter'
+        * 'instrument'
+        * 'location'
+        * 'magnetic'
+        * 'person'
+        * 'provenance'
+        * 'run'
+        * 'software'
+        * 'station'
+        * 'survey'
+        * 'timing_system'
+    
+    :param level: name of level
+    :type level: string
+    :return: full path to file name
+    :rtype: pathlib.Path or None if not found
+    
+    :Example: ::
+        
+        >>> run_fn = get_level_fn('run')
+
+    """
+
+    for fn in CSV_FN_PATHS:
+        if level in fn.stem:
+            if not fn.exists():
+                logger.error('{0} does not exist'.format(fn))
+                raise MTSchemaError("Can not find file {0}".format(fn))
+            logger.info('Found standards csv file {0}'.format(fn))
+            return fn
+    return None
+
+def from_csv(csv_fn):
+    """
+    Read in CSV file as a dictionary
+    
+    :param csv_fn: csv file to read metadata standards from
+    :type csv_fn: pathlib.Path or string
+    
+    :return: dictionary of the contents of the file
+    :rtype: Dictionary
+    
+    :Example: ::
+        
+        >>> run_dict = from_csv(get_level_fn('run')) 
+
+    """
+    if not isinstance(csv_fn, Path):
+        csv_fn = Path(csv_fn)
+        
+    with open(csv_fn, 'r') as fid:
+        logger.info('reading {0}'.format(csv_fn))
+        lines = fid.readlines()
+        
+    header = validate_header([ss.strip().lower() for ss in 
+                              lines[0].strip().split(',')],
+                             attribute=True)
+    attribute_dict = {}
+    for line in lines[1:]:
+        line_dict = dict([(key, ss.strip()) for key, ss in
+                          zip(header, line.strip().split(','))])
+
+        key_name = line_dict['attribute']
+        line_dict.pop('attribute')
+
+        attribute_dict[key_name] = validate_value_dict(line_dict)
+    
+    return attribute_dict
+        
+def add_attr_dict(original_dict, new_dict, name):
+    """
+    Add an attribute dictionary from another container
+    
+    :param original_dict: DESCRIPTION
+    :type original_dict: TYPE
+    :param new_dict: DESCRIPTION
+    :type new_dict: TYPE
+    :param name: DESCRIPTION
+    :type name: TYPE
+    :return: DESCRIPTION
+    :rtype: TYPE
+
+    """
+    for key, v_dict in new_dict.items():
+        if name is not None:
+            key = '{0}.{1}'.format(name, key)
+        original_dict[key] = v_dict
+        
+    return original_dict
+
+def add_attr_to_dict(original_dict, key, value_dict):
+    """
+    Add an attribute to an existing attribute dictionary
+    
+    :param original_dict: DESCRIPTION
+    :type original_dict: TYPE
+    :param key: DESCRIPTION
+    :type key: TYPE
+    :param value: DESCRIPTION
+    :type value: TYPE
+    :return: DESCRIPTION
+    :rtype: TYPE
+
+    """
+    
+    original_dict[key] = validate_value_dict(value_dict)
+    
+    return original_dict
+
+
+class Standards():
     """
     Helper container to read in csv files and make the appropriate 
     dictionaries used in metadata.  
@@ -45,8 +347,7 @@ class Standards(object):
         self.accepted_styles = ['name', 'url', 'email', 'number', 'date',
                                 'time', 'date_time', 'net_code', 'name_list']
         
-        self.logger = MTH5Logger.get_logger(__name__,
-                                            fn=Path(CSV_FN_PATHS[0].parent).joinpath('{0}.log'.format(__name__)))
+        self.logger = logger
         self.logger.info('='*50)
         
     def _get_level_fn(self, level):
@@ -64,6 +365,7 @@ class Standards(object):
                 if not fn.exists():
                     raise MTSchemaError("Can not find file {0}".format(fn))
                 return fn
+        return None
     
     def from_csv(self, csv_fn, name=None):
         """
