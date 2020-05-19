@@ -4,7 +4,6 @@ notes_s,str,FALSE,name,none
 start_s,str,TRUE,time,none
 end_s,str,TRUE,time,none
 sampling_rate_d,float,TRUE,number,samples per second
-num_channels_i,int,TRUE,number,none
 channels_recorded_s,str,TRUE,name_list,none
 data_type_s,str,TRUE,name,none
 acquired_by.author_s,str,TRUE,name,none

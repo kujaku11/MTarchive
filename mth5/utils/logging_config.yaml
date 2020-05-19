@@ -1,0 +1,24 @@
+version: 1
+disable_existing_loggers: False
+formatters:
+    simple:
+        format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        datefmt: "%Y-%m-%dT%H:%M:%S"
+
+handlers:
+    console: # screen display print out
+        class: logging.StreamHandler
+        level: WARNING
+        formatter: simple
+        stream: ext://sys.stdout
+
+
+loggers:
+    __main__:
+        level: DEBUG
+        handlers: [console]
+        propagate: no
+
+root:
+    level: DEBUG
+    handlers: [console]

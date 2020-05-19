@@ -23,7 +23,8 @@ from copy import deepcopy
 
 from mth5.standards import CSV_FN_PATHS
 from mth5.utils.exceptions import MTSchemaError
-      
+from mth5.utils.mth5logger import MTH5Logger
+
 # =============================================================================
 # Helper functions
 # =============================================================================
@@ -44,7 +45,9 @@ class Standards(object):
         self.accepted_styles = ['name', 'url', 'email', 'number', 'date',
                                 'time', 'date_time', 'net_code', 'name_list']
         
-        
+        self.logger = MTH5Logger.get_logger(__name__,
+                                            fn=Path(CSV_FN_PATHS[0].parent).joinpath('{0}.log'.format(__name__)))
+        self.logger.info('='*50)
         
     def _get_level_fn(self, level):
         """
@@ -77,6 +80,7 @@ class Standards(object):
             name = csv_fn.name
             
         with open(csv_fn, 'r') as fid:
+            self.logger.info('reading {0}'.format(csv_fn))
             lines = fid.readlines()
             
         header = self._validate_header([ss.strip().lower() for ss in 

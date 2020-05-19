@@ -125,7 +125,8 @@ class Base():
         # skip these attribute because they are validated in the property 
         # setter.
         skip_list = ['latitude_d', 'longitude_d',  'elevation_d',
-                     'start_date_s', 'end_date_s', 'start_s', 'end_s']
+                     'start_date_s', 'end_date_s', 'start_s', 'end_s',
+                     'name_s', 'applied_b']
         if hasattr(self, '_attr_dict'):
             if name[0] != '_':
                 if not name in skip_list: 
@@ -264,16 +265,27 @@ class Base():
                         raise MTSchemaError(msg.format(v_type, type(value)))
                 elif v_type is str:
                     return value
+            
             elif isinstance(value, int):
                 if v_type is float:
                     return float(value)
                 elif v_type is str:
                     return '{0:.0f}'.format(value)
+            
             elif isinstance(value, float):
                 if v_type is int:
                     return int(value)
                 elif v_type is str:
                     return '{0}'.format(value)
+            elif isinstance(value, list):
+                return value
+                # if v_type is str:
+                #     return ','.join(value)
+                # elif v_type is float:
+                #     return ','.join([str(ff) for ff in value])
+                # elif v_type is bool:
+                #     return ','.join([str(bb).lower() for bb in value])
+                
             else:
                 raise MTSchemaError(msg.format(v_type, type(value)))
                 
@@ -878,26 +890,87 @@ class Software(Base):
 class Filter(Base):
     """
     container for filters
+    
+    .. note:: name_s and applied_b should be input as a list or comma 
+              separated string.  applied can be a single true, false for all 
+              or needs to be the same length as name
+              
     """
 
     def __init__(self, **kwargs):
-        self.name_s = None
-        self.applied_b = False
+        self._name_s = None
+        self._applied_b = None
         super().__init__()
 
         self._attr_dict = ATTR_DICT['filter']
+        
+    @property
+    def name_s(self):
+        return self._name_s
+    
+    @name_s.setter
+    def name_s(self, names):
+        if isinstance(names, str):
+            self._name_s = [ss.strip().lower() for ss in names.split(',')]
+        elif isinstance(names, list):
+            self._name_s = [ss.strip().lower() for ss in names]
+        else:
+            raise MTSchemaError('names must be a string or list of strings')
+            
+        check = self._check_consistency()
+            
+    @property
+    def applied_b(self):
+        return self._applied_b
+    
+    @applied_b.setter
+    def applied_b(self, applied):
+        if isinstance(applied, str):
+            applied_list = [ss.strip().lower() for ss in applied.split(',')] 
+        elif isinstance(applied, list):
+            applied_list = applied
+        elif isinstance(applied, bool):
+            applied_list = [applied]
+        else:
+            raise MTSchemaError('names must be a string or list of strings')        
 
-    def to_poles_zeros(self):
-        pass
-
-    def from_poles_zeros(self, pz_arr):
-        pass
-
-    def from_file(self, filename):
-        pass
-
-    def to_file(self, filename):
-        pass
+        bool_list = []
+        for app_bool in applied_list:
+            if isinstance(app_bool, str):
+                if app_bool.lower() in ['false']:
+                    bool_list.append(False)
+                elif app_bool.lower() in ['true']:
+                    bool_list.append(True)
+                else:
+                    raise MTSchemaError('Filter.applied must be [True | False]')
+            elif isinstance(app_bool, bool):
+                bool_list.append(app_bool)
+            else:
+                raise MTSchemaError('Filter.applied must be [True | False ]')
+        self._applied_b = bool_list
+        
+        # check for consistency
+        check = self._check_consistency()
+                        
+    def _check_consistency(self):
+        # check for consistency
+        if self._name_s is not None:
+            if self._applied_b is None:
+                print('WARNING: Need to input applied')
+                return False
+            if len(self._name_s) > 1:
+                if len(self._applied_b) == 1:
+                    print('Assuming all filters have been applied as {0}'.format(
+                           self._applied_b[0]))
+                    return True
+                elif len(self._applied_b) > 1:
+                    if len(self._applied_b) != len(self._name_s):
+                        print('WARNING: Applied and filter names should be '+ 
+                              'the same length.  Appied={0}, names={1}'.format(
+                                  len(self._applied_b), len(self._name_s)))
+                        return False
+        else:
+            return False
 
 
 # ==============================================================================
@@ -996,6 +1069,9 @@ class Station(Location):
 class Run(Base):
     """
     container to hold run metadata
+    
+    .. note:: num_channels_i is derived from channels_recorded_s assuming that
+              the channels are comma separated. e.g. 'EX, EY, HX'
     """
 
     def __init__(self, **kwargs):
