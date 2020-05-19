@@ -805,7 +805,7 @@ class Diagnostic(Base):
         self.end_d = None
         super(Diagnostic, self).__init__(**kwargs)
 
-        self._attr_dict = {}
+        self._attr_dict = ATTR_DICT['diagnostic']
 
 
 # =============================================================================
@@ -1127,7 +1127,7 @@ class DataLogger(Instrument):
 # =============================================================================
 # Base Channel
 # =============================================================================
-class Channel(Base):
+class Channel(Location):
     """
     Base channel container
     """
@@ -1189,7 +1189,7 @@ class Electric(Channel):
 # =============================================================================
 # Magnetic Channel
 # =============================================================================
-class Magnetic(Channel, Location):
+class Magnetic(Channel):
     """
 
     """
@@ -1199,8 +1199,7 @@ class Magnetic(Channel, Location):
         self.h_field_min = Diagnostic()
         self.h_field_max = Diagnostic()
 
-        super().__init__()
-        Location.__init__(self)
+        super().__init__(**kwargs)
 
         self._attr_dict = ATTR_DICT['magnetic']
 

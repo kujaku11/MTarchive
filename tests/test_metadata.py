@@ -57,15 +57,15 @@ class TestSurveyMetadata(unittest.TestCase):
     
     def test_in_out(self):
         self.survey_object.from_dict(self.meta_dict)
-        self.assertEqual(self.meta_dict, self.survey_object.to_dict())
+        self.assertDictEqual(self.meta_dict, self.survey_object.to_dict())
 
         survey_series = pd.Series(self.meta_dict)
         self.survey_object.from_series(survey_series)
-        self.assertEqual(self.meta_dict, self.survey_object.to_dict())
+        self.assertDictEqual(self.meta_dict, self.survey_object.to_dict())
         
         survey_json = json.dumps(self.meta_dict)
         self.survey_object.from_json((survey_json))
-        self.assertEqual(self.meta_dict, self.survey_object.to_dict())  
+        self.assertDictEqual(self.meta_dict, self.survey_object.to_dict())  
         
     def test_start_date(self):
         self.survey_object.start_date_s = '2020/01/02'
@@ -135,15 +135,15 @@ class TestStationMetadata(unittest.TestCase):
     def test_in_out(self):
         self.station_object.from_dict(self.meta_dict)
         out_dict = self.station_object.to_dict()
-        self.assertEqual(self.meta_dict, out_dict)
+        self.assertDictEqual(self.meta_dict, out_dict)
         
         station_series = pd.Series(self.meta_dict)
         self.station_object.from_series(station_series)
-        self.assertEqual(self.meta_dict, self.station_object.to_dict())
+        self.assertDictEqual(self.meta_dict, self.station_object.to_dict())
         
         station_json = json.dumps(self.meta_dict)
         self.station_object.from_json((station_json))
-        self.assertEqual(self.meta_dict, self.station_object.to_dict())
+        self.assertDictEqual(self.meta_dict, self.station_object.to_dict())
         
     def test_start(self):
         self.station_object.start_s = '2020/01/02T12:20:40.4560Z'
@@ -196,15 +196,15 @@ class TestRun(unittest.TestCase):
    
     def test_in_out(self):
         self.run_object.from_dict(self.meta_dict)
-        self.assertEqual(self.meta_dict, self.run_object.to_dict())
+        self.assertDictEqual(self.meta_dict, self.run_object.to_dict())
         
         run_series = pd.Series(self.meta_dict)
         self.run_object.from_series(run_series)
-        self.assertEqual(self.meta_dict, self.run_object.to_dict())
+        self.assertDictEqual(self.meta_dict, self.run_object.to_dict())
         
         run_json = json.dumps(self.meta_dict)
         self.run_object.from_json((run_json))
-        self.assertEqual(self.meta_dict, self.run_object.to_dict())
+        self.assertDictEqual(self.meta_dict, self.run_object.to_dict())
         
     def test_start(self):
         self.run_object.start_s = '2020/01/02T12:20:40.4560Z'
@@ -242,11 +242,15 @@ class TestChannel(unittest.TestCase):
                                       ('data_quality.rating_i', 5),
                                       ('data_quality.warning_flags_s', '0'),
                                       ('data_quality.warning_notes_s', None),
+                                      ('datum_s', 'WGS84'),
+                                      ('elevation_d', 1200.3),
                                       ('filter.applied_b', [False]),
                                       ('filter.name_s', ['counts2mv']),
                                       ('filter.notes_s', None),
+                                      ('latitude_d', 40.12),
+                                      ('longitude_d', -115.767),
                                       ('notes_s', None),
-                                      ('sample_rate_d', 256),
+                                      ('sample_rate_d', 256.),
                                       ('type_s', 'auxiliary'),
                                       ('units_s', 'mV')])
         
@@ -255,16 +259,112 @@ class TestChannel(unittest.TestCase):
         
     def test_in_out(self):
         self.channel_object.from_dict(self.meta_dict)
-        self.assertEqual(self.meta_dict, self.channel_object.to_dict())
+        self.assertDictEqual(self.meta_dict, self.channel_object.to_dict())
         
         channel_series = pd.Series(self.meta_dict)
         self.channel_object.from_series(channel_series)
-        self.assertEqual(self.meta_dict, self.channel_object.to_dict())
+        self.assertDictEqual(self.meta_dict, self.channel_object.to_dict())
         
         channel_json = json.dumps(self.meta_dict)
         self.channel_object.from_json((channel_json))
-        self.assertEqual(self.meta_dict, self.channel_object.to_dict())
+        self.assertDictEqual(self.meta_dict, self.channel_object.to_dict())
         
+class TestElectric(unittest.TestCase):
+    def setUp(self):
+        self.maxDiff = None
+        self.electric_object = metadata.Electric()
+        self.meta_dict = OrderedDict([('ac.end_d', 10.0),
+                                      ('ac.start_d', 9.0),
+                                      ('azimuth_d', 23.0),
+                                      ('channel_number_i', 5),
+                                      ('component_s', 'EY'),
+                                      ('contact_resistance_1.start_d', 1200.0),
+                                      ('contact_resistance_2.end_d', 1210.0),
+                                      ('data_quality.author_s', 'mt'),
+                                      ('data_quality.rating_i', 4),
+                                      ('data_quality.warning_flags_s', '0'),
+                                      ('data_quality.warning_notes_s', None),
+                                      ('dc.end_d', 2.0),
+                                      ('dc.start_d', 2.5),
+                                      ('dipole_length_d', 120.0),
+                                      ('filter.applied_b', [False]),
+                                      ('filter.name_s', ['counts2mv']),
+                                      ('filter.notes_s', None),
+                                      ('negative.datum_s', 'WGS84'),
+                                      ('negative.elevation_d', 1200.0),
+                                      ('negative.latitude_d', 40.123),
+                                      ('negative.longitude_d', -115.134),
+                                      ('negative.notes_s', None),
+                                      ('notes_s', None),
+                                      ('positive.datum_s', 'WGS84'),
+                                      ('positive.elevation_d', 1210.0),
+                                      ('positive.latitude_d', 40.234),
+                                      ('positive.longitude_d', -115.234),
+                                      ('positive.notes_s', None),
+                                      ('sample_rate_d', 4096.0),
+                                      ('type_s', 'electric'),
+                                      ('units_s', 'counts')])
+        
+        self.meta_dict = OrderedDict(sorted(self.meta_dict.items(), 
+                                            key=itemgetter(0)))
+        
+    def test_in_out(self):
+        self.electric_object.from_dict(self.meta_dict)
+        self.assertDictEqual(self.meta_dict, self.electric_object.to_dict())
+        
+        electric_series = pd.Series(self.meta_dict)
+        self.electric_object.from_series(electric_series)
+        self.assertDictEqual(self.meta_dict, self.electric_object.to_dict())
+        
+        electric_json = json.dumps(self.meta_dict)
+        self.electric_object.from_json((electric_json))
+        self.assertDictEqual(self.meta_dict, self.electric_object.to_dict())
+        
+
+class TestMagnetic(unittest.TestCase):
+    def setUp(self):
+        self.maxDiff = None
+        self.electric_object = metadata.Magnetic()
+        self.meta_dict = OrderedDict([('azimuth_d', 0.0),
+                                      ('channel_number_i', 2),
+                                      ('component_s', 'hy'),
+                                      ('data_quality.author_s', 'mt'),
+                                      ('data_quality.rating_i', 2),
+                                      ('data_quality.warning_flags_s', '0'),
+                                      ('data_quality.warning_notes_s', None),
+                                      ('datum_s', 'WGS84'),
+                                      ('elevation_d', 1230.9),
+                                      ('filter.applied_b', [True]),
+                                      ('filter.name_s', ['counts2mv']),
+                                      ('filter.notes_s', None),
+                                      ('h_field_max.end_d', 12.3),
+                                      ('h_field_max.start_d',1200.1),
+                                      ('h_field_min.end_d', 12.3),
+                                      ('h_field_min.start_d', 1400.),
+                                      ('latitude_d', 40.234),
+                                      ('longitude_d', -113.45),
+                                      ('notes_s', None),
+                                      ('sample_rate_d', 256.),
+                                      ('sensor.id_s', 'ant2284'),
+                                      ('sensor.manufacturer_s', None),
+                                      ('sensor.type_s', 'induction coil'),
+                                      ('type_s', 'magnetic'),
+                                      ('units_s', 'mv')])
+        
+        self.meta_dict = OrderedDict(sorted(self.meta_dict.items(), 
+                                            key=itemgetter(0)))
+        
+    def test_in_out(self):
+        self.electric_object.from_dict(self.meta_dict)
+        self.assertDictEqual(self.meta_dict, self.electric_object.to_dict())
+        
+        electric_series = pd.Series(self.meta_dict)
+        self.electric_object.from_series(electric_series)
+        self.assertDictEqual(self.meta_dict, self.electric_object.to_dict())
+        
+        electric_json = json.dumps(self.meta_dict)
+        self.electric_object.from_json((electric_json))
+        self.assertDictEqual(self.meta_dict, self.electric_object.to_dict())
         
 # =============================================================================
 # run

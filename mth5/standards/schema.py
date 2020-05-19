@@ -376,6 +376,10 @@ class Standards(object):
         channel_dict = self.add_attr_dict(channel_dict, self.data_quality_dict,
                                     'data_quality')
         channel_dict = self.add_attr_dict(channel_dict, self.filter_dict, 'filter')
+        for key, v_dict in self.location_dict.items():
+            if 'declination' not in key:
+                channel_dict = self.add_attr_to_dict(channel_dict, key,
+                                                      v_dict)
         return channel_dict
     
     @property
@@ -385,8 +389,12 @@ class Standards(object):
     @property
     def electric_dict(self):
         electric_dict = self.from_csv(self._get_level_fn('electric'))
-        electric_dict = self.add_attr_dict(electric_dict, self.channel_dict,
+        electric_dict = self.add_attr_dict(electric_dict, 
+                                           self.from_csv(self._get_level_fn('channel')),
                                            None)
+        electric_dict = self.add_attr_dict(electric_dict, self.data_quality_dict,
+                                    'data_quality')
+        electric_dict = self.add_attr_dict(electric_dict, self.filter_dict, 'filter')
         electric_dict = self.add_attr_dict(electric_dict, self.electrode_dict,
                                            'positive')
         electric_dict = self.add_attr_dict(electric_dict, self.electrode_dict,
@@ -396,10 +404,8 @@ class Standards(object):
     @property
     def magnetic_dict(self):
         magnetic_dict = self.from_csv(self._get_level_fn('magnetic'))
-        for key, v_dict in self.location_dict.items():
-            if 'declination' not in key:
-                magnetic_dict = self.add_attr_to_dict(magnetic_dict, key,
-                                                      v_dict)
+        magnetic_dict = self.add_attr_dict(magnetic_dict, self.channel_dict,
+                                           None)
         magnetic_dict = self.add_attr_dict(magnetic_dict, self.instrument_dict,
                                            'sensor')
         return magnetic_dict
