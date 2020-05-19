@@ -49,7 +49,6 @@ import json
 import pandas as pd
 import numpy as np
 
-from pathlib import Path
 from collections import OrderedDict
 from operator import itemgetter
 
@@ -223,6 +222,35 @@ class Base():
         else:
             setattr(self, name, value)
 
+    def add_base_attribute(self, name, value_dict):
+        """
+        Add an attribute to _attr_dict so it will be included in the
+        output dictionary
+        
+        :param name: name of attribute
+        :type name: string
+        :param value_dict: dictionary describing the attribute, must have keys
+                           ['type', 'required', 'style', 'units']
+        :type name: string
+    
+        * type --> the data type [ str | int | float | bool ]
+        * required --> required in the standards [ True | False ]
+        * style --> style of the string
+        * units --> units of the attribute, must be a string
+        
+        :return: DESCRIPTION
+        :rtype: TYPE
+        
+        :Example: ::
+            
+            >>> extra = {'type': str, 'style': 'name',
+            >>> ...      'required': False, 'units': None}
+            >>> r = Run()
+            >>> r.add_base_attribute('weather', extra)
+
+        """
+        
+        self._attr_dict.update({name: value_dict})
 
     def _validate_type(self, value, v_type, style=None):
         """
@@ -279,12 +307,6 @@ class Base():
                     return '{0}'.format(value)
             elif isinstance(value, list):
                 return value
-                # if v_type is str:
-                #     return ','.join(value)
-                # elif v_type is float:
-                #     return ','.join([str(ff) for ff in value])
-                # elif v_type is bool:
-                #     return ','.join([str(bb).lower() for bb in value])
                 
             else:
                 raise MTSchemaError(msg.format(v_type, type(value)))

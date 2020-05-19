@@ -22,6 +22,9 @@ import sys
 
 from pathlib import Path
 from copy import deepcopy
+from collections.abc import MutableMapping
+from collections import OrderedDict
+from operator import itemgetter
 
 from mth5.standards import CSV_FN_PATHS
 from mth5.utils.exceptions import MTSchemaError
@@ -70,9 +73,9 @@ def validate_header(header, attribute=False):
         required_keys = [key for key in REQUIRED_KEYS if key != 'attribute']
         if sorted(header) != sorted(required_keys):
             logger.error('CSV Header is not correct, must include {0}'.format(
-                REQUIRED_KEYS))
+                required_keys))
             raise MTSchemaError('CSV header must inlcude {0}'.format(
-                REQUIRED_KEYS))
+                required_keys))
     logger.info('Validate header')
     return header
 
@@ -286,74 +289,68 @@ def from_csv(csv_fn):
 
         attribute_dict[key_name] = validate_value_dict(line_dict)
 
-    return attribute_dict
+    return BaseDict(**attribute_dict)
 
-def add_attr_dict(original_dict, new_dict, name):
-    """
-    Add an attribute dictionary from another container
-
-    Must be of the form:
-        * {attribute_name:{'type':data_type
-                           'required': [True | False ],
-                           'style': string_style,
-                           'units': units of attribute_name]}
-
-    :param original_dict: original dictionary to append to
-    :type original_dict: dictionary
-
-    :param new_dict: new dictionary to append
-    :type new_dict: dictionary
-
-    :param name: categorical name of new dictionary, name.key, if None
-                 then no name is added.
-    :type name: string
-    :return: dictionary with appended key, values
-    :rtype: dictionary
-
-    :Example: ::
-
-        >>> run_dict = from_csv(get_level_fn('run'))
-        >>> extra = {'weather':{'type': str, 'style': 'name',
-        >>> ...                 'required': False, 'units': None}}
-        >>> run_dict = add_attr_dict(run_dict, extra, None)
-
-    """
-
-    for key, v_dict in new_dict.items():
-        if name is not None:
-            key = '{0}.{1}'.format(name, key)
-        original_dict[key] = validate_value_dict(v_dict)
-
-    return original_dict
-
-def add_attr_to_dict(original_dict, key, value_dict):
-    """
-    Add an attribute to an existing attribute dictionary
-
-    :param original_dict: original dictionary to append to
-    :type original_dict: dictionary
-
-    :param key: new dictionary to append
-    :type key: string
-
-    :param value_dict: dictionary describing the attribute, must have keys
-                       ['type', 'required', 'style', 'units']
-    :type name: string
-
-    * type --> the data type [ str | int | float | bool ]
-    * required --> required in the standards [ True | False ]
-    * style --> style of the string
-    * units --> units of the attribute, must be a string
-
-    :return: dictionary with appended key, values
-    :rtype: dictionary
-
-    """
-
-    original_dict[key] = validate_value_dict(value_dict)
-
-    return original_dict
-
+# =============================================================================
+# base dictionary
+# =============================================================================
+class BaseDict(MutableMapping):
+    
+    def __init__(self, *args, **kwargs):
+        self.update(dict(*args, **kwargs))
+        
+    def __setitem__(self, key, value):
+        self.__dict__[key] = validate_value_dict(value)
+        
+    def __getitem__(self, key):
+        return self.__dict__[key]
+    
+    def __delitem__(self, key):
+        del self.__dict__[key]
+        
+    def __iter__(self):
+        return iter(self.__dict__)
+    
+    def __len__(self):
+        return len(self.__dict__)
+    
+    # The final two methods aren't required, but nice for demo purposes:
+    def __str__(self):
+        """returns simple dict representation of the mapping"""
+        s = sorted(self.__dict__.items(), key=itemgetter(0))
+        return str(s)
+    
+    def __repr__(self):
+        """echoes class, id, & reproducible representation in the REPL"""
+        return '{}, BaseDict({})'.format(super(BaseDict, self).__repr__(), 
+                                  self.__dict__)
+    
+    def add_dict(self, add_dict, name=None):
+        """
+        Add a dictionary to.  If name is input it is added to the keys of
+        the input dictionary
+        
+        :param add_dict: dictionary to add
+        :type add_dict: dictionary, or MutableMapping
+        :param name: name to add to keys
+        :type name: string or None
+    
+        :Example: :: 
+            
+            >>> s_obj = Standards()
+            >>> run_dict = s_obj.run_dict
+            >>> run_dict.add_dict(s_obj.declination_dict, 'declination')
+            
+        """
+        assert isinstance(add_dict, (dict, MutableMapping))
+        
+        if name:
+            add_dict = dict([('{0}.{1}'.format(name, key), value) for 
+                             key, value in add_dict.items()])
+        self.update(**add_dict)
+            
+    def copy(self):
+        return deepcopy(self)
 
 class Standards():
     """
@@ -420,32 +417,25 @@ class Standards():
     @property
     def location_dict(self):
         location_dict = from_csv(get_level_fn('location'))
-        location_dict = add_attr_dict(location_dict,
-                                      self.declination_dict,
-                                      'declination')
+        location_dict.add_dict(self.declination_dict, 'declination')
+        
         return location_dict
 
     @property
     def provenance_dict(self):
         provenance_dict = from_csv(get_level_fn('provenance'))
-        provenance_dict = add_attr_dict(provenance_dict,
-                                        self.software_dict,
-                                        'software')
-        provenance_dict = add_attr_dict(provenance_dict,
-                                        self.person_dict,
-                                        'person')
+        provenance_dict.add_dict(self.software_dict, 'software')
+        provenance_dict.add_dict(self.person_dict, 'person')
         return provenance_dict
 
 
     @property
     def datalogger_dict(self):
         dl_dict = from_csv(get_level_fn('datalogger'))
-        dl_dict = add_attr_dict(dl_dict, self.instrument_dict, None)
-        dl_dict = add_attr_dict(dl_dict, self.timing_system_dict,
-                                'timing_system')
-        dl_dict = add_attr_dict(dl_dict, self.software_dict, 'firmware')
-        dl_dict = add_attr_dict(dl_dict, self.battery_dict,
-                                'power_source')
+        dl_dict.add_dict( self.instrument_dict)
+        dl_dict.add_dict( self.timing_system_dict,'timing_system')
+        dl_dict.add_dict( self.software_dict, 'firmware')
+        dl_dict.add_dict( self.battery_dict, 'power_source')
         return dl_dict
 
     @property
@@ -453,30 +443,25 @@ class Standards():
         elec_dict = from_csv(get_level_fn('electrode'))
         for key, v_dict in self.location_dict.items():
             if 'declination' not in key:
-                elec_dict = add_attr_to_dict(elec_dict, key, v_dict)
+                elec_dict.update({key: v_dict})
         return elec_dict
 
     @property
     def survey_dict(self):
         survey_dict = from_csv(get_level_fn('survey'))
-        survey_dict = add_attr_dict(survey_dict, self.person_dict,
-                                    'acquired_by')
+        survey_dict.add_dict(self.person_dict, 'acquired_by')
         return survey_dict
 
     @property
     def station_dict(self):
         station_dict = from_csv(get_level_fn('station'))
-        station_dict = add_attr_dict(station_dict, self.location_dict, None)
+        station_dict.add_dict(self.location_dict)
         for key, v_dict in self.person_dict.items():
             if key in ['author_s', 'email_s']:
-                station_dict = add_attr_to_dict(station_dict,
-                                                'acquired_by.{0}'.format(key),
-                                                v_dict)
+                station_dict.update({'acquired_by.{0}'.format(key): v_dict})
 
-        station_dict = add_attr_dict(station_dict, self.software_dict,
-                                     'provenance.software')
-        station_dict = add_attr_dict(station_dict, self.person_dict,
-                                     'provenance.submitter')
+        station_dict.add_dict(self.software_dict, 'provenance.software')
+        station_dict.add_dict(self.person_dict, 'provenance.submitter')
         return station_dict
 
     @property
@@ -486,13 +471,11 @@ class Standards():
     @property
     def channel_dict(self):
         channel_dict = from_csv(get_level_fn('channel'))
-        channel_dict = add_attr_dict(channel_dict, self.data_quality_dict,
-                                    'data_quality')
-        channel_dict = add_attr_dict(channel_dict, self.filter_dict, 'filter')
+        channel_dict.add_dict(self.data_quality_dict, 'data_quality')
+        channel_dict.add_dict(self.filter_dict, 'filter')
         for key, v_dict in self.location_dict.items():
             if 'declination' not in key:
-                channel_dict = add_attr_to_dict(channel_dict, key,
-                                                v_dict)
+                channel_dict.update({key: v_dict})
         return channel_dict
 
     @property
@@ -502,25 +485,18 @@ class Standards():
     @property
     def electric_dict(self):
         electric_dict = from_csv(get_level_fn('electric'))
-        electric_dict = add_attr_dict(electric_dict,
-                                      from_csv(get_level_fn('channel')),
-                                      None)
-        electric_dict = add_attr_dict(electric_dict, self.data_quality_dict,
-                                      'data_quality')
-        electric_dict = add_attr_dict(electric_dict, self.filter_dict, 'filter')
-        electric_dict = add_attr_dict(electric_dict, self.electrode_dict,
-                                      'positive')
-        electric_dict = add_attr_dict(electric_dict, self.electrode_dict,
-                                      'negative')
+        electric_dict.add_dict(from_csv(get_level_fn('channel')))
+        electric_dict.add_dict( self.data_quality_dict, 'data_quality')
+        electric_dict.add_dict(self.filter_dict, 'filter')
+        electric_dict.add_dict(self.electrode_dict, 'positive')
+        electric_dict.add_dict(self.electrode_dict, 'negative')
         return electric_dict
 
     @property
     def magnetic_dict(self):
         magnetic_dict = from_csv(get_level_fn('magnetic'))
-        magnetic_dict = add_attr_dict(magnetic_dict, self.channel_dict,
-                                      None)
-        magnetic_dict = add_attr_dict(magnetic_dict, self.instrument_dict,
-                                      'sensor')
+        magnetic_dict.add_dict(self.channel_dict)
+        magnetic_dict.add_dict(self.instrument_dict, 'sensor')
         return magnetic_dict
 # =============================================================================
 # Make ATTR_DICT
