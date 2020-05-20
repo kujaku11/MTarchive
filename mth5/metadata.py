@@ -48,6 +48,7 @@ Created on Sun Apr 24 20:50:41 2020
 import json
 import pandas as pd
 import numpy as np
+import logging
 
 from collections import OrderedDict
 from operator import itemgetter
@@ -76,6 +77,7 @@ class Base():
 
         self.notes_s = None
         self._attr_dict = {}
+        self.logger = logging.getLogger(__name__)
 
         for name, value in kwargs.items():
             self.set_attr_from_name(name, value)
@@ -317,7 +319,12 @@ class Base():
         """
         meta_dict = {}
         for name in list(self._attr_dict.keys()):
-            meta_dict[name] = self.get_attr_from_name(name)
+            try:
+                meta_dict[name] = self.get_attr_from_name(name)
+            except AttributeError as error:
+                print('{0} setting to none'.format(error,
+                                                                      name))
+                meta_dict[name] = None
 
         # sort the output dictionary for convience
         key = itemgetter(0)

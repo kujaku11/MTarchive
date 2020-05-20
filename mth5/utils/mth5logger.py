@@ -17,6 +17,9 @@ FORMATTER = logging.Formatter("%(asctime)s — %(name)s — %(levelname)s — %(
 CONF_PATH = Path(os.path.dirname(os.path.abspath(__file__)))
 CONF_FILE = Path.joinpath(CONF_PATH, 'logging_config.yaml')
 
+if not CONF_FILE.exists():
+    CONF_FILE = None
+
 class MTH5Logger():
     @staticmethod
     def load_config():

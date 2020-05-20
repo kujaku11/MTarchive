@@ -23,12 +23,10 @@ import sys
 from pathlib import Path
 from copy import deepcopy
 from collections.abc import MutableMapping
-from collections import OrderedDict
 from operator import itemgetter
 
 from mth5.standards import CSV_FN_PATHS
 from mth5.utils.exceptions import MTSchemaError
-
 
 logger = logging.getLogger(__name__)
 # =============================================================================
@@ -61,7 +59,10 @@ def validate_header(header, attribute=False):
     :rtype: list
 
     """
-    assert(isinstance(header, list)), 'header must be a list'
+    if not isinstance(header, list):
+        msg = 'Validate Header: input header must be a list, not {0}'.format(header)
+        logger.error(msg)
+        raise MTSchemaError(msg)
 
     if attribute:
         if sorted(header) != sorted(REQUIRED_KEYS):
@@ -76,7 +77,6 @@ def validate_header(header, attribute=False):
                 required_keys))
             raise MTSchemaError('CSV header must inlcude {0}'.format(
                 required_keys))
-    logger.info('Validate header')
     return header
 
 
@@ -99,9 +99,16 @@ def validate_required(value):
             return False
         elif value.lower() in ['true']:
             return True
+        else:
+            msg = ('Validate Required: Required value must be True or False, '+
+                   'not {0}'.format(value)) 
+            logger.error(msg)
+            raise MTSchemaError(msg)
     else:
-        logger.error('Required value must be True or False')
-        raise MTSchemaError("'required' must be bool [ True | False ]")
+        msg = ('Validate Required: Required value must be True or False, '+
+                   'not {0}'.format(value)) 
+        logger.error(msg)
+        raise MTSchemaError(msg)
 
 def validate_type(value):
     """
@@ -133,10 +140,15 @@ def validate_type(value):
             return 'boolean'
 
         else:
-            logging.error("'type' must be a [ int | float | str | bool ]"+\
-                                " Not {0}".format(value))
-            raise MTSchemaError("'type' must be a [ int | float | str | bool ]"+\
-                                " Not {0}".format(value))
+            msg = ("Validate Type: 'type' must be type [ int | float " +
+                   "| str | bool ].  Not {0}".format(value))
+            logger.error(msg)
+            raise MTSchemaError(msg)
+    else:
+        msg = ("Validate Type: 'type' must be type [ int | float " +
+               "| str | bool ] or string.  Not {0}".format(value))
+        logger.error(msg)
+        raise MTSchemaError(msg)
 
 def validate_units(value):
     """
@@ -159,8 +171,10 @@ def validate_units(value):
         else:
             return value.lower()
     else:
-        logger.error("'units' must be a string or None")
-        raise MTSchemaError("'units' must be a string or None")
+        msg = ("Validate Units: 'units' must be a string or None." +
+               " Not {0}".format(value))
+        logger.error(msg)
+        raise MTSchemaError(msg)
 
 def validate_style(value):
     """
@@ -175,10 +189,16 @@ def validate_style(value):
 
     """
 
-    assert isinstance(value, str), "'value' must be a string"
+    if not isinstance(value, str):
+        msg = "Validate Style: 'value' must be a string. Not {0}".format(value)
+        logger.error(msg)
+        raise MTSchemaError(msg)
+        
     if value.lower() not in ACCEPTED_STYLES:
-        raise MTSchemaError("style {0} unknown, must be {1}".format(
-            value, ACCEPTED_STYLES) + '. Not {0}'.format(value))
+        msg = ("Validate Style: style {0} unknown, must be {1}".format(
+                value, ACCEPTED_STYLES) + '. Not {0}'.format(value))
+        logger.error(msg)
+        raise MTSchemaError(msg)
 
     return value.lower()
 
@@ -195,11 +215,15 @@ def validate_value_dict(value_dict):
     :rtype: TYPE
 
     """
-    assert isinstance(value_dict, dict), "Input must be a dictionary"
+    if not isinstance(value_dict, dict):
+        msg = ("Validate Value Dict: Input must be a dictionary," +
+               " not {0}".format(value_dict))
+        logger.error(msg)
+        raise MTSchemaError(msg)
 
     header = validate_header(list(value_dict.keys()))
+    # loop over validating functions in this module
     for key in header:
-
         value_dict[key] = getattr(sys.modules[__name__],
                                   'validate_{0}'.format(key))(value_dict[key])
 
@@ -248,10 +272,13 @@ def get_level_fn(level):
     for fn in CSV_FN_PATHS:
         if level in fn.stem:
             if not fn.exists():
-                logger.error('{0} does not exist'.format(fn))
-                raise MTSchemaError("Can not find file {0}".format(fn))
-            logger.info('Found standards csv file {0}'.format(fn))
+                msg = '{0} does not exist for level={1}'.format(fn, level)
+                logger.error(msg)
+                raise MTSchemaError(msg)
+            logger.debug('Found standards csv file {0} for level={1}'.format(fn,
+                                                                             level))
             return fn
+    logger.debug('Cound not find CSV file for {0}'.format(level))
     return None
 
 def from_csv(csv_fn):
@@ -273,7 +300,7 @@ def from_csv(csv_fn):
         csv_fn = Path(csv_fn)
 
     with open(csv_fn, 'r') as fid:
-        logger.info('reading {0}'.format(csv_fn))
+        logger.debug('reading {0}'.format(csv_fn))
         lines = fid.readlines()
 
     header = validate_header([ss.strip().lower() for ss in
@@ -295,6 +322,34 @@ def from_csv(csv_fn):
 # base dictionary
 # =============================================================================
 class BaseDict(MutableMapping):
+    """
+    BaseDict is a convenience class that can help the metadata dictionaries 
+    act like classes so you can access variables by .name or [name]
+    
+    .. note:: If the attribute has a . in the name then you will not be able
+              to access that attribute by class.name.name  You will get an 
+              attribute error.  You need to access the attribute like a 
+              dictionary class['name.name']
+              
+    You can add an attribute by:
+        
+        >>> b = BaseDict()
+        >>> b.update({name: value_dict})
+        
+    Or you can add a whole dictionary:
+        
+        >>> b.add_dict(ATTR_DICT['run'])
+        
+    All attributes have a descriptive dictionary of the form:
+        
+        >>> {'type': data type, 'required': [True | False],
+        >>> ... 'style': 'string style', 'units': attribute units}
+    
+        * **type** --> the data type [ str | int | float | bool ]
+        * **required** --> required in the standards [ True | False ]
+        * **style** --> style of the string
+        * **units** --> units of the attribute, must be a string
+    """
     
     def __init__(self, *args, **kwargs):
         self.update(dict(*args, **kwargs))
@@ -302,7 +357,7 @@ class BaseDict(MutableMapping):
     def __setitem__(self, key, value):
         self.__dict__[key] = validate_value_dict(value)
         
-    def __getitem__(self, key):
+    def __getitem__(self, key):         
         return self.__dict__[key]
     
     def __delitem__(self, key):
@@ -317,8 +372,9 @@ class BaseDict(MutableMapping):
     # The final two methods aren't required, but nice for demo purposes:
     def __str__(self):
         """returns simple dict representation of the mapping"""
-        s = sorted(self.__dict__.items(), key=itemgetter(0))
-        return str(s)
+        s = list(sorted(self.__dict__.items(), key=itemgetter(0)))
+        s = ['{0}: {1}'.format(k, v) for k, v in s]
+        return '\n'.join(s)
     
     def __repr__(self):
         """echoes class, id, & reproducible representation in the REPL"""
@@ -368,7 +424,7 @@ class Standards():
         self.accepted_styles = ACCEPTED_STYLES
 
         self.logger = logger
-        self.logger.info('='*50)
+        self.logger.debug('Initiating Standards')
 
     @property
     def declination_dict(self):
