@@ -19,6 +19,7 @@ Created on Wed Apr 29 11:11:31 2020
 # =============================================================================
 import logging
 import sys
+import re
 
 from pathlib import Path
 from copy import deepcopy
@@ -80,6 +81,45 @@ def validate_header(header, attribute=False):
     return header
 
 
+def validate_attribute(name):
+    """
+    validate the name to conform to the standards
+    name must be:
+        * all lower case {a-z; 1-9}
+        * must start with a letter
+        * categories are separated by '.'
+        * words separated by '_'
+
+    {object}.{name_name}
+
+    '/' will be replaced with '.'
+    converted to all lower case
+
+    :param name: name name
+    :type name: string
+    :return: valid name name
+    :rtype: string
+
+    """
+    
+    if not isinstance(name, str):
+        msg = 'attribute name must be a string, not {0}'.format(type(name))
+        logger.error(msg)
+        raise MTSchemaError(msg)
+        
+    name = name.lower()
+    logger.debug('converted attribute {0} to lower case'.format(name))
+    if '/' in name:
+        name = name.replace('/', '.')
+        logger.debug("replaced '/' with '.' --> {0}".format(name))
+        
+    if re.match('^[0-9]', name):
+        msg = 'attribute name cannot start with a number, {0}'.format(name)
+        logger.error(msg)
+        raise MTSchemaError(msg)
+        
+    return name
+        
 def validate_required(value):
     """
 
@@ -188,7 +228,10 @@ def validate_style(value):
     :rtype: string
 
     """
-
+    # if None then return the generic name style
+    if value is None:
+        return 'name'
+    
     if not isinstance(value, str):
         msg = "'value' must be a string. Not {0}".format(value)
         logger.error(msg)
@@ -311,7 +354,7 @@ def from_csv(csv_fn):
         line_dict = dict([(key, ss.strip()) for key, ss in
                           zip(header, line.strip().split(','))])
 
-        key_name = line_dict['attribute']
+        key_name = validate_attribute(line_dict['attribute'])
         line_dict.pop('attribute')
 
         attribute_dict[key_name] = validate_value_dict(line_dict)

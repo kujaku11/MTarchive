@@ -54,7 +54,7 @@ import re
 from collections import OrderedDict
 from operator import itemgetter
 
-from mth5.standards.schema import ATTR_DICT
+from mth5.standards.schema import ATTR_DICT, validate_attribute
 from mth5.utils.mttime import MTime
 from mth5.utils.exceptions import MTSchemaError
 
@@ -96,7 +96,7 @@ class Base():
 
     def _validate_name(self, name):
         """
-        validate the name name to conform to the standards
+        validate the name to conform to the standards
         name must be:
             * all lower case {a-z; 1-9}
             * must start with a letter
@@ -114,19 +114,7 @@ class Base():
         :rtype: string
 
         """
-        if not isinstance(name, str):
-            msg = "name must be a string. not {0}".format(name)
-            self.logger.error(msg)
-            raise MTSchemaError(msg)
-            
-        name = name.lower().replace('/', '.')
-        self.logger.debug("replaced '/' with '.' in name={0}".format(name))
-        if re.search('^[0-9]', name):
-            msg = ('name must start with a character {a-z}' +
-                   ', not {0}'.format(name[0]))
-            self.logger.error(msg)
-            raise MTSchemaError(msg)
-        return name
+        return validate_attribute(name)
 
     def __setattr__(self, name, value):
         """

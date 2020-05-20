@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """
+Tests for Metadata module
+
 Created on Tue Apr 28 18:08:40 2020
 
 @author: jpeacock
