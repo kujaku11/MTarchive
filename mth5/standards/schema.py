@@ -60,7 +60,7 @@ def validate_header(header, attribute=False):
 
     """
     if not isinstance(header, list):
-        msg = 'Validate Header: input header must be a list, not {0}'.format(header)
+        msg = 'input header must be a list, not {0}'.format(header)
         logger.error(msg)
         raise MTSchemaError(msg)
 
@@ -100,12 +100,12 @@ def validate_required(value):
         elif value.lower() in ['true']:
             return True
         else:
-            msg = ('Validate Required: Required value must be True or False, '+
+            msg = ('Required value must be True or False, '+
                    'not {0}'.format(value)) 
             logger.error(msg)
             raise MTSchemaError(msg)
     else:
-        msg = ('Validate Required: Required value must be True or False, '+
+        msg = ('Required value must be True or False, '+
                    'not {0}'.format(value)) 
         logger.error(msg)
         raise MTSchemaError(msg)
@@ -140,12 +140,12 @@ def validate_type(value):
             return 'boolean'
 
         else:
-            msg = ("Validate Type: 'type' must be type [ int | float " +
+            msg = ("'type' must be type [ int | float " +
                    "| str | bool ].  Not {0}".format(value))
             logger.error(msg)
             raise MTSchemaError(msg)
     else:
-        msg = ("Validate Type: 'type' must be type [ int | float " +
+        msg = ("'type' must be type [ int | float " +
                "| str | bool ] or string.  Not {0}".format(value))
         logger.error(msg)
         raise MTSchemaError(msg)
@@ -171,7 +171,7 @@ def validate_units(value):
         else:
             return value.lower()
     else:
-        msg = ("Validate Units: 'units' must be a string or None." +
+        msg = ("'units' must be a string or None." +
                " Not {0}".format(value))
         logger.error(msg)
         raise MTSchemaError(msg)
@@ -190,12 +190,12 @@ def validate_style(value):
     """
 
     if not isinstance(value, str):
-        msg = "Validate Style: 'value' must be a string. Not {0}".format(value)
+        msg = "'value' must be a string. Not {0}".format(value)
         logger.error(msg)
         raise MTSchemaError(msg)
         
     if value.lower() not in ACCEPTED_STYLES:
-        msg = ("Validate Style: style {0} unknown, must be {1}".format(
+        msg = ("style {0} unknown, must be {1}".format(
                 value, ACCEPTED_STYLES) + '. Not {0}'.format(value))
         logger.error(msg)
         raise MTSchemaError(msg)
@@ -216,7 +216,7 @@ def validate_value_dict(value_dict):
 
     """
     if not isinstance(value_dict, dict):
-        msg = ("Validate Value Dict: Input must be a dictionary," +
+        msg = ("Input must be a dictionary," +
                " not {0}".format(value_dict))
         logger.error(msg)
         raise MTSchemaError(msg)
@@ -562,3 +562,4 @@ m_obj = Standards()
 keys = [fn.stem for fn in CSV_FN_PATHS]
 ATTR_DICT = dict([(key, deepcopy(getattr(m_obj, '{0}_dict'.format(key))))
                   for key in keys])
+logger.debug("Successfully made ATTR_DICT")

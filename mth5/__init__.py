@@ -20,7 +20,7 @@ if config_file is not None:
     logger.info('Started MTH5')
     logger.debug('Beginning debug mode for MTH5')
     handler = logger.root.handlers[1]
-    logger.warning('Log file can be found at {0}'.format(handler.baseFilename))
+    logger.info('Log file can be found at {0}'.format(handler.baseFilename))
 
 else:
     formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")

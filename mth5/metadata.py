@@ -49,6 +49,7 @@ import json
 import pandas as pd
 import numpy as np
 import logging
+import re
 
 from collections import OrderedDict
 from operator import itemgetter
@@ -77,7 +78,8 @@ class Base():
 
         self.notes_s = None
         self._attr_dict = {}
-        self.logger = logging.getLogger(__name__)
+        self.logger = logging.getLogger('{0}.{1}'.format(__name__, 
+                                                     self.__class__.__name__))
 
         for name, value in kwargs.items():
             self.set_attr_from_name(name, value)
@@ -112,10 +114,18 @@ class Base():
         :rtype: string
 
         """
-        assert(isinstance(name, str)), "name must be a string"
+        if not isinstance(name, str):
+            msg = "name must be a string. not {0}".format(name)
+            self.logger.error(msg)
+            raise MTSchemaError(msg)
+            
         name = name.lower().replace('/', '.')
-        if name[0] in [str(ii) for ii in range(10)]:
-            raise MTSchemaError('name name must start with a character {a-z}')
+        self.logger.debug("replaced '/' with '.' in name={0}".format(name))
+        if re.search('^[0-9]', name):
+            msg = ('name must start with a character {a-z}' +
+                   ', not {0}'.format(name[0]))
+            self.logger.error(msg)
+            raise MTSchemaError(msg)
         return name
 
     def __setattr__(self, name, value):
@@ -127,7 +137,7 @@ class Base():
         # setter.
         skip_list = ['latitude_d', 'longitude_d',  'elevation_d',
                      'start_date_s', 'end_date_s', 'start_s', 'end_s',
-                     'name_s', 'applied_b']
+                     'name_s', 'applied_b', 'logger']
         if hasattr(self, '_attr_dict'):
             if name[0] != '_':
                 if not name in skip_list: 
