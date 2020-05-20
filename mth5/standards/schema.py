@@ -35,7 +35,7 @@ logger = logging.getLogger(__name__)
 ACCEPTED_STYLES = ['name', 'url', 'email', 'number', 'date',
                    'time', 'date_time', 'net_code', 'name_list']
 
-REQUIRED_KEYS = ['attribute', 'type', 'required', 'style', 'units']
+REQUIRED_KEYS = ['attribute', 'type', 'required', 'units', 'style']
 
 # =============================================================================
 # Helper functions
@@ -318,6 +318,36 @@ def from_csv(csv_fn):
 
     return BaseDict(**attribute_dict)
 
+def to_csv(level_dict, csv_fn):
+    """
+    write dictionary to csv file
+    
+    :param level_dict: DESCRIPTION
+    :type level_dict: TYPE
+    :param csv_fn: DESCRIPTION
+    :type csv_fn: TYPE
+    :return: DESCRIPTION
+    :rtype: TYPE
+
+    """
+    
+    if not isinstance(csv_fn, Path):
+        csv_fn = Path(csv_fn)
+        
+    # sort dictionary first
+    lines = [','.join(REQUIRED_KEYS)]
+    for key in sorted(list(level_dict.keys())):
+        line = [key]
+        for rkey in REQUIRED_KEYS[1:]:
+            line.append('{0}'.format(level_dict[key][rkey]))
+        lines.append(','.join(line))
+    
+    with csv_fn.open('w') as fid:
+        fid.write('\n'.join(lines))
+    logger.info('Wrote dictionary to {0}'.format(csv_fn))
+    return csv_fn
+    
+
 # =============================================================================
 # base dictionary
 # =============================================================================
@@ -407,7 +437,8 @@ class BaseDict(MutableMapping):
             
     def copy(self):
         return deepcopy(self)
-
+    
+    
 class Standards():
     """
     Helper container to read in csv files and make the appropriate
