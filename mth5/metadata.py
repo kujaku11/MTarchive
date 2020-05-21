@@ -367,17 +367,51 @@ class Base():
         :type meta_dict: dictionary
         
         """
-        assert isinstance(meta_dict, (dict, OrderedDict)), "Input must be a dictionary" 
+        if not isinstance(meta_dict, (dict, OrderedDict)):
+            msg = "Input must be a dictionary not {0}".format(type(meta_dict))
+            self.logger.error(msg)
+            raise MTSchemaError(msg)
+            
         for name, value in meta_dict.items():
             self.set_attr_from_name(name, value)
                 
-    def to_json(self):
+    def to_json(self, structured=False):
         """
         Write a json string from a given object, taking into account other
         class objects contained within the given object.
         """
-
-        return json.dumps(self.to_dict(), cls=NumpyEncoder)
+        if not structured:
+            return json.dumps(self.to_dict(), cls=NumpyEncoder)
+        
+        elif structured:
+            meta_dict = self.to_dict()
+            structured_dict = {}
+            for key, value in meta_dict.items():
+                if '.' in key:
+                    category, names = key.split('.', 1)
+                    n = names.count('.')
+                    try:
+                        category_dict = structured_dict[category]
+                    except KeyError:
+                        category_dict = {}
+                    n = names.count('.')
+                    if n == 0:
+                        category_dict[names] = value
+                        structured_dict[category] = category_dict
+                    elif n == 1:
+                        name, sub = names.split('.')
+                        try:
+                            name_dict = category_dict[name]
+                        except KeyError:
+                            name_dict = {}
+                        name_dict[sub] = value
+                        category_dict[name] = name_dict
+                        structured_dict[category] = category_dict
+                    else:
+                        raise ValueError('Have not implemented 3 levels yet')
+                else:
+                    structured_dict[key] = value
+            return json.dumps(structured_dict, cls=NumpyEncoder)
 
     def from_json(self, json_str):
         """
@@ -387,8 +421,27 @@ class Base():
         :type json_str: string
 
         """
-        assert isinstance(json_str, str), "Input must be valid JSON string"
-        self.from_dict(json.loads(json_str))
+        if not isinstance(json_str, str):
+            msg = "Input must be valid JSON string not {0}".format(
+                type(json_str))
+            self.logger.error(msg)
+            raise MTSchemaError(msg)
+        read_dict = json.loads(json_str)
+        meta_dict = {}
+        for key, value in read_dict.items():
+            if isinstance(value, dict):
+                for key_01, value_01 in value.items():
+                    if isinstance(value_01, dict):
+                        for key_02, value_02 in value_01.items():
+                            m_key = '.'.join([key, key_01, key_02])
+                            meta_dict[m_key] = value_02
+                    else:
+                        m_key = '.'.join(key, key_01)
+                        meta_dict[m_key] = value_01
+            else:
+                meta_dict[key] = value
+        
+        self.from_dict(meta_dict)
 
     def from_series(self, pd_series):
         """
