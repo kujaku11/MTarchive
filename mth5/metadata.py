@@ -130,6 +130,8 @@ class Base():
         if hasattr(self, '_attr_dict'):
             if name[0] != '_':
                 if not name in skip_list: 
+                    self.logger.debug('Setting {0} to {1}'.format(name, 
+                                                                  value))
                     v_type = self._get_standard_type(name)
                     value = self._validate_type(value, v_type)
 
@@ -145,9 +147,11 @@ class Base():
             return standards['type']
         except KeyError:
             if name[0] != '_':
-                msg = ('{0} is not defined in the standards. '+\
-                      ' Assuming type and style are correct')
-                self.logger.info(msg)
+                msg = ('{0} is not defined in the standards. ' +
+                      ' Should add attribute information with ' +
+                      'add_base_attribute if the attribute is going to ' +
+                      'propogate via to_dict, to_json, to_series')
+                self.logger.info(msg.format(name))
             return None
 
     def get_attr_from_name(self, name):
@@ -275,9 +279,11 @@ class Base():
 
         else:
             msg = 'value={0} must be {1} not {2}'
+            info = 'converting {0} to {1}'
             if isinstance(value, str):
                 if v_type is int:
                     try:
+                        self.logger.debug(info.format(type(value), v_type))
                         return int(value)
                     except ValueError as error:
                         self.logger.exception(error)
@@ -285,6 +291,7 @@ class Base():
                                                        type(value)))
                 elif v_type is float:
                     try:
+                        self.logger.debug(info.format(type(value), v_type))
                         return float(value)
                     except ValueError as error:
                         self.logger.exception(error)
@@ -292,8 +299,10 @@ class Base():
                                                        v_type, type(value)))
                 elif v_type is bool:
                     if value.lower() in ['false']:
+                        self.logger.debug(info.format(value, False))
                         return False
                     elif value.lower() in ['true']:
+                        self.logger.debug(info.format(value, True))
                         return True
                     else:
                         self.logger.exception(msg.format(value, 
@@ -307,14 +316,18 @@ class Base():
             
             elif isinstance(value, int):
                 if v_type is float:
+                    self.logger.debug(info.format(type(value), v_type))
                     return float(value)
                 elif v_type is str:
+                    self.logger.debug(info.format(type(value), v_type))
                     return '{0:.0f}'.format(value)
             
             elif isinstance(value, float):
                 if v_type is int:
+                    self.logger.debug(info.format(type(value), v_type))
                     return int(value)
                 elif v_type is str:
+                    self.logger.debug(info.format(type(value), v_type))
                     return '{0}'.format(value)
             elif isinstance(value, list):
                 return value
@@ -336,8 +349,9 @@ class Base():
             try:
                 meta_dict[name] = self.get_attr_from_name(name)
             except AttributeError as error:
-                print('{0} setting to none'.format(error,
-                                                                      name))
+                msg = ('{0}: setting {1} to None.  '.format(error, name) + 
+                       'Try setting {0} to the desired value'.format(name))
+                self.logger.info(msg)
                 meta_dict[name] = None
 
         # sort the output dictionary for convience
@@ -480,14 +494,19 @@ class Location(Base):
             lat_value = float(latitude)
 
         except TypeError:
+            self.logger.info('Could not convert {0} setting to None'.format(
+                             latitude))
             return None
 
         except ValueError:
+            self.logger.debug('Latitude is a string {0}'.format(latitude))
             lat_value = self._convert_position_str2float(latitude)
 
         if abs(lat_value) >= 90:
-            print("==> The lat_value =", lat_value)
-            raise ValueError('|Latitude| > 90, unacceptable!')
+            msg = ('latitude value = {0} is unacceptable!'.format(lat_value) +
+                   '.  Must be |Latitude| > 90')
+            self.logger.error(msg)
+            raise ValueError(msg)
 
         return lat_value
 
@@ -505,14 +524,19 @@ class Location(Base):
             lon_value = float(longitude)
 
         except TypeError:
+            self.logger.info('Could not convert {0} setting to None'.format(
+                             longitude))
             return None
 
         except ValueError:
+            self.logger.debug('Longitude is a string {0}'.format(longitude))
             lon_value = self._convert_position_str2float(longitude)
 
         if abs(lon_value) >= 180:
-            print("==> The longitude_value =", lon_value)
-            raise ValueError('|Longitude| > 180, unacceptable!')
+            msg = ('longitude value = {0} is unacceptable!'.format(lon_value) +
+                   '.  Must be |longitude| > 180')
+            self.logger.error(msg)
+            raise ValueError(msg)
 
         return lon_value
 
@@ -527,6 +551,9 @@ class Location(Base):
         try:
             elev_value = float(elevation)
         except (ValueError, TypeError):
+            msg = 'Could not convert {0} to a number setting to 0'.format(
+                    elevation)
+            self.logger.info(msg)
             elev_value = 0.0
 
         return elev_value
@@ -564,6 +591,8 @@ class Location(Base):
         position_str = '{0}:{1:02.0f}:{2:05.2f}'.format(sign * int(deg),
                                                         int(minutes),
                                                         sec)
+        self.logger.debug('Converted {0} to {1}'.format(position,
+                                                        position_str))
 
         return position_str
 
@@ -595,18 +624,28 @@ class Location(Base):
             sign = -1
 
         position_value = sign * (abs(deg) + minutes / 60. + sec / 3600.)
+        
+        self.logger.debug('Converted {0} to {1}'.format(position_str, 
+                                                        position_value))
 
         return position_value
 
     def _assert_minutes(self, minutes):
-        assert 0 <= minutes < 60., \
-            'minutes needs to be <60 and >0, currently {0:.0f}'.format(minutes)
+        if not 0 <= minutes < 60.:
+            msg = ('minutes should be 0 < > 60, currently {0:.0f}'.format(
+                    minutes) + ' conversion will account for non-uniform' +
+                    'timne. Be sure to check accuracy.')
+            self.logger.warning(msg)
 
         return minutes
 
     def _assert_seconds(self, seconds):
-        assert 0 <= seconds < 60., \
-            'seconds needs to be <60 and >0, currently {0:.3f}'.format(seconds)
+        if not 0 <= seconds < 60.:
+            msg = ('seconds should be 0 < > 60, currently {0:.0f}'.format(
+                    seconds) + ' conversion will account for non-uniform' +
+                    'timne. Be sure to check accuracy.')
+            self.logger.warning(msg)
+            
         return seconds
 
 # ==============================================================================
