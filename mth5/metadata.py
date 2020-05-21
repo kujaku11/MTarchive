@@ -997,9 +997,16 @@ class Filter(Base):
         elif isinstance(names, list):
             self._name_s = [ss.strip().lower() for ss in names]
         else:
-            raise MTSchemaError('names must be a string or list of strings')
+            msg = 'names must be a string or list of strings not {0}'
+            self.logger.error(msg.format(names))
+            raise MTSchemaError(msg.format(names))
             
         check = self._check_consistency()
+        if not check:
+            self.logger.info('Filter names and applied lists are not the ' +
+                             'same size Be sure to check the inputs.' +
+                             '. names = {0}, applied = {1}'.format(
+                                 self._name_s, self._applied_b))
             
     @property
     def applied_b(self):
@@ -1014,7 +1021,9 @@ class Filter(Base):
         elif isinstance(applied, bool):
             applied_list = [applied]
         else:
-            raise MTSchemaError('names must be a string or list of strings')        
+            msg = 'applied must be a string or list of strings not {0}'
+            self.logger.error(msg.format(applied))
+            raise MTSchemaError(msg.format(applied))       
 
         bool_list = []
         for app_bool in applied_list:
@@ -1024,32 +1033,45 @@ class Filter(Base):
                 elif app_bool.lower() in ['true']:
                     bool_list.append(True)
                 else:
-                    raise MTSchemaError('Filter.applied must be [True | False]')
+                    msg = 'Filter.applied must be [True | False], not {0}'
+                    self.logger.error(msg.format(app_bool))
+                    raise MTSchemaError(msg.format(app_bool))
             elif isinstance(app_bool, bool):
                 bool_list.append(app_bool)
             else:
-                raise MTSchemaError('Filter.applied must be [True | False ]')
+                msg = 'Filter.applied must be [True | False], not {0}'
+                self.logger.error(msg.format(app_bool))
         self._applied_b = bool_list
         
         # check for consistency
         check = self._check_consistency()
+        if not check:
+            self.logger.info('Filter names and applied lists are not the ' +
+                             'same size Be sure to check the inputs.' +
+                             '. names = {0}, applied = {1}'.format(
+                                 self._name_s, self._applied_b))
                         
     def _check_consistency(self):
         # check for consistency
         if self._name_s is not None:
             if self._applied_b is None:
-                print('WARNING: Need to input applied')
+                self.logger.warning('Need to input filter.applied')
                 return False
-            if len(self._name_s) > 1:
+            if len(self._name_s) == 1:
                 if len(self._applied_b) == 1:
-                    print('Assuming all filters have been applied as {0}'.format(
-                           self._applied_b[0]))
+                    return True
+            elif len(self._name_s) > 1:
+                if len(self._applied_b) == 1:
+                    self.logger.info('Assuming all filters have been ' +
+                                     'applied as {0}'.format(self._applied_b[0]))
                     return True
                 elif len(self._applied_b) > 1:
                     if len(self._applied_b) != len(self._name_s):
-                        print('WARNING: Applied and filter names should be '+ 
-                              'the same length.  Appied={0}, names={1}'.format(
-                                  len(self._applied_b), len(self._name_s)))
+                        self.logger.waring('Applied and filter names ' +
+                                           'should be the same length. '+
+                                           'Appied={0}, names={1}'.format(
+                                               len(self._applied_b), 
+                                               len(self._name_s)))
                         return False
         else:
             return False
