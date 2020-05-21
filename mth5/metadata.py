@@ -943,7 +943,7 @@ class Provenance(Base):
 
     @creation_time_s.setter
     def creation_time_s(self, dt_str):
-        self._creation_dt.dt_object = self._creation_dt.from_str(dt_str)
+        self._creation_dt.from_str(dt_str)
 
 # ==============================================================================
 # Person
@@ -1227,7 +1227,7 @@ class Survey(Base):
 
     @start_date_s.setter
     def start_date_s(self, start_date):
-        self._start_dt.dt_object = self._start_dt.from_str(start_date)
+        self._start_dt.from_str(start_date)
 
     @property
     def end_date_s(self):
@@ -1235,7 +1235,7 @@ class Survey(Base):
 
     @end_date_s.setter
     def end_date_s(self, stop_date):
-        self._end_dt.dt_object = self._end_dt.from_str(stop_date)
+        self._end_dt.from_str(stop_date)
 
 # =============================================================================
 # Station Class
@@ -1268,7 +1268,7 @@ class Station(Location):
 
     @start_s.setter
     def start_s(self, start_date):
-        self._start_dt.dt_object = self._start_dt.from_str(start_date)
+        self._start_dt.from_str(start_date)
 
     @property
     def end_s(self):
@@ -1276,7 +1276,7 @@ class Station(Location):
 
     @end_s.setter
     def end_s(self, stop_date):
-        self._end_dt.dt_object = self._end_dt.from_str(stop_date)
+        self._end_dt.from_str(stop_date)
 
 # =============================================================================
 # Run
@@ -1309,7 +1309,7 @@ class Run(Base):
 
     @start_s.setter
     def start_s(self, start_date):
-        self._start_dt.dt_object = self._start_dt.from_str(start_date)
+        self._start_dt.from_str(start_date)
 
     @property
     def end_s(self):
@@ -1317,7 +1317,7 @@ class Run(Base):
 
     @end_s.setter
     def end_s(self, stop_date):
-        self._end_dt.dt_object = self._end_dt.from_str(stop_date)
+        self._end_dt.from_str(stop_date)
         
     @property
     def num_channels_i(self):
@@ -1368,7 +1368,7 @@ class Channel(Location):
 
     @start_s.setter
     def start_s(self, start_date):
-        self._start_dt.dt_object = self._start_dt.from_str(start_date)
+        self._start_dt.from_str(start_date)
 
     @property
     def end_s(self):
@@ -1376,7 +1376,7 @@ class Channel(Location):
 
     @end_s.setter
     def end_s(self, stop_date):
-        self._end_dt.dt_object = self._end_dt.from_str(stop_date)
+        self._end_dt.from_str(stop_date)
 
 # =============================================================================
 # Electric Channel

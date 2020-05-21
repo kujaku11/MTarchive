@@ -11,3 +11,6 @@ Created on Wed May 13 19:07:21 2020
 # Schema Error
 class MTSchemaError(Exception):
     pass
+
+class MTTimeError(Exception):
+    pass
