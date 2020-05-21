@@ -54,7 +54,8 @@ import re
 from collections import OrderedDict
 from operator import itemgetter
 
-from mth5.standards.schema import ATTR_DICT, validate_attribute
+from mth5.standards.schema import (ATTR_DICT, validate_attribute,
+                                   validate_type)
 from mth5.utils.mttime import MTime
 from mth5.utils.exceptions import MTSchemaError
 
@@ -144,9 +145,9 @@ class Base():
             return standards['type']
         except KeyError:
             if name[0] != '_':
-                msg = ('WARNING: {0} is not defined in the standards. '+\
+                msg = ('{0} is not defined in the standards. '+\
                       ' Assuming type and style are correct')
-                print(msg.format(name))
+                self.logger.info(msg)
             return None
 
     def get_attr_from_name(self, name):
@@ -251,6 +252,8 @@ class Base():
         """
         
         self._attr_dict.update({name: value_dict})
+        self.logger.debug('Added {0} to _attr_dict with {1}'.format(name,
+                                                                    value_dict))
 
     def _validate_type(self, value, v_type, style=None):
         """
@@ -259,38 +262,46 @@ class Base():
 
         if value is None or v_type is None:
             return value
-        # for some reason storing types in ATTR_DICT gets messed up
-        # when read in, so a work around is to make a dictionary
-        # locally.
-        type_dict = {'float': float,
-                     'string': str,
+
+        type_dict = {'string': str,
                      'integer': int,
+                     'float': float,
                      'boolean': bool}
-        v_type = type_dict[v_type]
+        v_type = type_dict[validate_type(v_type)]
+        
 
         if isinstance(value, v_type):
             return value
 
         else:
-            msg = ' must be {0} not {1}'
+            msg = 'value={0} must be {1} not {2}'
             if isinstance(value, str):
                 if v_type is int:
                     try:
                         return int(value)
-                    except ValueError:
-                        raise MTSchemaError(msg.format(v_type, type(value)))
+                    except ValueError as error:
+                        self.logger.exception(error)
+                        raise MTSchemaError(msg.format(value, v_type,
+                                                       type(value)))
                 elif v_type is float:
                     try:
                         return float(value)
-                    except ValueError:
-                        raise MTSchemaError(msg.format(v_type, type(value)))
+                    except ValueError as error:
+                        self.logger.exception(error)
+                        raise MTSchemaError(msg.format(value, 
+                                                       v_type, type(value)))
                 elif v_type is bool:
                     if value.lower() in ['false']:
                         return False
                     elif value.lower() in ['true']:
                         return True
                     else:
-                        raise MTSchemaError(msg.format(v_type, type(value)))
+                        self.logger.exception(msg.format(value, 
+                                                         v_type,
+                                                         type(value)))
+                        raise MTSchemaError(msg.format(value, 
+                                                       v_type,
+                                                       type(value)))
                 elif v_type is str:
                     return value
             
@@ -309,7 +320,12 @@ class Base():
                 return value
                 
             else:
-                raise MTSchemaError(msg.format(v_type, type(value)))
+                self.logger.exception(msg.format(value, 
+                                                 v_type,
+                                                 type(value)))
+                raise MTSchemaError(msg.format(value, 
+                                               v_type, 
+                                               type(value)))
                 
     def to_dict(self):
         """
