@@ -376,7 +376,7 @@ class Base():
                     for v in value:
                         if v in [True, 'true', 'True', 'TRUE']:
                             value_list.append(True)
-                        elif v in [False, 'false','False', 'FALSE']:
+                        elif v in [False, 'false', 'False', 'FALSE']:
                             value_list.append(False)
                     value = value_list
                 return value
