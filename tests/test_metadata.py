@@ -15,13 +15,39 @@ import unittest
 import json
 import numpy as np
 import pandas as pd
-from mth5 import metadata
 from collections import OrderedDict
 from operator import itemgetter
+from mth5 import metadata
+from mth5.utils.exceptions import MTSchemaError
 
 # =============================================================================
 # Tests
 # =============================================================================
+class TestBase(unittest.TestCase):
+    def setUp(self):
+        self.maxDiff = None
+        self.base_object = metadata.Base()
+        self.extra_name = 'ExtraAttribute'
+        self.extra_v_dict = {'type': str, 'required': True, 'units': 'mv',
+                             'style': 'name'}
+        self.extra_value = 10
+        
+    def test_validate_name(self):
+        self.assertEqual('name.test_case', 
+                         self.base_object._validate_name('name/TestCase'))
+        
+        self.assertRaises(MTSchemaError,
+                          self.base_object._validate_name,
+                          '0Name/Test_case')
+        
+    def test_add_attribute(self):
+        self.base_object.add_base_attribute(self.extra_name,
+                                            self.extra_value,
+                                            self.extra_v_dict)
+        self.assertEqual(self.base_object.extra_attribute, '10')
+        
+        
+
 
 class TestSurveyMetadata(unittest.TestCase):
     """
@@ -57,17 +83,23 @@ class TestSurveyMetadata(unittest.TestCase):
     
         self.survey_object = metadata.Survey()
     
-    def test_in_out(self):
+    def test_in_out_dict(self):
         self.survey_object.from_dict(self.meta_dict)
         self.assertDictEqual(self.meta_dict, self.survey_object.to_dict())
-
+        
+    def test_in_out_series(self):
         survey_series = pd.Series(self.meta_dict)
         self.survey_object.from_series(survey_series)
         self.assertDictEqual(self.meta_dict, self.survey_object.to_dict())
         
+    def test_in_out_json(self):
         survey_json = json.dumps(self.meta_dict)
         self.survey_object.from_json((survey_json))
-        self.assertDictEqual(self.meta_dict, self.survey_object.to_dict())  
+        self.assertDictEqual(self.meta_dict, self.survey_object.to_dict())
+        
+        survey_json = self.survey_object.to_json(structured=True)
+        self.survey_object.from_json(survey_json)
+        self.assertDictEqual(self.meta_dict, self.survey_object.to_dict())
         
     def test_start_date(self):
         self.survey_object.start_date_s = '2020/01/02'
@@ -134,17 +166,22 @@ class TestStationMetadata(unittest.TestCase):
               
         self.meta_dict = key =  OrderedDict(sorted(self.meta_dict.items(),
                                                    key=itemgetter(0)))
-    def test_in_out(self):
+    def test_in_out_dict(self):
         self.station_object.from_dict(self.meta_dict)
-        out_dict = self.station_object.to_dict()
-        self.assertDictEqual(self.meta_dict, out_dict)
-        
-        station_series = pd.Series(self.meta_dict)
-        self.station_object.from_series(station_series)
         self.assertDictEqual(self.meta_dict, self.station_object.to_dict())
         
-        station_json = json.dumps(self.meta_dict)
-        self.station_object.from_json((station_json))
+    def test_in_out_series(self):
+        survey_series = pd.Series(self.meta_dict)
+        self.station_object.from_series(survey_series)
+        self.assertDictEqual(self.meta_dict, self.station_object.to_dict())
+        
+    def test_in_out_json(self):
+        survey_json = json.dumps(self.meta_dict)
+        self.station_object.from_json((survey_json))
+        self.assertDictEqual(self.meta_dict, self.station_object.to_dict())
+        
+        survey_json = self.station_object.to_json(structured=True)
+        self.station_object.from_json(survey_json)
         self.assertDictEqual(self.meta_dict, self.station_object.to_dict())
         
     def test_start(self):
@@ -196,16 +233,22 @@ class TestRun(unittest.TestCase):
                                             key=itemgetter(0)))
         self.run_object = metadata.Run()
    
-    def test_in_out(self):
+    def test_in_out_dict(self):
         self.run_object.from_dict(self.meta_dict)
         self.assertDictEqual(self.meta_dict, self.run_object.to_dict())
         
-        run_series = pd.Series(self.meta_dict)
-        self.run_object.from_series(run_series)
+    def test_in_out_series(self):
+        survey_series = pd.Series(self.meta_dict)
+        self.run_object.from_series(survey_series)
         self.assertDictEqual(self.meta_dict, self.run_object.to_dict())
         
-        run_json = json.dumps(self.meta_dict)
-        self.run_object.from_json((run_json))
+    def test_in_out_json(self):
+        survey_json = json.dumps(self.meta_dict)
+        self.run_object.from_json((survey_json))
+        self.assertDictEqual(self.meta_dict, self.run_object.to_dict())
+        
+        survey_json = self.run_object.to_json(structured=True)
+        self.run_object.from_json(survey_json)
         self.assertDictEqual(self.meta_dict, self.run_object.to_dict())
         
     def test_start(self):
@@ -259,16 +302,22 @@ class TestChannel(unittest.TestCase):
         self.meta_dict = OrderedDict(sorted(self.meta_dict.items(), 
                                             key=itemgetter(0)))
         
-    def test_in_out(self):
+    def test_in_out_dict(self):
         self.channel_object.from_dict(self.meta_dict)
         self.assertDictEqual(self.meta_dict, self.channel_object.to_dict())
         
-        channel_series = pd.Series(self.meta_dict)
-        self.channel_object.from_series(channel_series)
+    def test_in_out_series(self):
+        survey_series = pd.Series(self.meta_dict)
+        self.channel_object.from_series(survey_series)
         self.assertDictEqual(self.meta_dict, self.channel_object.to_dict())
         
-        channel_json = json.dumps(self.meta_dict)
-        self.channel_object.from_json((channel_json))
+    def test_in_out_json(self):
+        survey_json = json.dumps(self.meta_dict)
+        self.channel_object.from_json((survey_json))
+        self.assertDictEqual(self.meta_dict, self.channel_object.to_dict())
+        
+        survey_json = self.channel_object.to_json(structured=True)
+        self.channel_object.from_json(survey_json)
         self.assertDictEqual(self.meta_dict, self.channel_object.to_dict())
         
 class TestElectric(unittest.TestCase):
@@ -310,23 +359,29 @@ class TestElectric(unittest.TestCase):
         self.meta_dict = OrderedDict(sorted(self.meta_dict.items(), 
                                             key=itemgetter(0)))
         
-    def test_in_out(self):
+    def test_in_out_dict(self):
         self.electric_object.from_dict(self.meta_dict)
         self.assertDictEqual(self.meta_dict, self.electric_object.to_dict())
         
-        electric_series = pd.Series(self.meta_dict)
-        self.electric_object.from_series(electric_series)
+    def test_in_out_series(self):
+        survey_series = pd.Series(self.meta_dict)
+        self.electric_object.from_series(survey_series)
         self.assertDictEqual(self.meta_dict, self.electric_object.to_dict())
         
-        electric_json = json.dumps(self.meta_dict)
-        self.electric_object.from_json((electric_json))
+    def test_in_out_json(self):
+        survey_json = json.dumps(self.meta_dict)
+        self.electric_object.from_json((survey_json))
+        self.assertDictEqual(self.meta_dict, self.electric_object.to_dict())
+        
+        survey_json = self.electric_object.to_json(structured=True)
+        self.electric_object.from_json(survey_json)
         self.assertDictEqual(self.meta_dict, self.electric_object.to_dict())
         
 
 class TestMagnetic(unittest.TestCase):
     def setUp(self):
         self.maxDiff = None
-        self.electric_object = metadata.Magnetic()
+        self.magnetic_object = metadata.Magnetic()
         self.meta_dict = OrderedDict([('azimuth_d', 0.0),
                                       ('channel_number_i', 2),
                                       ('component_s', 'hy'),
@@ -356,17 +411,23 @@ class TestMagnetic(unittest.TestCase):
         self.meta_dict = OrderedDict(sorted(self.meta_dict.items(), 
                                             key=itemgetter(0)))
         
-    def test_in_out(self):
-        self.electric_object.from_dict(self.meta_dict)
-        self.assertDictEqual(self.meta_dict, self.electric_object.to_dict())
+    def test_in_out_dict(self):
+        self.magnetic_object.from_dict(self.meta_dict)
+        self.assertDictEqual(self.meta_dict, self.magnetic_object.to_dict())
         
-        electric_series = pd.Series(self.meta_dict)
-        self.electric_object.from_series(electric_series)
-        self.assertDictEqual(self.meta_dict, self.electric_object.to_dict())
+    def test_in_out_series(self):
+        survey_series = pd.Series(self.meta_dict)
+        self.magnetic_object.from_series(survey_series)
+        self.assertDictEqual(self.meta_dict, self.magnetic_object.to_dict())
         
-        electric_json = json.dumps(self.meta_dict)
-        self.electric_object.from_json((electric_json))
-        self.assertDictEqual(self.meta_dict, self.electric_object.to_dict())
+    def test_in_out_json(self):
+        survey_json = json.dumps(self.meta_dict)
+        self.magnetic_object.from_json((survey_json))
+        self.assertDictEqual(self.meta_dict, self.magnetic_object.to_dict())
+        
+        survey_json = self.magnetic_object.to_json(structured=True)
+        self.magnetic_object.from_json(survey_json)
+        self.assertDictEqual(self.meta_dict, self.magnetic_object.to_dict())
         
 # =============================================================================
 # run

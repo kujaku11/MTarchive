@@ -227,13 +227,17 @@ class Base():
         else:
             setattr(self, name, value)
 
-    def add_base_attribute(self, name, value_dict):
+    def add_base_attribute(self, name, value, value_dict):
         """
         Add an attribute to _attr_dict so it will be included in the
         output dictionary
         
         :param name: name of attribute
         :type name: string
+        
+        :param value: value of the new attribute
+        :type value: described in value_dict
+        
         :param value_dict: dictionary describing the attribute, must have keys
                            ['type', 'required', 'style', 'units']
         :type name: string
@@ -251,13 +255,16 @@ class Base():
             >>> extra = {'type': str, 'style': 'name',
             >>> ...      'required': False, 'units': None}
             >>> r = Run()
-            >>> r.add_base_attribute('weather', extra)
+            >>> r.add_base_attribute('weather', 'fair', extra)
 
         """
-        
+        name = self._validate_name(name)
         self._attr_dict.update({name: value_dict})
+        self.set_attr_from_name(name, value)
         self.logger.debug('Added {0} to _attr_dict with {1}'.format(name,
                                                                     value_dict))
+        self.logger.debug('set {0} to {1} as type {2}'.format(name, value,
+                                                              value_dict['type']))
 
     def _validate_type(self, value, v_type, style=None):
         """
@@ -436,7 +443,7 @@ class Base():
                             m_key = '.'.join([key, key_01, key_02])
                             meta_dict[m_key] = value_02
                     else:
-                        m_key = '.'.join(key, key_01)
+                        m_key = '.'.join([key, key_01])
                         meta_dict[m_key] = value_01
             else:
                 meta_dict[key] = value
@@ -1045,6 +1052,9 @@ class Filter(Base):
     
     @name_s.setter
     def name_s(self, names):
+        if names is None:
+            return
+        
         if isinstance(names, str):
             self._name_s = [ss.strip().lower() for ss in names.split(',')]
         elif isinstance(names, list):
@@ -1067,6 +1077,9 @@ class Filter(Base):
     
     @applied_b.setter
     def applied_b(self, applied):
+        if applied is None:
+            return 
+        
         if isinstance(applied, str):
             applied_list = [ss.strip().lower() for ss in applied.split(',')] 
         elif isinstance(applied, list):
