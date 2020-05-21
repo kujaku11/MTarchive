@@ -92,7 +92,27 @@ class Base():
 
     def __repr__(self):
         return self.to_json()
-
+    
+    def __eq__(self, other):
+        if isinstance(other, Base):
+            if other.to_dict() == self.to_dict():
+                return True
+            else:
+                other_dict = other.to_dict()
+                home_dict = self.to_dict()
+                for key, value in home_dict.items():
+                    try:
+                        other_value = other_dict[key]
+                        if value != other_value:
+                            msg = ('Key is the same but values are different' +
+                                   '\n\thome[{0}] = {1} != '.format(key, value) + 
+                                   'other[{0}] = {1}'.format(key, other_value))
+                            self.logger.info(msg)
+                    except KeyError:
+                        msg = 'Cannot find {0} in other'.format(key)
+                        self.logger.info(msg)
+                        
+                return False
 
     def _validate_name(self, name):
         """
@@ -1395,12 +1415,10 @@ class Electric(Channel):
         self.ac = Diagnostic()
         self.dc = Diagnostic()
         self.units_s = None
-
+        
         super(Electric, self).__init__(**kwargs)
-
         self._attr_dict = ATTR_DICT['electric']
-
-
+        
 # =============================================================================
 # Magnetic Channel
 # =============================================================================
