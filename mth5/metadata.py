@@ -219,11 +219,25 @@ class Base():
         if '.'  in name:
             if name.count('.') == 1:
                 attr_class, attr_name = name.split('.')
-                setattr(getattr(self, attr_class), attr_name, value)
+                try:
+                    setattr(getattr(self, attr_class), attr_name, value)
+                except AttributeError as error:
+                    msg = ("must set {0} to a class in metadata first " +
+                           "before setting {1}.")
+                    self.logger.info(msg.format(attr_class, name))
+                    self.logger.exception(error)
+                    raise AttributeError(error)
             elif name.count('.') == 2:
                 attr_master, attr_class, attr_name = name.split('.')
-                setattr(getattr(getattr(self, attr_master),
-                                attr_class), attr_name, value)
+                try:
+                    setattr(getattr(getattr(self, attr_master),
+                                    attr_class), attr_name, value)
+                except AttributeError as error:
+                    msg = ("must set {0} to a class in metadata first " +
+                           "before setting {1}.")
+                    self.logger.info(msg.format(attr_class, name))
+                    self.logger.exception(error)
+                    raise AttributeError(error)
         else:
             setattr(self, name, value)
 
@@ -269,17 +283,31 @@ class Base():
     def _validate_type(self, value, v_type, style=None):
         """
         validate type from standards
+        
         """
 
-        if value is None or v_type is None:
-            return value
-
-        type_dict = {'string': str,
-                     'integer': int,
-                     'float': float,
-                     'boolean': bool}
-        v_type = type_dict[validate_type(v_type)]
+        if value is None:
+            return None
         
+        if v_type is None:
+            msg = ('standards data type is unknown, if you want to ' +
+                   'propogate this attribute using to_dict, to_json or ' +
+                   'to_series, you need to add attribute description using ' +
+                   'class function add_base_attribute.' +\
+                   'Example: \n\t>>> Run.add_base_attribute(new, 10, ' +
+                   '{"type":float, "required": True, "units": None, ' +
+                   '"style": number})')
+            self.logger.info(msg)
+            return value
+        
+        if not isinstance(v_type, type) and isinstance(v_type, str):
+            type_dict = {'string': str,
+                         'integer': int,
+                         'float': float,
+                         'boolean': bool}
+            v_type = type_dict[validate_type(v_type)]
+        else:
+            msg = 'v_type must be a string or type not {0}'.format(v_type)
 
         if isinstance(value, v_type):
             return value
@@ -337,6 +365,20 @@ class Base():
                     self.logger.debug(info.format(type(value), v_type))
                     return '{0}'.format(value)
             elif isinstance(value, list):
+                if v_type is str:
+                    value = ['{0}'.format(v) for v in value]
+                elif v_type is int:
+                    value = [int(float(v)) for v in value]
+                elif v_type is float:
+                    value = [float(v) for v in value]
+                elif v_type is bool:
+                    value_list = []
+                    for v in value:
+                        if v in [True, 'true', 'True', 'TRUE']:
+                            value_list.append(True)
+                        elif v in [False, 'false','False', 'FALSE']:
+                            value_list.append(False)
+                    value = value_list
                 return value
                 
             else:
@@ -346,6 +388,7 @@ class Base():
                 raise MTSchemaError(msg.format(value, 
                                                v_type, 
                                                type(value)))
+        return None
                 
     def to_dict(self):
         """
@@ -459,7 +502,11 @@ class Base():
         
         ..todo:: Force types in series
         """
-        assert isinstance(pd_series, pd.Series), "Input must be a Pandas.Series"
+        if not isinstance(pd_series, pd.Series):
+            msg = ("Input must be a Pandas.Series not type {0}".format(
+                    type(pd_series)))
+            self.logger.error(msg)
+            MTSchemaError(msg)
         for key, value in pd_series.iteritems():
             self.set_attr_from_name(key, value)
             
@@ -474,10 +521,9 @@ class Base():
         
         return pd.Series(self.to_dict())
 
-
-# ==============================================================================
+# ============================================================================
 # Location class, be sure to put locations in decimal degrees, and note datum
-# ==============================================================================
+# ============================================================================
 class Declination(Base):
     """
     declination container

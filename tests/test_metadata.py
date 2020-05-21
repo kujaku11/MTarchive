@@ -44,10 +44,28 @@ class TestBase(unittest.TestCase):
         self.base_object.add_base_attribute(self.extra_name,
                                             self.extra_value,
                                             self.extra_v_dict)
+        self.assertIsInstance(self.base_object.extra_attribute, 
+                              self.extra_v_dict['type'])
         self.assertEqual(self.base_object.extra_attribute, '10')
         
         
-
+    def test_validate_type(self):
+        self.assertEqual(10.0, self.base_object._validate_type('10',
+                                                               'float'))
+        self.assertEqual(10, self.base_object._validate_type('10', int))
+        self.assertEqual('10', self.base_object._validate_type(10, str))
+        self.assertEqual(True, self.base_object._validate_type('true', bool))
+        
+        number_list = [10, '11', 12.6, '13.3']
+        self.assertEqual([10, 11, 12, 13], 
+                         self.base_object._validate_type(number_list, int))
+        self.assertEqual([10., 11., 12.6, 13.3], 
+                          self.base_object._validate_type(number_list, float))
+        self.assertEqual(['10', '11', '12.6', '13.3'], 
+                          self.base_object._validate_type(number_list, str))
+        self.assertEqual([True, False], 
+                         self.base_object._validate_type(['true', 'False'],
+                                                         bool))
 
 class TestSurveyMetadata(unittest.TestCase):
     """

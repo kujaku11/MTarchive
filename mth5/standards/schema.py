@@ -101,29 +101,35 @@ def validate_attribute(name):
     :rtype: string
 
     """
-    
     if not isinstance(name, str):
         msg = 'attribute name must be a string, not {0}'.format(type(name))
         logger.error(msg)
         raise MTSchemaError(msg)
         
-    if '/' in name:
-        name = name.replace('/', '.')
-        logger.debug("replaced '/' with '.' --> {0}".format(name))
-        
-    if re.search('[A-Z].*?', name):
-        logger.debug('found capital letters in attribute {0}'.format(name))
-        logger.debug('Spliting by capital letters')
-        name = '_'.join(re.findall('.[^A-Z]*', name))
-        name = name.replace('._', '.')
-        logger.debug('result {0}'.format(name))
-        name = name.lower()
-        logger.debug('converted to lower case. Result {0}'.format(name))
-
+    original = str(name)
+    
     if re.match('^[0-9]', name):
-        msg = 'attribute name cannot start with a number, {0}'.format(name)
+        msg = 'attribute name cannot start with a number, {0}'.format(original)
         logger.error(msg)
         raise MTSchemaError(msg)
+        
+    if '/' in name:
+        name = name.replace('/', '.')
+        logger.debug("replaced '/' with '.' in {0}".format(original))
+        
+    if re.search('[A-Z].*?', name):
+        logger.debug('found capital letters in attribute {0}'.format(original))
+        logger.debug('spliting {0} by capital letters'.format(original))
+        name = '_'.join(re.findall('.[^A-Z]*', name))
+        name = name.replace('._', '.')
+        name = name.lower()
+        logger.debug('converting {0} to lower case'.format(original))
+
+
+        
+    if original != name:
+        msg = 'input name {0} converted to {1} following MTH5 standards'
+        logger.info(msg.format(original, name))
         
     return name
         
