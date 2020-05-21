@@ -17,17 +17,15 @@ handlers:
         level: DEBUG
         formatter: standard
         filename: mth5_debug.log
-        mode: 'w'
-        maxBytes: 2485760 # 10MB
+        maxBytes: 2485760 # 2MB
         backupCount: 5
     
     warning_file_handler:
         class: logging.handlers.RotatingFileHandler
         level: WARNING
         formatter: standard
-        filename: mth5_warning.log
-        mode: 'w'
-        maxBytes: 2485760 # 10MB
+        filename: mth5_error.log
+        maxBytes: 2485760 # 2MB
         backupCount: 5
 
 loggers:
