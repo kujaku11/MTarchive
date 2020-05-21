@@ -107,12 +107,19 @@ def validate_attribute(name):
         logger.error(msg)
         raise MTSchemaError(msg)
         
-    name = name.lower()
-    logger.debug('converted attribute {0} to lower case'.format(name))
     if '/' in name:
         name = name.replace('/', '.')
         logger.debug("replaced '/' with '.' --> {0}".format(name))
         
+    if re.search('[A-Z].*?', name):
+        logger.debug('found capital letters in attribute {0}'.format(name))
+        logger.debug('Spliting by capital letters')
+        name = '_'.join(re.findall('.[^A-Z]*', name))
+        name = name.replace('._', '.')
+        logger.debug('result {0}'.format(name))
+        name = name.lower()
+        logger.debug('converted to lower case. Result {0}'.format(name))
+
     if re.match('^[0-9]', name):
         msg = 'attribute name cannot start with a number, {0}'.format(name)
         logger.error(msg)

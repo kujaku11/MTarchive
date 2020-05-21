@@ -20,7 +20,7 @@ from mth5.utils.exceptions import MTSchemaError
 # =============================================================================
 class TestValidators(unittest.TestCase):
     def setUp(self):
-        self.name = 'test'
+        self.name = 'Test/StandardEnd'
         self.type = str
         self.style = 'name'
         self.header = ['attribute', 'type', 'required', 'units', 'style']
@@ -31,7 +31,7 @@ class TestValidators(unittest.TestCase):
                            'units': self.units,
                            'style': self.style}
         
-        self.name_fail = '0test'
+        self.name_fail = '0test/WeakSauce'
         self.type_fail = 'value'
         self.style_fail = 'fancy'
         self.header_fail = ['type', 'required', 'units']
@@ -96,8 +96,13 @@ class TestValidators(unittest.TestCase):
                           self.style_fail)
         
     def test_validate_attribute(self):
-        self.assertEqual('test.format_end', 
-                         schema.validate_attribute('test/format_end'))
+        self.assertEqual('test.standard_end', 
+                         schema.validate_attribute(self.name))
+        
+    def test_validate_attribue_fail(self):
+        self.assertRaises(MTSchemaError,
+                          schema.validate_attribute,
+                          self.name_fail)    
     
     
         
