@@ -554,25 +554,25 @@ class Standards():
     @property
     def location_dict(self):
         location_dict = from_csv(get_level_fn('location'))
-        location_dict.add_dict(self.declination_dict, 'declination')
+        location_dict.add_dict(self.declination_dict.copy(), 'declination')
         
         return location_dict
 
     @property
     def provenance_dict(self):
         provenance_dict = from_csv(get_level_fn('provenance'))
-        provenance_dict.add_dict(self.software_dict, 'software')
-        provenance_dict.add_dict(self.person_dict, 'person')
+        provenance_dict.add_dict(self.software_dict.copy(), 'software')
+        provenance_dict.add_dict(self.person_dict.copy(), 'person')
         return provenance_dict
 
 
     @property
     def datalogger_dict(self):
         dl_dict = from_csv(get_level_fn('datalogger'))
-        dl_dict.add_dict( self.instrument_dict)
-        dl_dict.add_dict( self.timing_system_dict,'timing_system')
-        dl_dict.add_dict( self.software_dict, 'firmware')
-        dl_dict.add_dict( self.battery_dict, 'power_source')
+        dl_dict.add_dict(self.instrument_dict.copy())
+        dl_dict.add_dict(self.timing_system_dict.copy(),'timing_system')
+        dl_dict.add_dict(self.software_dict.copy(), 'firmware')
+        dl_dict.add_dict(self.battery_dict.copy(), 'power_source')
         return dl_dict
 
     @property
@@ -586,19 +586,19 @@ class Standards():
     @property
     def survey_dict(self):
         survey_dict = from_csv(get_level_fn('survey'))
-        survey_dict.add_dict(self.person_dict, 'acquired_by')
+        survey_dict.add_dict(self.person_dict.copy(), 'acquired_by')
         return survey_dict
 
     @property
     def station_dict(self):
         station_dict = from_csv(get_level_fn('station'))
-        station_dict.add_dict(self.location_dict)
+        station_dict.add_dict(self.location_dict.copy())
         for key, v_dict in self.person_dict.items():
             if key in ['author_s', 'email_s']:
                 station_dict.update({'acquired_by.{0}'.format(key): v_dict})
 
-        station_dict.add_dict(self.software_dict, 'provenance.software')
-        station_dict.add_dict(self.person_dict, 'provenance.submitter')
+        station_dict.add_dict(self.software_dict.copy(), 'provenance.software')
+        station_dict.add_dict(self.person_dict.copy(), 'provenance.submitter')
         return station_dict
 
     @property
@@ -608,8 +608,8 @@ class Standards():
     @property
     def channel_dict(self):
         channel_dict = from_csv(get_level_fn('channel'))
-        channel_dict.add_dict(self.data_quality_dict, 'data_quality')
-        channel_dict.add_dict(self.filter_dict, 'filter')
+        channel_dict.add_dict(self.data_quality_dict.copy(), 'data_quality')
+        channel_dict.add_dict(self.filter_dict.copy(), 'filter')
         for key, v_dict in self.location_dict.items():
             if 'declination' not in key:
                 channel_dict.update({key: v_dict})
@@ -623,17 +623,17 @@ class Standards():
     def electric_dict(self):
         electric_dict = from_csv(get_level_fn('electric'))
         electric_dict.add_dict(from_csv(get_level_fn('channel')))
-        electric_dict.add_dict( self.data_quality_dict, 'data_quality')
-        electric_dict.add_dict(self.filter_dict, 'filter')
-        electric_dict.add_dict(self.electrode_dict, 'positive')
-        electric_dict.add_dict(self.electrode_dict, 'negative')
+        electric_dict.add_dict(self.data_quality_dict.copy(), 'data_quality')
+        electric_dict.add_dict(self.filter_dict.copy(), 'filter')
+        electric_dict.add_dict(self.electrode_dict.copy(), 'positive')
+        electric_dict.add_dict(self.electrode_dict.copy(), 'negative')
         return electric_dict
 
     @property
     def magnetic_dict(self):
         magnetic_dict = from_csv(get_level_fn('magnetic'))
-        magnetic_dict.add_dict(self.channel_dict)
-        magnetic_dict.add_dict(self.instrument_dict, 'sensor')
+        magnetic_dict.add_dict(self.channel_dict.copy())
+        magnetic_dict.add_dict(self.instrument_dict.copy(), 'sensor')
         return magnetic_dict
 # =============================================================================
 # Make ATTR_DICT
