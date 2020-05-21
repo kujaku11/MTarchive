@@ -12,7 +12,7 @@ Each container will be able to read and write:
     * dictionary
     * json
     * xml?
-    * csv
+    * csv?
     * pandas
     * anything else?
 
@@ -49,7 +49,6 @@ import json
 import pandas as pd
 import numpy as np
 import logging
-import re
 
 from collections import OrderedDict
 from operator import itemgetter

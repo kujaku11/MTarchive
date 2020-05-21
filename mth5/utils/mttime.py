@@ -7,6 +7,7 @@ Created on Wed May 13 19:10:46 2020
 import datetime
 from dateutil import parser as dtparser
 from dateutil.tz.tz import tzutc
+import logging
 
 #==============================================================================
 # convenience date-time container
@@ -18,6 +19,8 @@ class MTime(object):
     
     def __init__(self):
         self.dt_object = self.from_str('1980-01-01 00:00:00')
+        self.logger = logging.getLogger('{0}.{1}'.format(__name__, 
+                                                 self.__class__.__name__))
            
     @property
     def iso_str(self):
@@ -27,8 +30,16 @@ class MTime(object):
     def epoch_sec(self):
         return self.dt_object.timestamp()
     
+    @epoch_sec.setter
+    def epoch_sec(self, seconds):
+        self.logger.debug("reading time from ephch seconds")
+        self.dt_object = datetime.datetime.utcfromtimestamp(seconds)
+        self.dt_object.replace(tzinfo=datetime.timezone.utc)
+    
     def from_str(self, dt_str):
         return self.validate_tzinfo(dtparser.parse(dt_str))
+    
+    
         
     def validate_tzinfo(self, dt_object):
         """
