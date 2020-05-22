@@ -94,12 +94,21 @@ class Base():
         return self.to_json()
     
     def __eq__(self, other):
-        if isinstance(other, Base):
-            if other.to_dict() == self.to_dict():
+        if isinstance(other, (Base, dict, str, pd.Series)):
+            home_dict = self.to_dict()
+            if isinstance(other, Base):
+                other_dict = other.to_dict()
+            elif isinstance(other, dict):
+                other_dict = other
+            elif isinstance(other, str):
+                other_dict = OrderedDict(sorted(json.loads(other).items(), 
+                                                key=itemgetter(0)))
+            elif isinstance(other, pd.Series):
+                other_dict = OrderedDict(sorted(other.to_dict().items(), 
+                                                key=itemgetter(0)))
+            if other_dict == self.to_dict():
                 return True
             else:
-                other_dict = other.to_dict()
-                home_dict = self.to_dict()
                 for key, value in home_dict.items():
                     try:
                         other_value = other_dict[key]
@@ -113,6 +122,9 @@ class Base():
                         self.logger.info(msg)
                         
                 return False
+        
+            
+            
 
     def _validate_name(self, name):
         """
