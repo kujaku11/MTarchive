@@ -52,6 +52,7 @@ import logging
 
 from collections import OrderedDict
 from operator import itemgetter
+from lxml import etree
 
 from mth5.standards.schema import (ATTR_DICT, validate_attribute,
                                    validate_type)
@@ -76,10 +77,13 @@ class Base():
 
     def __init__(self, **kwargs):
 
-        self.notes_s = None
+        self.notes = None
         self._attr_dict = {}
+        
+        self._class_name = self.__class__.__name__
+        
         self.logger = logging.getLogger('{0}.{1}'.format(__name__, 
-                                                     self.__class__.__name__))
+                                                         self._class_name))
 
         for name, value in kwargs.items():
             self.set_attr_from_name(name, value)
@@ -472,9 +476,10 @@ class Base():
                 else:
                     meta_dict[name] = value
 
+        meta_dict = {self._class_name.lower(): meta_dict}
         # sort the output dictionary for convience
-        key = itemgetter(0)
-        meta_dict = OrderedDict(sorted(meta_dict.items(), key=key))
+        meta_dict = OrderedDict(sorted(meta_dict.items(), key=itemgetter(0)))
+        
         return meta_dict
 
     def from_dict(self, meta_dict):
@@ -490,7 +495,12 @@ class Base():
             self.logger.error(msg)
             raise MTSchemaError(msg)
             
-        for name, value in meta_dict.items():
+        class_name = list(meta_dict.keys())[0]
+        if class_name.lower() != self._class_name.lower():
+            msg = ('name of input dictionary is not the same as class type' +
+                   'input = {0}, class type = {1}'.format(class_name, 
+                                                          self._class_name))
+        for name, value in meta_dict[class_name].items():
             self.set_attr_from_name(name, value)
                 
     def to_json(self, structured=False):
@@ -588,6 +598,41 @@ class Base():
         """
         
         return pd.Series(self.to_dict())
+    
+    def to_xml(self):
+        """
+        
+        :return: DESCRIPTION
+        :rtype: TYPE
+
+        """
+        meta_dict = self.to_dict(structured=True)
+
+        root = etree.Element(self.__class__.__name__)
+        
+        for key, value in meta_dict.items():
+            element = etree.SubElement(root, key)
+            if isinstance(value, dict):
+                for k1, v1 in value.items():
+                    sub_element_01 = etree.SubElement(element, k1)
+                    if isinstance(v1, dict):
+                        sub_element_02 = etree.SubElement(sub_element_01, k1)
+                        for k2, v2 in v1.items():
+                            sub_element_02.text = str(v2)
+                            name = '{0}.{1}.{2}'.format(key, k1, k2)
+                            units = self._attr_dict[name]['units']
+                            if units:
+                                sub_element_02.set('units', str(units))
+                    else:
+                        name = '{0}.{1}'.format(key, k1)
+                        sub_element_01.text = str(v1)
+                        units = self._attr_dict[name]['units']
+                        if units:
+                            sub_element_01.set('units', str(units)) 
+            else:
+                element.text = str(value)
+        
+        return root
 
 # ============================================================================
 # Location class, be sure to put locations in decimal degrees, and note datum
