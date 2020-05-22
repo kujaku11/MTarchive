@@ -155,9 +155,9 @@ class Base():
         """
         # skip these attribute because they are validated in the property 
         # setter.
-        skip_list = ['latitude_d', 'longitude_d',  'elevation_d',
-                     'start_date_s', 'end_date_s', 'start_s', 'end_s',
-                     'name_s', 'applied_b', 'logger']
+        skip_list = ['latitude', 'longitude',  'elevation',
+                     'start_date', 'end_date', 'start', 'end',
+                     'name', 'applied', 'logger']
         if hasattr(self, '_attr_dict'):
             if name[0] != '_':
                 if not name in skip_list: 
@@ -421,19 +421,56 @@ class Base():
                                                type(value)))
         return None
                 
-    def to_dict(self):
+    def to_dict(self, structured=False):
         """
         make a dictionary from attributes, makes dictionary from _attr_list.
         """
         meta_dict = {}
-        for name in list(self._attr_dict.keys()):
-            try:
-                meta_dict[name] = self.get_attr_from_name(name)
-            except AttributeError as error:
-                msg = ('{0}: setting {1} to None.  '.format(error, name) + 
-                       'Try setting {0} to the desired value'.format(name))
-                self.logger.info(msg)
-                meta_dict[name] = None
+        if not structured:
+            for name in list(self._attr_dict.keys()):
+                try:
+                    meta_dict[name] = self.get_attr_from_name(name)
+                except AttributeError as error:
+                    msg = ('{0}: setting {1} to None.  '.format(error, name) + 
+                           'Try setting {0} to the desired value'.format(name))
+                    self.logger.info(msg)
+                    meta_dict[name] = None
+
+        else:
+            meta_dict = {}
+            for name in list(self._attr_dict.keys()):
+                try:
+                    value = self.get_attr_from_name(name)
+                except AttributeError as error:
+                    msg = ('{0}: setting {1} to None.  '.format(error, name) + 
+                           'Try setting {0} to the desired value'.format(name))
+                    self.logger.info(msg)
+                    value = None
+                
+                if '.' in name:
+                    category, names = name.split('.', 1)
+                    n = names.count('.')
+                    try:
+                        category_dict = meta_dict[category]
+                    except KeyError:
+                        category_dict = {}
+                    n = names.count('.')
+                    if n == 0:
+                        category_dict[names] = value
+                        meta_dict[category] = category_dict
+                    elif n == 1:
+                        level, sub = names.split('.')
+                        try:
+                            level_dict = category_dict[level]
+                        except KeyError:
+                            level_dict = {}
+                        level_dict[sub] = value
+                        category_dict[level] = level_dict
+                        meta_dict[category] = category_dict
+                    else:
+                        raise ValueError('Have not implemented 3 levels yet')
+                else:
+                    meta_dict[name] = value
 
         # sort the output dictionary for convience
         key = itemgetter(0)
@@ -561,10 +598,10 @@ class Declination(Base):
     """
     def __init__(self, **kwargs):
 
-        self.value_d = None
-        self.units_s = None
-        self.epoch_s = None
-        self.model_s = None
+        self.value = None
+        self.units = None
+        self.epoch = None
+        self.model = None
         super(Declination, self).__init__(**kwargs)
 
         self._attr_dict = ATTR_DICT['declination']
@@ -582,7 +619,7 @@ class Location(Base):
 
     def __init__(self, **kwargs):
 
-        self.datum_s = 'WGS84'
+        self.datum = 'WGS84'
         self.declination = Declination()
 
         self._elevation = None
@@ -594,27 +631,27 @@ class Location(Base):
         self._attr_dict = ATTR_DICT['location']
 
     @property
-    def latitude_d(self):
+    def latitude(self):
         return self._latitude
 
-    @latitude_d.setter
-    def latitude_d(self, lat):
+    @latitude.setter
+    def latitude(self, lat):
         self._latitude = self._assert_lat_value(lat)
 
     @property
-    def longitude_d(self):
+    def longitude(self):
         return self._longitude
 
-    @longitude_d.setter
-    def longitude_d(self, lon):
+    @longitude.setter
+    def longitude(self, lon):
         self._longitude = self._assert_lon_value(lon)
 
     @property
-    def elevation_d(self):
+    def elevation(self):
         return self._elevation
 
-    @elevation_d.setter
-    def elevation_d(self, elev):
+    @elevation.setter
+    def elevation(self, elev):
         self._elevation = self._assert_elevation_value(elev)
 
     def _assert_lat_value(self, latitude):
@@ -748,7 +785,10 @@ class Location(Base):
 
         p_list = position_str.split(':')
         if len(p_list) != 3:
-            raise ValueError('{0} not correct format, should be DD:MM:SS'.format(position_str))
+            msg = ('{0} not correct format, should be DD:MM:SS'.format(
+                position_str))
+            self.logger.error(msg)
+            raise ValueError(msg)
 
         deg = float(p_list[0])
         minutes = self._assert_minutes(float(p_list[1]))
@@ -809,9 +849,9 @@ class Instrument(Base):
 
     def __init__(self, **kwargs):
 
-        self.id_s = None
-        self.manufacturer_s = None
-        self.type_s = None
+        self.id = None
+        self.manufacturer = None
+        self.type = None
         super(Instrument, self).__init__(**kwargs)
 
         self._attr_dict = ATTR_DICT['instrument']
@@ -844,10 +884,10 @@ class DataQuality(Base):
 
     def __init__(self, **kwargs):
 
-        self.rating_i = None
-        self.warning_notes_s = None
-        self.warning_flags_s = None
-        self.author_s = None
+        self.rating = None
+        self.warning_notes = None
+        self.warning_flags = None
+        self.author = None
         super(DataQuality, self).__init__(**kwargs)
 
         self._attr_dict = ATTR_DICT['data_quality']
@@ -877,12 +917,12 @@ class Citation(Base):
     """
 
     def __init__(self, **kwargs):
-        self.author_s = None
-        self.title_s = None
-        self.journal_s = None
-        self.volume_s = None
-        self.doi_s = None
-        self.year_s = None
+        self.author = None
+        self.title = None
+        self.journal = None
+        self.volume = None
+        self.doi = None
+        self.year = None
         super(Citation, self).__init__(**kwargs)
 
         self._attr_dict = ATTR_DICT['citation']
@@ -912,23 +952,24 @@ class Copyright(Base):
 
     def __init__(self, **kwargs):
         self.citation = Citation()
-        self.conditions_of_use_s = ''.join(['All data and metadata for this survey are ',
-                                            'available free of charge and may be copied ',
-                                            'freely, duplicated and further distributed ',
-                                            'provided this data set is cited as the ',
-                                            'reference. While the author(s) strive to ',
-                                            'provide data and metadata of best possible ',
-                                            'quality, neither the author(s) of this data ',
-                                            'set, not IRIS make any claims, promises, or ',
-                                            'guarantees about the accuracy, completeness, ',
-                                            'or adequacy of this information, and expressly ',
-                                            'disclaim liability for errors and omissions in ',
-                                            'the contents of this file. Guidelines about ',
-                                            'the quality or limitations of the data and ',
-                                            'metadata, as obtained from the author(s), are ',
-                                            'included for informational purposes only.'])
-        self.release_status_s = None
-        self.additional_info_s = None
+        self.conditions_of_use = ''.join(
+            ['All data and metadata for this survey are ',
+             'available free of charge and may be copied ',
+             'freely, duplicated and further distributed ',
+             'provided this data set is cited as the ',
+             'reference. While the author(s) strive to ',
+             'provide data and metadata of best possible ',
+             'quality, neither the author(s) of this data ',
+             'set, not IRIS make any claims, promises, or ',
+             'guarantees about the accuracy, completeness, ',
+             'or adequacy of this information, and expressly ',
+             'disclaim liability for errors and omissions in ',
+             'the contents of this file. Guidelines about ',
+             'the quality or limitations of the data and ',
+             'metadata, as obtained from the author(s), are ',
+             'included for informational purposes only.'])
+        self.release_status = None
+        self.additional_info = None
         super(Copyright, self).__init__(**kwargs)
 
         self._attr_dict = ATTR_DICT['copyright']
@@ -960,21 +1001,21 @@ class Provenance(Base):
     def __init__(self, **kwargs):
 
         self._creation_dt = MTime()
-        self.creating_application_s = 'MTH5'
+        self.creating_application = 'MTH5'
         self.creator = Person()
         self.submitter = Person()
         self.software = Software()
-        self.log_s = None
+        self.log = None
         super(Provenance, self).__init__(**kwargs)
 
         self._attr_dict = ATTR_DICT['provenance']
 
     @property
-    def creation_time_s(self):
+    def creation_time(self):
         return self._creation_dt.iso_str
 
-    @creation_time_s.setter
-    def creation_time_s(self, dt_str):
+    @creation_time.setter
+    def creation_time(self, dt_str):
         self._creation_dt.from_str(dt_str)
 
 # ==============================================================================
@@ -1002,10 +1043,10 @@ class Person(Base):
 
     def __init__(self, **kwargs):
 
-        self.email_s = None
-        self.author_s = None
-        self.organization_s = None
-        self.url_s = None
+        self.email = None
+        self.author = None
+        self.organization = None
+        self.url = None
         super(Person, self).__init__(**kwargs)
 
         self._attr_dict = ATTR_DICT['person']
@@ -1019,9 +1060,9 @@ class Diagnostic(Base):
     """
 
     def __init__(self, **kwargs):
-        self.units_s = None
-        self.start_d = None
-        self.end_d = None
+        self.units = None
+        self.start = None
+        self.end = None
         super(Diagnostic, self).__init__(**kwargs)
 
         self._attr_dict = ATTR_DICT['diagnostic']
@@ -1037,8 +1078,8 @@ class Battery(Base):
 
     def __init__(self, **kwargs):
 
-        self.type_s = None
-        self.id_s = None
+        self.type = None
+        self.id = None
         self.voltage = Diagnostic()
         super(Battery, self).__init__(**kwargs)
 
@@ -1068,12 +1109,12 @@ class TimingSystem(Base):
 
     def __init__(self, **kwargs):
 
-        self.type_s = None
-        self.drift_d = None
-        self.drift_units_d = None
-        self.uncertainty_d = None
-        self.uncertainty_units_d = None
-        self.notes_s = None
+        self.type = None
+        self.drift = None
+        self.drift_units = None
+        self.uncertainty = None
+        self.uncertainty_units = None
+        self.notes = None
         super(TimingSystem, self).__init__(**kwargs)
 
         self._attr_dict = ATTR_DICT['timing_system']
@@ -1087,21 +1128,21 @@ class Software(Base):
     """
 
     def __init__(self, **kwargs):
-        self.name_s = None
-        self.version_s = None
-        self.author = Person()
+        self.name = None
+        self.version = None
+        self._author = Person()
 
         super(Software, self).__init__(**kwargs)
 
-        self._attr_dict = ATTR_DICT['timing_system']
+        self._attr_dict = ATTR_DICT['software']
 
     @property
-    def author_s(self):
-        return self.author.author_s
+    def author(self):
+        return self._author.author
 
-    @author_s.setter
-    def author_s(self, value):
-        self.author.author_s = value
+    @author.setter
+    def author(self, value):
+        self._author.author= value
 
 # =============================================================================
 # filter
@@ -1110,32 +1151,32 @@ class Filter(Base):
     """
     container for filters
     
-    .. note:: name_s and applied_b should be input as a list or comma 
+    .. note:: name_s and applied should be input as a list or comma 
               separated string.  applied can be a single true, false for all 
               or needs to be the same length as name
               
     """
 
     def __init__(self, **kwargs):
-        self._name_s = None
-        self._applied_b = None
+        self._name = None
+        self._applied = None
         super().__init__()
 
         self._attr_dict = ATTR_DICT['filter']
         
     @property
-    def name_s(self):
-        return self._name_s
+    def name(self):
+        return self._name
     
-    @name_s.setter
-    def name_s(self, names):
+    @name.setter
+    def name(self, names):
         if names is None:
             return
         
         if isinstance(names, str):
-            self._name_s = [ss.strip().lower() for ss in names.split(',')]
+            self._name = [ss.strip().lower() for ss in names.split(',')]
         elif isinstance(names, list):
-            self._name_s = [ss.strip().lower() for ss in names]
+            self._name = [ss.strip().lower() for ss in names]
         else:
             msg = 'names must be a string or list of strings not {0}'
             self.logger.error(msg.format(names))
@@ -1146,14 +1187,14 @@ class Filter(Base):
             self.logger.info('Filter names and applied lists are not the ' +
                              'same size Be sure to check the inputs.' +
                              '. names = {0}, applied = {1}'.format(
-                                 self._name_s, self._applied_b))
+                                 self._name, self._applied))
             
     @property
-    def applied_b(self):
-        return self._applied_b
+    def applied(self):
+        return self._applied
     
-    @applied_b.setter
-    def applied_b(self, applied):
+    @applied.setter
+    def applied(self, applied):
         if applied is None:
             return 
         
@@ -1184,7 +1225,7 @@ class Filter(Base):
             else:
                 msg = 'Filter.applied must be [True | False], not {0}'
                 self.logger.error(msg.format(app_bool))
-        self._applied_b = bool_list
+        self._applied = bool_list
         
         # check for consistency
         check = self._check_consistency()
@@ -1192,29 +1233,29 @@ class Filter(Base):
             self.logger.info('Filter names and applied lists are not the ' +
                              'same size Be sure to check the inputs.' +
                              '. names = {0}, applied = {1}'.format(
-                                 self._name_s, self._applied_b))
+                                 self._name, self._applied))
                         
     def _check_consistency(self):
         # check for consistency
-        if self._name_s is not None:
-            if self._applied_b is None:
+        if self._name is not None:
+            if self._applied is None:
                 self.logger.warning('Need to input filter.applied')
                 return False
-            if len(self._name_s) == 1:
-                if len(self._applied_b) == 1:
+            if len(self._name) == 1:
+                if len(self._applied) == 1:
                     return True
-            elif len(self._name_s) > 1:
-                if len(self._applied_b) == 1:
+            elif len(self._name) > 1:
+                if len(self._applied) == 1:
                     self.logger.info('Assuming all filters have been ' +
-                                     'applied as {0}'.format(self._applied_b[0]))
+                                     'applied as {0}'.format(self._applied[0]))
                     return True
-                elif len(self._applied_b) > 1:
-                    if len(self._applied_b) != len(self._name_s):
+                elif len(self._applied) > 1:
+                    if len(self._applied) != len(self._name):
                         self.logger.waring('Applied and filter names ' +
                                            'should be the same length. '+
                                            'Appied={0}, names={1}'.format(
-                                               len(self._applied_b), 
-                                               len(self._name_s)))
+                                               len(self._applied), 
+                                               len(self._name)))
                         return False
         else:
             return False
@@ -1235,18 +1276,18 @@ class Survey(Base):
         self.acquired_by = Person()
         self._start_dt = MTime()
         self._end_dt = MTime()
-        self.name_s = None
-        self.id_s = None
-        self.net_code_s = None
+        self.name = None
+        self.id = None
+        self.net_code = None
         self.northwest_corner = Location()
         self.southeast_corner = Location()
-        self.datum_s = None
-        self.location_s = None
-        self.country_s = None
-        self.summary_s = None
+        self.datum = None
+        self.location = None
+        self.country = None
+        self.summary = None
         self.acquired_by = Person()
-        self.conditions_of_use_s = None
-        self.release_status_s = None
+        self.conditions_of_use = None
+        self.release_status = None
         self.citation_dataset = Citation()
         self.citation_journal = Citation()
         super(Survey, self).__init__()
@@ -1254,19 +1295,19 @@ class Survey(Base):
         self._attr_dict = ATTR_DICT['survey']
 
     @property
-    def start_date_s(self):
+    def start_date(self):
         return self._start_dt.date
 
-    @start_date_s.setter
-    def start_date_s(self, start_date):
+    @start_date.setter
+    def start_date(self, start_date):
         self._start_dt.from_str(start_date)
 
     @property
-    def end_date_s(self):
+    def end_date(self):
         return self._end_dt.date
 
-    @end_date_s.setter
-    def end_date_s(self, stop_date):
+    @end_date.setter
+    def end_date(self, stop_date):
         self._end_dt.from_str(stop_date)
 
 # =============================================================================
@@ -1277,16 +1318,16 @@ class Station(Location):
     station object
     """
     def __init__(self, **kwargs):
-        self.sta_code_s = None
-        self.name_s = None
-        self.datum_s = None
+        self.sta_code = None
+        self.name = None
+        self.datum = None
         self._start_dt = MTime()
         self._end_dt = MTime()
-        self.num_channels_i = None
-        self.channels_recorded_s = None
-        self.data_type_s = None
-        self.station_orientation_s = None
-        self.orientation_method_s = None
+        self.num_channels = None
+        self.channels_recorded = None
+        self.data_type = None
+        self.station_orientation = None
+        self.orientation_method = None
         self.acquired_by = Person()
         self.provenance = Provenance()
 
@@ -1295,19 +1336,19 @@ class Station(Location):
         self._attr_dict = ATTR_DICT['station']
 
     @property
-    def start_s(self):
+    def start(self):
         return self._start_dt.iso_str
 
-    @start_s.setter
-    def start_s(self, start_date):
+    @start.setter
+    def start(self, start_date):
         self._start_dt.from_str(start_date)
 
     @property
-    def end_s(self):
+    def end(self):
         return self._end_dt.iso_str
 
-    @end_s.setter
-    def end_s(self, stop_date):
+    @end.setter
+    def end(self, stop_date):
         self._end_dt.from_str(stop_date)
 
 # =============================================================================
@@ -1325,9 +1366,9 @@ class Run(Base):
         self.id_s = None
         self._start_dt = MTime()
         self._end_dt = MTime()
-        self.sampling_rate_d = None
-        self.channels_recorded_s = None
-        self.data_type_s = None
+        self.sampling_rate = None
+        self.channels_recorded = None
+        self.data_type = None
         self.acquired_by = Person()
         self.provenance = Provenance()
 
@@ -1336,26 +1377,26 @@ class Run(Base):
         self._attr_dict = ATTR_DICT['run']
 
     @property
-    def start_s(self):
+    def start(self):
         return self._start_dt.iso_str
 
-    @start_s.setter
-    def start_s(self, start_date):
+    @start.setter
+    def start(self, start_date):
         self._start_dt.from_str(start_date)
 
     @property
-    def end_s(self):
+    def end(self):
         return self._end_dt.iso_str
 
-    @end_s.setter
-    def end_s(self, stop_date):
+    @end.setter
+    def end(self, stop_date):
         self._end_dt.from_str(stop_date)
         
     @property
-    def num_channels_i(self):
-        if self.channels_recorded_s is None:
+    def num_channels(self):
+        if self.channels_recorded is None:
             return None
-        return len(self.channels_recorded_s.split(','))
+        return len(self.channels_recorded.split(','))
 
 # =============================================================================
 # Data logger
@@ -1380,11 +1421,11 @@ class Channel(Location):
     """
 
     def __init__(self, **kwargs):
-        self.type_s = None
-        self.units_s = None
-        self.channel_number_i = None
-        self.component_s = None
-        self.sample_rate_d = None
+        self.type = None
+        self.units = None
+        self.channel_number = None
+        self.component = None
+        self.sample_rate = None
         self.azimuth_d = 0.0
         self.data_quality = DataQuality()
         self.filter = Filter()
@@ -1395,19 +1436,19 @@ class Channel(Location):
         self._attr_dict = ATTR_DICT['channel']
         
     @property
-    def start_s(self):
+    def start(self):
         return self._start_dt.iso_str
 
-    @start_s.setter
-    def start_s(self, start_date):
+    @start.setter
+    def start(self, start_date):
         self._start_dt.from_str(start_date)
 
     @property
-    def end_s(self):
+    def end(self):
         return self._end_dt.iso_str
 
-    @end_s.setter
-    def end_s(self, stop_date):
+    @end.setter
+    def end(self, stop_date):
         self._end_dt.from_str(stop_date)
 
 # =============================================================================
@@ -1419,7 +1460,7 @@ class Electric(Channel):
     """
 
     def __init__(self, **kwargs):
-        self.dipole_length_d = 0.0
+        self.dipole_length = 0.0
         self.positive = Electrode()
         self.negative = Electrode()
         self.contact_resistance_1 = Diagnostic()

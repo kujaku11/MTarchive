@@ -1,5 +1,5 @@
 attribute,type,required,style,units
-author_s,str,TRUE,name,none
-organization_s,str,TRUE,name,none
-url_s,str,TRUE,url,none
-email_s,str,TRUE,email,none
+author,str,TRUE,name,none
+organization,str,TRUE,name,none
+url,str,TRUE,url,none
+email,str,TRUE,email,none

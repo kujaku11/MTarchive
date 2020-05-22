@@ -1,6 +1,6 @@
 attribute,type,required,style,units
-type_s,str,TRUE,name,none
-id_s,str,FALSE,name,none
-voltage.start_d,float,TRUE,number,volts
-voltage.end_d,float,TRUE,number,volts
-notes_s,str,FALSE,name,none
+type,str,TRUE,name,none
+id,str,FALSE,name,none
+voltage.start,float,TRUE,number,volts
+voltage.end,float,TRUE,number,volts
+notes,str,FALSE,name,none

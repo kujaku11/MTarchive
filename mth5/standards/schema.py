@@ -8,7 +8,7 @@ Convenience Classes and Functions to deal with the base metadata standards
 described by the csv file.
 
 The hope is that only the csv files will need to be changed as the standards
-are modified.  The attribute dictionaries are stored in ATTR_DICT
+are modified.  The attribute dictionaries are stored in ATTRICT
 
 Created on Wed Apr 29 11:11:31 2020
 
@@ -600,7 +600,7 @@ class Standards():
         station_dict = from_csv(get_level_fn('station'))
         station_dict.add_dict(self.location_dict.copy())
         for key, v_dict in self.person_dict.items():
-            if key in ['author_s', 'email_s']:
+            if key in ['author', 'email']:
                 station_dict.update({'acquired_by.{0}'.format(key): v_dict})
 
         station_dict.add_dict(self.software_dict.copy(), 'provenance.software')

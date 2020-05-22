@@ -1,5 +1,5 @@
 attribute,type,required,style,units
-datum_s,str,TRUE,name,
-latitude_d,float,TRUE,name,
-longitude_d,float,TRUE,name,
-elevation_d,float,TRUE,name,
+datum,str,TRUE,name,
+latitude,float,TRUE,name,
+longitude,float,TRUE,name,
+elevation,float,TRUE,name,

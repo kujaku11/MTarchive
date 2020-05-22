@@ -1,5 +1,5 @@
 attribute,type,required,style,units
-type_s,str,TRUE,name,none
-drift_d,float,TRUE,name,milliseconds
-uncertainty_d,float,TRUE,name,milliseconds
-notes_s,str,TRUE,name,none
+type,str,TRUE,name,none
+drift,float,TRUE,name,milliseconds
+uncertainty,float,TRUE,name,milliseconds
+notes,str,TRUE,name,none

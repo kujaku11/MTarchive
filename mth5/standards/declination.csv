@@ -1,5 +1,5 @@
 attribute,type,required,style,units
-value_d,float,TRUE,number,degrees
-units_s,str,TRUE,name,None
-epoch_s,str,TRUE,name,None
-model_s,str,TRUE,name,None
+value,float,TRUE,number,degrees
+units,str,TRUE,name,None
+epoch,str,TRUE,name,None
+model,str,TRUE,name,None

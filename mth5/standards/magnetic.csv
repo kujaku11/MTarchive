@@ -1,5 +1,5 @@
 attribute,type,required,style,units
-h_field_min.start_d,float,TRUE,number,nT
-h_field_min.end_d,float,TRUE,number,nT
-h_field_max.start_d,float,TRUE,number,nT
-h_field_max.end_d,float,TRUE,number,nT
+h_field_min.start,float,TRUE,number,nT
+h_field_min.end,float,TRUE,number,nT
+h_field_max.start,float,TRUE,number,nT
+h_field_max.end,float,TRUE,number,nT

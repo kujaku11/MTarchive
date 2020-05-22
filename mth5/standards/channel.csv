@@ -1,8 +1,8 @@
 attribute,type,required,style,units
-type_s,str,TRUE,name,none
-units_s,str,TRUE,name,none
-channel_number_i,int,TRUE,number,none
-component_s,str,TRUE,name,none
-sample_rate_d,float,TRUE,number,samples per second
-azimuth_d,float,TRUE,number,degrees
-notes_s,str,FALSE,name,none
+type,str,TRUE,name,none
+units,str,TRUE,name,none
+channel_number,int,TRUE,number,none
+component,str,TRUE,name,none
+sample_rate,float,TRUE,number,samples per second
+azimuth,float,TRUE,number,degrees
+notes,str,FALSE,name,none

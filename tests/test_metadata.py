@@ -82,19 +82,19 @@ class TestLocation(unittest.TestCase):
         self.lon_fail_02 = 190.87
 
     def test_str_conversion(self):
-        self.location_object.latitude_d = self.lat_str
+        self.location_object.latitude = self.lat_str
         self.assertAlmostEqual(self.lat_value, 
-                               self.location_object.latitude_d,
+                               self.location_object.latitude,
                                places=5)
         
-        self.location_object.longitude_d = self.lon_str
+        self.location_object.longitude = self.lon_str
         self.assertAlmostEqual(self.lon_value, 
-                               self.location_object.longitude_d,
+                               self.location_object.longitude,
                                places=5)
         
-        self.location_object.elevation_d = self.elev_str
+        self.location_object.elevation = self.elev_str
         self.assertAlmostEqual(self.elev_value, 
-                               self.location_object.elevation_d,
+                               self.location_object.elevation,
                                places=1)
         
     def test_fails(self):
@@ -118,28 +118,28 @@ class TestSurveyMetadata(unittest.TestCase):
 
     def setUp(self):
         self.maxDiff = None
-        self.meta_dict = {'name_s': 'name test',
-                          'id_s': 'id test',
-                          'net_code_s': 'net_code test',
-                          'start_date_s': '2019-01-02',
-                          'end_date_s': '2019-03-05',
-                          'northwest_corner.latitude_d': 40.09,
-                          'northwest_corner.longitude_d': -115.6,
-                          'southeast_corner.latitude_d': 35.90,
-                          'southeast_corner.longitude_d': -118.9,
-                          'datum_s': 'WGS84',
-                          'location_s': 'location test',
-                          'country_s': 'country test',
-                          'summary_s': 'summary test',
-                          'notes_s': 'notes test',
-                          'acquired_by.author_s': 'author test',
-                          'acquired_by.organization_s': 'organization test',
-                          'acquired_by.email_s': 'email@test.mt',
-                          'acquired_by.url_s': 'https:test.com',
-                          'release_status_s': 'free',
-                          'conditions_of_use_s': 'freedom',
-                          'citation_dataset.doi_s': 'https:doi.adfa12',
-                          'citation_journal.doi_s': None} 
+        self.meta_dict = {'name': 'name test',
+                          'id': 'id test',
+                          'net_code': 'net_code test',
+                          'start_date': '2019-01-02',
+                          'end_date': '2019-03-05',
+                          'northwest_corner.latitude': 40.09,
+                          'northwest_corner.longitude': -115.6,
+                          'southeast_corner.latitude': 35.90,
+                          'southeast_corner.longitude': -118.9,
+                          'datum': 'WGS84',
+                          'location': 'location test',
+                          'country': 'country test',
+                          'summary': 'summary test',
+                          'notes': 'notes test',
+                          'acquired_by.author': 'author test',
+                          'acquired_by.organization': 'organization test',
+                          'acquired_by.email': 'email@test.mt',
+                          'acquired_by.url': 'https:test.com',
+                          'release_status': 'free',
+                          'conditions_of_use': 'freedom',
+                          'citation_dataset.doi': 'https:doi.adfa12',
+                          'citation_journal.doi': None} 
         self.meta_dict = key =  OrderedDict(sorted(self.meta_dict.items(),
                                                    key=itemgetter(0)))
     
@@ -164,28 +164,29 @@ class TestSurveyMetadata(unittest.TestCase):
         self.assertDictEqual(self.meta_dict, self.survey_object.to_dict())
         
     def test_start_date(self):
-        self.survey_object.start_date_s = '2020/01/02'
-        self.assertEqual(self.survey_object.start_date_s, '2020-01-02')
+        self.survey_object.start_date = '2020/01/02'
+        self.assertEqual(self.survey_object.start_date, '2020-01-02')
         
-        self.survey_object.start_date_s = '01-02-2020T12:20:30.45Z'
-        self.assertEqual(self.survey_object.start_date_s, '2020-01-02')
+        self.survey_object.start_date = '01-02-2020T12:20:30.45Z'
+        self.assertEqual(self.survey_object.start_date, '2020-01-02')
 
     def test_end_date(self):
-        self.survey_object.start_date_s = '2020/01/02'
-        self.assertEqual(self.survey_object.start_date_s, '2020-01-02')
+        self.survey_object.start_date = '2020/01/02'
+        self.assertEqual(self.survey_object.start_date, '2020-01-02')
         
-        self.survey_object.start_date_s = '01-02-2020T12:20:30.45Z'
-        self.assertEqual(self.survey_object.start_date_s, '2020-01-02')
+        self.survey_object.start_date = '01-02-2020T12:20:30.45Z'
+        self.assertEqual(self.survey_object.start_date, '2020-01-02')
         
     def test_latitude(self):
-        self.survey_object.southeast_corner.latitude_d = '40:10:05.123'
-        self.assertTrue(np.isclose(self.survey_object.southeast_corner.latitude_d,
-                                   40.1680897))
+        self.survey_object.southeast_corner.latitude = '40:10:05.123'
+        self.assertAlmostEqual(self.survey_object.southeast_corner.latitude,
+                               40.1680897,
+                               places=5)
         
     def test_longitude(self):
-        self.survey_object.southeast_corner.longitude_d = '-115:34:24.9786'
-        self.assertTrue(np.isclose(self.survey_object.southeast_corner.longitude_d,
-                                   -115.5736))
+        self.survey_object.southeast_corner.longitude = '-115:34:24.9786'
+        self.assertAlmostEqual(self.survey_object.southeast_corner.longitude,
+                               -115.57361, places=5)
         
 class TestStationMetadata(unittest.TestCase):
     """
@@ -195,36 +196,36 @@ class TestStationMetadata(unittest.TestCase):
     def setUp(self):
         self.maxDiff = None
         self.station_object = metadata.Station()
-        self.meta_dict = {'sta_code_s': 'test sta_code',
-                          'name_s': 'test name',
-                          'latitude_d': 40.019,
-                          'longitude_d': -117.89,
-                          'elevation_d': 1230.0,
-                          'notes_s': 'notes test',
-                          'datum_s': 'data test',
-                          'start_s': '2010-01-01T12:30:20+00:00',
-                          'end_s': '2010-01-04T07:40:30+00:00',
-                          'num_channels_i': 5,
-                          'channels_recorded_s': '[ex, ey, hx, hy, hz]',
-                          'data_type_s': 'MT',
-                          'declination.value_d': -12.3,
-                          'declination.units_s': 'degrees',
-                          'declination.epoch_s': 'MTM01',
-                          'declination.model_s': 'MTM01',
-                          'station_orientation_s': 'geographic north',
-                          'orientation_method_s': 'compass',
-                          'acquired_by.author_s': 'acquired test',
-                          'acquired_by.email_s': 'acquired email',
-                          'provenance.creation_time_s': '2010-04-01T10:10:10+00:00',
-                          'provenance.software.name_s': 'mth5',
-                          'provenance.software.version_s': '1.0.1',
-                          'provenance.software.author_s': 'Peacock',
-                          'provenance.submitter.author_s': 'submitter name',
-                          'provenance.submitter.organization_s': 'mt inc',
-                          'provenance.submitter.url_s': 'mt.edi',
-                          'provenance.submitter.email_s': 'mt@em.edi',
-                          'provenance.notes_s': 'goats',
-                          'provenance.log_s': 'EY flipped'}
+        self.meta_dict = {'sta_code': 'test sta_code',
+                          'name': 'test name',
+                          'latitude': 40.019,
+                          'longitude': -117.89,
+                          'elevation': 1230.0,
+                          'notes': 'notes test',
+                          'datum': 'data test',
+                          'start': '2010-01-01T12:30:20+00:00',
+                          'end': '2010-01-04T07:40:30+00:00',
+                          'num_channels': 5,
+                          'channels_recorded': '[ex, ey, hx, hy, hz]',
+                          'data_type': 'MT',
+                          'declination.value': -12.3,
+                          'declination.units': 'degrees',
+                          'declination.epoch': 'MTM01',
+                          'declination.model': 'MTM01',
+                          'station_orientation': 'geographic north',
+                          'orientation_method': 'compass',
+                          'acquired_by.author': 'acquired test',
+                          'acquired_by.email': 'acquired email',
+                          'provenance.creation_time': '2010-04-01T10:10:10+00:00',
+                          'provenance.software.name': 'mth5',
+                          'provenance.software.version': '1.0.1',
+                          'provenance.software.author': 'Peacock',
+                          'provenance.submitter.author': 'submitter name',
+                          'provenance.submitter.organization': 'mt inc',
+                          'provenance.submitter.url': 'mt.edi',
+                          'provenance.submitter.email': 'mt@em.edi',
+                          'provenance.notes': 'goats',
+                          'provenance.log': 'EY flipped'}
               
         self.meta_dict = key =  OrderedDict(sorted(self.meta_dict.items(),
                                                    key=itemgetter(0)))
@@ -247,50 +248,50 @@ class TestStationMetadata(unittest.TestCase):
         self.assertDictEqual(self.meta_dict, self.station_object.to_dict())
         
     def test_start(self):
-        self.station_object.start_s = '2020/01/02T12:20:40.4560Z'
-        self.assertEqual(self.station_object.start_s, 
+        self.station_object.start = '2020/01/02T12:20:40.4560Z'
+        self.assertEqual(self.station_object.start, 
                          '2020-01-02T12:20:40.456000+00:00')
         
-        self.station_object.start_s = '01/02/20T12:20:40.4560'
-        self.assertEqual(self.station_object.start_s, 
+        self.station_object.start = '01/02/20T12:20:40.4560'
+        self.assertEqual(self.station_object.start, 
                          '2020-01-02T12:20:40.456000+00:00')
 
     def test_end_date(self):
-        self.station_object.end_s = '2020/01/02T12:20:40.4560Z'
-        self.assertEqual(self.station_object.end_s, 
+        self.station_object.end = '2020/01/02T12:20:40.4560Z'
+        self.assertEqual(self.station_object.end, 
                          '2020-01-02T12:20:40.456000+00:00')
         
-        self.station_object.end_s = '01/02/20T12:20:40.4560'
-        self.assertEqual(self.station_object.end_s, 
+        self.station_object.end = '01/02/20T12:20:40.4560'
+        self.assertEqual(self.station_object.end, 
                          '2020-01-02T12:20:40.456000+00:00')
         
     def test_latitude(self):
-        self.station_object.latitude_d = '40:10:05.123'
-        self.assertTrue(np.isclose(self.station_object.latitude_d,
-                                   40.1680897))
+        self.station_object.latitude = '40:10:05.123'
+        self.assertAlmostEqual(self.station_object.latitude,
+                               40.1680897, places=5)
         
     def test_longitude(self):
-        self.station_object.longitude_d = '-115:34:24.9786'
-        self.assertTrue(np.isclose(self.station_object.longitude_d,
-                                   -115.5736))
+        self.station_object.longitude = '-115:34:24.9786'
+        self.assertAlmostEqual(self.station_object.longitude,
+                               -115.57361, places=5)
         
     def test_declination(self):
-        self.station_object.declination.value_d = '10.980'
-        self.assertEqual(self.station_object.declination.value_d, 10.980)
+        self.station_object.declination.value = '10.980'
+        self.assertEqual(self.station_object.declination.value, 10.980)
         
 class TestRun(unittest.TestCase):
     def setUp(self):
-        self.meta_dict = OrderedDict([('acquired_by.author_s', 'mt'),
-                                      ('acquired_by.email_s', 'mt@mt.org'),
-                                      ('channels_recorded_s', 'EX, EY, HX, HY'),
-                                      ('data_type_s', 'MT'),
-                                      ('end_s', '1980-01-01T00:00:00+00:00'),
-                                      ('id_s', 'mt01'),
-                                      ('notes_s', 'cables chewed by gophers'),
-                                      ('provenance.log_s', None),
-                                      ('provenance.notes_s', None),
-                                      ('sampling_rate_d', None),
-                                      ('start_s', '1980-01-01T00:00:00+00:00')])
+        self.meta_dict = OrderedDict([('acquired_by.author', 'mt'),
+                                      ('acquired_by.email', 'mt@mt.org'),
+                                      ('channels_recorded', 'EX, EY, HX, HY'),
+                                      ('data_type', 'MT'),
+                                      ('end', '1980-01-01T00:00:00+00:00'),
+                                      ('id', 'mt01'),
+                                      ('notes', 'cables chewed by gophers'),
+                                      ('provenance.log', None),
+                                      ('provenance.notes', None),
+                                      ('sampling_rate', None),
+                                      ('start', '1980-01-01T00:00:00+00:00')])
         self.meta_dict = OrderedDict(sorted(self.meta_dict.items(), 
                                             key=itemgetter(0)))
         self.run_object = metadata.Run()
@@ -314,52 +315,52 @@ class TestRun(unittest.TestCase):
         self.assertDictEqual(self.meta_dict, self.run_object.to_dict())
         
     def test_start(self):
-        self.run_object.start_s = '2020/01/02T12:20:40.4560Z'
-        self.assertEqual(self.run_object.start_s, 
+        self.run_object.start = '2020/01/02T12:20:40.4560Z'
+        self.assertEqual(self.run_object.start, 
                          '2020-01-02T12:20:40.456000+00:00')
         
-        self.run_object.start_s = '01/02/20T12:20:40.4560'
-        self.assertEqual(self.run_object.start_s, 
+        self.run_object.start = '01/02/20T12:20:40.4560'
+        self.assertEqual(self.run_object.start, 
                          '2020-01-02T12:20:40.456000+00:00')
 
     def test_end_date(self):
-        self.run_object.end_s = '2020/01/02T12:20:40.4560Z'
-        self.assertEqual(self.run_object.end_s, 
+        self.run_object.end = '2020/01/02T12:20:40.4560Z'
+        self.assertEqual(self.run_object.end, 
                          '2020-01-02T12:20:40.456000+00:00')
         
-        self.run_object.end_s = '01/02/20T12:20:40.4560'
-        self.assertEqual(self.run_object.end_s, 
+        self.run_object.end = '01/02/20T12:20:40.4560'
+        self.assertEqual(self.run_object.end, 
                          '2020-01-02T12:20:40.456000+00:00')
         
     def test_n_channels(self):
-        self.run_object.channels_recorded_s = None
-        self.assertEqual(self.run_object.num_channels_i, None)
+        self.run_object.channels_recorded = None
+        self.assertEqual(self.run_object.num_channels, None)
         
-        self.run_object.channels_recorded_s = 'EX, EY, HX, HY, HZ'
-        self.assertEqual(self.run_object.num_channels_i, 5)
+        self.run_object.channels_recorded = 'EX, EY, HX, HY, HZ'
+        self.assertEqual(self.run_object.num_channels, 5)
 
 class TestChannel(unittest.TestCase):
     def setUp(self):
         self.maxDiff = None
         self.channel_object = metadata.Channel()
-        self.meta_dict = OrderedDict([('azimuth_d', 0.0),
-                                      ('channel_number_i', 1),
-                                      ('component_s', 'hx'),
-                                      ('data_quality.author_s', 'mt'),
-                                      ('data_quality.rating_i', 5),
-                                      ('data_quality.warning_flags_s', '0'),
-                                      ('data_quality.warning_notes_s', None),
-                                      ('datum_s', 'WGS84'),
-                                      ('elevation_d', 1200.3),
-                                      ('filter.applied_b', [False]),
-                                      ('filter.name_s', ['counts2mv']),
-                                      ('filter.notes_s', None),
-                                      ('latitude_d', 40.12),
-                                      ('longitude_d', -115.767),
-                                      ('notes_s', None),
-                                      ('sample_rate_d', 256.),
-                                      ('type_s', 'auxiliary'),
-                                      ('units_s', 'mV')])
+        self.meta_dict = OrderedDict([('azimuth', 0.0),
+                                      ('channel_number', 1),
+                                      ('component', 'hx'),
+                                      ('data_quality.author', 'mt'),
+                                      ('data_quality.rating', 5),
+                                      ('data_quality.warning_flags', '0'),
+                                      ('data_quality.warning_notes', None),
+                                      ('datum', 'WGS84'),
+                                      ('elevation', 1200.3),
+                                      ('filter.applied', [False]),
+                                      ('filter.name', ['counts2mv']),
+                                      ('filter.notes', None),
+                                      ('latitude', 40.12),
+                                      ('longitude', -115.767),
+                                      ('notes', None),
+                                      ('sample_rate', 256.),
+                                      ('type', 'auxiliary'),
+                                      ('units', 'mV')])
         
         self.meta_dict = OrderedDict(sorted(self.meta_dict.items(), 
                                             key=itemgetter(0)))
@@ -386,37 +387,37 @@ class TestElectric(unittest.TestCase):
     def setUp(self):
         self.maxDiff = None
         self.electric_object = metadata.Electric()
-        self.meta_dict = OrderedDict([('ac.end_d', 10.0),
-                                      ('ac.start_d', 9.0),
-                                      ('azimuth_d', 23.0),
-                                      ('channel_number_i', 5),
-                                      ('component_s', 'EY'),
-                                      ('contact_resistance_1.start_d', 1200.0),
-                                      ('contact_resistance_2.end_d', 1210.0),
-                                      ('data_quality.author_s', 'mt'),
-                                      ('data_quality.rating_i', 4),
-                                      ('data_quality.warning_flags_s', '0'),
-                                      ('data_quality.warning_notes_s', None),
-                                      ('dc.end_d', 2.0),
-                                      ('dc.start_d', 2.5),
-                                      ('dipole_length_d', 120.0),
-                                      ('filter.applied_b', [False]),
-                                      ('filter.name_s', ['counts2mv']),
-                                      ('filter.notes_s', None),
-                                      ('negative.datum_s', 'WGS84'),
-                                      ('negative.elevation_d', 1200.0),
-                                      ('negative.latitude_d', 40.123),
-                                      ('negative.longitude_d', -115.134),
-                                      ('negative.notes_s', None),
-                                      ('notes_s', None),
-                                      ('positive.datum_s', 'WGS84'),
-                                      ('positive.elevation_d', 1210.0),
-                                      ('positive.latitude_d', 40.234),
-                                      ('positive.longitude_d', -115.234),
-                                      ('positive.notes_s', None),
-                                      ('sample_rate_d', 4096.0),
-                                      ('type_s', 'electric'),
-                                      ('units_s', 'counts')])
+        self.meta_dict = OrderedDict([('ac.end', 10.0),
+                                      ('ac.start', 9.0),
+                                      ('azimuth', 23.0),
+                                      ('channel_number', 5),
+                                      ('component', 'EY'),
+                                      ('contact_resistance_1.start', 1200.0),
+                                      ('contact_resistance_2.end', 1210.0),
+                                      ('data_quality.author', 'mt'),
+                                      ('data_quality.rating', 4),
+                                      ('data_quality.warning_flags', '0'),
+                                      ('data_quality.warning_notes', None),
+                                      ('dc.end', 2.0),
+                                      ('dc.start', 2.5),
+                                      ('dipole_length', 120.0),
+                                      ('filter.applied', [False]),
+                                      ('filter.name', ['counts2mv']),
+                                      ('filter.notes', None),
+                                      ('negative.datum', 'WGS84'),
+                                      ('negative.elevation', 1200.0),
+                                      ('negative.latitude', 40.123),
+                                      ('negative.longitude', -115.134),
+                                      ('negative.notes', None),
+                                      ('notes', None),
+                                      ('positive.datum', 'WGS84'),
+                                      ('positive.elevation', 1210.0),
+                                      ('positive.latitude', 40.234),
+                                      ('positive.longitude', -115.234),
+                                      ('positive.notes', None),
+                                      ('sample_rate', 4096.0),
+                                      ('type', 'electric'),
+                                      ('units', 'counts')])
         
         self.meta_dict = OrderedDict(sorted(self.meta_dict.items(), 
                                             key=itemgetter(0)))
@@ -444,31 +445,31 @@ class TestMagnetic(unittest.TestCase):
     def setUp(self):
         self.maxDiff = None
         self.magnetic_object = metadata.Magnetic()
-        self.meta_dict = OrderedDict([('azimuth_d', 0.0),
-                                      ('channel_number_i', 2),
-                                      ('component_s', 'hy'),
-                                      ('data_quality.author_s', 'mt'),
-                                      ('data_quality.rating_i', 2),
-                                      ('data_quality.warning_flags_s', '0'),
-                                      ('data_quality.warning_notes_s', None),
-                                      ('datum_s', 'WGS84'),
-                                      ('elevation_d', 1230.9),
-                                      ('filter.applied_b', [True]),
-                                      ('filter.name_s', ['counts2mv']),
-                                      ('filter.notes_s', None),
-                                      ('h_field_max.end_d', 12.3),
-                                      ('h_field_max.start_d',1200.1),
-                                      ('h_field_min.end_d', 12.3),
-                                      ('h_field_min.start_d', 1400.),
-                                      ('latitude_d', 40.234),
-                                      ('longitude_d', -113.45),
-                                      ('notes_s', None),
-                                      ('sample_rate_d', 256.),
-                                      ('sensor.id_s', 'ant2284'),
-                                      ('sensor.manufacturer_s', None),
-                                      ('sensor.type_s', 'induction coil'),
-                                      ('type_s', 'magnetic'),
-                                      ('units_s', 'mv')])
+        self.meta_dict = OrderedDict([('azimuth', 0.0),
+                                      ('channel_number', 2),
+                                      ('component', 'hy'),
+                                      ('data_quality.author', 'mt'),
+                                      ('data_quality.rating', 2),
+                                      ('data_quality.warning_flags', '0'),
+                                      ('data_quality.warning_notes', None),
+                                      ('datum', 'WGS84'),
+                                      ('elevation', 1230.9),
+                                      ('filter.applied', [True]),
+                                      ('filter.name', ['counts2mv']),
+                                      ('filter.notes', None),
+                                      ('h_field_max.end', 12.3),
+                                      ('h_field_max.start',1200.1),
+                                      ('h_field_min.end', 12.3),
+                                      ('h_field_min.start', 1400.),
+                                      ('latitude', 40.234),
+                                      ('longitude', -113.45),
+                                      ('notes', None),
+                                      ('sample_rate', 256.),
+                                      ('sensor.id', 'ant2284'),
+                                      ('sensor.manufacturer', None),
+                                      ('sensor.type', 'induction coil'),
+                                      ('type', 'magnetic'),
+                                      ('units', 'mv')])
         
         self.meta_dict = OrderedDict(sorted(self.meta_dict.items(), 
                                             key=itemgetter(0)))

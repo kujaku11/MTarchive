@@ -1,4 +1,4 @@
 attribute,type,required,style,units
-author_s,str,TRUE,name,none
-version_s,str,TRUE,name,none
-name_s,str,TRUE,name,none
+author,str,TRUE,name,none
+version,str,TRUE,name,none
+name,str,TRUE,name,none

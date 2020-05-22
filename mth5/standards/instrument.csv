@@ -1,4 +1,4 @@
 attribute,type,required,style,units
-id_s,str,TRUE,name,none
-manufacturer_s,str,TRUE,name,none
-type_s,str,TRUE,name,none
+id,str,TRUE,name,none
+manufacturer,str,TRUE,name,none
+type,str,TRUE,name,none
