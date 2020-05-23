@@ -322,7 +322,7 @@ class Base():
         
         """
 
-        if value is None:
+        if value in [None, 'None', 'none']:
             return None
         
         if v_type is None:
@@ -533,33 +533,23 @@ class Base():
         :rtype: TYPE
 
         """
-        meta_dict = self.to_dict(structured=True)
 
-        root = etree.Element(self.__class__.__name__)
+        return helpers.dict_to_xml(self.to_dict(structured=True),
+                                   self._attr_dict)
+    
+    def from_xml(self, xml_element):
+        """
         
-        for key, value in meta_dict.items():
-            element = etree.SubElement(root, key)
-            if isinstance(value, dict):
-                for k1, v1 in value.items():
-                    sub_element_01 = etree.SubElement(element, k1)
-                    if isinstance(v1, dict):
-                        sub_element_02 = etree.SubElement(sub_element_01, k1)
-                        for k2, v2 in v1.items():
-                            sub_element_02.text = str(v2)
-                            name = '{0}.{1}.{2}'.format(key, k1, k2)
-                            units = self._attr_dict[name]['units']
-                            if units:
-                                sub_element_02.set('units', str(units))
-                    else:
-                        name = '{0}.{1}'.format(key, k1)
-                        sub_element_01.text = str(v1)
-                        units = self._attr_dict[name]['units']
-                        if units:
-                            sub_element_01.set('units', str(units)) 
-            else:
-                element.text = str(value)
+        :param xml_str: DESCRIPTION
+        :type xml_str: TYPE
+        :return: DESCRIPTION
+        :rtype: TYPE
+
+        """
         
-        return root
+        self.from_dict(helpers.element_to_dict(xml_element))
+        
+        
 
 # ============================================================================
 # Location class, be sure to put locations in decimal degrees, and note datum

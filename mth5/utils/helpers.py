@@ -5,9 +5,10 @@ Created on Fri May 22 16:49:06 2020
 @author: jpeacock
 """
 
-from collections import MutableMapping
+from collections import MutableMapping, defaultdict, OrderedDict
 from xml.etree import cElementTree as et 
 from xml.dom import minidom
+from operator import itemgetter
   
 # code to convert ini_dict to flattened dictionary 
 # default seperater '_' 
@@ -73,41 +74,55 @@ def structure_dict(meta_dict, sep='.'):
     for key, value in meta_dict.items():
         recursive_split_dict(key, value, structured_dict, sep=sep)
     return structured_dict
+
+def get_units(name, attr_dict):
+    """
+    """
+    try:
+        units = attr_dict[name]['units']
+    except KeyError:
+        units = None
+    return units
         
-def recursive_split_xml(element, item, name, reference_dict=None):
+def recursive_split_xml(element, item, base, name, attr_dict=None):
     """
     """
-    name = [name]
+
+    key = None
     if isinstance(item, dict):
         for key, value in item.items():
-            name.append(key)
+            attr_name = '.'.join([base, key])
+            
             sub_element = et.SubElement(element, key)
-            recursive_split_xml(sub_element, value, key, reference_dict)
+            recursive_split_xml(sub_element, value, attr_name, key,
+                                attr_dict)
+            
+            if attr_dict:
+                units = get_units(attr_name, attr_dict)
+                if units:
+                    element.set('units', str(units))     
             
     elif isinstance(item, (tuple, list)):
         for ii in item:
             sub_element = et.SubElement(element, 'i')
-            recursive_split_xml(sub_element, ii)
+            recursive_split_xml(sub_element, ii, base, name, attr_dict)
+            
     elif isinstance(item, str):
         element.text = item
     else:
         element.text = str(item)
-     
-    name = '.'.join(name)
-    print(name)
-    if reference_dict:
-        try:
-            units = reference_dict[name]['units']
-            print(units)
-            if units is not None:
-                element.set('units', str(units))
-        except KeyError:
-            pass
-    
         
+    if key:
+        base = '.'.join([base, key])
+    
+    if attr_dict:
+        units = get_units(base, attr_dict)
+        if units:
+            element.set('units', str(units))
+    
     return element, name
     
-def dict_to_xml(meta_dict, reference_dict=None):
+def dict_to_xml(meta_dict, attr_dict=None):
     """
     Assumes dictionary is structured {class:{attribute_dict}}
     
@@ -123,8 +138,42 @@ def dict_to_xml(meta_dict, reference_dict=None):
     for key, value in meta_dict[class_name].items():
         element = et.SubElement(root, key)
         name = [key]
-        r, k = recursive_split_xml(element, value, key, reference_dict)
-        
-        
+        recursive_split_xml(element, value, key, key, attr_dict)
     
     return root
+
+def element_to_dict(element):
+    """
+    
+    :param element: DESCRIPTION
+    :type element: TYPE
+    :return: DESCRIPTION
+    :rtype: TYPE
+
+    """
+    meta_dict = {element.tag: {} if element.attrib else None}
+    children = list(element)
+    if children:
+        child_dict = defaultdict(list)
+        for dc in map(element_to_dict, children):
+            for k, v in dc.items():
+                child_dict[k].append(v)
+        meta_dict = {element.tag: {k:v[0] if len(v) == 1 else v 
+                                   for k, v in child_dict.items()}}
+    
+    # going to skip attributes for now, later can check them against 
+    # standards
+    # if element.attrib:
+    #     meta_dict[element.tag].update((k, v) 
+    #                                   for k, v in element.attrib.items())
+    
+    if element.text:
+        text = element.text.strip()
+        # if children or element.attrib:
+        #     if text:
+        #       meta_dict[element.tag]['value'] = text
+        # else:
+        meta_dict[element.tag] = text
+        
+    return OrderedDict(sorted(meta_dict.items(), key=itemgetter(0)))
+    
