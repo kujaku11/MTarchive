@@ -59,33 +59,5 @@ def etree_to_dict(element):
 
 test_sd = etree_to_dict(root)
 
-def dict_to_etree(meta_dict):
-    def _to_etree(meta_dict, root):
-        if not meta_dict:
-            pass
-        elif isinstance(meta_dict, str):
-            root.text = meta_dict
-        elif isinstance(meta_dict, dict):
-            for k,v in meta_dict.items():
-                assert isinstance(k, str)
-                if k.startswith('#'):
-                    assert k == '#text' and isinstance(v, str)
-                    root.text = v
-                elif k.startswith('@'):
-                    assert isinstance(v, str)
-                    root.set(k[1:], v)
-                elif isinstance(v, list):
-                    for e in v:
-                        _to_etree(e, ET.SubElement(root, k))
-                else:
-                    _to_etree(v, ET.SubElement(root, k))
-        else:
-            raise TypeError('invalid type: ' + str(type(meta_dict)))
-    assert isinstance(meta_dict, dict) and len(meta_dict) == 1
-    tag, body = next(iter(meta_dict.items()))
-    node = ET.Element(tag)
-    _to_etree(body, node)
-    return ET.tostring(node)
-
 
 # for level in root.iter(): 

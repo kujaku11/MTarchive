@@ -58,6 +58,7 @@ from mth5.standards.schema import (ATTR_DICT, validate_attribute,
                                    validate_type)
 from mth5.utils.mttime import MTime
 from mth5.utils.exceptions import MTSchemaError
+from mth5.utils import helpers
 
 # =============================================================================
 #  Base class that everything else will inherit
@@ -430,51 +431,17 @@ class Base():
         make a dictionary from attributes, makes dictionary from _attr_list.
         """
         meta_dict = {}
-        if not structured:
-            for name in list(self._attr_dict.keys()):
-                try:
-                    meta_dict[name] = self.get_attr_from_name(name)
-                except AttributeError as error:
-                    msg = ('{0}: setting {1} to None.  '.format(error, name) + 
-                           'Try setting {0} to the desired value'.format(name))
-                    self.logger.info(msg)
-                    meta_dict[name] = None
+        for name in list(self._attr_dict.keys()):
+            try:
+                meta_dict[name] = self.get_attr_from_name(name)
+            except AttributeError as error:
+                msg = ('{0}: setting {1} to None.  '.format(error, name) + 
+                       'Try setting {0} to the desired value'.format(name))
+                self.logger.info(msg)
+                meta_dict[name] = None
 
         else:
-            meta_dict = {}
-            for name in list(self._attr_dict.keys()):
-                try:
-                    value = self.get_attr_from_name(name)
-                except AttributeError as error:
-                    msg = ('{0}: setting {1} to None.  '.format(error, name) + 
-                           'Try setting {0} to the desired value'.format(name))
-                    self.logger.info(msg)
-                    value = None
-                
-                if '.' in name:
-                    category, names = name.split('.', 1)
-                    n = names.count('.')
-                    try:
-                        category_dict = meta_dict[category]
-                    except KeyError:
-                        category_dict = {}
-                    n = names.count('.')
-                    if n == 0:
-                        category_dict[names] = value
-                        meta_dict[category] = category_dict
-                    elif n == 1:
-                        level, sub = names.split('.')
-                        try:
-                            level_dict = category_dict[level]
-                        except KeyError:
-                            level_dict = {}
-                        level_dict[sub] = value
-                        category_dict[level] = level_dict
-                        meta_dict[category] = category_dict
-                    else:
-                        raise ValueError('Have not implemented 3 levels yet')
-                else:
-                    meta_dict[name] = value
+           meta_dict = helpers.structure_dict(meta_dict)
 
         meta_dict = {self._class_name.lower(): meta_dict}
         # sort the output dictionary for convience
@@ -500,7 +467,8 @@ class Base():
             msg = ('name of input dictionary is not the same as class type' +
                    'input = {0}, class type = {1}'.format(class_name, 
                                                           self._class_name))
-        for name, value in meta_dict[class_name].items():
+        meta_dict = helpers.flatten_dict(meta_dict[class_name])
+        for name, value in meta_dict.items():
             self.set_attr_from_name(name, value)
                 
     def to_json(self, structured=False):
@@ -508,38 +476,9 @@ class Base():
         Write a json string from a given object, taking into account other
         class objects contained within the given object.
         """
-        if not structured:
-            return json.dumps(self.to_dict(), cls=NumpyEncoder)
-        
-        elif structured:
-            meta_dict = self.to_dict()
-            structured_dict = {}
-            for key, value in meta_dict.items():
-                if '.' in key:
-                    category, names = key.split('.', 1)
-                    n = names.count('.')
-                    try:
-                        category_dict = structured_dict[category]
-                    except KeyError:
-                        category_dict = {}
-                    n = names.count('.')
-                    if n == 0:
-                        category_dict[names] = value
-                        structured_dict[category] = category_dict
-                    elif n == 1:
-                        name, sub = names.split('.')
-                        try:
-                            name_dict = category_dict[name]
-                        except KeyError:
-                            name_dict = {}
-                        name_dict[sub] = value
-                        category_dict[name] = name_dict
-                        structured_dict[category] = category_dict
-                    else:
-                        raise ValueError('Have not implemented 3 levels yet')
-                else:
-                    structured_dict[key] = value
-            return json.dumps(structured_dict, cls=NumpyEncoder)
+
+        return json.dumps(self.to_dict(structured=structured),
+                          cls=NumpyEncoder)
 
     def from_json(self, json_str):
         """
