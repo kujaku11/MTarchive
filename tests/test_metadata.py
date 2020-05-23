@@ -2,6 +2,10 @@
 """
 Tests for Metadata module
 
+.. todo::
+    * write tests for to/from_xml
+    
+
 Created on Tue Apr 28 18:08:40 2020
 
 @author: jpeacock
@@ -118,28 +122,30 @@ class TestSurveyMetadata(unittest.TestCase):
 
     def setUp(self):
         self.maxDiff = None
-        self.meta_dict = {'name': 'name test',
-                          'id': 'id test',
-                          'net_code': 'net_code test',
-                          'start_date': '2019-01-02',
-                          'end_date': '2019-03-05',
-                          'northwest_corner.latitude': 40.09,
-                          'northwest_corner.longitude': -115.6,
-                          'southeast_corner.latitude': 35.90,
-                          'southeast_corner.longitude': -118.9,
-                          'datum': 'WGS84',
-                          'location': 'location test',
-                          'country': 'country test',
-                          'summary': 'summary test',
-                          'notes': 'notes test',
-                          'acquired_by.author': 'author test',
-                          'acquired_by.organization': 'organization test',
-                          'acquired_by.email': 'email@test.mt',
-                          'acquired_by.url': 'https:test.com',
-                          'release_status': 'free',
-                          'conditions_of_use': 'freedom',
-                          'citation_dataset.doi': 'https:doi.adfa12',
-                          'citation_journal.doi': None} 
+        self.meta_dict = {'survey':
+                          {'name': 'name test',
+                           'id': 'id test',
+                           'net_code': 'net_code test',
+                           'start_date': '2019-01-02',
+                           'end_date': '2019-03-05',
+                           'northwest_corner.latitude': 40.09,
+                           'northwest_corner.longitude': -115.6,
+                           'southeast_corner.latitude': 35.90,
+                           'southeast_corner.longitude': -118.9,
+                           'datum': 'WGS84',
+                           'location': 'location test',
+                           'country': 'country test',
+                           'summary': 'summary test',
+                           'notes': 'notes test',
+                           'acquired_by.author': 'author test',
+                           'acquired_by.organization': 'organization test',
+                           'acquired_by.email': 'email@test.mt',
+                           'acquired_by.url': 'https:test.com',
+                           'release_status': 'free',
+                           'conditions_of_use': 'freedom',
+                           'citation_dataset.doi': 'https:doi.adfa12',
+                           'citation_journal.doi': None}}
+                          
         self.meta_dict = key =  OrderedDict(sorted(self.meta_dict.items(),
                                                    key=itemgetter(0)))
     
@@ -150,7 +156,7 @@ class TestSurveyMetadata(unittest.TestCase):
         self.assertDictEqual(self.meta_dict, self.survey_object.to_dict())
         
     def test_in_out_series(self):
-        survey_series = pd.Series(self.meta_dict)
+        survey_series = pd.Series(self.meta_dict['survey'])
         self.survey_object.from_series(survey_series)
         self.assertDictEqual(self.meta_dict, self.survey_object.to_dict())
         
@@ -196,36 +202,37 @@ class TestStationMetadata(unittest.TestCase):
     def setUp(self):
         self.maxDiff = None
         self.station_object = metadata.Station()
-        self.meta_dict = {'sta_code': 'test sta_code',
-                          'name': 'test name',
-                          'latitude': 40.019,
-                          'longitude': -117.89,
-                          'elevation': 1230.0,
-                          'notes': 'notes test',
-                          'datum': 'data test',
-                          'start': '2010-01-01T12:30:20+00:00',
-                          'end': '2010-01-04T07:40:30+00:00',
-                          'num_channels': 5,
-                          'channels_recorded': '[ex, ey, hx, hy, hz]',
-                          'data_type': 'MT',
-                          'declination.value': -12.3,
-                          'declination.units': 'degrees',
-                          'declination.epoch': 'MTM01',
-                          'declination.model': 'MTM01',
-                          'station_orientation': 'geographic north',
-                          'orientation_method': 'compass',
-                          'acquired_by.author': 'acquired test',
-                          'acquired_by.email': 'acquired email',
-                          'provenance.creation_time': '2010-04-01T10:10:10+00:00',
-                          'provenance.software.name': 'mth5',
-                          'provenance.software.version': '1.0.1',
-                          'provenance.software.author': 'Peacock',
-                          'provenance.submitter.author': 'submitter name',
-                          'provenance.submitter.organization': 'mt inc',
-                          'provenance.submitter.url': 'mt.edi',
-                          'provenance.submitter.email': 'mt@em.edi',
-                          'provenance.notes': 'goats',
-                          'provenance.log': 'EY flipped'}
+        self.meta_dict = {'station':
+                          {'sta_code': 'test sta_code',
+                           'name': 'test name',
+                           'latitude': 40.019,
+                           'longitude': -117.89,
+                           'elevation': 1230.0,
+                           'notes': 'notes test',
+                           'datum': 'data test',
+                           'start': '2010-01-01T12:30:20+00:00',
+                           'end': '2010-01-04T07:40:30+00:00',
+                           'num_channels': 5,
+                           'channels_recorded': '[ex, ey, hx, hy, hz]',
+                           'data_type': 'MT',
+                           'declination.value': -12.3,
+                           'declination.units': 'degrees',
+                           'declination.epoch': 'MTM01',
+                           'declination.model': 'MTM01',
+                           'station_orientation': 'geographic north',
+                           'orientation_method': 'compass',
+                           'acquired_by.author': 'acquired test',
+                           'acquired_by.email': 'acquired email',
+                           'provenance.creation_time': '2010-04-01T10:10:10+00:00',
+                           'provenance.software.name': 'mth5',
+                           'provenance.software.version': '1.0.1',
+                           'provenance.software.author': 'Peacock',
+                           'provenance.submitter.author': 'submitter name',
+                           'provenance.submitter.organization': 'mt inc',
+                           'provenance.submitter.url': 'mt.edi',
+                           'provenance.submitter.email': 'mt@em.edi',
+                           'provenance.notes': 'goats',
+                           'provenance.log': 'EY flipped'}}
               
         self.meta_dict = key =  OrderedDict(sorted(self.meta_dict.items(),
                                                    key=itemgetter(0)))
@@ -234,8 +241,8 @@ class TestStationMetadata(unittest.TestCase):
         self.assertDictEqual(self.meta_dict, self.station_object.to_dict())
         
     def test_in_out_series(self):
-        survey_series = pd.Series(self.meta_dict)
-        self.station_object.from_series(survey_series)
+        station_series = pd.Series(self.meta_dict['station'])
+        self.station_object.from_series(station_series)
         self.assertDictEqual(self.meta_dict, self.station_object.to_dict())
         
     def test_in_out_json(self):
@@ -281,17 +288,19 @@ class TestStationMetadata(unittest.TestCase):
         
 class TestRun(unittest.TestCase):
     def setUp(self):
-        self.meta_dict = OrderedDict([('acquired_by.author', 'mt'),
-                                      ('acquired_by.email', 'mt@mt.org'),
-                                      ('channels_recorded', 'EX, EY, HX, HY'),
-                                      ('data_type', 'MT'),
-                                      ('end', '1980-01-01T00:00:00+00:00'),
-                                      ('id', 'mt01'),
-                                      ('notes', 'cables chewed by gophers'),
-                                      ('provenance.log', None),
-                                      ('provenance.notes', None),
-                                      ('sampling_rate', None),
-                                      ('start', '1980-01-01T00:00:00+00:00')])
+        self.meta_dict = {'run': 
+                          {'acquired_by.author': 'mt',
+                           'acquired_by.email': 'mt@mt.org',
+                           'channels_recorded': 'EX, EY, HX, HY',
+                           'data_type': 'MT',
+                           'end': '1980-01-01T00:00:00+00:00',
+                           'id': 'mt01',
+                           'notes': 'cables chewed by gophers',
+                           'provenance.log': None,
+                           'provenance.notes': None,
+                           'sampling_rate': None,
+                           'start': '1980-01-01T00:00:00+00:00'}}
+            
         self.meta_dict = OrderedDict(sorted(self.meta_dict.items(), 
                                             key=itemgetter(0)))
         self.run_object = metadata.Run()
@@ -301,8 +310,8 @@ class TestRun(unittest.TestCase):
         self.assertDictEqual(self.meta_dict, self.run_object.to_dict())
         
     def test_in_out_series(self):
-        survey_series = pd.Series(self.meta_dict)
-        self.run_object.from_series(survey_series)
+        run_series = pd.Series(self.meta_dict['run'])
+        self.run_object.from_series(run_series)
         self.assertDictEqual(self.meta_dict, self.run_object.to_dict())
         
     def test_in_out_json(self):
@@ -343,24 +352,25 @@ class TestChannel(unittest.TestCase):
     def setUp(self):
         self.maxDiff = None
         self.channel_object = metadata.Channel()
-        self.meta_dict = OrderedDict([('azimuth', 0.0),
-                                      ('channel_number', 1),
-                                      ('component', 'hx'),
-                                      ('data_quality.author', 'mt'),
-                                      ('data_quality.rating', 5),
-                                      ('data_quality.warning_flags', '0'),
-                                      ('data_quality.warning_notes', None),
-                                      ('datum', 'WGS84'),
-                                      ('elevation', 1200.3),
-                                      ('filter.applied', [False]),
-                                      ('filter.name', ['counts2mv']),
-                                      ('filter.notes', None),
-                                      ('latitude', 40.12),
-                                      ('longitude', -115.767),
-                                      ('notes', None),
-                                      ('sample_rate', 256.),
-                                      ('type', 'auxiliary'),
-                                      ('units', 'mV')])
+        self.meta_dict = {'channel':
+                          {'azimuth': 0.0,
+                           'channel_number': 1,
+                           'component': 'hx',
+                           'data_quality.author': 'mt',
+                           'data_quality.rating': 5,
+                           'data_quality.warning_flags': '0',
+                           'data_quality.warning_notes': None,
+                           'datum': 'WGS84',
+                           'elevation': 1200.3,
+                           'filter.applied': [False],
+                           'filter.name': ['counts2mv'],
+                           'filter.notes': None,
+                           'latitude': 40.12,
+                           'longitude': -115.767,
+                           'notes': None,
+                           'sample_rate': 256.0,
+                           'type': 'auxiliary',
+                           'units': 'mV'}}
         
         self.meta_dict = OrderedDict(sorted(self.meta_dict.items(), 
                                             key=itemgetter(0)))
@@ -370,8 +380,8 @@ class TestChannel(unittest.TestCase):
         self.assertDictEqual(self.meta_dict, self.channel_object.to_dict())
         
     def test_in_out_series(self):
-        survey_series = pd.Series(self.meta_dict)
-        self.channel_object.from_series(survey_series)
+        channel_series = pd.Series(self.meta_dict['channel'])
+        self.channel_object.from_series(channel_series)
         self.assertDictEqual(self.meta_dict, self.channel_object.to_dict())
         
     def test_in_out_json(self):
@@ -387,37 +397,38 @@ class TestElectric(unittest.TestCase):
     def setUp(self):
         self.maxDiff = None
         self.electric_object = metadata.Electric()
-        self.meta_dict = OrderedDict([('ac.end', 10.0),
-                                      ('ac.start', 9.0),
-                                      ('azimuth', 23.0),
-                                      ('channel_number', 5),
-                                      ('component', 'EY'),
-                                      ('contact_resistance_1.start', 1200.0),
-                                      ('contact_resistance_2.end', 1210.0),
-                                      ('data_quality.author', 'mt'),
-                                      ('data_quality.rating', 4),
-                                      ('data_quality.warning_flags', '0'),
-                                      ('data_quality.warning_notes', None),
-                                      ('dc.end', 2.0),
-                                      ('dc.start', 2.5),
-                                      ('dipole_length', 120.0),
-                                      ('filter.applied', [False]),
-                                      ('filter.name', ['counts2mv']),
-                                      ('filter.notes', None),
-                                      ('negative.datum', 'WGS84'),
-                                      ('negative.elevation', 1200.0),
-                                      ('negative.latitude', 40.123),
-                                      ('negative.longitude', -115.134),
-                                      ('negative.notes', None),
-                                      ('notes', None),
-                                      ('positive.datum', 'WGS84'),
-                                      ('positive.elevation', 1210.0),
-                                      ('positive.latitude', 40.234),
-                                      ('positive.longitude', -115.234),
-                                      ('positive.notes', None),
-                                      ('sample_rate', 4096.0),
-                                      ('type', 'electric'),
-                                      ('units', 'counts')])
+        self.meta_dict = {'electric':
+                          {'ac.end': 10.0,
+                           'ac.start': 9.0,
+                           'azimuth': 23.0,
+                           'channel_number': 5,
+                           'component': 'EY',
+                           'contact_resistance_1.start': 1200.0,
+                           'contact_resistance_2.end': 1210.0,
+                           'data_quality.author': 'mt',
+                           'data_quality.rating': 4,
+                           'data_quality.warning_flags': '0',
+                           'data_quality.warning_notes': None,
+                           'dc.end': 2.0,
+                           'dc.start': 2.5,
+                           'dipole_length': 120.0,
+                           'filter.applied': [False],
+                           'filter.name': ['counts2mv'],
+                           'filter.notes': None,
+                           'negative.datum': 'WGS84',
+                           'negative.elevation': 1200.0,
+                           'negative.latitude': 40.123,
+                           'negative.longitude': -115.134,
+                           'negative.notes': None,
+                           'notes': None,
+                           'positive.datum': 'WGS84',
+                           'positive.elevation': 1210.0,
+                           'positive.latitude': 40.234,
+                           'positive.longitude': -115.234,
+                           'positive.notes': None,
+                           'sample_rate': 4096.0,
+                           'type': 'electric',
+                           'units': 'counts'}}
         
         self.meta_dict = OrderedDict(sorted(self.meta_dict.items(), 
                                             key=itemgetter(0)))
@@ -427,8 +438,8 @@ class TestElectric(unittest.TestCase):
         self.assertDictEqual(self.meta_dict, self.electric_object.to_dict())
         
     def test_in_out_series(self):
-        survey_series = pd.Series(self.meta_dict)
-        self.electric_object.from_series(survey_series)
+        electric_series = pd.Series(self.meta_dict['electric'])
+        self.electric_object.from_series(electric_series)
         self.assertDictEqual(self.meta_dict, self.electric_object.to_dict())
         
     def test_in_out_json(self):
@@ -445,31 +456,32 @@ class TestMagnetic(unittest.TestCase):
     def setUp(self):
         self.maxDiff = None
         self.magnetic_object = metadata.Magnetic()
-        self.meta_dict = OrderedDict([('azimuth', 0.0),
-                                      ('channel_number', 2),
-                                      ('component', 'hy'),
-                                      ('data_quality.author', 'mt'),
-                                      ('data_quality.rating', 2),
-                                      ('data_quality.warning_flags', '0'),
-                                      ('data_quality.warning_notes', None),
-                                      ('datum', 'WGS84'),
-                                      ('elevation', 1230.9),
-                                      ('filter.applied', [True]),
-                                      ('filter.name', ['counts2mv']),
-                                      ('filter.notes', None),
-                                      ('h_field_max.end', 12.3),
-                                      ('h_field_max.start',1200.1),
-                                      ('h_field_min.end', 12.3),
-                                      ('h_field_min.start', 1400.),
-                                      ('latitude', 40.234),
-                                      ('longitude', -113.45),
-                                      ('notes', None),
-                                      ('sample_rate', 256.),
-                                      ('sensor.id', 'ant2284'),
-                                      ('sensor.manufacturer', None),
-                                      ('sensor.type', 'induction coil'),
-                                      ('type', 'magnetic'),
-                                      ('units', 'mv')])
+        self.meta_dict = {'magnetic':
+                          {'azimuth': 0.0,
+                           'channel_number': 2,   
+                           'component': 'hy', 
+                           'data_quality.author': 'mt',
+                           'data_quality.rating': 2,
+                           'data_quality.warning_flags': '0',
+                           'data_quality.warning_notes': None,
+                           'datum': 'WGS84',
+                           'elevation': 1230.9,
+                           'filter.applied': [True],
+                           'filter.name': ['counts2mv'],
+                           'filter.notes': None,
+                           'h_field_max.end': 12.3,
+                           'h_field_max.start': 1200.1,
+                           'h_field_min.end': 12.3,
+                           'h_field_min.start': 1400.0,
+                           'latitude': 40.234,
+                           'longitude': -113.45,
+                           'notes': None,
+                           'sample_rate': 256.0,
+                           'sensor.id': 'ant2284',
+                           'sensor.manufacturer': None,
+                           'sensor.type': 'induction coil',
+                           'type': 'magnetic',
+                           'units': 'mv'}}
         
         self.meta_dict = OrderedDict(sorted(self.meta_dict.items(), 
                                             key=itemgetter(0)))
@@ -479,8 +491,8 @@ class TestMagnetic(unittest.TestCase):
         self.assertDictEqual(self.meta_dict, self.magnetic_object.to_dict())
         
     def test_in_out_series(self):
-        survey_series = pd.Series(self.meta_dict)
-        self.magnetic_object.from_series(survey_series)
+        magnetic_series = pd.Series(self.meta_dict['magnetic'])
+        self.magnetic_object.from_series(magnetic_series)
         self.assertDictEqual(self.meta_dict, self.magnetic_object.to_dict())
         
     def test_in_out_json(self):

@@ -52,7 +52,6 @@ import logging
 
 from collections import OrderedDict
 from operator import itemgetter
-from lxml import etree
 
 from mth5.standards.schema import (ATTR_DICT, validate_attribute,
                                    validate_type)
@@ -440,7 +439,7 @@ class Base():
                 self.logger.info(msg)
                 meta_dict[name] = None
 
-        else:
+        if structured:
            meta_dict = helpers.structure_dict(meta_dict)
 
         meta_dict = {self._class_name.lower(): meta_dict}
@@ -524,7 +523,7 @@ class Base():
 
         """
         
-        return pd.Series(self.to_dict()[self._class_name])
+        return pd.Series(self.to_dict()[self._class_name.lower()])
     
     def to_xml(self):
         """

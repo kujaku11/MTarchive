@@ -5,7 +5,8 @@ Created on Fri May 22 16:49:06 2020
 @author: jpeacock
 """
 
-from collections import MutableMapping, defaultdict, OrderedDict
+from collections.abc import MutableMapping
+from collections import OrderedDict, defaultdict
 from xml.etree import cElementTree as et 
 from xml.dom import minidom
 from operator import itemgetter
@@ -176,4 +177,8 @@ def element_to_dict(element):
         meta_dict[element.tag] = text
         
     return OrderedDict(sorted(meta_dict.items(), key=itemgetter(0)))
+
+def print_element(element):
+    print(minidom.parseString(et.tostring(element).decode()).toprettyxml(
+        indent='    '))
     
