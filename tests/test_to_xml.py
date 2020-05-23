@@ -5,7 +5,7 @@ Created on Fri May 22 11:53:57 2020
 @author: jpeacock
 """
 
-from xml.etree import cElementTree as ET
+from xml.etree import cElementTree as et
 from xml.dom import minidom
 from mth5 import metadata
 from collections import defaultdict, OrderedDict
@@ -14,20 +14,20 @@ from operator import itemgetter
 s = metadata.Survey()
 sd = s.to_dict(structured=True)
 
-root = ET.Element(s.__class__.__name__)
+root = et.Element(s.__class__.__name__)
 
 for key, value in sd.items():
-    element = ET.SubElement(root, key)
+    element = et.SubElement(root, key)
     if isinstance(value, dict):
         for k, v in value.items():
-            sub_element = ET.SubElement(element, k)
+            sub_element = et.SubElement(element, k)
             sub_element.text = str(v)
             units = s._attr_dict['{0}.{1}'.format(key, k)]['units']
             if units:
                 sub_element.set('units', str(units)) 
     else:
         element.text = str(value)
-print(minidom.parseString(ET.tostring(root).decode()).toprettyxml(indent='    '))    
+print(minidom.parseString(et.tostring(root).decode()).toprettyxml(indent='    '))    
 
 ## from xml
 

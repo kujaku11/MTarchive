@@ -467,6 +467,8 @@ class Base():
             msg = ('name of input dictionary is not the same as class type' +
                    'input = {0}, class type = {1}'.format(class_name, 
                                                           self._class_name))
+        
+        # be sure to flatten the dictionary first for easier transform
         meta_dict = helpers.flatten_dict(meta_dict[class_name])
         for name, value in meta_dict.items():
             self.set_attr_from_name(name, value)
@@ -492,23 +494,9 @@ class Base():
             msg = "Input must be valid JSON string not {0}".format(
                 type(json_str))
             self.logger.error(msg)
-            raise MTSchemaError(msg)
-        read_dict = json.loads(json_str)
-        meta_dict = {}
-        for key, value in read_dict.items():
-            if isinstance(value, dict):
-                for key_01, value_01 in value.items():
-                    if isinstance(value_01, dict):
-                        for key_02, value_02 in value_01.items():
-                            m_key = '.'.join([key, key_01, key_02])
-                            meta_dict[m_key] = value_02
-                    else:
-                        m_key = '.'.join([key, key_01])
-                        meta_dict[m_key] = value_01
-            else:
-                meta_dict[key] = value
-        
-        self.from_dict(meta_dict)
+            raise MTSchemaError(msg) 
+            
+        self.from_dict(json.loads(json_str))
 
     def from_series(self, pd_series):
         """
@@ -536,7 +524,7 @@ class Base():
 
         """
         
-        return pd.Series(self.to_dict())
+        return pd.Series(self.to_dict()[self._class_name])
     
     def to_xml(self):
         """
