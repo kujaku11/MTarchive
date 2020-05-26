@@ -123,8 +123,8 @@ class TestSurveyMetadata(unittest.TestCase):
     def setUp(self):
         self.maxDiff = None
         self.meta_dict = {'survey':
-                          {'name': 'name test',
-                           'id': 'id test',
+                          {'short_name': 'name test',
+                           'long_name': 'id test',
                            'net_code': 'net_code test',
                            'start_date': '2019-01-02',
                            'end_date': '2019-03-05',
@@ -133,7 +133,7 @@ class TestSurveyMetadata(unittest.TestCase):
                            'southeast_corner.latitude': 35.90,
                            'southeast_corner.longitude': -118.9,
                            'datum': 'WGS84',
-                           'location': 'location test',
+                           'geographic_location': 'location test',
                            'country': 'country test',
                            'summary': 'summary test',
                            'notes': 'notes test',
@@ -205,20 +205,19 @@ class TestStationMetadata(unittest.TestCase):
         self.meta_dict = {'station':
                           {'sta_code': 'test sta_code',
                            'name': 'test name',
-                           'latitude': 40.019,
-                           'longitude': -117.89,
-                           'elevation': 1230.0,
+                           'location.latitude': 40.019,
+                           'location.longitude': -117.89,
+                           'location.elevation': 1230.0,
+                           'location.datum': 'WGS84',
+                           'location.declination.value': -12.3,
+                           'location.declination.epoch': 'MTM01',
+                           'location.declination.model': 'MTM01',
                            'notes': 'notes test',
-                           'datum': 'data test',
                            'start': '2010-01-01T12:30:20+00:00',
                            'end': '2010-01-04T07:40:30+00:00',
                            'num_channels': 5,
                            'channels_recorded': '[ex, ey, hx, hy, hz]',
                            'data_type': 'MT',
-                           'declination.value': -12.3,
-                           'declination.units': 'degrees',
-                           'declination.epoch': 'MTM01',
-                           'declination.model': 'MTM01',
                            'station_orientation': 'geographic north',
                            'orientation_method': 'compass',
                            'acquired_by.author': 'acquired test',
@@ -273,21 +272,23 @@ class TestStationMetadata(unittest.TestCase):
                          '2020-01-02T12:20:40.456000+00:00')
         
     def test_latitude(self):
-        self.station_object.latitude = '40:10:05.123'
-        self.assertAlmostEqual(self.station_object.latitude,
+        self.station_object.location.latitude = '40:10:05.123'
+        self.assertAlmostEqual(self.station_object.location.latitude,
                                40.1680897, places=5)
         
     def test_longitude(self):
-        self.station_object.longitude = '-115:34:24.9786'
-        self.assertAlmostEqual(self.station_object.longitude,
+        self.station_object.location.longitude = '-115:34:24.9786'
+        self.assertAlmostEqual(self.station_object.location.longitude,
                                -115.57361, places=5)
         
     def test_declination(self):
-        self.station_object.declination.value = '10.980'
-        self.assertEqual(self.station_object.declination.value, 10.980)
+        self.station_object.location.declination.value = '10.980'
+        self.assertEqual(self.station_object.location.declination.value,
+                         10.980)
         
 class TestRun(unittest.TestCase):
     def setUp(self):
+        self.maxDiff = None
         self.meta_dict = {'run': 
                           {'acquired_by.author': 'mt',
                            'acquired_by.email': 'mt@mt.org',

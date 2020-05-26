@@ -1,6 +1,6 @@
 attribute,type,required,style,units
-name,str,TRUE,name,None
-id,str,TRUE,name,None
+short_name,str,TRUE,name,None
+long_name,str,TRUE,name,None
 net_code,str,TRUE,net_code,None
 start_date,str,TRUE,date,None
 end_date,str,TRUE,date,None
@@ -9,7 +9,7 @@ northwest_corner.longitude,float,TRUE,number,decimal degrees
 southeast_corner.latitude,float,TRUE,number,decimal degrees
 southeast_corner.longitude,float,TRUE,number,decimal degrees
 datum,str,TRUE,name,none
-location,str,TRUE,name,none
+geographic_location,str,TRUE,name,none
 country,str,TRUE,name,none
 summary,str,TRUE,name,none
 notes,str,TRUE,name,none

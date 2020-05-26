@@ -428,6 +428,10 @@ class Base():
     def to_dict(self, structured=False):
         """
         make a dictionary from attributes, makes dictionary from _attr_list.
+        
+        :param structured: make the returned dictionary nested
+        :type structured: [ True | False ] , default is False
+        
         """
         meta_dict = {}
         for name in list(self._attr_dict.keys()):
@@ -472,14 +476,19 @@ class Base():
         for name, value in meta_dict.items():
             self.set_attr_from_name(name, value)
                 
-    def to_json(self, structured=False):
+    def to_json(self, structured=False, indent=' '*4):
         """
         Write a json string from a given object, taking into account other
         class objects contained within the given object.
+        
+        :param structured: make the returned json nested
+        :type structured: [ True | False ] , default is False
+        
         """
 
         return json.dumps(self.to_dict(structured=structured),
-                          cls=NumpyEncoder)
+                          cls=NumpyEncoder,
+                          indent=indent)
 
     def from_json(self, json_str):
         """
@@ -501,10 +510,14 @@ class Base():
         """
         Fill attributes from a Pandas series
         
+        .. note:: Currently, the series must be single layered with key names
+                  separated by dots. (location.latitude)
+        
         :param pd_series: Series containing metadata information
         :type pd_series: pandas.Series
         
         ..todo:: Force types in series
+        
         """
         if not isinstance(pd_series, pd.Series):
             msg = ("Input must be a Pandas.Series not type {0}".format(
@@ -518,6 +531,8 @@ class Base():
         """
         Convert attribute list to a pandas.Series
         
+        .. note:: this is a flattened version of the metadata
+        
         :return: pandas.Series
         :rtype: pandas.Series
 
@@ -527,9 +542,13 @@ class Base():
     
     def to_xml(self, string=False):
         """
+        make an xml element for the attribute that will add types and 
+        units.  
         
-        :return: DESCRIPTION
-        :rtype: TYPE
+        :param string: output a string instead of an XML element
+        :type string: [ True | False ], default is False
+        
+        :return: XML element or string
 
         """
         element = helpers.dict_to_xml(self.to_dict(structured=True),
@@ -542,28 +561,32 @@ class Base():
     def from_xml(self, xml_element):
         """
         
-        :param xml_str: DESCRIPTION
-        :type xml_str: TYPE
-        :return: DESCRIPTION
-        :rtype: TYPE
+        :param xml_element: XML element
+        :type xml_element: etree.Element
+        
+        :return: Fills attributes accordingly
 
         """
         
         self.from_dict(helpers.element_to_dict(xml_element))
-        
-        
 
 # ============================================================================
 # Location class, be sure to put locations in decimal degrees, and note datum
 # ============================================================================
 class Declination(Base):
     """
-    declination container
+    Declination container
+    
+    =================== ========================================= ============
+    Default Attributes  Description                               type
+    =================== ========================================= ============
+    value               value of declination in degrees           float
+    units                 
+    =================== ========================================= ============
     """
     def __init__(self, **kwargs):
 
         self.value = None
-        self.units = None
         self.epoch = None
         self.model = None
         super(Declination, self).__init__(**kwargs)
@@ -1240,8 +1263,8 @@ class Survey(Base):
         self.acquired_by = Person()
         self._start_dt = MTime()
         self._end_dt = MTime()
-        self.name = None
-        self.id = None
+        self.short_name = None
+        self.long_name = None
         self.net_code = None
         self.northwest_corner = Location()
         self.southeast_corner = Location()
@@ -1277,7 +1300,7 @@ class Survey(Base):
 # =============================================================================
 # Station Class
 # =============================================================================
-class Station(Location):
+class Station(Base):
     """
     station object
     """
@@ -1294,6 +1317,7 @@ class Station(Location):
         self.orientation_method = None
         self.acquired_by = Person()
         self.provenance = Provenance()
+        self.location = Location()
 
         super(Station, self).__init__()
 
@@ -1332,6 +1356,7 @@ class Run(Base):
         self._end_dt = MTime()
         self.sampling_rate = None
         self.channels_recorded = None
+        self._n_chan = None
         self.data_type = None
         self.acquired_by = Person()
         self.provenance = Provenance()
@@ -1360,7 +1385,12 @@ class Run(Base):
     def num_channels(self):
         if self.channels_recorded is None:
             return None
-        return len(self.channels_recorded.split(','))
+        else:
+            return len(self.channels_recorded.split(','))
+
+            
+
+        
 
 # =============================================================================
 # Data logger

@@ -1,5 +1,4 @@
 attribute,type,required,style,units
 value,float,TRUE,number,degrees
-units,str,TRUE,name,None
 epoch,str,TRUE,name,None
 model,str,TRUE,name,None
