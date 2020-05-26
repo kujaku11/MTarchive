@@ -81,14 +81,29 @@ def get_units(name, attr_dict):
     """
     try:
         units = attr_dict[name]['units']
+        if not isinstance(units, str):
+            units = '{0}'.format(units)
     except KeyError:
         units = None
+    if units in [None, 'None', 'none']:
+        return None
+    
     return units
+
+def get_type(name, attr_dict):
+    """
+    """
+    try:
+        v_type = attr_dict[name]['type']
+        if v_type in ['string', str, 'str', 'String']:
+            v_type = None
+    except KeyError:
+        v_type = None
+    return v_type
         
 def recursive_split_xml(element, item, base, name, attr_dict=None):
     """
     """
-
     key = None
     if isinstance(item, dict):
         for key, value in item.items():
@@ -97,12 +112,7 @@ def recursive_split_xml(element, item, base, name, attr_dict=None):
             sub_element = et.SubElement(element, key)
             recursive_split_xml(sub_element, value, attr_name, key,
                                 attr_dict)
-            
-            if attr_dict:
-                units = get_units(attr_name, attr_dict)
-                if units:
-                    element.set('units', str(units))     
-            
+                
     elif isinstance(item, (tuple, list)):
         for ii in item:
             sub_element = et.SubElement(element, 'i')
@@ -110,16 +120,20 @@ def recursive_split_xml(element, item, base, name, attr_dict=None):
             
     elif isinstance(item, str):
         element.text = item
-    else:
+    elif isinstance(item, (float, int, type(None))):
         element.text = str(item)
-        
-    if key:
-        base = '.'.join([base, key])
+    else:
+        raise ValueError('Value cannot be {0}'.format(type(item)))
     
     if attr_dict:
+        
         units = get_units(base, attr_dict)
         if units:
             element.set('units', str(units))
+            
+        v_type = get_type(base, attr_dict)
+        if v_type:
+            element.set('type', v_type)
     
     return element, name
     
@@ -138,7 +152,6 @@ def dict_to_xml(meta_dict, attr_dict=None):
         
     for key, value in meta_dict[class_name].items():
         element = et.SubElement(root, key)
-        name = [key]
         recursive_split_xml(element, value, key, key, attr_dict)
     
     return root
@@ -178,7 +191,7 @@ def element_to_dict(element):
         
     return OrderedDict(sorted(meta_dict.items(), key=itemgetter(0)))
 
-def print_element(element):
-    print(minidom.parseString(et.tostring(element).decode()).toprettyxml(
-        indent='    '))
+def element_to_string(element):
+    return minidom.parseString(et.tostring(element).decode()).toprettyxml(
+            indent='    ')
     

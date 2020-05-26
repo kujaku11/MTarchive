@@ -525,16 +525,19 @@ class Base():
         
         return pd.Series(self.to_dict()[self._class_name.lower()])
     
-    def to_xml(self):
+    def to_xml(self, string=False):
         """
         
         :return: DESCRIPTION
         :rtype: TYPE
 
         """
-
-        return helpers.dict_to_xml(self.to_dict(structured=True),
-                                   self._attr_dict)
+        element = helpers.dict_to_xml(self.to_dict(structured=True),
+                                      self._attr_dict)
+        if not string:
+            return element
+        else:
+            return helpers.element_to_string(element)
     
     def from_xml(self, xml_element):
         """
@@ -1324,7 +1327,7 @@ class Run(Base):
     """
 
     def __init__(self, **kwargs):
-        self.id_s = None
+        self.id = None
         self._start_dt = MTime()
         self._end_dt = MTime()
         self.sampling_rate = None
@@ -1387,7 +1390,7 @@ class Channel(Location):
         self.channel_number = None
         self.component = None
         self.sample_rate = None
-        self.azimuth_d = 0.0
+        self.azimuth = 0.0
         self.data_quality = DataQuality()
         self.filter = Filter()
         self._start_dt = MTime()
