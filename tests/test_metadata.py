@@ -123,8 +123,8 @@ class TestSurveyMetadata(unittest.TestCase):
     def setUp(self):
         self.maxDiff = None
         self.meta_dict = {'survey':
-                          {'short_name': 'name test',
-                           'long_name': 'id test',
+                          {'project': 'name test',
+                           'survey': 'id test',
                            'net_code': 'net_code test',
                            'start_date': '2019-01-02',
                            'end_date': '2019-03-05',
@@ -173,7 +173,7 @@ class TestSurveyMetadata(unittest.TestCase):
         self.survey_object.start_date = '2020/01/02'
         self.assertEqual(self.survey_object.start_date, '2020-01-02')
         
-        self.survey_object.start_date = '01-02-2020T12:20:30.45Z'
+        self.survey_object.start_date = '01-02-2020T12:20:30.450000+00:00'
         self.assertEqual(self.survey_object.start_date, '2020-01-02')
 
     def test_end_date(self):

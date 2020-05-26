@@ -138,8 +138,8 @@ A survey describes an entire dataset that covers a specific time span and region
 	\begin{tabular}{|l|p{3.65in}|l|l|}
 		\hline
 		\textbf{Metadata Key} & \textbf{Description} & \textbf{Type} & \textbf{Required} \\ \hline
-		short\_name\ & short name of survey. This should be a short descriptive name, e.g. Mammoth MT & string & compulsory \\ \hline
-		long\_name\ & long name of the survey, Magnetotelluric investigations of Mammoth volcanic system, California & string & optional \\ \hline
+		project & alphanumeric name for the project USGS-GEOMAG & string & compulsory \\ \hline
+		survey & long name of the survey, Magnetotelluric investigations of Mammoth volcanic system, California & string & optional \\ \hline
 		net\_code\ & network code given by PASSCAL/IRIS/FDSN & string & compulsory \\ \hline
 		start\_date\ & start date of survey [ UTC ] & string & compulsory \\ \hline
 		end\_date\ & end date of survey [ UTC ] & string & compulsory \\ \hline
@@ -148,7 +148,7 @@ A survey describes an entire dataset that covers a specific time span and region
 		southeast\_corner.latitude\ & location of southeast corner of survey  [ degrees ] & float & compulsory \\ \hline
 		southeast\_corner.longitude\ & location of southeast corner of survey  [ degrees ] & float & compulsory \\ \hline
 		datum\ & datum of latitude and longitude coordinates [ WGS84 ] & string & compulsory \\ \hline
-		location\ & location of survey in general terms & string & optional \\ \hline
+		geographic\_location\ & geographic location of survey in general terms & string & optional \\ \hline
 		country\ & country/countries survey located in & string & optional \\ \hline
 		summary\ & summary paragraph of survey & string & compulsory \\ \hline
 		notes\ & notes about survey & string & optional \\ \hline

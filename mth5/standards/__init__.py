@@ -25,7 +25,8 @@ CSV_LIST = ['auxiliary.csv',
 			'software.csv',
 			'station.csv',
 			'survey.csv',
-			'timing_system.csv']
+			'timing_system.csv',
+			'time_period.csv']
 
 CSV_FN_PATHS = [CSV_PATH.joinpath(fn) for fn in CSV_LIST]
 

@@ -1,6 +1,6 @@
 attribute,type,required,style,units
-short_name,str,TRUE,name,None
-long_name,str,TRUE,name,None
+project,str,TRUE,name,None
+survey,str,TRUE,name,None
 net_code,str,TRUE,net_code,None
 start_date,str,TRUE,date,None
 end_date,str,TRUE,date,None
@@ -16,7 +16,7 @@ notes,str,TRUE,name,none
 release_status,str,TRUE,name,none
 conditions_of_use,str,TRUE,name,none
 citation_dataset.doi,str,TRUE,url,none
-citation_journal.doi,str,TRUE,url,none
+citation_journal.doi,str,False,url,none
 acquired_by.author,str,TRUE,name,none
 acquired_by.organization,str,TRUE,name,none
 acquired_by.url,str,TRUE,url,none

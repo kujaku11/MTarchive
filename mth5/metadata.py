@@ -1105,6 +1105,35 @@ class TimingSystem(Base):
         super(TimingSystem, self).__init__(**kwargs)
 
         self._attr_dict = ATTR_DICT['timing_system']
+        
+class TimePeriod(Base):
+    """
+    Time period function
+    """
+    
+    def __init__(self, **kwargs):
+        
+        self._start_dt = MTime()
+        self._end_dt = MTime()
+        super().__init__(**kwargs)
+        self._attr_dict = ATTR_DICT['time_period']
+        
+    @property
+    def start(self):
+        return self._start_dt.iso_str
+
+    @start.setter
+    def start(self, start_date):
+        self._start_dt.from_str(start_date)
+
+    @property
+    def end(self):
+        return self._end_dt.iso_str
+
+    @end.setter
+    def end(self, stop_date):
+        self._end_dt.from_str(stop_date)
+        
 
 # ==============================================================================
 # Software
@@ -1251,7 +1280,7 @@ class Filter(Base):
 # ==============================================================================
 # Site details
 # ==============================================================================
-class Survey(Base):
+class Survey(TimePeriod):
     """
     Information on the survey, including location, id, etc.
 
@@ -1261,15 +1290,13 @@ class Survey(Base):
     def __init__(self, **kwargs):
 
         self.acquired_by = Person()
-        self._start_dt = MTime()
-        self._end_dt = MTime()
-        self.short_name = None
-        self.long_name = None
+        self.project = None
+        self.survey = None
         self.net_code = None
         self.northwest_corner = Location()
         self.southeast_corner = Location()
         self.datum = None
-        self.location = None
+        self.geographic_location = None
         self.country = None
         self.summary = None
         self.acquired_by = Person()
@@ -1277,7 +1304,7 @@ class Survey(Base):
         self.release_status = None
         self.citation_dataset = Citation()
         self.citation_journal = Citation()
-        super(Survey, self).__init__()
+        super().__init__()
 
         self._attr_dict = ATTR_DICT['survey']
 
@@ -1300,7 +1327,7 @@ class Survey(Base):
 # =============================================================================
 # Station Class
 # =============================================================================
-class Station(Base):
+class Station(TimePeriod):
     """
     station object
     """
@@ -1308,8 +1335,6 @@ class Station(Base):
         self.sta_code = None
         self.name = None
         self.datum = None
-        self._start_dt = MTime()
-        self._end_dt = MTime()
         self.num_channels = None
         self.channels_recorded = None
         self.data_type = None
@@ -1323,26 +1348,10 @@ class Station(Base):
 
         self._attr_dict = ATTR_DICT['station']
 
-    @property
-    def start(self):
-        return self._start_dt.iso_str
-
-    @start.setter
-    def start(self, start_date):
-        self._start_dt.from_str(start_date)
-
-    @property
-    def end(self):
-        return self._end_dt.iso_str
-
-    @end.setter
-    def end(self, stop_date):
-        self._end_dt.from_str(stop_date)
-
 # =============================================================================
 # Run
 # =============================================================================
-class Run(Base):
+class Run(TimePeriod):
     """
     container to hold run metadata
     
@@ -1352,34 +1361,16 @@ class Run(Base):
 
     def __init__(self, **kwargs):
         self.id = None
-        self._start_dt = MTime()
-        self._end_dt = MTime()
         self.sampling_rate = None
         self.channels_recorded = None
         self._n_chan = None
         self.data_type = None
         self.acquired_by = Person()
         self.provenance = Provenance()
-
         super(Run, self).__init__()
 
         self._attr_dict = ATTR_DICT['run']
 
-    @property
-    def start(self):
-        return self._start_dt.iso_str
-
-    @start.setter
-    def start(self, start_date):
-        self._start_dt.from_str(start_date)
-
-    @property
-    def end(self):
-        return self._end_dt.iso_str
-
-    @end.setter
-    def end(self, stop_date):
-        self._end_dt.from_str(stop_date)
         
     @property
     def num_channels(self):
@@ -1387,10 +1378,6 @@ class Run(Base):
             return None
         else:
             return len(self.channels_recorded.split(','))
-
-            
-
-        
 
 # =============================================================================
 # Data logger
@@ -1409,7 +1396,7 @@ class DataLogger(Instrument):
 # =============================================================================
 # Base Channel
 # =============================================================================
-class Channel(Location):
+class Channel(TimePeriod):
     """
     Base channel container
     """
@@ -1423,27 +1410,10 @@ class Channel(Location):
         self.azimuth = 0.0
         self.data_quality = DataQuality()
         self.filter = Filter()
-        self._start_dt = MTime()
-        self._end_dt = MTime()
+        self.location = Location()
 
         super(Channel, self).__init__(**kwargs)
-        self._attr_dict = ATTR_DICT['channel']
-        
-    @property
-    def start(self):
-        return self._start_dt.iso_str
-
-    @start.setter
-    def start(self, start_date):
-        self._start_dt.from_str(start_date)
-
-    @property
-    def end(self):
-        return self._end_dt.iso_str
-
-    @end.setter
-    def end(self, stop_date):
-        self._end_dt.from_str(stop_date)
+        self._attr_dict = ATTR_DICT['channel']      
 
 # =============================================================================
 # Electric Channel

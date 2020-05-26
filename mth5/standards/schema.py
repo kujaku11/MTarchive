@@ -552,6 +552,10 @@ class Standards():
     @property
     def timing_system_dict(self):
         return from_csv(get_level_fn('timing_system'))
+    
+    @property
+    def time_period_dict(self):
+        return from_csv(get_level_fn('time_period'))
 
     @property
     def filter_dict(self):
