@@ -1,0 +1,3 @@
+attribute,type,required,style,units
+start,str,TRUE,time,none
+end,str,TRUE,time,none

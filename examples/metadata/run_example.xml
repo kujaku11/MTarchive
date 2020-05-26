@@ -1,0 +1,18 @@
+<?xml version="1.0" ?>
+<run>
+    <id>None</id>
+    <notes>None</notes>
+    <start>1980-01-01T00:00:00+00:00</start>
+    <end>1980-01-01T00:00:00+00:00</end>
+    <sampling_rate type="float" units="samples per second">None</sampling_rate>
+    <channels_recorded>None</channels_recorded>
+    <data_type>None</data_type>
+    <acquired_by>
+        <author>None</author>
+        <email>None</email>
+    </acquired_by>
+    <provenance>
+        <notes>None</notes>
+        <log>None</log>
+    </provenance>
+</run>
