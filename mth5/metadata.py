@@ -77,7 +77,7 @@ class Base():
 
     def __init__(self, **kwargs):
 
-        self.notes = None
+        self.comments = None
         self._attr_dict = {}
         
         self._class_name = self.__class__.__name__
@@ -446,9 +446,9 @@ class Base():
         if structured:
            meta_dict = helpers.structure_dict(meta_dict)
 
-        meta_dict = {self._class_name.lower(): meta_dict}
-        # sort the output dictionary for convience
-        meta_dict = OrderedDict(sorted(meta_dict.items(), key=itemgetter(0)))
+        meta_dict = {self._class_name.lower(): 
+                     OrderedDict(sorted(meta_dict.items(),
+                                        key=itemgetter(0)))}
         
         return meta_dict
 
@@ -872,7 +872,7 @@ class DataQuality(Base):
     def __init__(self, **kwargs):
 
         self.rating = None
-        self.warning_notes = None
+        self.warning_comments = None
         self.warning_flags = None
         self.author = None
         super(DataQuality, self).__init__(**kwargs)
@@ -1101,7 +1101,7 @@ class TimingSystem(Base):
         self.drift_units = None
         self.uncertainty = None
         self.uncertainty_units = None
-        self.notes = None
+        self.comments = None
         super(TimingSystem, self).__init__(**kwargs)
 
         self._attr_dict = ATTR_DICT['timing_system']
@@ -1327,7 +1327,7 @@ class Survey(TimePeriod):
 # =============================================================================
 # Station Class
 # =============================================================================
-class Station(TimePeriod):
+class Station(Base):
     """
     station object
     """
@@ -1343,6 +1343,7 @@ class Station(TimePeriod):
         self.acquired_by = Person()
         self.provenance = Provenance()
         self.location = Location()
+        self.time_period = TimePeriod()
 
         super(Station, self).__init__()
 
@@ -1351,7 +1352,7 @@ class Station(TimePeriod):
 # =============================================================================
 # Run
 # =============================================================================
-class Run(TimePeriod):
+class Run(Base):
     """
     container to hold run metadata
     
@@ -1367,6 +1368,7 @@ class Run(TimePeriod):
         self.data_type = None
         self.acquired_by = Person()
         self.provenance = Provenance()
+        self.time_period = TimePeriod()
         super(Run, self).__init__()
 
         self._attr_dict = ATTR_DICT['run']
@@ -1396,7 +1398,7 @@ class DataLogger(Instrument):
 # =============================================================================
 # Base Channel
 # =============================================================================
-class Channel(TimePeriod):
+class Channel(Base):
     """
     Base channel container
     """
@@ -1411,6 +1413,7 @@ class Channel(TimePeriod):
         self.data_quality = DataQuality()
         self.filter = Filter()
         self.location = Location()
+        self.time_period = TimePeriod()
 
         super(Channel, self).__init__(**kwargs)
         self._attr_dict = ATTR_DICT['channel']      
@@ -1427,8 +1430,7 @@ class Electric(Channel):
         self.dipole_length = 0.0
         self.positive = Electrode()
         self.negative = Electrode()
-        self.contact_resistance_1 = Diagnostic()
-        self.contact_resistance_2 = Diagnostic()
+        self.contact_resistance = Diagnostic()
         self.ac = Diagnostic()
         self.dc = Diagnostic()
         self.units_s = None

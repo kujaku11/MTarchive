@@ -5,4 +5,4 @@ channel_number,int,TRUE,number,none
 component,str,TRUE,name,none
 sample_rate,float,TRUE,number,samples per second
 azimuth,float,TRUE,number,degrees
-notes,str,FALSE,name,none
+comments,str,FALSE,name,none

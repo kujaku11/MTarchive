@@ -1,5 +1,6 @@
 CHANGELOG METADATA STANDARDS
 ================================
+	* change notes to comments
 	* Survey
 		- Changed id to long_name
 		- Changed name to short_name
@@ -7,6 +8,7 @@ CHANGELOG METADATA STANDARDS
 		
 	* Station
 		- nested lat, lon, elevation, declination under location
+		- nested start, end under time_period
 		
 	* Run
 	

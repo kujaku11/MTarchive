@@ -1,4 +1,4 @@
 attribute,type,required,style,units
 creation_time,str,TRUE,name,none
-notes,str,TRUE,name,none
+comments,str,TRUE,name,none
 log,str,TRUE,name,none

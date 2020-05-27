@@ -12,7 +12,7 @@ datum,str,TRUE,name,none
 geographic_location,str,TRUE,name,none
 country,str,TRUE,name,none
 summary,str,TRUE,name,none
-notes,str,TRUE,name,none
+comments,str,TRUE,name,none
 release_status,str,TRUE,name,none
 conditions_of_use,str,TRUE,name,none
 citation_dataset.doi,str,TRUE,url,none

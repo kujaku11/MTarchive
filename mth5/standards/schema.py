@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 # Variables
 # =============================================================================
 ACCEPTED_STYLES = ['name', 'url', 'email', 'number', 'date',
-                   'time', 'date_time', 'net_code', 'name_list']
+                   'time', 'date_time', 'net_code', 'name_list', 'number_list']
 
 REQUIRED_KEYS = ['attribute', 'type', 'required', 'units', 'style']
 
@@ -620,6 +620,7 @@ class Standards():
         channel_dict = from_csv(get_level_fn('channel'))
         channel_dict.add_dict(self.data_quality_dict.copy(), 'data_quality')
         channel_dict.add_dict(self.filter_dict.copy(), 'filter')
+        channel_dict.add_dict(self.time_period_dict.copy(), 'time_period')
         for key, v_dict in self.location_dict.items():
             if 'declination' not in key:
                 channel_dict.update({key: v_dict})
@@ -637,6 +638,7 @@ class Standards():
         electric_dict.add_dict(self.filter_dict.copy(), 'filter')
         electric_dict.add_dict(self.electrode_dict.copy(), 'positive')
         electric_dict.add_dict(self.electrode_dict.copy(), 'negative')
+        electric_dict.add_dict(self.time_period_dict.copy(), 'time_period')
         return electric_dict
 
     @property

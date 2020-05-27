@@ -1,12 +1,12 @@
 attribute,type,required,style,units
 id,str,TRUE,name,none
-notes,str,FALSE,name,none
-start,str,TRUE,time,none
-end,str,TRUE,time,none
+comments,str,FALSE,name,none
+time_period.start,str,TRUE,time,none
+time_period.end,str,TRUE,time,none
 sampling_rate,float,TRUE,number,samples per second
 channels_recorded,str,TRUE,name_list,none
 data_type,str,TRUE,name,none
 acquired_by.author,str,TRUE,name,none
 acquired_by.email,str,TRUE,email,none
-provenance.notes,str,FALSE,name,none
+provenance.comments,str,FALSE,name,none
 provenance.log,str,FALSE,name,none

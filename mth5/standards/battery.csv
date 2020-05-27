@@ -3,4 +3,4 @@ type,str,TRUE,name,none
 id,str,FALSE,name,none
 voltage.start,float,TRUE,number,volts
 voltage.end,float,TRUE,number,volts
-notes,str,FALSE,name,none
+comments,str,FALSE,name,none

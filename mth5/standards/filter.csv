@@ -1,4 +1,4 @@
 attribute,type,required,style,units
 name,str,TRUE,name_list,none
 applied,bool,TRUE,name_list,none
-notes,str,FALSE,name,none
+comments,str,FALSE,name,none
