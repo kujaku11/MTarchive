@@ -141,17 +141,17 @@ A survey describes an entire dataset that covers a specific time span and region
 		project & alphanumeric name for the project e.g USGS-GEOMAG & string & compulsory \\ \hline
 		survey & long name of the survey, e.g. Magnetotelluric investigations of Mammoth volcanic system, California & string & optional \\ \hline
 		net\_code\ & network code given by PASSCAL/IRIS/FDSN & string & compulsory \\ \hline
-		start\_date\ & start date of survey [ UTC ] & string & compulsory \\ \hline
-		end\_date\ & end date of survey [ UTC ] & string & compulsory \\ \hline
+		time\_period.start\_date\ & start date of survey [ UTC ] & string & compulsory \\ \hline
+		time\_period.end\_date\ & end date of survey [ UTC ] & string & compulsory \\ \hline
 		northwest\_corner.latitude\ & location of northwest corner of survey [ degrees ] & float & compulsory \\ \hline
 		northwest\_corner.longitude\ & location of northwest corner of survey [ degrees] & float & compulsory \\ \hline
 		southeast\_corner.latitude\ & location of southeast corner of survey  [ degrees ] & float & compulsory \\ \hline
 		southeast\_corner.longitude\ & location of southeast corner of survey  [ degrees ] & float & compulsory \\ \hline
-		datum\ & datum of latitude and longitude coordinates [ WGS84 ] & string & compulsory \\ \hline
+		datum\ & datum of latitude and longitude coordinates, shoulc be a well-known datum [ WGS84 ] & string & compulsory \\ \hline
 		geographic\_location\ & geographic location of survey in general terms & string & optional \\ \hline
 		country\ & country/countries survey located in & string & optional \\ \hline
-		summary\ & summary paragraph of survey & string & compulsory \\ \hline
-		notes\ & notes about survey & string & optional \\ \hline
+		summary\ & summary paragraph of survey including the purpose, difficulties, data quality, summary of outcomes if the data have been processed and modeled. & string & compulsory \\ \hline
+		comments\ & comments about survey that are not in the summary & string & optional \\ \hline
 		acquired\_by.author\ & principal investigator(s) responsible for survey & string & compulsory \\ \hline
 		acquired\_by.organization\ & organization(s) associated with survey & string & compulsory \\ \hline
 		acquired\_by.email\ & email address of PI(s) & string & compulsory \\ \hline
@@ -168,39 +168,42 @@ A survey describes an entire dataset that covers a specific time span and region
 \subsection{Example Survey JSON Input String}
 
 \begin{verbatim}
-{"survey": {
-    "name": "Long Valley, CA",
-    "id": "Casa Diablo",
-    "net_code": "XE",
-    "start_date": "2020-01-01",
-    "end_date": "2021-01-01",
-    "northwest_corner": {
-        "latitude": 37.5,
-        "longitude": 122.0
-    },
-    "southeast_corner": {
-        "latitude": 36.5,
-        "longitude": -121.15
-    },
-    "datum": "WGS84",
-    "location": "Mammoth, CA",
-    "country": "USA",
-    "summary": "This survey is meant to image the magmatic and hydrothermal systems.",
-    "notes": "Had complications due to snow",
-    "release_status": "open",
-    "conditions_of_use": "condition of use information including licensing",
-    "citation_dataset": {
-        "doi": "citation dataset doi number"
-    },
-    "citation_journal": {
-        "doi": "citation journal doi"
-    },
-    "acquired_by": {
-        "author": "M. Tee, T. Luric, S. Spot, and A. Borealis",
-        "organization": "MT Gurus",
-        "url": "mt_guru.com",
-        "email": "mtee@guru.com"
-    }
+{
+    "survey": {
+        "acquired_by": {
+            "author": "M. Tee, T. Luric, S. Spot, and A. Borealis",
+            "organization": "MT Gurus",
+            "url": "mt_guru.com",
+            "email": "mtee@guru.com"
+        },
+        "citation_dataset": {
+             "doi": "citation dataset doi number"
+        },
+        "citation_journal": {
+            "doi": "citation journal doi"
+        },
+        "comments": "Had complications due to snow",
+        "conditions_of_use": "condition of use information including licensing",
+        "country": "USA",
+        "datum": "WGS84",
+        "geographic_location": "Earth",
+        "net_code": "XE",
+        "northwest_corner": {
+             "latitude": 90,
+             "longitude": 179.
+        },
+        "project": "LONGTEST01",
+        "release_status": "open",
+        "southeast_corner": {
+            "latitude": -90,
+            "longitude": -179
+        },
+        "summary": "This survey is meant to image to the core.",
+        "survey": "Large MT survey of planet Earth",
+        "time_period": {
+            "start_date": "2020-01-01",
+            "end_date": "2021-01-01"
+        }
     }
 }
 \end{verbatim}
@@ -215,34 +218,34 @@ A station encompasses a single site where data are collected. If the location ch
     \begin{tabular}{|l|p{3in}|l|l|}
         \hline
         \textbf{Metadata Key} & \textbf{Description} & \textbf{Type} & \textbf{Required} \\ \hline
-        sta\_code\ & 5 char name {A-Z; 1-9} for station & string & compulsory \\ \hline
-        geographic\_name\ & geographic name station site & string & compulsory \\ \hline
+        archive\_id\ & 5 char name {A-Z; 1-9} for station & string & compulsory \\ \hline
+        id\ & general name for station & string & compulsory \\ \hline
+        geographic\_name\ & closest geographic reference name to station  & string & compulsory \\ \hline
         location.latitude\ & longitude location [ degrees (hh.mmss) ] & float & compulsory \\ \hline
         location.longitude\ & latitude location [ degrees (hh.mmss) ] & float & compulsory \\ \hline
         location.elevation\ & elevation [ m ] & float & compulsory \\ \hline
+        location.datum\ & datum for lat, lon location should be a well known datum and same as the survey datum & string & compulsory \\ \hline
         location.declination.value\ & declination value & float & compulsory \\ \hline
         location.declination.epoch\ & declination epoch & string & compulsory \\ \hline
         location.declination.model\ & declination model & string & compulsory \\ \hline
-        notes\ & any notes about station & string & optional \\ \hline
-        datum\ & datum for lat, lon location & string & compulsory \\ \hline
-        start\ & start time and date of data logging [ISO UTC ] & string & compulsory \\ \hline
-        end\ & stop time and date of data logging  [ ISO UTC ] & string & compulsory \\ \hline
-        num\_channels\ & number of channels recording & int & compulsory \\ \hline
-        channels\_recorded\ & "list of channels recorded [EX, EY, HX, HY, HZ $|$ ...]" & string & compulsory \\ \hline
+        comments\ & any comments about station & string & optional \\ \hline 
+        time\_period.start\ & start time and date of data logging [ISO UTC ] & string & compulsory \\ \hline
+        time\_period.end\ & stop time and date of data logging  [ ISO UTC ] & string & compulsory \\ \hline
+        num\_channels\ & number of channels recording needs to be the same number as entries in channels\_recorded & int & compulsory \\ \hline
+        channels\_recorded\ & list of channels recorded [EX, EY, HX, HY, HZ $|$ ...], needs to be same length as num\_channels & string & compulsory \\ \hline
         data\_type\ & type of data collected [ BB $|$ LP $|$ AMT $|$ Combo $|$ ...] & string & compulsory \\ \hline
-
-        station\_orientation\ & orientation coordinate system [ geographic $|$ channel-measurement specific $|$ ...] & string & compulsory \\ \hline
-        orientation\_method\ & [ compass $|$ differential GPS $|$ gyroscope $|$...] & string & optional \\ \hline
-        acquired\_by.author\ & person(s) operating station & string & compulsory \\ \hline
-        acquired\_by.email\ & email of lead station operator & string & compulsory \\ \hline
-        provenance.creation\_time\ & creation time of time series data for storing & string & compulsory \\ \hline
+        orientation.option & orientation coordinate system [ geographic $|$ channel-measurement specific $|$ ...] & string & compulsory \\ \hline
+        orientation.method & [ compass $|$ differential GPS $|$ gyroscope $|$...] & string & optional \\ \hline
+%        acquired\_by.author & person(s) operating station & string & compulsory \\ \hline
+%        acquired\_by.email & email of lead station operator & string & compulsory \\ \hline
+        provenance.creation\_time & creation time of time series data for storing & string & compulsory \\ \hline
         provenance.software.name\ & name of software used to store time series & string & compulsory \\ \hline
         provenance.software.version\ & version of software used to store time series & string & compulsory \\ \hline
         provenance.submitter.author\ & name of person or group submitting archive data & string & compulsory \\ \hline
         provenance.submitter.organization\ & name of organization or institution submitting archive data & string & compulsory \\ \hline
         provenance.submitter.url\ & url of group submitting archive data & string & compulsory \\ \hline
         provenance.submitter.email\ & email of person or group submitting archive data & string & compulsory  \\ \hline
-        provenance.notes\ & any notes on the history of the data & string & optional \\ \hline
+        provenance.comments\ & any comments on the history of the data & string & optional \\ \hline
         provenance.log\ & log of any changes made to time series data & string & optional \\ \hline
     \end{tabular}
 \label{tab:station01}
@@ -253,36 +256,36 @@ A station encompasses a single site where data are collected. If the location ch
 
 \begin{verbatim}
 {
- "sta_code": "MNP01",
- "name": "Mojave National Preserve Hole-in-the-rock",
- "location.latitude": 35.0,
- "location.longitude": -117.0,
- "location.elevation": 1200,
- "location.declination.value": "11.5",
- "location.declination.epoch": "declination epoch",
- "location.declination.model": "WMM2019-2024",
- "notes": "Donkeys chewed both electric channels",
- "datum": "WGS84",
- "start": "2020-01-01T12:00:00.0000+00:00",
- "end": "2020-01-12T12:00:00.0000+00:00",
- "num_channels": 5,
- "channels_recorded": "[EX, EY, HX, HY, HZ]",
- "data_type": "BB & LP",
- "station_orientation": "geographic",
- "orientation_method": "compass",
- "acquired_by.author": "M. Tee and A. Borealis",
- "acquired_by.email": "m.tee@guru.com",
- "provenance.creation_time": "2020-05-01T12:00:00.0000+00:00",
- "provenance.software.name": "MTH5",
- "provenance.software.version": "1.0.0",
- "provenance.software.author": "IRIS",
- "provenance.submitter.author": "M. Tee",
- "provenance.submitter.organization": "MT Gurus",
- "provenance.submitter.url": "mt_guru.com",
- "provenance.submitter.email": "m.tee@guru.com",
- "provenance.notes": "Electrics are good until 2020-01-10",
- "provenance.log": "2020-05-02T12:00:00+00:00: The data rotated with updated
-                     declination of N13.78W."
+    "station": {
+        "archive_id": "test sta_code",
+        "channels_recorded": "[ex, ey, hx, hy, hz]",
+        "comments": "comments test",
+        "data_type": "MT",
+        "geographic_name": "Paris, TX",
+        "id": "test name",
+        "location.datum": "WGS84",
+        "location.declination.epoch": "MTM01",
+        "location.declination.model": "MTM01",
+        "location.declination.value": -12.3,
+        "location.elevation": 1230.0,
+        "location.latitude": 40.019,
+        "location.longitude": -117.89,
+        "num_channels": 5,
+        "orientation.method": "compass",
+        "orientation.option": "geographic north",
+        "provenance.comments": "goats",
+        "provenance.creation_time": "2010-04-01T10:10:10+00:00",
+        "provenance.log": "EY flipped",
+        "provenance.software.author": "Peacock",
+        "provenance.software.name": "mth5",
+        "provenance.software.version": "1.0.1",
+        "provenance.submitter.author": "submitter name",
+        "provenance.submitter.email": "mt@em.edi",
+        "provenance.submitter.organization": "mt inc",
+        "provenance.submitter.url": "mt.edi",
+        "time_period.end": "2010-01-04T07:40:30+00:00",
+        "time_period.start": "2010-01-01T12:30:20+00:00"
+    }
 }
 \end{verbatim}
 
@@ -293,20 +296,20 @@ A run represents data collected at a single station with a single sampling rate.
 
 \begin{table}[htb!]
     \caption[Attributes for Run]{Attributes for Run category}
-    \begin{tabular}{|l|p{3in}|l|l|}
+    \begin{tabular}{|l|p{3.6in}|l|l|}
         \hline
         \textbf{Metadata Key} & \textbf{Description} & \textbf{Type} & \textbf{Required} \\ \hline
         id\ & run ID & string & compulsory \\ \hline
-        notes\ & notes on run & string & optional \\ \hline
-        start\ & start date and time of data logging [ ISO UTC ] & string & compulsory \\ \hline
-        end\ & stop date and time of data logging [ ISO UTC ] & string & compulsory \\ \hline
+        comments\ & comments on run, commonly station name with {0-9}{0-9} or {a-z}, mt01a or mt01\_01 & string & optional \\ \hline
+        time\_period.start\ & start date and time of data logging [ ISO UTC ] & string & compulsory \\ \hline
+        time\_period.end\ & stop date and time of data logging [ ISO UTC ] & string & compulsory \\ \hline
         sampling\_rate\ & sampling rate of run (samples.second) & float & compulsory \\ \hline
         num\_channels\ & number of channels recorded & int & compulsory \\ \hline
         channels\_recorded\ & list of channels recorded [ [EX, EY, HX, HY] $|$ ...] & string & compulsory \\ \hline
         data\_type \ & type of data collected [ BB $|$ LP $|$ AMT $|$ Combo $|$ ...] & string & compulsory \\ \hline
         acquired\_by.author\ & person(s) responsible for run & string & compulsory \\ \hline
         acquired\_by.email\ & email of lead run operator & string & compulsory \\ \hline
-        provenance.notes\ & any notes on the history of the data & string & optional \\ \hline
+        provenance.comments\ & any comments on the history of the data & string & optional \\ \hline
         provenance.log\ & log of any changes made to time series data & string & optional \\ \hline
     \end{tabular}
     \label{tab:run}
@@ -316,21 +319,23 @@ A run represents data collected at a single station with a single sampling rate.
 
 \begin{verbatim}
 <run>
-    <id>MNP02_b</id>
-    <notes>Changed north electrode</notes>
-    <start>2020-01-02T15:30:00+00:00</start>
-    <end>2020-01-05T07:05:30+00:00</end>
-    <sampling_rate type="float" units="samples per second">256.0</sampling_rate>
-    <channels_recorded>[EX, EY, HX, HY, HZ]</channels_recorded>
-    <data_type>BB</data_type>
     <acquired_by>
-        <author>T. Luric</author>
-        <email>t.lurric@guru.com</email>
+        <author>mt</author>
+        <email>mt@mt.org</email>
     </acquired_by>
+    <channels_recorded>EX, EY, HX, HY</channels_recorded>
+    <comments>cables chewed by gophers</comments>
+    <data_type>MT</data_type>
+    <id>mt01</id>
     <provenance>
-         <notes>Near a powerline and HZ is clipped</notes>
-         <log>2020-05-01T12:00:00+00:00: Clipped data in HZ replaced with zeros by T. Luric.</log>
+        <comments>None</comments>
+        <log>None</log>
     </provenance>
+    <sampling_rate type="float" units="samples per second">None</sampling_rate>
+    <time_period>
+        <start>1980-01-01T00:00:00+00:00</start>
+        <end>1980-01-01T00:00:00+00:00</end>
+    </time_period>
 </run>
 \end{verbatim}
 
@@ -347,11 +352,11 @@ Data logger is a the digital acquisition system used to collect time series data
         manufacturer\ & manufacturer name & string & compulsory \\ \hline
         model\ & model name & string & compulsory \\ \hline
         serial\ & serial number & string & compulsory \\ \hline
-        notes\ & notes about data logger & string & compulsory \\ \hline
+        comments\ & comments about data logger & string & compulsory \\ \hline
         timing\_system.type\ & type of timing system [GPS $|$ internal $|$ ... ] & string & compulsory \\ \hline
         timing\_system.drift\ & any drift in internal clock [ seconds ] & float & compulsory \\ \hline
         timing\_system.uncertainty\ & uncertainty associated with internal clock [seconds] & float & compulsory \\ \hline
-        timing\_system.notes\ & notes on timing system & string & optional \\ \hline
+        timing\_system.comments\ & comments on timing system & string & optional \\ \hline
         firmware.version\ & firmware version & string & compulsory \\ \hline
         firmware.date\ & date on firmware & string & compulsory \\ \hline
         firmware.author\ & author of firmware & string & optional \\ \hline
@@ -361,7 +366,7 @@ Data logger is a the digital acquisition system used to collect time series data
         power\_source.id\ & power source id & string & optional \\ \hline
         power\_source.voltage.start\ & starting voltage of power source & float & compulsory \\ \hline
         power\_source.volage.end\ & ending voltage of power source & float & compulsory \\ \hline
-        power\_source.notes\ & notes on power source & string & optional \\ \hline
+        power\_source.comments\ & comments on power source & string & optional \\ \hline
     \end{tabular}
     \label{tab:datalogger}
 \end{table}    
@@ -374,11 +379,11 @@ Data logger is a the digital acquisition system used to collect time series data
  "manufacturer": "MT `r Us",
  "model": "Broadband 2000",
  "serial": "0128947850230",
- "notes": "Intern dropped the data logger on a shovel.",
+ "comments": "Intern dropped the data logger on a shovel.",
  "timingystem.type": "GPS",
  "timingystem.drift": 0,
  "timingystem.uncertainty": 0.0016,
- "timingystem.notes": "only works when sky is clear",
+ "timingystem.comments": "only works when sky is clear",
  "firmware.version": "1.0",
  "firmware.date": "2020-01-01",
  "firmware.author": "R. Phase",
@@ -388,7 +393,7 @@ Data logger is a the digital acquisition system used to collect time series data
  "powersource.type": "solar panel and battery",
  "powersource.voltage.start": 13.1,
  "powersource.voltage.end": 12.0,
- "powersource.notes": "Overcast all day reduced recharging"
+ "powersource.comments": "Overcast all day reduced recharging"
 }
 \end{verbatim}
 
@@ -413,7 +418,7 @@ Electric channel refers to a dipole measurement of the electric field for a sing
         positive.datum\ & positive datum for location [ WGS84 ] & string & optional \\ \hline
         positive.type\ & type of electric sensor [ Ag-AgCl $|$ Pb-PbCl $|$ ...] & string & compulsory \\ \hline
         positive.manufacturer\ & electric sensor manufacturer & string & compulsory \\ \hline
-        positive.notes\ & notes on electric sensor & string & optional \\ \hline
+        positive.comments\ & comments on electric sensor & string & optional \\ \hline
         negative.id\ & sensor id number & string & compulsory \\ \hline
         negative.longitude\ & negative sensor location latitude [ degrees (hh.mmss) ] & float & optional \\ \hline
         negative.latitude\ & negative sensor location longitude [ degrees (hh.mmss) ] & float & optional \\ \hline
@@ -421,7 +426,7 @@ Electric channel refers to a dipole measurement of the electric field for a sing
         negative.datum\ & negative datum for location [ WGS84 ] & string & optional \\ \hline
         negative.type\ & type of electric sensor [ Ag-AgCl $|$ Pb-PbCl $|$ ...] & string & compulsory \\ \hline
         negative.manufacturer\ & electric sensor manufacturer & string & compulsory \\ \hline
-        negative.notes\ & notes on electric sensor & string & optional \\ \hline
+        negative.comments\ & comments on electric sensor & string & optional \\ \hline
         contact\_resistance\_1.start\ & contact resistance at beginning of measurement, positive polarity [ Ohm ]" & float & optional \\ \hline
         contact\_resistance\_2.start\ & contact resistance at beginning of measurement, negative polarity [ Ohm ] & float & optional \\ \hline
         contact\_resistance\_1.end\ & contact resistance at end of measurement, positive polarity [ Ohm ] & float & optional \\ \hline
@@ -443,13 +448,13 @@ Electric channel refers to a dipole measurement of the electric field for a sing
         \textbf{Metadata Key} & \textbf{Description} & \textbf{Type} & \textbf{Required} \\ \hline
         units\ & units of electric field data [ counts $|$ mV/km $|$ ... ] & string & compulsory \\ \hline
         sample\_rate\ & sample rate of electric channel (samples.second) & float & compulsory \\ \hline
-        notes\ & notes about electric field measurement & string &  optional \\ \hline
+        comments\ & comments about electric field measurement & string &  optional \\ \hline
         data\_quality.rating\ & data quality rating based on some sort of statistic & integer & optional \\ \hline
-        data\_quality.warning\_notes\ & any warnings about data quality & string & optional \\ \hline
+        data\_quality.warning\_comments\ & any warnings about data quality & string & optional \\ \hline
         data\_quality.warning\_flags\ & a value flagging bad data  & float &  integer \\ \hline
         data\_quality.author\ & person who did QA/QC on data & string &  optional \\ \hline
         filter.name\ & filter name in filter table, can be a list. Needs to be ordered in which filters were applied & string &  optional \\ \hline
-        filter.notes\ & any notes on the filtering & string &  optional \\ \hline
+        filter.comments\ & any comments on the filtering & string &  optional \\ \hline
         filter.applied\_b & have filters been applied [ True $|$ False ] & string & compulsory \\ \hline
         \end{tabular}
         \label{tab:electric02}
@@ -471,7 +476,7 @@ Electric channel refers to a dipole measurement of the electric field for a sing
  "positive.datum": "WGS84",
  "positive.type": "Ag-AgCl",
  "positive.manufacturer": "Zaps",
- "positive.notes": "Sitting on the shelf since last year",
+ "positive.comments": "Sitting on the shelf since last year",
  "negative.id": "102",
  "negative.latitude": 35.5588,
  "negative.longitude": -117.38754,
@@ -479,7 +484,7 @@ Electric channel refers to a dipole measurement of the electric field for a sing
  "negative.datum": "WGS84",
  "negative.type": "Ag-AgCl"
  "negative.manufacturer": "Zaps",
- "negative.notes": "Sitting on the shelf since last year",
+ "negative.comments": "Sitting on the shelf since last year",
  "contact_resistance_1.start": 1200.0,
  "contact_resistance_2.start": 1210.0,
  "contact_resistance_1.end": 1205.0,
@@ -490,13 +495,13 @@ Electric channel refers to a dipole measurement of the electric field for a sing
  "dc.end": 0.002,
  "units": "counts",
  "sample_rate": 256,
- "notes": "cables chewed on 2020-01-07",
+ "comments": "cables chewed on 2020-01-07",
  "data_quality.rating": 3,
- "data_quality.warning_notes": "cables chewed 2020-01-07",
+ "data_quality.warning_comments": "cables chewed 2020-01-07",
  "data_quality.warning_flags": "Nan",
  "data_quality.author": "Q. Sea",
  "filter.name": "[counts2mv, datalogger024]",
- "filter.notes": "notes on filters applied",
+ "filter.comments": "comments on filters applied",
  "filter.applied_b": "true"
 }
 \end{verbatim}
@@ -513,7 +518,7 @@ A magnetic channel is a recording of one component of the magnetic field at a si
         \textbf{Metadata Key} & \textbf{Description} & \textbf{Type} & \textbf{Required} \\ \hline
         sensor.type\ & type of magnetic sensor [ Induction Coil $|$ flux gate $|$ ...] & string & compulsory \\ \hline
         sensor.manufacturer\ & magnetic sensor manufacturer & string &  compulsory \\ \hline
-        sensor.notes\ & notes on sensor & string & compulsory \\ \hline
+        sensor.comments\ & comments on sensor & string & compulsory \\ \hline
         sensor.id\ & sensor id number & string &  compulsory \\ \hline
         channel\_number\ & channel number [ 1 $|$ 2 $|$ 3 $|$ 4 $|$ 5 $|$ 6 $|$...] & int &  compulsory \\ \hline
         component\ & [ Hx $|$ Hy $|$ Hz ] & string  &  compulsory \\ \hline
@@ -529,13 +534,13 @@ A magnetic channel is a recording of one component of the magnetic field at a si
         h\_field\_min.end\ & minimum h-field value at end of measurement & float &  optional\\ \hline
         h\_field\_max.end\ & maximum h-field value at end of measurement & float &  optional\\ \hline
         h\_field.units\ & units of h-field measurement [ nT $|$ ...] & string &   optional \\ \hline
-        notes\ & notes on magnetic field measurments & string &  optional \\ \hline
+        comments\ & comments on magnetic field measurments & string &  optional \\ \hline
         data\_quality.rating\ & data quality rating based on some sort of statistic & integer &  optional \\ \hline
-        data\_quality.warning\_notes\ & any warnings about data quality & string &   optional \\ \hline
+        data\_quality.warning\_comments\ & any warnings about data quality & string &   optional \\ \hline
         data\_quality.warning\_flags\ & a value flagging bad data  & integer &  optional \\ \hline
         data\_quality.author\ & person who did QC.QA on data & string &   optional \\ \hline
         filter.name\ & filter name in filter table, can be a list. Needs to be ordered in which filters were applied & string &  optional \\ \hline
-        filter.notes\ & any notes on the filtering & string &  optional \\ \hline
+        filter.comments\ & any comments on the filtering & string &  optional \\ \hline
         filter.applied\_b & have filters been applied [ True $|$ False ] & string & compulsory \\ \hline
         \end{tabular}
     \label{tab:magnetic}
@@ -548,7 +553,7 @@ A magnetic channel is a recording of one component of the magnetic field at a si
 {
  "sensor.type": "Induction Coil",
  "sensor.manufacturer": "MT `r Us",
- "sensor.notes": "new coil",
+ "sensor.comments": "new coil",
  "sensor.id": "2149",
  "channel_number": 5,
  "component": "HZ",
@@ -564,13 +569,13 @@ A magnetic channel is a recording of one component of the magnetic field at a si
  "h_field_min.end": -9,
  "h_field_max.end": 9,
  "h_field.units": "nT",
- "notes": "not buried all the way ",
+ "comments": "not buried all the way ",
  "data_quality.rating": 4,
- "data_quality.warning_notes": "windy during the day",
+ "data_quality.warning_comments": "windy during the day",
  "data_quality.warning_flags": 0,
  "data_quality.author": "Q. Sea",
  "filter.name": "[counts2mv, datalogger024, coil2149]",
- "filter.notes": "Calibrated 2018-01-01",
+ "filter.comments": "Calibrated 2018-01-01",
  "filter.applied_b": "[true, false, false]"
 }
 \end{verbatim}
@@ -602,7 +607,7 @@ In each channel there are keys to identify filters that can or have been applied
         units\_in\ & units of data going in [ counts $|$ mV/km $|$ ... ] & string & compulsory \\ \hline
         units\_out\ & units of data coming out [ counts $|$ mV/km $|$ ... ] & string & compulsory \\ \hline
         calibration\_date\ & date of calibration & string &  compulsory \\ \hline
-        notes\ & any notes on the filtering & string &  optional \\ \hline
+        comments\ & any comments on the filtering & string &  optional \\ \hline
     \end{tabular}
     \label{tab:filter}
 \end{table}
@@ -616,7 +621,7 @@ In each channel there are keys to identify filters that can or have been applied
  "unitsn": "mV",
  "units_out": "mV",
  "calibrationate": "2015-07-01",
- "notes": "interpolated from poles and zeros"
+ "comments": "interpolated from poles and zeros"
 }
 \end{verbatim}
 
@@ -636,13 +641,13 @@ Auxiliary channels include state of health channels, temperature, etc.
         channel\_num\ & channel number [ 1 $|$ 2 $|$ 3 $|$ 4 $|$ 5 $|$ 6 $|$...] & int &  compulsory \\ \hline
         component\ & channel number [ `None' $|$ ... ] & string &  compulsory \\ \hline
         sample\_rate\ & sample rate (samples.second) & float &  compulsory \\ \hline
-        notes\ & any notes on the auxillary channel & string &  optional \\ \hline
+        comments\ & any comments on the auxillary channel & string &  optional \\ \hline
         data\_quality.rating\ & data quality rating based on some sort of statistic & integer &  optional \\ \hline
-        data\_quality.warning\_notes\ & any warnings about data quality & string &   optional \\ \hline
+        data\_quality.warning\_comments\ & any warnings about data quality & string &   optional \\ \hline
         data\_quality.warning\_flags\ & a value flagging bad data  & integer &  optional \\ \hline
         data\_quality.author\ & person who did QC.QA on data & string &   optional \\ \hline
         filter.name\ & filter name in filter table, can be a list. Needs to be ordered in which filters were applied & string &  optional \\ \hline
-        filter.notes\ & any notes on the filtering & string &  optional \\ \hline
+        filter.comments\ & any comments on the filtering & string &  optional \\ \hline
         filter.applied\_b & have filters been applied [ True $|$ False ] & string & compulsory \\ \hline
     \end{tabular}
     \label{tab:aux}
@@ -652,19 +657,28 @@ Auxiliary channels include state of health channels, temperature, etc.
 
 \begin{verbatim}
 {
-"type": "temperature",
-"units": "celsius",
-"channel_number": "6",
-"component": "None",
-"sample_rate": "256",
-"notes": "internal data logger temperature"
-"data_quality.rating": 4,
-"data_quality.warning_notes": "windy during the day",
-"data_quality.warning_flags": "Nan",
-"data_quality.author": "Q. Sea",
-"filter.name": "[counts2c]"
-"filter.notes": "Calibrated 2018-01-01",
-"filter.applied_b": "true"
+    "channel": {
+         "azimuth": 0.0,
+         "channel_number": 1,
+         "comments": null,
+         "component": "hx",
+         "data_quality.author": "mt",
+         "data_quality.rating": 5,
+         "data_quality.warning_comments": null,
+         "data_quality.warning_flags": "0",
+         "filter.applied": [false],
+         "filter.comments": null,
+         "filter.name": ["counts2mv"],
+         "location.datum": "WGS84",
+         "location.elevation": 1200.3,
+         "location.latitude": 40.12,
+         "location.longitude": -115.767,
+         "sample_rate": 256.0,
+         "time_period.end": "2010-01-04T07:40:30+00:00",
+         "time_period.start": "2010-01-01T12:30:20+00:00",
+         "type": "auxiliary",
+         "units": "mV"
+    }
 }
 \end{verbatim}
 
