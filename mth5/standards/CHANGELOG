@@ -1,7 +1,11 @@
 CHANGELOG METADATA STANDARDS
 ================================
+	* ‘/’ in metadata name replaced with ‘.’
+	* removed _type from metadata name
+	* change to all lower case names
 	* change notes to comments
 	* nested all start, end date/times under time_period
+	
 	* Survey
 		- Changed id to long_name
 		- Changed name to short_name
@@ -10,12 +14,24 @@ CHANGELOG METADATA STANDARDS
 	* Station
 		- nested lat, lon, elevation, declination under location
 		- nested start, end under time_period
+		- nested orientation options under orientation
+		
+	* DataLogger
+		- Change battery.start_voltage_d to battery.voltage.start_d
 		
 	* Run
 	
 	* Channel
+		- Add 'type' to distinguish what type of metadata is needed.
+		- Add location to auxiliary channels for consistency.
+		- nested lat, lon, elevation, declination under location
+		
 	
 	* Electric
+		- Change electric.contact_resistance.start_B_d to electric.contact_resitance.start where start can be a list
 	
 	* Magnetic
+		- Change magnetic.h_field.start_min_d to magnetic.h_field_min.start
+		Change magnetic.h_field.start_max_d to magnetic.h_field_max.start
+		- nested lat, lon, elevation, declination under location
 	
