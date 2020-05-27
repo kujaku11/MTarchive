@@ -208,8 +208,9 @@ class TestStationMetadata(unittest.TestCase):
         self.maxDiff = None
         self.station_object = metadata.Station()
         self.meta_dict = {'station':
-                          {'sta_code': 'test sta_code',
-                           'name': 'test name',
+                          {'archive_id': 'test sta_code',
+                           'id': 'test name',
+                           'geographic_name': 'Paris, TX',
                            'location.latitude': 40.019,
                            'location.longitude': -117.89,
                            'location.elevation': 1230.0,
@@ -225,8 +226,8 @@ class TestStationMetadata(unittest.TestCase):
                            'data_type': 'MT',
                            'orientation.option': 'geographic north',
                            'orientation.method': 'compass',
-                           'acquired_by.author': 'acquired test',
-                           'acquired_by.email': 'acquired email',
+                           # 'acquired_by.author': 'acquired test',
+                           # 'acquired_by.email': 'acquired email',
                            'provenance.creation_time': '2010-04-01T10:10:10+00:00',
                            'provenance.software.name': 'mth5',
                            'provenance.software.version': '1.0.1',

@@ -1,6 +1,7 @@
 attribute,type,required,style,units
-sta_code,str,TRUE,name,
-name,str,TRUE,name,
+archive_id,str,TRUE,name,
+id,str,TRUE,name,
+geographic_name,str,TRUE,name,none
 time_period.start,str,TRUE,date_time,
 time_period.end,str,TRUE,date_time,
 comments,str,False,name,

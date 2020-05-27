@@ -16,11 +16,16 @@ CHANGELOG METADATA STANDARDS
 		- nested lat, lon, elevation, declination under location
 		- nested start, end under time_period
 		- nested orientation options under orientation
+		- Remove acquired_by because it is redundant
+		- renamed sta_code to archive_id
+		- renamed name to id
+		- added geographic_name for additional searching
 		
 	* DataLogger
 		- Change battery.start_voltage_d to battery.voltage.start_d
 		
 	* Run
+		- nested start/end under time_period
 	
 	* Channel
 		- Add 'type' to distinguish what type of metadata is needed.

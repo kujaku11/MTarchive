@@ -1345,8 +1345,9 @@ class Station(Base):
     station object
     """
     def __init__(self, **kwargs):
-        self.sta_code = None
-        self.name = None
+        self.id = None
+        self.archive_id = None
+        self.geographic_name = None
         self.datum = None
         self.num_channels = None
         self.channels_recorded = None

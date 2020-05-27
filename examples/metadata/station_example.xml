@@ -1,12 +1,11 @@
 <?xml version="1.0" ?>
 <station>
-    <acquired_by>
-        <author>None</author>
-        <email>None</email>
-    </acquired_by>
+    <archive_id>None</archive_id>
     <channels_recorded>None</channels_recorded>
     <comments>None</comments>
     <data_type>None</data_type>
+    <geographic_name>None</geographic_name>
+    <id>None</id>
     <location>
         <datum>WGS84</datum>
         <latitude type="float">None</latitude>
@@ -18,9 +17,11 @@
             <model>None</model>
         </declination>
     </location>
-    <name>None</name>
     <num_channels type="integer">None</num_channels>
-    <orientation_method>None</orientation_method>
+    <orientation>
+        <option>None</option>
+        <method>None</method>
+    </orientation>
     <provenance>
         <creation_time>1980-01-01T00:00:00+00:00</creation_time>
         <comments>None</comments>
@@ -37,8 +38,6 @@
             <email>None</email>
         </submitter>
     </provenance>
-    <sta_code>None</sta_code>
-    <station_orientation>None</station_orientation>
     <time_period>
         <start>1980-01-01T00:00:00+00:00</start>
         <end>1980-01-01T00:00:00+00:00</end>

@@ -16,7 +16,6 @@
     <conditions_of_use>None</conditions_of_use>
     <country>None</country>
     <datum>None</datum>
-    <end_date>1980-01-01</end_date>
     <geographic_location>None</geographic_location>
     <net_code>None</net_code>
     <northwest_corner>
@@ -29,7 +28,10 @@
         <latitude type="float" units="decimal degrees">None</latitude>
         <longitude type="float" units="decimal degrees">None</longitude>
     </southeast_corner>
-    <start_date>1980-01-01</start_date>
     <summary>None</summary>
     <survey>None</survey>
+    <time_period>
+        <start_date>1980-01-01</start_date>
+        <end_date>1980-01-01</end_date>
+    </time_period>
 </survey>

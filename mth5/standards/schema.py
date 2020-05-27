@@ -607,9 +607,9 @@ class Standards():
     def station_dict(self):
         station_dict = from_csv(get_level_fn('station'))
         station_dict.add_dict(self.location_dict.copy(), 'location')
-        for key, v_dict in self.person_dict.items():
-            if key in ['author', 'email']:
-                station_dict.update({'acquired_by.{0}'.format(key): v_dict})
+        # for key, v_dict in self.person_dict.items():
+        #     if key in ['author', 'email']:
+        #         station_dict.update({'acquired_by.{0}'.format(key): v_dict})
 
         station_dict.add_dict(self.software_dict.copy(), 'provenance.software')
         station_dict.add_dict(self.person_dict.copy(), 'provenance.submitter')
