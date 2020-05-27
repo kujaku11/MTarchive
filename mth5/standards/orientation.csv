@@ -1,0 +1,3 @@
+attribute,type,required,style,units
+option,string,TRUE,number, none
+method,string,TRUE,name,none

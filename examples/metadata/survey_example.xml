@@ -1,35 +1,35 @@
 <?xml version="1.0" ?>
 <survey>
-    <project>None</project>
-    <survey>None</survey>
-    <net_code>None</net_code>
-    <start_date>1980-01-01</start_date>
-    <end_date>1980-01-01</end_date>
-    <northwest_corner>
-        <latitude type="float" units="decimal degrees">None</latitude>
-        <longitude type="float" units="decimal degrees">None</longitude>
-    </northwest_corner>
-    <southeast_corner>
-        <latitude type="float" units="decimal degrees">None</latitude>
-        <longitude type="float" units="decimal degrees">None</longitude>
-    </southeast_corner>
-    <datum>None</datum>
-    <geographic_location>None</geographic_location>
-    <country>None</country>
-    <summary>None</summary>
-    <notes>None</notes>
-    <release_status>None</release_status>
-    <conditions_of_use>None</conditions_of_use>
-    <citation_dataset>
-        <doi>None</doi>
-    </citation_dataset>
-    <citation_journal>
-        <doi>None</doi>
-    </citation_journal>
     <acquired_by>
         <author>None</author>
         <organization>None</organization>
         <url>None</url>
         <email>None</email>
     </acquired_by>
+    <citation_dataset>
+        <doi>None</doi>
+    </citation_dataset>
+    <citation_journal>
+        <doi>None</doi>
+    </citation_journal>
+    <comments>None</comments>
+    <conditions_of_use>None</conditions_of_use>
+    <country>None</country>
+    <datum>None</datum>
+    <end_date>1980-01-01</end_date>
+    <geographic_location>None</geographic_location>
+    <net_code>None</net_code>
+    <northwest_corner>
+        <latitude type="float" units="decimal degrees">None</latitude>
+        <longitude type="float" units="decimal degrees">None</longitude>
+    </northwest_corner>
+    <project>None</project>
+    <release_status>None</release_status>
+    <southeast_corner>
+        <latitude type="float" units="decimal degrees">None</latitude>
+        <longitude type="float" units="decimal degrees">None</longitude>
+    </southeast_corner>
+    <start_date>1980-01-01</start_date>
+    <summary>None</summary>
+    <survey>None</survey>
 </survey>

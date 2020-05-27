@@ -548,6 +548,10 @@ class Standards():
     @property
     def battery_dict(self):
         return from_csv(get_level_fn('battery'))
+    
+    @property
+    def orientation_dict(self):
+        return from_csv(get_level_fn('orientation'))
 
     @property
     def timing_system_dict(self):
@@ -623,7 +627,7 @@ class Standards():
         channel_dict.add_dict(self.time_period_dict.copy(), 'time_period')
         for key, v_dict in self.location_dict.items():
             if 'declination' not in key:
-                channel_dict.update({key: v_dict})
+                channel_dict.update({'{0}.{1}'.format('location', key): v_dict})
         return channel_dict
 
     @property

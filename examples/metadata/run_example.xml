@@ -1,18 +1,20 @@
 <?xml version="1.0" ?>
 <run>
-    <id>None</id>
-    <notes>None</notes>
-    <start>1980-01-01T00:00:00+00:00</start>
-    <end>1980-01-01T00:00:00+00:00</end>
-    <sampling_rate type="float" units="samples per second">None</sampling_rate>
-    <channels_recorded>None</channels_recorded>
-    <data_type>None</data_type>
     <acquired_by>
         <author>None</author>
         <email>None</email>
     </acquired_by>
+    <channels_recorded>None</channels_recorded>
+    <comments>None</comments>
+    <data_type>None</data_type>
+    <id>None</id>
     <provenance>
-        <notes>None</notes>
+        <comments>None</comments>
         <log>None</log>
     </provenance>
+    <sampling_rate type="float" units="samples per second">None</sampling_rate>
+    <time_period>
+        <start>1980-01-01T00:00:00+00:00</start>
+        <end>1980-01-01T00:00:00+00:00</end>
+    </time_period>
 </run>

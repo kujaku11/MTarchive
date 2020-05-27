@@ -1,18 +1,29 @@
 <?xml version="1.0" ?>
 <station>
-    <sta_code>None</sta_code>
-    <name>None</name>
-    <start>1980-01-01T00:00:00+00:00</start>
-    <end>1980-01-01T00:00:00+00:00</end>
-    <notes>None</notes>
-    <num_channels type="integer">None</num_channels>
+    <acquired_by>
+        <author>None</author>
+        <email>None</email>
+    </acquired_by>
     <channels_recorded>None</channels_recorded>
+    <comments>None</comments>
     <data_type>None</data_type>
-    <station_orientation>None</station_orientation>
+    <location>
+        <datum>WGS84</datum>
+        <latitude type="float">None</latitude>
+        <longitude type="float">None</longitude>
+        <elevation type="float">None</elevation>
+        <declination>
+            <value type="float" units="degrees">None</value>
+            <epoch>None</epoch>
+            <model>None</model>
+        </declination>
+    </location>
+    <name>None</name>
+    <num_channels type="integer">None</num_channels>
     <orientation_method>None</orientation_method>
     <provenance>
         <creation_time>1980-01-01T00:00:00+00:00</creation_time>
-        <notes>None</notes>
+        <comments>None</comments>
         <log>None</log>
         <software>
             <author>None</author>
@@ -26,19 +37,10 @@
             <email>None</email>
         </submitter>
     </provenance>
-    <location>
-        <datum>WGS84</datum>
-        <latitude type="float">None</latitude>
-        <longitude type="float">None</longitude>
-        <elevation type="float">None</elevation>
-        <declination>
-            <value type="float" units="degrees">None</value>
-            <epoch>None</epoch>
-            <model>None</model>
-        </declination>
-    </location>
-    <acquired_by>
-        <author>None</author>
-        <email>None</email>
-    </acquired_by>
+    <sta_code>None</sta_code>
+    <station_orientation>None</station_orientation>
+    <time_period>
+        <start>1980-01-01T00:00:00+00:00</start>
+        <end>1980-01-01T00:00:00+00:00</end>
+    </time_period>
 </station>

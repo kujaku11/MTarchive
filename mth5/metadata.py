@@ -1134,6 +1134,16 @@ class TimePeriod(Base):
     def end(self, stop_date):
         self._end_dt.from_str(stop_date)
         
+class Orientation(Base):
+    """
+    how channels are oriented
+    """
+    def __init__(self, **kwargs):
+        self.option = None
+        self.method = None
+        
+        super(Orientation, self).__init__(**kwargs) 
+        self._attr_dict = ATTR_DICT['orientation']
 
 # ==============================================================================
 # Software
@@ -1338,7 +1348,7 @@ class Station(Base):
         self.num_channels = None
         self.channels_recorded = None
         self.data_type = None
-        self.station_orientation = None
+        self.orientation = Orientation()
         self.orientation_method = None
         self.acquired_by = Person()
         self.provenance = Provenance()

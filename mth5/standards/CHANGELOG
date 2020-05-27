@@ -1,6 +1,7 @@
 CHANGELOG METADATA STANDARDS
 ================================
 	* change notes to comments
+	* nested all start, end date/times under time_period
 	* Survey
 		- Changed id to long_name
 		- Changed name to short_name

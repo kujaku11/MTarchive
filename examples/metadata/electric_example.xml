@@ -1,50 +1,52 @@
 <?xml version="1.0" ?>
 <electric>
-    <dipole_length type="float" units="meters">0.0</dipole_length>
-    <contact_resistance_1>
-        <start type="float" units="ohms">None</start>
-    </contact_resistance_1>
-    <contact_resistance_2>
-        <end type="float" units="ohms">None</end>
-    </contact_resistance_2>
     <ac>
         <start type="float" units="volts">None</start>
         <end type="float" units="volts">None</end>
     </ac>
+    <azimuth type="float" units="degrees">0.0</azimuth>
+    <channel_number type="integer">None</channel_number>
+    <comments>None</comments>
+    <component>None</component>
+    <contact_resistance>
+        <start type="float" units="ohms">None</start>
+        <end type="float" units="ohms">None</end>
+    </contact_resistance>
+    <data_quality>
+        <rating type="integer">None</rating>
+        <warning_comments>None</warning_comments>
+        <warning_flags>None</warning_flags>
+        <author>None</author>
+    </data_quality>
     <dc>
         <start type="float" units="volts">None</start>
         <end type="float" units="volts">None</end>
     </dc>
-    <type>None</type>
-    <units>None</units>
-    <channel_number type="integer">None</channel_number>
-    <component>None</component>
-    <sample_rate type="float" units="samples per second">None</sample_rate>
-    <azimuth type="float" units="degrees">0.0</azimuth>
-    <notes>None</notes>
-    <data_quality>
-        <rating type="integer">None</rating>
-        <warning_notes>None</warning_notes>
-        <warning_flags>None</warning_flags>
-        <author>None</author>
-    </data_quality>
+    <dipole_length type="float" units="meters">0.0</dipole_length>
     <filter>
         <name>None</name>
         <applied type="boolean">None</applied>
-        <notes>None</notes>
+        <comments>None</comments>
     </filter>
-    <positive>
-        <notes>None</notes>
-        <datum>WGS84</datum>
-        <latitude type="float">None</latitude>
-        <longitude type="float">None</longitude>
-        <elevation type="float">None</elevation>
-    </positive>
     <negative>
-        <notes>None</notes>
+        <comments>None</comments>
         <datum>WGS84</datum>
         <latitude type="float">None</latitude>
         <longitude type="float">None</longitude>
         <elevation type="float">None</elevation>
     </negative>
+    <positive>
+        <comments>None</comments>
+        <datum>WGS84</datum>
+        <latitude type="float">None</latitude>
+        <longitude type="float">None</longitude>
+        <elevation type="float">None</elevation>
+    </positive>
+    <sample_rate type="float" units="samples per second">None</sample_rate>
+    <time_period>
+        <start>1980-01-01T00:00:00+00:00</start>
+        <end>1980-01-01T00:00:00+00:00</end>
+    </time_period>
+    <type>None</type>
+    <units>None</units>
 </electric>
