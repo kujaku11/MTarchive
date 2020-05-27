@@ -617,7 +617,10 @@ class Standards():
 
     @property
     def run_dict(self):
-        return from_csv(get_level_fn('run'))
+        run_dict = from_csv(get_level_fn('run'))
+        run_dict.add_dict(self.datalogger_dict.copy(), 'data_logger')
+        return run_dict
+        
 
     @property
     def channel_dict(self):

@@ -59,6 +59,25 @@ def recursive_split_dict(key, value, remainder, sep='.'):
         recursive_split_dict(other[0], value, remainder.setdefault(key, {}))
     else:
         remainder[key] = value
+        
+def recursive_split_getattr(base_object, name, sep='.'):
+    key, *other = name.split(sep, 1)
+
+    if other:
+        base_object = getattr(base_object, key)
+        value = recursive_split_getattr(base_object, other[0])
+    else:
+        value = getattr(base_object, key)
+    return value
+
+def recursive_split_setattr(base_object, name, value, sep='.'):
+    key, *other = name.split(sep, 1)
+
+    if other:
+        base_object = getattr(base_object, key)
+        recursive_split_setattr(base_object, other[0], value)
+    else:
+        setattr(base_object, key, value)
     
 def structure_dict(meta_dict, sep='.'):
     """

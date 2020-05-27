@@ -296,7 +296,7 @@ A run represents data collected at a single station with a single sampling rate.
 
 \begin{table}[htb!]
     \caption[Attributes for Run]{Attributes for Run category}
-    \begin{tabular}{|l|p{3.6in}|l|l|}
+    \begin{tabular}{|l|p{3.4in}|l|l|}
         \hline
         \textbf{Metadata Key} & \textbf{Description} & \textbf{Type} & \textbf{Required} \\ \hline
         id\ & run ID & string & compulsory \\ \hline
@@ -311,6 +311,24 @@ A run represents data collected at a single station with a single sampling rate.
         acquired\_by.email\ & email of lead run operator & string & compulsory \\ \hline
         provenance.comments\ & any comments on the history of the data & string & optional \\ \hline
         provenance.log\ & log of any changes made to time series data & string & optional \\ \hline
+        data\_logger.manufacturer\ & manufacturer name & string & compulsory \\ \hline
+        data\_logger.model\ & model name & string & compulsory \\ \hline
+        data\_logger.serial\ & serial number & string & compulsory \\ \hline
+        data\_logger.comments\ & comments about data logger & string & compulsory \\ \hline
+        data\_logger.timing\_system.type\ & type of timing system [GPS $|$ internal $|$ ... ] & string & compulsory \\ \hline
+        data\_logger.timing\_system.drift\ & any drift in internal clock [ seconds ] & float & compulsory \\ \hline
+        data\_logger.timing\_system.uncertainty\ & uncertainty associated with internal clock [seconds] & float & compulsory \\ \hline
+        data\_logger.timing\_system.comments\ & comments on timing system & string & optional \\ \hline
+        data\_logger.firmware.version\ & firmware version & string & compulsory \\ \hline
+        data\_logger.firmware.date\ & date on firmware & string & compulsory \\ \hline
+        data\_logger.firmware.author\ & author of firmware & string & optional \\ \hline
+%        n\_channels\ & number of channels & int & compulsory \\ \hline
+%        n\_channels\_used\ & number of channels used & int & compulsory \\ \hline
+        data\_logger.power\_source.type\ & power source type [ Pb-acid battery $|$ solar panel $|$ Li battery $|$ ...] & string & compulsory \\ \hline
+        data\_logger.power\_source.id\ & power source id & string & optional \\ \hline
+        data\_logger.power\_source.voltage.start\ & starting voltage of power source & float & compulsory \\ \hline
+        data\_logger.power\_source.volage.end\ & ending voltage of power source & float & compulsory \\ \hline
+        data\_logger.power\_source.comments\ & comments on power source & string & optional \\ \hline
     \end{tabular}
     \label{tab:run}
 \end{table}
@@ -323,18 +341,18 @@ A run represents data collected at a single station with a single sampling rate.
         <author>mt</author>
         <email>mt@mt.org</email>
     </acquired_by>
-    <channels_recorded>EX, EY, HX, HY</channels_recorded>
+    <channels_recorded>[EX, EY, HX, HY]</channels_recorded>
     <comments>cables chewed by gophers</comments>
     <data_type>MT</data_type>
-    <id>mt01</id>
+    <id>mt01a</id>
     <provenance>
         <comments>None</comments>
         <log>None</log>
     </provenance>
-    <sampling_rate type="float" units="samples per second">None</sampling_rate>
+    <sampling_rate type="float" units="samples per second">256.0</sampling_rate>
     <time_period>
         <start>1980-01-01T00:00:00+00:00</start>
-        <end>1980-01-01T00:00:00+00:00</end>
+        <end>1980-01-02T00:00:00+00:00</end>
     </time_period>
 </run>
 \end{verbatim}

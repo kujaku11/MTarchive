@@ -215,15 +215,7 @@ class Base():
         v_type = self._get_standard_type(name)
 
         if '.'  in name:
-            if name.count('.') == 1:
-                attr_class, attr_name = name.split('.')
-                value = getattr(getattr(self, attr_class), attr_name)
-
-            elif name.count('.') == 2:
-                attr_master, attr_class, attr_name = name.split('.')
-                value = getattr(getattr(getattr(self, attr_master),
-                                        attr_class),
-                                attr_name)
+            value = helpers.recursive_split_getattr(self, name)
         else:
             value = getattr(self, name)
 
@@ -252,27 +244,14 @@ class Base():
             '10'
         """
         if '.'  in name:
-            if name.count('.') == 1:
-                attr_class, attr_name = name.split('.')
-                try:
-                    setattr(getattr(self, attr_class), attr_name, value)
-                except AttributeError as error:
-                    msg = ("must set {0} to a class in metadata first " +
-                           "before setting {1}.")
-                    self.logger.info(msg.format(attr_class, name))
-                    self.logger.exception(error)
-                    raise AttributeError(error)
-            elif name.count('.') == 2:
-                attr_master, attr_class, attr_name = name.split('.')
-                try:
-                    setattr(getattr(getattr(self, attr_master),
-                                    attr_class), attr_name, value)
-                except AttributeError as error:
-                    msg = ("must set {0} to a class in metadata first " +
-                           "before setting {1}.")
-                    self.logger.info(msg.format(attr_class, name))
-                    self.logger.exception(error)
-                    raise AttributeError(error)
+            try:
+                helpers.recursive_split_setattr(self, name, value)
+            except AttributeError as error:
+                msg = ("must set {0} to a class in metadata first " +
+                       "before setting {1}.")
+                self.logger.info(msg.format(self, name))
+                self.logger.exception(error)
+                raise AttributeError(error)
         else:
             setattr(self, name, value)
 
@@ -425,12 +404,12 @@ class Base():
                                                type(value)))
         return None
                 
-    def to_dict(self, structured=False):
+    def to_dict(self, nested=False):
         """
         make a dictionary from attributes, makes dictionary from _attr_list.
         
-        :param structured: make the returned dictionary nested
-        :type structured: [ True | False ] , default is False
+        :param nested: make the returned dictionary nested
+        :type nested: [ True | False ] , default is False
         
         """
         meta_dict = {}
@@ -443,7 +422,7 @@ class Base():
                 self.logger.info(msg)
                 meta_dict[name] = None
 
-        if structured:
+        if nested:
            meta_dict = helpers.structure_dict(meta_dict)
 
         meta_dict = {self._class_name.lower(): 
@@ -476,17 +455,17 @@ class Base():
         for name, value in meta_dict.items():
             self.set_attr_from_name(name, value)
                 
-    def to_json(self, structured=False, indent=' '*4):
+    def to_json(self, nested=False, indent=' '*4):
         """
         Write a json string from a given object, taking into account other
         class objects contained within the given object.
         
-        :param structured: make the returned json nested
-        :type structured: [ True | False ] , default is False
+        :param nested: make the returned json nested
+        :type nested: [ True | False ] , default is False
         
         """
 
-        return json.dumps(self.to_dict(structured=structured),
+        return json.dumps(self.to_dict(nested=nested),
                           cls=NumpyEncoder,
                           indent=indent)
 
@@ -551,7 +530,7 @@ class Base():
         :return: XML element or string
 
         """
-        element = helpers.dict_to_xml(self.to_dict(structured=True),
+        element = helpers.dict_to_xml(self.to_dict(nested=True),
                                       self._attr_dict)
         if not string:
             return element
@@ -1383,6 +1362,7 @@ class Run(Base):
         self.acquired_by = Person()
         self.provenance = Provenance()
         self.time_period = TimePeriod()
+        self.data_logger = DataLogger()
         super(Run, self).__init__()
 
         self._attr_dict = ATTR_DICT['run']

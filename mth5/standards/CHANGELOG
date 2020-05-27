@@ -26,6 +26,7 @@ CHANGELOG METADATA STANDARDS
 		
 	* Run
 		- nested start/end under time_period
+		- nested data_logger info under run
 	
 	* Channel
 		- Add 'type' to distinguish what type of metadata is needed.

@@ -166,7 +166,7 @@ class TestSurveyMetadata(unittest.TestCase):
         self.survey_object.from_json((survey_json))
         self.assertDictEqual(self.meta_dict, self.survey_object.to_dict())
         
-        survey_json = self.survey_object.to_json(structured=True)
+        survey_json = self.survey_object.to_json(nested=True)
         self.survey_object.from_json(survey_json)
         self.assertDictEqual(self.meta_dict, self.survey_object.to_dict())
         
@@ -256,7 +256,7 @@ class TestStationMetadata(unittest.TestCase):
         self.station_object.from_json((survey_json))
         self.assertDictEqual(self.meta_dict, self.station_object.to_dict())
         
-        survey_json = self.station_object.to_json(structured=True)
+        survey_json = self.station_object.to_json(nested=True)
         self.station_object.from_json(survey_json)
         self.assertDictEqual(self.meta_dict, self.station_object.to_dict())
         
@@ -297,16 +297,31 @@ class TestRun(unittest.TestCase):
     def setUp(self):
         self.maxDiff = None
         self.meta_dict = {'run': 
-                          {'acquired_by.author': 'mt',
+                          {'acquired_by.author': 'MT guru',
                            'acquired_by.email': 'mt@mt.org',
-                           'channels_recorded': 'EX, EY, HX, HY',
-                           'data_type': 'MT',
-                           'time_period.end': '1980-01-01T00:00:00+00:00',
-                           'id': 'mt01',
-                           'comments': 'cables chewed by gophers',
-                           'provenance.log': None,
+                           'channels_recorded': '[EX, EY, HX, HY, HZ]',
+                           'comments': 'Cloudy solar panels failed',
+                           'data_logger.firmware.author': 'MT instruments',
+                           'data_logger.firmware.name': 'FSGMT',
+                           'data_logger.firmware.version': '12.120',
+                           'data_logger.id': 'mt091',
+                           'data_logger.manufacturer': 'T. Lurric',
+                           'data_logger.power_source.comments': 'rats',
+                           'data_logger.power_source.id': '12',
+                           'data_logger.power_source.type': 'pb acid',
+                           'data_logger.power_source.voltage.end': 12.0,
+                           'data_logger.power_source.voltage.start': 14.0,
+                           'data_logger.timing_system.drift': .001,
+                           'data_logger.timing_system.notes': 'in trees',
+                           'data_logger.timing_system.type': 'GPS',
+                           'data_logger.timing_system.uncertainty': .000001,
+                           'data_logger.type': 'broadband',
+                           'data_type': 'mt',
+                           'id': 'mt01a',
                            'provenance.comments': None,
-                           'sampling_rate': None,
+                           'provenance.log': None,
+                           'sampling_rate': 256.0,
+                           'time_period.end': '1980-01-01T00:00:00+00:00',
                            'time_period.start': '1980-01-01T00:00:00+00:00'}}
             
         self.meta_dict = {'run': 
@@ -328,7 +343,7 @@ class TestRun(unittest.TestCase):
         self.run_object.from_json((survey_json))
         self.assertDictEqual(self.meta_dict, self.run_object.to_dict())
         
-        survey_json = self.run_object.to_json(structured=True)
+        survey_json = self.run_object.to_json(nested=True)
         self.run_object.from_json(survey_json)
         self.assertDictEqual(self.meta_dict, self.run_object.to_dict())
         
@@ -401,7 +416,7 @@ class TestChannel(unittest.TestCase):
         self.channel_object.from_json((survey_json))
         self.assertDictEqual(self.meta_dict, self.channel_object.to_dict())
         
-        survey_json = self.channel_object.to_json(structured=True)
+        survey_json = self.channel_object.to_json(nested=True)
         self.channel_object.from_json(survey_json)
         self.assertDictEqual(self.meta_dict, self.channel_object.to_dict())
         
@@ -462,7 +477,7 @@ class TestElectric(unittest.TestCase):
         self.electric_object.from_json((survey_json))
         self.assertDictEqual(self.meta_dict, self.electric_object.to_dict())
         
-        survey_json = self.electric_object.to_json(structured=True)
+        survey_json = self.electric_object.to_json(nested=True)
         self.electric_object.from_json(survey_json)
         self.assertDictEqual(self.meta_dict, self.electric_object.to_dict())
         
@@ -518,7 +533,7 @@ class TestMagnetic(unittest.TestCase):
         self.magnetic_object.from_json((survey_json))
         self.assertDictEqual(self.meta_dict, self.magnetic_object.to_dict())
         
-        survey_json = self.magnetic_object.to_json(structured=True)
+        survey_json = self.magnetic_object.to_json(nested=True)
         self.magnetic_object.from_json(survey_json)
         self.assertDictEqual(self.meta_dict, self.magnetic_object.to_dict())
         
