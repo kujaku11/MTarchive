@@ -126,8 +126,8 @@ class TestSurveyMetadata(unittest.TestCase):
                           {'project': 'name test',
                            'survey': 'id test',
                            'net_code': 'net_code test',
-                           'start_date': '2019-01-02',
-                           'end_date': '2019-03-05',
+                           'time_period.start_date': '2019-01-02',
+                           'time_period.end_date': '2019-03-05',
                            'northwest_corner.latitude': 40.09,
                            'northwest_corner.longitude': -115.6,
                            'southeast_corner.latitude': 35.90,
@@ -171,18 +171,22 @@ class TestSurveyMetadata(unittest.TestCase):
         self.assertDictEqual(self.meta_dict, self.survey_object.to_dict())
         
     def test_start_date(self):
-        self.survey_object.start_date = '2020/01/02'
-        self.assertEqual(self.survey_object.start_date, '2020-01-02')
+        self.survey_object.time_period.start_date = '2020/01/02'
+        self.assertEqual(self.survey_object.time_period.start_date,
+                         '2020-01-02')
         
         self.survey_object.start_date = '01-02-2020T12:20:30.450000+00:00'
-        self.assertEqual(self.survey_object.start_date, '2020-01-02')
+        self.assertEqual(self.survey_object.time_period.start_date,
+                         '2020-01-02')
 
     def test_end_date(self):
-        self.survey_object.start_date = '2020/01/02'
-        self.assertEqual(self.survey_object.start_date, '2020-01-02')
+        self.survey_object.time_period.start_date = '2020/01/02'
+        self.assertEqual(self.survey_object.time_period.start_date,
+                         '2020-01-02')
         
         self.survey_object.start_date = '01-02-2020T12:20:30.45Z'
-        self.assertEqual(self.survey_object.start_date, '2020-01-02')
+        self.assertEqual(self.survey_object.time_period.start_date,
+                         '2020-01-02')
         
     def test_latitude(self):
         self.survey_object.southeast_corner.latitude = '40:10:05.123'

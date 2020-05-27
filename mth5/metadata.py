@@ -1134,6 +1134,22 @@ class TimePeriod(Base):
     def end(self, stop_date):
         self._end_dt.from_str(stop_date)
         
+    @property
+    def start_date(self):
+        return self._start_dt.date
+
+    @start_date.setter
+    def start_date(self, start_date):
+        self._start_dt.from_str(start_date)
+
+    @property
+    def end_date(self):
+        return self._end_dt.date
+
+    @end_date.setter
+    def end_date(self, stop_date):
+        self._end_dt.from_str(stop_date)
+        
 class Orientation(Base):
     """
     how channels are oriented
@@ -1290,7 +1306,7 @@ class Filter(Base):
 # ==============================================================================
 # Site details
 # ==============================================================================
-class Survey(TimePeriod):
+class Survey(Base):
     """
     Information on the survey, including location, id, etc.
 
@@ -1314,25 +1330,12 @@ class Survey(TimePeriod):
         self.release_status = None
         self.citation_dataset = Citation()
         self.citation_journal = Citation()
+        self.time_period = TimePeriod()
         super().__init__()
 
         self._attr_dict = ATTR_DICT['survey']
 
-    @property
-    def start_date(self):
-        return self._start_dt.date
 
-    @start_date.setter
-    def start_date(self, start_date):
-        self._start_dt.from_str(start_date)
-
-    @property
-    def end_date(self):
-        return self._end_dt.date
-
-    @end_date.setter
-    def end_date(self, stop_date):
-        self._end_dt.from_str(stop_date)
 
 # =============================================================================
 # Station Class

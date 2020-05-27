@@ -2,8 +2,8 @@ attribute,type,required,style,units
 project,str,TRUE,name,None
 survey,str,TRUE,name,None
 net_code,str,TRUE,net_code,None
-start_date,str,TRUE,date,None
-end_date,str,TRUE,date,None
+time_period.start_date,str,TRUE,date,None
+time_period.end_date,str,TRUE,date,None
 northwest_corner.latitude,float,TRUE,number,decimal degrees
 northwest_corner.longitude,float,TRUE,number,decimal degrees
 southeast_corner.latitude,float,TRUE,number,decimal degrees

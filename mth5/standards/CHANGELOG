@@ -7,9 +7,10 @@ CHANGELOG METADATA STANDARDS
 	* nested all start, end date/times under time_period
 	
 	* Survey
-		- Changed id to long_name
-		- Changed name to short_name
+		- Changed id to project
+		- Changed name to survey
 		- Changed location to geographic_location
+		- nest start and end under time_period
 		
 	* Station
 		- nested lat, lon, elevation, declination under location
