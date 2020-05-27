@@ -6,6 +6,31 @@
     </acquired_by>
     <channels_recorded>None</channels_recorded>
     <comments>None</comments>
+    <data_logger>
+        <power_source>
+            <voltage>
+                <start type="float" units="volts">None</start>
+                <end type="float" units="volts">None</end>
+            </voltage>
+            <type>None</type>
+            <id>None</id>
+            <comments>None</comments>
+        </power_source>
+        <id>None</id>
+        <manufacturer>None</manufacturer>
+        <type>None</type>
+        <timing_system>
+            <type>None</type>
+            <drift type="float" units="milliseconds">None</drift>
+            <uncertainty type="float" units="milliseconds">None</uncertainty>
+            <notes>None</notes>
+        </timing_system>
+        <firmware>
+            <author>None</author>
+            <version>None</version>
+            <name>None</name>
+        </firmware>
+    </data_logger>
     <data_type>None</data_type>
     <id>None</id>
     <provenance>

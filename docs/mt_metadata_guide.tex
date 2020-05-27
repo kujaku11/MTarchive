@@ -165,7 +165,7 @@ A survey describes an entire dataset that covers a specific time span and region
 \end{table} 
 
 \newpage
-\subsection{Example Survey JSON Input String}
+\subsection{Example Survey JSON String}
 
 \begin{verbatim}
 {
@@ -252,7 +252,7 @@ A station encompasses a single site where data are collected. If the location ch
 \end{table}    
    
 \newpage
-\subsection{Example Station JSON Input String}
+\subsection{Example Station JSON String}
 
 \begin{verbatim}
 {
@@ -292,28 +292,28 @@ A station encompasses a single site where data are collected. If the location ch
 \newpage
 \section{Run}
 
-A run represents data collected at a single station with a single sampling rate. If the dipole length or other such station parameters are changed between runs, this would require adding a new run.  If the station is relocated then a new station should be created.
+A run represents data collected at a single station with a single sampling rate. If the dipole length or other such station parameters are changed between runs, this would require adding a new run.  If the station is relocated then a new station should be created.  If a run has channels that drop out the start and end period will be the minimum time and maximum time for all channels recorded.
 
 \begin{table}[htb!]
     \caption[Attributes for Run]{Attributes for Run category}
-    \begin{tabular}{|l|p{3.4in}|l|l|}
+    \begin{tabular}{|l|p{3.2in}|l|l|}
         \hline
         \textbf{Metadata Key} & \textbf{Description} & \textbf{Type} & \textbf{Required} \\ \hline
         id\ & run ID & string & compulsory \\ \hline
         comments\ & comments on run, commonly station name with {0-9}{0-9} or {a-z}, mt01a or mt01\_01 & string & optional \\ \hline
-        time\_period.start\ & start date and time of data logging [ ISO UTC ] & string & compulsory \\ \hline
-        time\_period.end\ & stop date and time of data logging [ ISO UTC ] & string & compulsory \\ \hline
-        sampling\_rate\ & sampling rate of run (samples.second) & float & compulsory \\ \hline
-        num\_channels\ & number of channels recorded & int & compulsory \\ \hline
-        channels\_recorded\ & list of channels recorded [ [EX, EY, HX, HY] $|$ ...] & string & compulsory \\ \hline
+        time\_period.start\ & start date and time of data logging [ ISO UTC ], should be the minimum time between all channels recorded & string & compulsory \\ \hline
+        time\_period.end\ & stop date and time of data logging [ ISO UTC ], should be the maximum time between all channels recorded & string & compulsory \\ \hline
+        sampling\_rate\ & sampling rate of run (samples per second) & float & compulsory \\ \hline
+%        num\_channels\ & number of channels recorded & int & compulsory \\ \hline
+        channels\_recorded\ & list of channels recorded as components [ [EX, EY, HX, HY] $|$ ...] & string & compulsory \\ \hline
         data\_type \ & type of data collected [ BB $|$ LP $|$ AMT $|$ Combo $|$ ...] & string & compulsory \\ \hline
-        acquired\_by.author\ & person(s) responsible for run & string & compulsory \\ \hline
-        acquired\_by.email\ & email of lead run operator & string & compulsory \\ \hline
-        provenance.comments\ & any comments on the history of the data & string & optional \\ \hline
+        acquired\_by.author\ & person(s) responsible for run this can be different from the PI's listed at he survey level & string & compulsory \\ \hline
+        acquired\_by.email\ & email of lead run operator & string & optional \\ \hline
+        provenance.comments\ & any comments on the history of the data for the run & string & optional \\ \hline
         provenance.log\ & log of any changes made to time series data & string & optional \\ \hline
-        data\_logger.manufacturer\ & manufacturer name & string & compulsory \\ \hline
-        data\_logger.model\ & model name & string & compulsory \\ \hline
-        data\_logger.serial\ & serial number & string & compulsory \\ \hline
+        data\_logger.manufacturer\ & data logger manufacturer name & string & compulsory \\ \hline
+        data\_logger.model\ & data logger model name & string & compulsory \\ \hline
+        data\_logger.serial\ & data logger serial number & string & compulsory \\ \hline
         data\_logger.comments\ & comments about data logger & string & compulsory \\ \hline
         data\_logger.timing\_system.type\ & type of timing system [GPS $|$ internal $|$ ... ] & string & compulsory \\ \hline
         data\_logger.timing\_system.drift\ & any drift in internal clock [ seconds ] & float & compulsory \\ \hline
@@ -333,16 +333,41 @@ A run represents data collected at a single station with a single sampling rate.
     \label{tab:run}
 \end{table}
 
-\subsection{Example Run XML Input String}
+\subsection{Example Run XML String}
 
 \begin{verbatim}
 <run>
     <acquired_by>
-        <author>mt</author>
+        <author>T. Lurric</author>
         <email>mt@mt.org</email>
     </acquired_by>
-    <channels_recorded>[EX, EY, HX, HY]</channels_recorded>
-    <comments>cables chewed by gophers</comments>
+    <channels_recorded>[EX, EY, HX, HY, HZ, temperature]</channels_recorded>
+    <comments>None</comments>
+    <data_logger>
+        <power_source>
+            <voltage>
+                <start type="float" units="volts">14</start>
+                <end type="float" units="volts">12</end>
+            </voltage>
+            <type>pb-acid</type>
+            <id>10</id>
+            <comments>solar panel</comments>
+        </power_source>
+        <id>mt01</id>
+        <manufacturer>MT r' Us</manufacturer>
+        <type>broadband</type>
+        <timing_system>
+            <type>GPS</type>
+            <drift type="float" units="seconds">0.00001</drift>
+            <uncertainty type="float" units="seconds">0.00001</uncertainty>
+            <notes>None</notes>
+        </timing_system>
+        <firmware>
+            <author>MT r' Us</author>
+            <version>12.15.a</version>
+            <name>FGDMT</name>
+        </firmware>
+    </data_logger>
     <data_type>MT</data_type>
     <id>mt01a</id>
     <provenance>
@@ -352,68 +377,68 @@ A run represents data collected at a single station with a single sampling rate.
     <sampling_rate type="float" units="samples per second">256.0</sampling_rate>
     <time_period>
         <start>1980-01-01T00:00:00+00:00</start>
-        <end>1980-01-02T00:00:00+00:00</end>
+        <end>1980-01-01T00:00:00+00:00</end>
     </time_period>
 </run>
 \end{verbatim}
 
-\newpage
-\section{Data Logger}
-
-Data logger is a the digital acquisition system used to collect time series data at a single station for a single run.  \verb|DataLogger| metadata includes the type of data logger, timing system, firmware, number of channels, calibrations, and power source.
-
-\begin{table}[htb!]
-    \caption[Attributes for DataLogger]{Attributes for DataLogger category}
-    \begin{tabular}{|l|p{3in}|l|l|}
-        \hline
-        \textbf{Metadata Key} & \textbf{Description} & \textbf{Type} & \textbf{Required} \\ \hline
-        manufacturer\ & manufacturer name & string & compulsory \\ \hline
-        model\ & model name & string & compulsory \\ \hline
-        serial\ & serial number & string & compulsory \\ \hline
-        comments\ & comments about data logger & string & compulsory \\ \hline
-        timing\_system.type\ & type of timing system [GPS $|$ internal $|$ ... ] & string & compulsory \\ \hline
-        timing\_system.drift\ & any drift in internal clock [ seconds ] & float & compulsory \\ \hline
-        timing\_system.uncertainty\ & uncertainty associated with internal clock [seconds] & float & compulsory \\ \hline
-        timing\_system.comments\ & comments on timing system & string & optional \\ \hline
-        firmware.version\ & firmware version & string & compulsory \\ \hline
-        firmware.date\ & date on firmware & string & compulsory \\ \hline
-        firmware.author\ & author of firmware & string & optional \\ \hline
-        n\_channels\ & number of channels & int & compulsory \\ \hline
-        n\_channels\_used\ & number of channels used & int & compulsory \\ \hline
-        power\_source.type\ & power source type [ Pb-acid battery $|$ solar panel $|$ Li battery $|$ ...] & string & compulsory \\ \hline
-        power\_source.id\ & power source id & string & optional \\ \hline
-        power\_source.voltage.start\ & starting voltage of power source & float & compulsory \\ \hline
-        power\_source.volage.end\ & ending voltage of power source & float & compulsory \\ \hline
-        power\_source.comments\ & comments on power source & string & optional \\ \hline
-    \end{tabular}
-    \label{tab:datalogger}
-\end{table}    
-
-\newpage
-\subsection{Example DataLogger JSON Input String}
-
-\begin{verbatim}
-{
- "manufacturer": "MT `r Us",
- "model": "Broadband 2000",
- "serial": "0128947850230",
- "comments": "Intern dropped the data logger on a shovel.",
- "timingystem.type": "GPS",
- "timingystem.drift": 0,
- "timingystem.uncertainty": 0.0016,
- "timingystem.comments": "only works when sky is clear",
- "firmware.version": "1.0",
- "firmware.date": "2020-01-01",
- "firmware.author": "R. Phase",
- "n_channels": 5,
- "n_channels_used": 4,
- "powersource.id": "battery 10"
- "powersource.type": "solar panel and battery",
- "powersource.voltage.start": 13.1,
- "powersource.voltage.end": 12.0,
- "powersource.comments": "Overcast all day reduced recharging"
-}
-\end{verbatim}
+%\newpage
+%\section{Data Logger}
+%
+%Data logger is a the digital acquisition system used to collect time series data at a single station for a single run.  \verb|DataLogger| metadata includes the type of data logger, timing system, firmware, number of channels, calibrations, and power source.
+%
+%\begin{table}[htb!]
+%    \caption[Attributes for DataLogger]{Attributes for DataLogger category}
+%    \begin{tabular}{|l|p{3in}|l|l|}
+%        \hline
+%        \textbf{Metadata Key} & \textbf{Description} & \textbf{Type} & \textbf{Required} \\ \hline
+%        manufacturer\ & manufacturer name & string & compulsory \\ \hline
+%        model\ & model name & string & compulsory \\ \hline
+%        serial\ & serial number & string & compulsory \\ \hline
+%        comments\ & comments about data logger & string & compulsory \\ \hline
+%        timing\_system.type\ & type of timing system [GPS $|$ internal $|$ ... ] & string & compulsory \\ \hline
+%        timing\_system.drift\ & any drift in internal clock [ seconds ] & float & compulsory \\ \hline
+%        timing\_system.uncertainty\ & uncertainty associated with internal clock [seconds] & float & compulsory \\ \hline
+%        timing\_system.comments\ & comments on timing system & string & optional \\ \hline
+%        firmware.version\ & firmware version & string & compulsory \\ \hline
+%        firmware.date\ & date on firmware & string & compulsory \\ \hline
+%        firmware.author\ & author of firmware & string & optional \\ \hline
+%        n\_channels\ & number of channels & int & compulsory \\ \hline
+%        n\_channels\_used\ & number of channels used & int & compulsory \\ \hline
+%        power\_source.type\ & power source type [ Pb-acid battery $|$ solar panel $|$ Li battery $|$ ...] & string & compulsory \\ \hline
+%        power\_source.id\ & power source id & string & optional \\ \hline
+%        power\_source.voltage.start\ & starting voltage of power source & float & compulsory \\ \hline
+%        power\_source.volage.end\ & ending voltage of power source & float & compulsory \\ \hline
+%        power\_source.comments\ & comments on power source & string & optional \\ \hline
+%    \end{tabular}
+%    \label{tab:datalogger}
+%\end{table}    
+%
+%\newpage
+%\subsection{Example DataLogger JSON String}
+%
+%\begin{verbatim}
+%{
+% "manufacturer": "MT `r Us",
+% "model": "Broadband 2000",
+% "serial": "0128947850230",
+% "comments": "Intern dropped the data logger on a shovel.",
+% "timingystem.type": "GPS",
+% "timingystem.drift": 0,
+% "timingystem.uncertainty": 0.0016,
+% "timingystem.comments": "only works when sky is clear",
+% "firmware.version": "1.0",
+% "firmware.date": "2020-01-01",
+% "firmware.author": "R. Phase",
+% "n_channels": 5,
+% "n_channels_used": 4,
+% "powersource.id": "battery 10"
+% "powersource.type": "solar panel and battery",
+% "powersource.voltage.start": 13.1,
+% "powersource.voltage.end": 12.0,
+% "powersource.comments": "Overcast all day reduced recharging"
+%}
+%\end{verbatim}
 
 \newpage
 \section{Electric Channel}
@@ -429,6 +454,8 @@ Electric channel refers to a dipole measurement of the electric field for a sing
         channel\_number\ & channel number [ 1 $|$ 2 $|$ 3 $|$ 4 $|$ 5 $|$ 6 $|$...] & int & compulsory \\ \hline
         component\ & [ Ex $|$ Ey $|$ Ez ] & string  & compulsory \\ \hline
         azimuth\ & azimuth of dipole N = 0,  E = 90 [ degrees ] & float & compulsory \\ \hline
+        time\_period.start\ & start date and time of data logging [ ISO UTC ] & string & compulsory \\ \hline
+        time\_period.end\ & stop date and time of data logging [ ISO UTC ] & string & compulsory \\ \hline
         positive.id\ & sensor id number & string & compulsory \\ \hline
         positive.latitude\ & positive sensor location latitude [ degrees (hh.mmss) ] & float & optional \\ \hline
         positive.longitude\ & positive sensor location longitude [ degrees (hh.mmss) ] & float & optional \\ \hline
@@ -479,7 +506,7 @@ Electric channel refers to a dipole measurement of the electric field for a sing
 \end{table}    
 
 \newpage
-\subsection{Example Electric Channel JSON Input String}
+\subsection{Example Electric Channel JSON String}
 
 \begin{verbatim}
 {
@@ -487,6 +514,8 @@ Electric channel refers to a dipole measurement of the electric field for a sing
  "channel_number": "1",
  "component": "EX",
  "azimuth": 0,
+ "time_period.start": 2020-01-02T12:30:15+00:00,
+ "time_period.end": 2020-01-05T16:20:15+00:00,
  "positive.id": "101",
  "positive.latitude": 35.5578,
  "positive.longitude": -117.38754,
@@ -541,10 +570,12 @@ A magnetic channel is a recording of one component of the magnetic field at a si
         channel\_number\ & channel number [ 1 $|$ 2 $|$ 3 $|$ 4 $|$ 5 $|$ 6 $|$...] & int &  compulsory \\ \hline
         component\ & [ Hx $|$ Hy $|$ Hz ] & string  &  compulsory \\ \hline
         azimuth\ & azimuth in \verb|station\_coordinates| [ degrees ]& float & compulsory \\ \hline
-        longitude\ & sensor longitude degrees & float & compulsory \\ \hline
-        latitude\ & sensor latitude in degrees & float &  compulsory \\ \hline
-        elevation\ & sensor elevation in meters & float &  compulsory \\ \hline
-        datum\ & datum for location [ WGS84 $|$ ... ] & string &  compulsory\\ \hline
+        time\_period.start\ & start date and time of data logging [ ISO UTC ] & string & compulsory \\ \hline
+        time\_period.end\ & stop date and time of data logging [ ISO UTC ] & string & compulsory \\ \hline
+        location.longitude\ & sensor longitude degrees & float & compulsory \\ \hline
+        location.latitude\ & sensor latitude in degrees & float &  compulsory \\ \hline
+        location.elevation\ & sensor elevation in meters & float &  compulsory \\ \hline
+        location.datum\ & datum for location [ WGS84 $|$ ... ] & string &  compulsory\\ \hline
         units\ & units of magnetic field data [ counts $|$ mV $|$ ... ] & string &  compulsory \\ \hline
         sample\_rate\ & sample rate of magnetic channel (samples.second) & float &  compulsory \\ \hline
         h\_field\_min.start\ & minimum h-field value at beginning of measurement & float &  optional \\ \hline
@@ -565,7 +596,7 @@ A magnetic channel is a recording of one component of the magnetic field at a si
 \end{table}
 
 \newpage
-\subsection{Example Magnetic Channel JSON Input String}
+\subsection{Example Magnetic Channel JSON String}
 
 \begin{verbatim}
 {
@@ -576,10 +607,12 @@ A magnetic channel is a recording of one component of the magnetic field at a si
  "channel_number": 5,
  "component": "HZ",
  "azimuth": 90,
- "longitude": -117.0,
- "latitude": 45.0,
- "elevation": 107.4,
- "datum": "WGS84",
+ "time_period.start": 2020-01-02T12:30:15+00:00,
+ "time_period.end": 2020-01-05T16:20:15+00:00,
+ "location.longitude": -117.0,
+ "location.latitude": 45.0,
+ "location.elevation": 107.4,
+ "location.datum": "WGS84",
  "units": "counts",
  "sample_rate": 256,
  "h_field_min.start": -10,
@@ -630,13 +663,13 @@ In each channel there are keys to identify filters that can or have been applied
     \label{tab:filter}
 \end{table}
 
-\subsection{Example Filter JSON Input String} 
+\subsection{Example Filter JSON String} 
 
 \begin{verbatim}
 {
  "type": "look up",
  "name": "coil_8897",
- "unitsn": "mV",
+ "units_in": "mV",
  "units_out": "mV",
  "calibrationate": "2015-07-01",
  "comments": "interpolated from poles and zeros"
@@ -671,15 +704,15 @@ Auxiliary channels include state of health channels, temperature, etc.
     \label{tab:aux}
 \end{table}
 
-\subsection{Example Auxiliary JSON Input String} 
+\subsection{Example Auxiliary JSON String} 
 
 \begin{verbatim}
 {
-    "channel": {
+    "auxiliary": {
          "azimuth": 0.0,
          "channel_number": 1,
          "comments": null,
-         "component": "hx",
+         "component": "temperature",
          "data_quality.author": "mt",
          "data_quality.rating": 5,
          "data_quality.warning_comments": null,
@@ -695,7 +728,7 @@ Auxiliary channels include state of health channels, temperature, etc.
          "time_period.end": "2010-01-04T07:40:30+00:00",
          "time_period.start": "2010-01-01T12:30:20+00:00",
          "type": "auxiliary",
-         "units": "mV"
+         "units": "celsius"
     }
 }
 \end{verbatim}
