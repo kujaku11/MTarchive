@@ -1,8 +1,8 @@
-attribute,type,required,style,units
-type,str,TRUE,name,none
-units,str,TRUE,name,none
-channel_number,int,TRUE,number,none
-component,str,TRUE,name,none
-sample_rate,float,TRUE,number,samples per second
-azimuth,float,TRUE,number,degrees
-comments,str,FALSE,name,none
+attribute,type,required,style,units,description,options,alias
+type,str,TRUE,free form,none,data type for the channel,none,none
+units,str,TRUE,controlled vocabulary,none,units of the data,metric units long name or short name,none
+data_logger.channel_number,int,TRUE,number,none,channel number on the data logger,none,none
+component,str,TRUE,controlled vocabulary,none,name of the component measured,| Ex |Ey |Hx | Hy | Hz | T| Battery| … |,none
+sample_rate,float,TRUE,number,samples per second,sample rate,none,sampling_rate
+measurement_azimuth,float,TRUE,number,degrees,azimuth of channel in measurement coordinates,none,azimuth
+comments,str,FALSE,free form,none,any comments about the channel,none,none

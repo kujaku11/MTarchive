@@ -522,8 +522,14 @@ class Standards():
         return from_csv(get_level_fn('instrument'))
 
     @property
+    def rating_dict(self):
+        return from_csv(get_level_fn('rating'))
+
+    @property
     def data_quality_dict(self):
-        return from_csv(get_level_fn('data_quality'))
+        dq_dict = from_csv(get_level_fn('data_quality'))
+        dq_dict.add_dict(self.rating_dict.copy(), 'rating')
+        return dq_dict
 
     @property
     def citation_dict(self):

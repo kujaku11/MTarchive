@@ -1,3 +1,2 @@
-attribute,type,required,style,units
-release_status,str,TRUE,name,none
-conditions_of_use,str,TRUE,name,none
+attribute,type,required,style,units,description,options,alias
+release_status,str,TRUE,name,none,how the data can be used ,| Unrestricted Release| Paper Citation Required | Academic Use Only | Conditions Apply |,none

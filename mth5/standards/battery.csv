@@ -1,6 +1,6 @@
-attribute,type,required,style,units
-type,str,TRUE,name,none
-id,str,FALSE,name,none
-voltage.start,float,TRUE,number,volts
-voltage.end,float,TRUE,number,volts
-comments,str,FALSE,name,none
+attribute,type,required,style,units,description,options,alias
+type,str,TRUE,name,none,battery type,none,none
+id,str,FALSE,name,none,battery id,none,none
+voltage.start,float,TRUE,number,volts,starting voltage,none,none
+voltage.end,float,TRUE,number,volts,end voltage,none,none
+comments,str,FALSE,name,none,any comment about the battery,none,none

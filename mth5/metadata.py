@@ -826,6 +826,18 @@ class Instrument(Base):
 # ==============================================================================
 # Data Quality
 # ==============================================================================
+class Rating(Base):
+    """
+    rating data quality or something else
+    """
+    def __init__(self, **kwargs):
+        self.author = None
+        self.method = None
+        self.value = None
+        
+        super(Rating, self).__init__(**kwargs)
+        self._attr_dict = ATTR_DICT['rating']
+
 class DataQuality(Base):
     """
     Information on data quality.
@@ -850,10 +862,9 @@ class DataQuality(Base):
 
     def __init__(self, **kwargs):
 
-        self.rating = None
-        self.warning_comments = None
-        self.warning_flags = None
-        self.author = None
+        self.rating = Rating()
+        self.warning = None
+
         super(DataQuality, self).__init__(**kwargs)
 
         self._attr_dict = ATTR_DICT['data_quality']
