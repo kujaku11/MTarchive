@@ -1,8 +1,8 @@
 attribute,type,required,style,units
 type,str,TRUE,name,none
 units,str,TRUE,name,none
-channel_number,int,TRUE,number,none
+data_logger.channel_number,int,TRUE,number,none
 component,str,TRUE,name,none
 sample_rate,float,TRUE,number,samples per second
-azimuth,float,TRUE,number,degrees
+measurement_azimuth,float,TRUE,number,degrees
 comments,str,FALSE,name,none

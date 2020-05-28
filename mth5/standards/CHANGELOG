@@ -7,10 +7,15 @@ CHANGELOG METADATA STANDARDS
 	* nested all start, end date/times under time_period
 	
 	* Survey
-		- Changed id to project
-		- Changed name to survey
+		- Changed survey to name
 		- Changed location to geographic_location
 		- nest start and end under time_period
+		- removed acquired_by.email and .url cause redundant, the user can get this from the doi.
+		- added acquired_by.comments as a free field to input any comments
+		- changed id to archive_id
+		- changed net_code to archive_network
+		- removed conditions_of_use because redundant with release_status
+		- added project_lead.name .email, .organization as can be different from acquired by.
 		
 	* Station
 		- nested lat, lon, elevation, declination under location

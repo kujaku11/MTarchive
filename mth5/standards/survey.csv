@@ -1,23 +1,23 @@
 attribute,type,required,style,units
-project,str,TRUE,name,None
-survey,str,TRUE,name,None
-net_code,str,TRUE,net_code,None
-time_period.start_date,str,TRUE,date,None
-time_period.end_date,str,TRUE,date,None
+acquired_by.author,str,TRUE,name,none
+acquired_by.comments,str,FALSE,name,none
+archive_id,str,TRUE,name,None
+archive_network,str,TRUE,name,None
+citation_dataset.doi,str,TRUE,url,none
+citation_journal.doi,str,FALSE,url,none
+comments,str,TRUE,name,none
+country,str,TRUE,name,none
+datum,str,TRUE,name,none
+geographic_name,str,TRUE,name,none
+name,str,TRUE,name,none
 northwest_corner.latitude,float,TRUE,number,decimal degrees
 northwest_corner.longitude,float,TRUE,number,decimal degrees
+project,str,TRUE,name,none
+project_lead.email,str,TRUE,email,none
+project_lead.organization,str,TRUE,name,none
+release_status,str,TRUE,name,none
 southeast_corner.latitude,float,TRUE,number,decimal degrees
 southeast_corner.longitude,float,TRUE,number,decimal degrees
-datum,str,TRUE,name,none
-geographic_location,str,TRUE,name,none
-country,str,TRUE,name,none
 summary,str,TRUE,name,none
-comments,str,TRUE,name,none
-release_status,str,TRUE,name,none
-conditions_of_use,str,TRUE,name,none
-citation_dataset.doi,str,TRUE,url,none
-citation_journal.doi,str,False,url,none
-acquired_by.author,str,TRUE,name,none
-acquired_by.organization,str,TRUE,name,none
-acquired_by.url,str,TRUE,url,none
-acquired_by.email,str,TRUE,email,none
+time_period.end_date,str,TRUE,date,None
+time_period.start_date,str,TRUE,date,None

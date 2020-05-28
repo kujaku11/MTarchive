@@ -1,8 +1,8 @@
 attribute,type,required,style,units
 dipole_length,float,TRUE,number,meters
-contact_resistance.start,float,TRUE,number_list,ohms
-contact_resistance.end,float,TRUE,number_list,ohms
-ac.start,float,TRUE,number,volts
-ac.end,float,TRUE,number,volts
-dc.start,float,TRUE,number,volts
-dc.end,float,TRUE,number,volts
+contact_resistance.start,float,False,number_list,ohms
+contact_resistance.end,float,False,number_list,ohms
+ac.start,float,False,number,volts
+ac.end,float,False,number,volts
+dc.start,float,False,number,volts
+dc.end,float,False,number,volts

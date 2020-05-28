@@ -1295,20 +1295,22 @@ class Survey(Base):
     def __init__(self, **kwargs):
 
         self.acquired_by = Person()
-        self.project = None
-        self.survey = None
-        self.net_code = None
-        self.northwest_corner = Location()
-        self.southeast_corner = Location()
-        self.datum = None
-        self.geographic_location = None
-        self.country = None
-        self.summary = None
-        self.acquired_by = Person()
-        self.conditions_of_use = None
-        self.release_status = None
+        
+        self.archive_id = None
+        self.archive_network = None
         self.citation_dataset = Citation()
         self.citation_journal = Citation()
+        self.country = None
+        self.datum = None
+        self.geographic_name = None
+        self.name = None
+        self.northwest_corner = Location()
+        self.project = None
+        self.project_lead = Person()
+        self.release_status = None
+        self.net_code = None
+        self.southeast_corner = Location()
+        self.summary = None
         self.time_period = TimePeriod()
         super().__init__()
 
