@@ -33,10 +33,12 @@ logger = logging.getLogger(__name__)
 # =============================================================================
 # Variables
 # =============================================================================
-ACCEPTED_STYLES = ['name', 'url', 'email', 'number', 'date',
-                   'time', 'date_time', 'net_code', 'name_list', 'number_list']
+ACCEPTED_STYLES = ['name', 'url', 'email', 'number', 'date', 'free form',
+                   'time', 'date time', 'name list', 'number list',
+                   'controlled vocabulary', 'alpha numeric']
 
-REQUIRED_KEYS = ['attribute', 'type', 'required', 'units', 'style']
+REQUIRED_KEYS = ['attribute', 'type', 'required', 'units', 'style', 
+                 'description', 'options', 'alias']
 
 # =============================================================================
 # Helper functions
@@ -67,17 +69,17 @@ def validate_header(header, attribute=False):
 
     if attribute:
         if sorted(header) != sorted(REQUIRED_KEYS):
-            logger.error('CSV Header is not correct, must include {0}'.format(
-                REQUIRED_KEYS))
-            raise MTSchemaError('CSV header must inlcude {0}'.format(
-                REQUIRED_KEYS))
+            msg = ('CSV Header is not correct, must include {0}'.format(
+                    REQUIRED_KEYS) + '. Currently has {0}'.format(header))
+            logger.error(msg)
+            raise MTSchemaError(msg)
     else:
         required_keys = [key for key in REQUIRED_KEYS if key != 'attribute']
         if sorted(header) != sorted(required_keys):
-            logger.error('CSV Header is not correct, must include {0}'.format(
-                required_keys))
-            raise MTSchemaError('CSV header must inlcude {0}'.format(
-                required_keys))
+            msg = ('CSV Header is not correct, must include {0}'.format(
+                    required_keys) + '. Currently has {0}'.format(header))
+            logger.error(msg)
+            raise MTSchemaError(msg)
     return header
 
 
@@ -257,6 +259,75 @@ def validate_style(value):
         raise MTSchemaError(msg)
 
     return value.lower()
+
+def validate_description(description):
+    """
+    
+    make sure the description is a string
+    
+    :param description: detailed description of an attribute
+    :type description: str
+    :return: validated string of description
+    :rtype: string
+
+    """
+    if not isinstance(description, str):
+        msg = "description must be a string, not {0}".format(type(description))
+        logger.error(msg)
+        raise MTSchemaError(msg)
+        
+    return description
+
+def validate_options(options):
+    """
+    turn options into a list of strings
+    
+    :param options: DESCRIPTION
+    :type options: TYPE
+    :return: DESCRIPTION
+    :rtype: TYPE
+
+    """
+    if isinstance(options, str):
+        options = options.replace('[', '').replace(']', '').strip().split('|')
+    
+    elif isinstance(options, (list, tuple)):
+        options = [str(option) for option in options]
+    elif isinstance(options, (float, int, bool)):
+        options = ['{0}'.format(options)]
+        
+    else:
+        msg = "option type not understood {0}".format(type(options))
+        logger.error(msg)
+        raise MTSchemaError(msg) 
+    return options
+
+def validate_alias(alias):
+    """
+    validate alias names
+    :param alias: DESCRIPTION
+    :type alias: TYPE
+    :return: DESCRIPTION
+    :rtype: TYPE
+
+    """
+    
+    if isinstance(alias, str):
+        alias = alias.replace('[', '').replace(']', '').strip().split('|')
+    
+    elif isinstance(alias, (list, tuple)):
+        alias = [str(option) for option in alias]
+    elif isinstance(alias, (float, int, bool)):
+        alias = ['{0}'.format(alias)]
+        
+    else:
+        msg = "alias type not understood {0}".format(type(alias))
+        logger.error(msg)
+        raise MTSchemaError(msg) 
+    return alias
+        
+    
+    
 
 def validate_value_dict(value_dict):
     """
@@ -467,7 +538,7 @@ class BaseDict(MutableMapping):
         return '{}, BaseDict({})'.format(super(BaseDict, self).__repr__(), 
                                   self.__dict__)
     
-    def add_dict(self, add_dict, name=None):
+    def add_dict(self, add_dict, name=None, keys=None):
         """
         Add a dictionary to.  If name is input it is added to the keys of
         the input dictionary
@@ -484,11 +555,23 @@ class BaseDict(MutableMapping):
             >>> run_dict.add_dict(s_obj.declination_dict, 'declination')
             
         """
-        assert isinstance(add_dict, (dict, MutableMapping))
+        if not isinstance(add_dict, (dict, MutableMapping)):
+            msg = "add_dict takes only a dictionary not type {0}".format(
+                type(add_dict))
+            logger.error(msg)
+            raise TypeError(msg)
+            
+        if keys:
+            small_dict = {}
+            for key, value in add_dict.items():
+                if key in keys:
+                    small_dict[key] = value
+            add_dict = small_dict
         
         if name:
             add_dict = dict([('{0}.{1}'.format(name, key), value) for 
                              key, value in add_dict.items()])
+        
         self.update(**add_dict)
             
     def copy(self):
@@ -588,8 +671,7 @@ class Standards():
 
     @property
     def datalogger_dict(self):
-        dl_dict = from_csv(get_level_fn('datalogger'))
-        dl_dict.add_dict(self.instrument_dict.copy())
+        dl_dict = self.instrument_dict.copy()
         dl_dict.add_dict(self.timing_system_dict.copy(),'timing_system')
         dl_dict.add_dict(self.software_dict.copy(), 'firmware')
         dl_dict.add_dict(self.battery_dict.copy(), 'power_source')
@@ -597,7 +679,7 @@ class Standards():
 
     @property
     def electrode_dict(self):
-        elec_dict = from_csv(get_level_fn('electrode'))
+        elec_dict = from_csv(get_level_fn('instrument'))
         for key, v_dict in self.location_dict.items():
             if 'declination' not in key:
                 elec_dict.update({key: v_dict})
@@ -606,29 +688,44 @@ class Standards():
     @property
     def survey_dict(self):
         survey_dict = from_csv(get_level_fn('survey'))
-        for key, v_dict in self.person_dict.items():
-            if key in ['author', 'comments']:
-                survey_dict.update({'{0}.{1}'.format('acquired_by', key):
-                                   v_dict})
-        survey_dict.add_dict(self.person_dict.copy(), 'project_lead')       
+        survey_dict.add_dict(self.person_dict.copy(), 'acquired_by', 
+                          keys=['author', 'comments'])
+        survey_dict.add_dict(self.person_dict.copy(), 'project_lead')
+        survey_dict.add_dict(self.citation_dict.copy(), 'citation_dataset')
+        survey_dict.add_dict(self.citation_dict.copy(), 'citation_journal')
+        survey_dict.add_dict(self.location_dict.copy(), 'northwest_corner',
+                             keys=['latitude', 'longitude'])
+        survey_dict.add_dict(self.location_dict.copy(), 'southeast_corner',
+                             keys=['latitude', 'longitude'])
+        survey_dict.add_dict(self.person_dict.copy(), 'project_lead', 
+                          keys=['author', 'email'])
+        survey_dict.add_dict(self.copyright_dict.copy(), None)
         return survey_dict
 
     @property
     def station_dict(self):
         station_dict = from_csv(get_level_fn('station'))
         station_dict.add_dict(self.location_dict.copy(), 'location')
-        # for key, v_dict in self.person_dict.items():
-        #     if key in ['author', 'email']:
-        #         station_dict.update({'acquired_by.{0}'.format(key): v_dict})
-
+        station_dict.add_dict(self.person_dict.copy(), 'acquired_by', 
+                          keys=['author', 'comments'])
+        station_dict.add_dict(self.orientation_dict.copy(), 'orientation')
+        station_dict.add_dict(self.provenance_dict.copy(), 'provenance')
         station_dict.add_dict(self.software_dict.copy(), 'provenance.software')
         station_dict.add_dict(self.person_dict.copy(), 'provenance.submitter')
+        station_dict.add_dict(self.time_period_dict.copy(), 'time_period')
         return station_dict
 
     @property
     def run_dict(self):
         run_dict = from_csv(get_level_fn('run'))
         run_dict.add_dict(self.datalogger_dict.copy(), 'data_logger')
+        run_dict.add_dict(self.time_period_dict.copy(), 'time_period')
+        run_dict.add_dict(self.person_dict.copy(), 'acquired_by', 
+                          keys=['author', 'comments'])
+        run_dict.add_dict(self.person_dict.copy(), 'metadata_by', 
+                          keys=['author', 'comments'])
+        run_dict.add_dict(self.provenance_dict.copy(), 'provenance', 
+                          keys=['comments', 'log'])
         return run_dict
         
 

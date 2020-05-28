@@ -1,23 +1,12 @@
-attribute,type,required,style,units
-acquired_by.author,str,TRUE,name,none
-acquired_by.comments,str,FALSE,name,none
-archive_id,str,TRUE,name,None
-archive_network,str,TRUE,name,None
-citation_dataset.doi,str,TRUE,url,none
-citation_journal.doi,str,FALSE,url,none
-comments,str,TRUE,name,none
-country,str,TRUE,name,none
-datum,str,TRUE,name,none
-geographic_name,str,TRUE,name,none
-name,str,TRUE,name,none
-northwest_corner.latitude,float,TRUE,number,decimal degrees
-northwest_corner.longitude,float,TRUE,number,decimal degrees
-project,str,TRUE,name,none
-project_lead.email,str,TRUE,email,none
-project_lead.organization,str,TRUE,name,none
-release_status,str,TRUE,name,none
-southeast_corner.latitude,float,TRUE,number,decimal degrees
-southeast_corner.longitude,float,TRUE,number,decimal degrees
-summary,str,TRUE,name,none
-time_period.end_date,str,TRUE,date,None
-time_period.start_date,str,TRUE,date,None
+attribute,type,required,style,units,description,options,alias
+archive_id,str,TRUE,alpha numeric,None,alphanumeric name for the project e.g USGS-GEOMAG,none,none
+archive_network,str,TRUE,alpha numeric,None,network code given by PASSCAL/IRIS/FDSN,none,none
+comments,str,TRUE,free form,none,any comments about the survey,none,none
+country,str,TRUE,free form,none,country(s) countries survey located in. If multiple input as comma separated names,none,none
+datum,str,TRUE,controlled vocabulary,none,datum of latitude and longitude coordinates. Should be a well-known datum [ WGS84 ] and will be the reference datum for all location,none,none
+geographic_name,str,TRUE,free form,none,closest geographic reference to survey,none,none
+name,str,TRUE,free form,none,descriptive name of the survey,none,none
+project,str,TRUE,free form,none,alphanumeric name for the project e.g USGS-GEOMAG,none,none
+summary,str,TRUE,free form,none,summary paragraph of survey including the purpose; difficulties; data quality; summary of outcomes if the data have been processed and modeled,none,none
+time_period.end_date,str,TRUE,date,None,end date of the survey in UTC,none,none
+time_period.start_date,str,TRUE,date,None,start date of the survey in UTC,none,none

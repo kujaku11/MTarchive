@@ -1,3 +1,3 @@
-attribute,type,required,style,units
-start,str,TRUE,time,none
-end,str,TRUE,time,none
+attribute,type,required,style,units,description,options,alias
+end,str,TRUE,time,none,end date and time of collection in UTC,none,none
+start,str,TRUE,time,none,start date and time of collection in UTC,none,none

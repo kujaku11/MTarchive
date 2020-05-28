@@ -1,18 +1,8 @@
-attribute,type,required,style,units
-acquired_by.author,str,True,name,none
-acquired_by.comments,str,False,name,none
-archive_id,str,TRUE,name,none
-channel_layout,str,False,name,none
-channels_recorded,str,TRUE,name,none
-comments,str,FALSE,name,none
-data_type,str,TRUE,name,none
-geographic_name,str,TRUE,name,none
-id,str,TRUE,name,none
-orientation.method,str,FALSE,name,none
-orientation.option,str,TRUE,name,none
-orientation.layout_rotation_angle,float,False,number,degrees
-provenance.comments,str,TRUE,name,none
-provenance.creation_time,str,TRUE,name,none
-provenance.log,str,TRUE,name,none
-time_period.end,str,TRUE,date_time,none
-time_period.start,str,TRUE,date_time,none
+attribute,type,required,style,units,description,options,alias
+archive_id,str,TRUE,alpha numeric,none,station name that is archived {a-z;A-Z;0-9},none,none
+channel_layout,str,FALSE,controlled vocabulary,none,how the station was laid out,[ L | X | other ],none
+channels_recorded,str,TRUE,controlled vocabulary,none,list of components recorded by the station. Should be a summary of all channels recorded dropped channels will be recorded in Run metadata.,[ Ex | Ey | Hx | Hy | Hz | T | Battery | other | … ],none
+comments,str,FALSE,free form,none,any comments on the station,none,none
+data_type,str,TRUE,controlled vocabulary,none,type of data recorded. If multiple types input as a comma separated list,none,none
+geographic_name,str,TRUE,free form,none,closest geographic name to the station,none,none
+id,str,TRUE,free form,none,station name can be a longer name,none,none

@@ -1,4 +1,4 @@
-attribute,type,required,style,units
-author,str,TRUE,name,none
-version,str,TRUE,name,none
-name,str,TRUE,name,none
+attribute,type,required,style,units,description,options,alias
+author,str,TRUE,free form,none,author of the software,none,none
+version,str,TRUE,free form,none,software version,none,none
+name,str,TRUE,free form,none,software name,none,none

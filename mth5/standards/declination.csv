@@ -1,4 +1,4 @@
-attribute,type,required,style,units
-value,float,TRUE,number,degrees
-comments,str,TRUE,name,None
-model,str,TRUE,name,None
+attribute,type,required,style,units,description,options,alias
+comments,str,TRUE,free form,None,any comments on declination,none,
+model,str,TRUE,controlled vocabulary,None,geomagnetic reference model used to calculate declination,none,none
+value,float,TRUE,number,degrees,declination angle relative to geographic north positive clockwise,none,

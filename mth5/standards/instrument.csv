@@ -1,4 +1,5 @@
-attribute,type,required,style,units
-id,str,TRUE,name,none
-manufacturer,str,TRUE,name,none
-type,str,TRUE,name,none
+attribute,type,required,style,units,description,options,alias
+id,str,TRUE,free form,none,instrument ID number can be serial number or a designated ID,none,serial
+manufacturer,str,TRUE,free form,none,who manufactured the instrument,none,none
+type,str,TRUE,free form,none,instrument type,none,none
+model,str,FALSE,free form,none,model version of the instrument,none,none

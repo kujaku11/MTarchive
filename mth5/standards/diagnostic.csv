@@ -1,3 +1,3 @@
-attribute,type,required,style,units
-start,float,True,name,
-end,float,True,name,
+attribute,type,required,style,units,description,options,alias
+end,float,FALSE,number,none,none,none,none
+start,float,FALSE,number,none,none,none,none

@@ -1,8 +1,8 @@
-attribute,type,required,style,units
-dipole_length,float,TRUE,number,meters
-contact_resistance.start,float,False,number_list,ohms
-contact_resistance.end,float,False,number_list,ohms
-ac.start,float,False,number,volts
-ac.end,float,False,number,volts
-dc.start,float,False,number,volts
-dc.end,float,False,number,volts
+attribute,type,required,style,units,description,options,alias
+dipole_length,float,TRUE,number,meters,length of the dipole,none,none
+contact_resistance.start,float,FALSE,number list,ohms,starting contact resistance; if more than one measurement input as a list of number [1 2 3 ...] ,none,none
+contact_resistance.end,float,FALSE,number list,ohms,starting contact resistance; if more than one measurement input as a list of number [1 2 3 ...] ,none,none
+ac.start,float,FALSE,number,volts,starting AC value; if more than one measurement input as a list of number [1 2 3 ...] ,none,none
+ac.end,float,FALSE,number,volts,ending AC value; if more than one measurement input as a list of number [1 2 3 ...] ,none,none
+dc.start,float,FALSE,number,volts,starting DC value; if more than one measurement input as a list of number [1 2 3 ...] ,none,none
+dc.end,float,FALSE,number,volts,ending DC value; if more than one measurement input as a list of number [1 2 3 ...] ,none,none

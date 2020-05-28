@@ -1,4 +1,4 @@
-attribute,type,required,style,units
-option,string,TRUE,number, none
-method,string,TRUE,name,none
-layout_rotation_angle,float,FALSE,number,none
+attribute,type,required,style,units,description,options,alias
+option,string,TRUE,controlled vocabulary, none,how the data are stored,[ channel-measurement specific | geographic orthogonal | geomagnetic orthogonal |site-specific orthogonal ],none
+method,string,TRUE,controlled vocabulary,none,method for orienting station layout,[ compass | GPS | theodolite | … ],none
+layout_rotation_angle,float,FALSE,number,degrees,angle relatave to geographic north of the station layout assuming components are orthogonal,none,none

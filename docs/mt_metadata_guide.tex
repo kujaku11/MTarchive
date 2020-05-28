@@ -165,10 +165,10 @@ A survey describes an entire dataset that covers a specific time span and region
 		\hline
 		\textbf{Metadata Key} & \textbf{Description} & \textbf{Type} & \textbf{Required}  & \textbf{Style}  \\ \hline
 		acquired\_by.author\ & principal investigator(s) responsible for survey & string & true & free form  \\ \hline
-		acquired\_by.comments\ & comments about who acquired the data, could include the various groups or contractors & string & true & free form \\ \hline
+		acquired\_by.comments\ & comments about who acquired the data, could include the various groups or contractors & string & false & free form \\ \hline
 		archive\_id & alphanumeric name for the project e.g USGS-GEOMAG & string & true & alpha numeric  \\ \hline
 		archive\_network & network code given by PASSCAL/IRIS/FDSN & string & true & alpha numeric  \\ \hline
-		citation\_data\_set.doi & citation dataset doi number & string & true & url  \\ \hline
+		citation\_dataset.doi & citation dataset doi number & string & true & url  \\ \hline
 		citation\_journal.doi & citation journal doi & string & false & url  \\ \hline
 		comments\ & comments about survey that are not in the summary & string & false & free form \\ \hline
 		country\ & country/countries survey located in, if multiple they should be comma separated & string & false & free form \\ \hline

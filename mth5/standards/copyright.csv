@@ -1,2 +1,2 @@
 attribute,type,required,style,units,description,options,alias
-release_status,str,TRUE,name,none,how the data can be used ,| Unrestricted Release| Paper Citation Required | Academic Use Only | Conditions Apply |,none
+release_status,str,TRUE,controlled vocabulary,none,how the data can be used ,| Unrestricted Release| Paper Citation Required | Academic Use Only | Conditions Apply |,none

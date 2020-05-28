@@ -1,5 +1,5 @@
-attribute,type,required,style,units
-h_field_min.start,float,TRUE,number,nT
-h_field_min.end,float,TRUE,number,nT
-h_field_max.start,float,TRUE,number,nT
-h_field_max.end,float,TRUE,number,nT
+attribute,type,required,style,units,description,options,alias
+h_field_min.start,float,TRUE,number,nT,minimum magnetic field strength at beginning of measurement,none,none
+h_field_min.end,float,TRUE,number,nT,minimum magnetic field strength at end of measurement,none,none
+h_field_max.start,float,TRUE,number,nT,maximum magnetic field strength at beginning of measurement,none,none
+h_field_max.end,float,TRUE,number,nT,maximum magnetic field strength at end of measurement,none,none

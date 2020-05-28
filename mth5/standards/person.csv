@@ -1,4 +1,5 @@
-attribute,type,required,style,units
-author,str,TRUE,name,none
-organization,str,TRUE,name,none
-email,str,TRUE,email,none
+attribute,type,required,style,units,description,options,alias
+author,str,TRUE,free form,none,author name,none,none
+organization,str,TRUE,free form,none,organization name,none,none
+email,str,TRUE,email,none,email of the contact person,none,none
+comments,str,False,email,none,email of the contact person,none,none

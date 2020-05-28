@@ -127,9 +127,41 @@ class Base():
                         
                 return False
         
-            
-            
+    def attribute_information(self, name=None):
+        """
+        return a descriptive string of the attribute if none returns for all
+    
+        :param key: DESCRIPTION, defaults to None
+        :type key: TYPE, optional
+        :return: DESCRIPTION
+        :rtype: TYPE
 
+        """
+        
+        if name:
+            try:
+                v_dict = OrderedDict(sorted(self._attr_dict[name].items(),
+                                             key=itemgetter(0)))
+            except KeyError as error:
+                msg = '{0} not attribute {1} found'.format(error, key)
+                self.logger.error(msg)
+                raise MTSchemaError(msg)
+            
+            lines = ['{0}:'.format(name)]
+            for key, value in v_dict.items():
+                lines.append('\t{0}: {1}'.format(key, value))
+        else:
+            lines = []
+            for name, v_dict in self._attr_dict.items():
+                lines.append('{0}:'.format(name))
+                v_dict = OrderedDict(sorted(v_dict.items(),
+                                            key=itemgetter(0)))
+                for key, value in v_dict.items():
+                    lines.append('\t{0}: {1}'.format(key, value))
+                lines.append('=' * 50)
+        
+        print('\n'.join(lines))
+                
     def _validate_name(self, name):
         """
         validate the name to conform to the standards
