@@ -377,14 +377,13 @@ class TestChannel(unittest.TestCase):
         self.maxDiff = None
         self.channel_object = metadata.Channel()
         self.meta_dict = {'channel':
-                          {'azimuth': 0.0,
-                           'channel_number': 1,
+                          {'measurement_azimuth': 0.0,
+                           'data_logger.channel_number': 1,
                            'component': 'hx',
                            'data_quality.author': 'mt',
                            'data_quality.rating': 5,
                            'data_quality.warning_flags': '0',
                            'data_quality.warning_comments': None,
-                           'location.datum': 'WGS84',
                            'location.elevation': 1200.3,
                            'filter.applied': [False],
                            'filter.name': ['counts2mv'],
@@ -427,8 +426,8 @@ class TestElectric(unittest.TestCase):
         self.meta_dict = {'electric':
                           {'ac.end': 10.0,
                            'ac.start': 9.0,
-                           'azimuth': 23.0,
-                           'channel_number': 5,
+                           'measurement_azimuth': 23.0,
+                           'data_logger.channel_number': 5,
                            'component': 'EY',
                            'contact_resistance.start': 1200.0,
                            'contact_resistance.end': 1210.0,
@@ -442,13 +441,11 @@ class TestElectric(unittest.TestCase):
                            'filter.applied': [False],
                            'filter.name': ['counts2mv'],
                            'filter.comments': None,
-                           'negative.datum': 'WGS84',
                            'negative.elevation': 1200.0,
                            'negative.latitude': 40.123,
                            'negative.longitude': -115.134,
                            'negative.comments': None,
                            'comments': None,
-                           'positive.datum': 'WGS84',
                            'positive.elevation': 1210.0,
                            'positive.latitude': 40.234,
                            'positive.longitude': -115.234,
@@ -487,14 +484,13 @@ class TestMagnetic(unittest.TestCase):
         self.maxDiff = None
         self.magnetic_object = metadata.Magnetic()
         self.meta_dict = {'magnetic':
-                          {'azimuth': 0.0,
-                           'channel_number': 2,   
+                          {'measurement_azimuth': 0.0,
+                           'data_logger.channel_number': 2,   
                            'component': 'hy', 
                            'data_quality.author': 'mt',
                            'data_quality.rating': 2,
                            'data_quality.warning_flags': '0',
                            'data_quality.warning_comments': None,
-                           'location.datum': 'WGS84',
                            'location.elevation': 1230.9,
                            'filter.applied': [True],
                            'filter.name': ['counts2mv'],

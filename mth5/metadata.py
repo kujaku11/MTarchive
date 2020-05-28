@@ -1386,6 +1386,7 @@ class DataLogger(Instrument):
         self.timing_system = TimingSystem()
         self.firmware = Software()
         self.power_source = Battery()
+        self.channel_number = None
         super().__init__(**kwargs)
         
         self._attr_dict = ATTR_DICT['datalogger']
@@ -1409,6 +1410,7 @@ class Channel(Base):
         self.filter = Filter()
         self.location = Location()
         self.time_period = TimePeriod()
+        self.data_logger = DataLogger()
 
         super(Channel, self).__init__(**kwargs)
         self._attr_dict = ATTR_DICT['channel']      
@@ -1429,6 +1431,7 @@ class Electric(Channel):
         self.ac = Diagnostic()
         self.dc = Diagnostic()
         self.units_s = None
+        
         
         super(Electric, self).__init__(**kwargs)
         self._attr_dict = ATTR_DICT['electric']
