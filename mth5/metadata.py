@@ -1012,7 +1012,7 @@ class Person(Base):
         self.email = None
         self.author = None
         self.organization = None
-        self.url = None
+        #self.url = None
         super(Person, self).__init__(**kwargs)
 
         self._attr_dict = ATTR_DICT['person']
@@ -1334,7 +1334,6 @@ class Station(Base):
         self.channels_recorded = None
         self.data_type = None
         self.orientation = Orientation()
-        self.orientation_method = None
         self.acquired_by = Person()
         self.provenance = Provenance()
         self.location = Location()

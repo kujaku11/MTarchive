@@ -1,5 +1,4 @@
 attribute,type,required,style,units
-datum,str,TRUE,name,
 latitude,float,TRUE,name,
 longitude,float,TRUE,name,
 elevation,float,TRUE,name,

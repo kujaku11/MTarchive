@@ -1,3 +1,4 @@
 attribute,type,required,style,units
 option,string,TRUE,number, none
 method,string,TRUE,name,none
+layout_rotation_angle,float,FALSE,number,none

@@ -7,7 +7,7 @@
 \usepackage{authblk}
 
 \title{A Standard for Exchangeable Magnetotelluric Data and Metadata}
-\date{\textbf{Version 0.0.1b -- May 2020}\footnote{\noindent\textbf{\textit{Corresponding Authors:}}
+\date{\textbf{Version 0.0.1c -- May 2020}\footnote{\noindent\textbf{\textit{Corresponding Authors:}}
 		
 		Jared Peacock (\url{jpeacock@usgs.gov})
 		
@@ -245,38 +245,38 @@ A station encompasses a single site where data are collected. If the location ch
 
 \begin{table}[htb!]
     \caption[Attributes for Station]{Attributes for Station category}
-    \begin{tabular}{|l|p{3in}|l|l|}
+    \begin{tabular}{|l|p{2.75in}|l|l|p{.95in}|}
         \hline
-        \textbf{Metadata Key} & \textbf{Description} & \textbf{Type} & \textbf{Required} \\ \hline
-        archive\_id\ & 5 char name {A-Z; 1-9} for station & string & true \\ \hline
-        id\ & general name for station & string & true \\ \hline
-        geographic\_name\ & closest geographic reference name to station  & string & true \\ \hline
-        location.latitude\ & longitude location [ degrees (hh.mmss) ] & float & true \\ \hline
-        location.longitude\ & latitude location [ degrees (hh.mmss) ] & float & true \\ \hline
-        location.elevation\ & elevation [ m ] & float & true \\ \hline
-        location.datum\ & datum for lat, lon location should be a well known datum and same as the survey datum & string & true \\ \hline
-        location.declination.value\ & declination value & float & true \\ \hline
-        location.declination.epoch\ & declination epoch & string & true \\ \hline
-        location.declination.model\ & declination model & string & true \\ \hline
-        comments\ & any comments about station & string & false \\ \hline 
-        time\_period.start\ & start time and date of data logging [ISO UTC ] & string & true \\ \hline
-        time\_period.end\ & stop time and date of data logging  [ ISO UTC ] & string & true \\ \hline
-        num\_channels\ & number of channels recording needs to be the same number as entries in channels\_recorded & int & true \\ \hline
-        channels\_recorded\ & list of channels recorded [EX, EY, HX, HY, HZ $|$ ...], needs to be same length as num\_channels & string & true \\ \hline
-        data\_type\ & type of data collected [ BB $|$ LP $|$ AMT $|$ Combo $|$ ...] & string & true \\ \hline
-        orientation.option & orientation coordinate system [ geographic $|$ channel-measurement specific $|$ ...] & string & true \\ \hline
-        orientation.method & [ compass $|$ differential GPS $|$ gyroscope $|$...] & string & false \\ \hline
-%        acquired\_by.author & person(s) operating station & string & true \\ \hline
-%        acquired\_by.email & email of lead station operator & string & true \\ \hline
-        provenance.creation\_time & creation time of time series data for storing & string & true \\ \hline
-        provenance.software.name\ & name of software used to store time series & string & true \\ \hline
-        provenance.software.version\ & version of software used to store time series & string & true \\ \hline
-        provenance.submitter.author\ & name of person or group submitting archive data & string & true \\ \hline
-        provenance.submitter.organization\ & name of organization or institution submitting archive data & string & true \\ \hline
-        provenance.submitter.url\ & url of group submitting archive data & string & true \\ \hline
-        provenance.submitter.email\ & email of person or group submitting archive data & string & true  \\ \hline
-        provenance.comments\ & any comments on the history of the data & string & false \\ \hline
-        provenance.log\ & log of any changes made to time series data & string & false \\ \hline
+        \textbf{Metadata Key} & \textbf{Description} & \textbf{Type} & \textbf{Required} & \textbf{Style} \\ \hline
+        acquired\_by.author\ & person who acquired the station & string & true & free form  \\ \hline
+        acquired\_by.comments\ & comments about who acquired the data, could include the various groups or contractors & string & true & free form \\ \hline
+        archive\_id\ & 5 char name \{A-Z; 1-9\} for station & string & true & controlled vocabulary \\ \hline
+        channel\_layout & how the station was laid out e.g. X or L & string & true & controlled vocabulary \\ \hline
+        channels\_recorded\ & list of channels recorded as a list of comma separated channels.  e.g. 'Ex, Ey, Hx, Hy' & string & true & controlled vocabulary \\ \hline
+        comments\ & any comments about station & string & false & free form \\ \hline
+        data\_type\ & type of data collected, options: [ BB $|$ LP $|$ AMT $|$ Combo $|$ ...] & string & true &  controlled vocabulary \\ \hline
+        geographic\_name\ & closest geographic reference name to station  & string & true & free form\\ \hline
+        id\ & alphanumeric name of the station & string & true & alpha numeric\\ \hline
+        location.declination.comments\ & comments on the declination & string & true & \\ \hline
+        location.declination.model\ & name of the declination model, options: [ EMAG2 $|$ EMM $|$ HDGM $|$ IGRF $|$ WMM ]& string & true & controlled vocabulary \\ \hline
+        location.declination.value\ & declination value & float & true & \\ \hline
+        location.latitude\ & longitude location [ degrees (hh.mmss) ] & float & true & \\ \hline
+        location.longitude\ & latitude location [ degrees (hh.mmss) ] & float & true & \\ \hline
+        location.elevation\ & elevation [ m ] & float & true & \\ \hline
+        orientation.option & orientation coordinate system [ geographic $|$ channel-measurement specific $|$ ...] & string & true & \\ \hline
+        orientation.method & [ compass $|$ differential GPS $|$ gyroscope $|$...] & string & false & \\ \hline
+        orientation.layout\_rotation\_angle & if the data were collected in a coordinate system not geographic, this will specify the angle at which all channels were rotated by. & float & false & number \\ \hline
+        provenance.creation\_time & creation time of time series data for storing & string & true & date time\\ \hline
+        provenance.comments\ & any comments on the history of the data & string & false & free form\\ \hline
+        provenance.log\ & log of any changes made to time series data & string & false & free form\\ \hline
+        provenance.software.author\ & author of software used to store time series & string & true & free form\\ \hline
+        provenance.software.name\ & name of software used to store time series & string & true & free form\\ \hline
+        provenance.software.version\ & version of software used to store time series & string & true & free form\\ \hline
+        provenance.submitter.author\ & name of person or group submitting archive data & string & true & free form\\ \hline
+        provenance.submitter.email\ & email of person or group submitting archive data & string & true  & email \\ \hline
+        provenance.submitter.organization\ & name of organization or institution submitting archive data & string & true & free form \\ \hline
+        time\_period.start\ & start time and date of data logging [ISO UTC ] & string & true & date time\\ \hline
+        time\_period.end\ & stop time and date of data logging  [ ISO UTC ] & string & true & date time \\ \hline
     \end{tabular}
 \label{tab:station01}
 \end{table}    
@@ -287,34 +287,51 @@ A station encompasses a single site where data are collected. If the location ch
 \begin{verbatim}
 {
     "station": {
-        "archive_id": "test sta_code",
-        "channels_recorded": "[ex, ey, hx, hy, hz]",
-        "comments": "comments test",
+        "acquired_by": {
+            "author": "mt",
+            "comments": null
+        },
+        "archive_id": "MT012",
+        "channel_layout": "L",
+        "channels_recorded": "Ex, Ey, Hx, Hy",
+        "comments": null,
         "data_type": "MT",
-        "geographic_name": "Paris, TX",
-        "id": "test name",
-        "location.datum": "WGS84",
-        "location.declination.epoch": "MTM01",
-        "location.declination.model": "MTM01",
-        "location.declination.value": -12.3,
-        "location.elevation": 1230.0,
-        "location.latitude": 40.019,
-        "location.longitude": -117.89,
-        "num_channels": 5,
-        "orientation.method": "compass",
-        "orientation.option": "geographic north",
-        "provenance.comments": "goats",
-        "provenance.creation_time": "2010-04-01T10:10:10+00:00",
-        "provenance.log": "EY flipped",
-        "provenance.software.author": "Peacock",
-        "provenance.software.name": "mth5",
-        "provenance.software.version": "1.0.1",
-        "provenance.submitter.author": "submitter name",
-        "provenance.submitter.email": "mt@em.edi",
-        "provenance.submitter.organization": "mt inc",
-        "provenance.submitter.url": "mt.edi",
-        "time_period.end": "2010-01-04T07:40:30+00:00",
-        "time_period.start": "2010-01-01T12:30:20+00:00"
+        "geographic_name": "london",
+        "id": "mt012",
+        "location": {
+            "latitude": 10.0,
+            "longitude": -112.98,
+            "elevation": 1234.0,
+            "declination": {
+                "value": 12.3,
+                "comments": null,
+                "model": "WMM"
+            }
+        },
+        "orientation": {
+            "method": "compass",
+            "option": "geographic",
+            "layout_rotation_angle": 0.0
+        },
+        "provenance": {
+            "comments": null,
+            "creation_time": "1980-01-01T00:00:00+00:00",
+            "log": null,
+            "software": {
+                "author": "test",
+                "version": "1.0a",
+                "name": "name"
+            },
+            "submitter": {
+                "author": "name",
+                "organization": null,
+                "email": "test@here.org"
+            }
+        },
+        "time_period": {
+            "end": "1980-01-01T00:00:00+00:00",
+            "start": "1980-01-01T00:00:00+00:00"
+        }
     }
 }
 \end{verbatim}

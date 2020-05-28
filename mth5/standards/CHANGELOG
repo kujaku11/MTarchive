@@ -5,6 +5,8 @@ CHANGELOG METADATA STANDARDS
 	* change to all lower case names
 	* change notes to comments
 	* nested all start, end date/times under time_period
+	* removed all datum except at the survey level to make sure everything is consistent.
+	* removed all url cause they never work.
 	
 	* Survey
 		- Changed survey to name
@@ -21,10 +23,12 @@ CHANGELOG METADATA STANDARDS
 		- nested lat, lon, elevation, declination under location
 		- nested start, end under time_period
 		- nested orientation options under orientation
-		- Remove acquired_by because it is redundant
+		- Remove acquired_by email and url
 		- renamed sta_code to archive_id
 		- renamed name to id
 		- added geographic_name for additional searching
+		- added channel layout
+		- removed declination.epoch and added declination.comments.  Epoch can be attained from the model.
 		
 	* DataLogger
 		- Change battery.start_voltage_d to battery.voltage.start_d

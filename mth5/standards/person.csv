@@ -1,5 +1,4 @@
 attribute,type,required,style,units
 author,str,TRUE,name,none
 organization,str,TRUE,name,none
-url,str,TRUE,url,none
 email,str,TRUE,email,none

@@ -604,10 +604,7 @@ class Standards():
             if key in ['author', 'comments']:
                 survey_dict.update({'{0}.{1}'.format('acquired_by', key):
                                    v_dict})
-        for key, v_dict in self.person_dict.items():
-            if key in ['author', 'email', 'organization']:
-                survey_dict.update({'{0}.{1}'.format('project_lead', key):
-                                   v_dict})        
+        survey_dict.add_dict(self.person_dict.copy(), 'project_lead')       
         return survey_dict
 
     @property

@@ -1,4 +1,4 @@
 attribute,type,required,style,units
 value,float,TRUE,number,degrees
-epoch,str,TRUE,name,None
+comments,str,TRUE,name,None
 model,str,TRUE,name,None
