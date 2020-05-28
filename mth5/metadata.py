@@ -143,7 +143,7 @@ class Base():
                 v_dict = OrderedDict(sorted(self._attr_dict[name].items(),
                                              key=itemgetter(0)))
             except KeyError as error:
-                msg = '{0} not attribute {1} found'.format(error, key)
+                msg = '{0} not attribute {1} found'.format(error, name)
                 self.logger.error(msg)
                 raise MTSchemaError(msg)
             
@@ -1407,6 +1407,7 @@ class Run(Base):
         self.provenance = Provenance()
         self.time_period = TimePeriod()
         self.data_logger = DataLogger()
+        self.metadata_by = Person()
         super(Run, self).__init__()
 
         self._attr_dict = ATTR_DICT['run']

@@ -23,6 +23,7 @@ import re
 
 from pathlib import Path
 from copy import deepcopy
+from collections import OrderedDict
 from collections.abc import MutableMapping
 from operator import itemgetter
 
@@ -290,6 +291,11 @@ def validate_options(options):
     """
     if isinstance(options, str):
         options = options.replace('[', '').replace(']', '').strip().split('|')
+        names = []
+        for name in options:
+            if not name.lower() in ['none']:
+                names.append(name)
+        options = names
     
     elif isinstance(options, (list, tuple)):
         options = [str(option) for option in options]
@@ -314,6 +320,11 @@ def validate_alias(alias):
     
     if isinstance(alias, str):
         alias = alias.replace('[', '').replace(']', '').strip().split('|')
+        names = []
+        for name in alias:
+            if not name.lower() in ['none']:
+                names.append(name)
+        alias = names
     
     elif isinstance(alias, (list, tuple)):
         alias = [str(option) for option in alias]
@@ -326,8 +337,6 @@ def validate_alias(alias):
         raise MTSchemaError(msg) 
     return alias
         
-    
-    
 
 def validate_value_dict(value_dict):
     """
@@ -474,7 +483,31 @@ def to_csv(level_dict, csv_fn):
     logger.info('Wrote dictionary to {0}'.format(csv_fn))
     return csv_fn
     
+def to_latex(level_dict):
+    """
+    
+    :param level_dict: DESCRIPTION
+    :type level_dict: TYPE
+    :return: DESCRIPTION
+    :rtype: TYPE
 
+    """
+    level_dict = OrderedDict(sorted(level_dict.items(),
+                                    key=itemgetter(0)))
+    
+    order = ['description', 'type', 'required', 'style']
+    
+    lines = [' & '.join(['\textbf{Metadata Key}', '\textbf{Description}', 
+             '\textbf{Type}', '\textbf{Required}', 
+             '\textbf{Style}']) + '\\ \hline']
+    
+    for name, v_dict in level_dict.items():
+        line = [name]
+        for key in order:
+            line.append('{0}'.format(v_dict[key]))
+        lines.append(' & '.join(line) + r'  hline')
+    
+    return lines
 # =============================================================================
 # base dictionary
 # =============================================================================
@@ -690,7 +723,6 @@ class Standards():
         survey_dict = from_csv(get_level_fn('survey'))
         survey_dict.add_dict(self.person_dict.copy(), 'acquired_by', 
                           keys=['author', 'comments'])
-        survey_dict.add_dict(self.person_dict.copy(), 'project_lead')
         survey_dict.add_dict(self.citation_dict.copy(), 'citation_dataset')
         survey_dict.add_dict(self.citation_dict.copy(), 'citation_journal')
         survey_dict.add_dict(self.location_dict.copy(), 'northwest_corner',
@@ -698,7 +730,7 @@ class Standards():
         survey_dict.add_dict(self.location_dict.copy(), 'southeast_corner',
                              keys=['latitude', 'longitude'])
         survey_dict.add_dict(self.person_dict.copy(), 'project_lead', 
-                          keys=['author', 'email'])
+                          keys=['author', 'email', 'organization'])
         survey_dict.add_dict(self.copyright_dict.copy(), None)
         return survey_dict
 
@@ -709,9 +741,11 @@ class Standards():
         station_dict.add_dict(self.person_dict.copy(), 'acquired_by', 
                           keys=['author', 'comments'])
         station_dict.add_dict(self.orientation_dict.copy(), 'orientation')
-        station_dict.add_dict(self.provenance_dict.copy(), 'provenance')
+        station_dict.add_dict(self.provenance_dict.copy(), 'provenance', 
+                              keys=['comments', 'creation_time', 'log'])
         station_dict.add_dict(self.software_dict.copy(), 'provenance.software')
-        station_dict.add_dict(self.person_dict.copy(), 'provenance.submitter')
+        station_dict.add_dict(self.person_dict.copy(), 'provenance.submitter',
+                              keys=['author', 'email', 'organization'])
         station_dict.add_dict(self.time_period_dict.copy(), 'time_period')
         return station_dict
 

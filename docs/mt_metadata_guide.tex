@@ -343,39 +343,39 @@ A run represents data collected at a single station with a single sampling rate.
 
 \begin{table}[htb!]
     \caption[Attributes for Run]{Attributes for Run category}
-    \begin{tabular}{|l|p{3.2in}|l|l|}
+    \begin{tabular}{|l|p{2.75in}|l|l|p{.95in}|}
         \hline
-        \textbf{Metadata Key} & \textbf{Description} & \textbf{Type} & \textbf{Required} \\ \hline
-        id\ & run ID & string & true \\ \hline
-        comments\ & comments on run, commonly station name with {0-9}{0-9} or {a-z}, mt01a or mt01\_01 & string & false \\ \hline
-        time\_period.start\ & start date and time of data logging [ ISO UTC ], should be the minimum time between all channels recorded & string & true \\ \hline
-        time\_period.end\ & stop date and time of data logging [ ISO UTC ], should be the maximum time between all channels recorded & string & true \\ \hline
-        sampling\_rate\ & sampling rate of run (samples per second) & float & true \\ \hline
-%        num\_channels\ & number of channels recorded & int & true \\ \hline
-        channels\_recorded\ & list of channels recorded as components [ [EX, EY, HX, HY] $|$ ...] & string & true \\ \hline
-        data\_type \ & type of data collected [ BB $|$ LP $|$ AMT $|$ Combo $|$ ...] & string & true \\ \hline
-        acquired\_by.author\ & person(s) responsible for run this can be different from the PI's listed at he survey level & string & true \\ \hline
-        acquired\_by.email\ & email of lead run operator & string & false \\ \hline
-        provenance.comments\ & any comments on the history of the data for the run & string & false \\ \hline
-        provenance.log\ & log of any changes made to time series data & string & false \\ \hline
-        data\_logger.manufacturer\ & data logger manufacturer name & string & true \\ \hline
-        data\_logger.model\ & data logger model name & string & true \\ \hline
-        data\_logger.serial\ & data logger serial number & string & true \\ \hline
-        data\_logger.comments\ & comments about data logger & string & true \\ \hline
-        data\_logger.timing\_system.type\ & type of timing system [GPS $|$ internal $|$ ... ] & string & true \\ \hline
-        data\_logger.timing\_system.drift\ & any drift in internal clock [ seconds ] & float & true \\ \hline
-        data\_logger.timing\_system.uncertainty\ & uncertainty associated with internal clock [seconds] & float & true \\ \hline
-        data\_logger.timing\_system.comments\ & comments on timing system & string & false \\ \hline
-        data\_logger.firmware.version\ & firmware version & string & true \\ \hline
-        data\_logger.firmware.date\ & date on firmware & string & true \\ \hline
-        data\_logger.firmware.author\ & author of firmware & string & false \\ \hline
-%        n\_channels\ & number of channels & int & true \\ \hline
-%        n\_channels\_used\ & number of channels used & int & true \\ \hline
-        data\_logger.power\_source.type\ & power source type [ Pb-acid battery $|$ solar panel $|$ Li battery $|$ ...] & string & true \\ \hline
-        data\_logger.power\_source.id\ & power source id & string & false \\ \hline
-        data\_logger.power\_source.voltage.start\ & starting voltage of power source & float & true \\ \hline
-        data\_logger.power\_source.volage.end\ & ending voltage of power source & float & true \\ \hline
-        data\_logger.power\_source.comments\ & comments on power source & string & false \\ \hline
+       \textbf{Metadata Key} & \textbf{Description} & \textbf{Type} & \textbf{Required} & \textbf{Style}\\ \hline acquired\_by.author & author name & string & True & free form  \\ \hline
+       acquired\_by.comments & email of the contact person & string & False & email  \\ \hline
+       channels\_recorded\_auxiliary & list of auxiliary channels recorded & string & True & name list  \\ \hline
+       channels\_recorded\_electric & list of electric channels recorded & string & True & name list  \\ \hline
+       channels\_recorded\_magnetic & list of magnetic channels recorded & string & True & name list  \\ \hline
+       comments & any comments on the run & string & False & free form  \\ \hline
+       data\_logger.firmware.author & author of the software & string & false & free form  \\ \hline
+       data\_logger.firmware.name & software name & string & false & free form  \\ \hline
+       data\_logger.firmware.version & software version & string & false & free form  \\ \hline
+       data\_logger.id & instrument ID number can be serial number or a designated ID & string & True & free form  \\ \hline
+       data\_logger.manufacturer & who manufactured the instrument & string & True & free form  \\ \hline
+       data\_logger.model & model version of the instrument & string & False & free form  \\ \hline
+       data\_logger.power\_source.comments & any comment about the battery & string & False & name  \\ \hline
+       data\_logger.power\_source.id & battery id & string & False & name  \\ \hline
+       data\_logger.power\_source.type & battery type & string & True & name  \\ \hline
+       data\_logger.power\_source.voltage.end & end voltage & float & false & number  \\ \hline
+       data\_logger.power\_source.voltage.start & starting voltage & float & false & number  \\ \hline
+       data\_logger.timing\_system.comments & any comment on timing system & string & False & free form  \\ \hline
+       data\_logger.timing\_system.drift & estimated drift of the timing system & float & false & number  \\ \hline
+       data\_logger.timing\_system.type & type of timing system & string & false & free form  \\ \hline
+       data\_logger.timing\_system.uncertainty & estimated uncertainty of the timing system & float & false & number  \\ \hline
+       data\_logger.type & instrument type & string & True & free form  \\ \hline
+       data\_type & type of data recoreded for this run & string & True & controlled vocabulary  \\ \hline
+       id & run ID should be station name followed by an alphabet letter for the run & string & True & alpha numeric  \\ \hline
+       metadata\_by.author & author name & string & True & free form  \\ \hline
+       metadata\_by.comments & email of the contact person & string & False & email  \\ \hline
+       provenance.comments & any comments on provenance of the data & string & False & free form  \\ \hline
+       provenance.log & a history of changes made to the data & string & False & free form  \\ \hline
+       sampling\_rate & rate of sampling renureded for this run & float & True & number  \\ \hline
+       time\_period.end & end date and time of collection in UTC & string & True & date time  \\ \hline
+       time\_period.start & start date and time of collection in UTC & string & True & date time  \\ \hline
     \end{tabular}
     \label{tab:run}
 \end{table}
