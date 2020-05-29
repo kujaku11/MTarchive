@@ -4,7 +4,6 @@
         <start type="float" units="volts">None</start>
         <end type="float" units="volts">None</end>
     </ac>
-    <azimuth type="float" units="degrees">0.0</azimuth>
     <channel_number type="integer">None</channel_number>
     <comments>None</comments>
     <component>None</component>
@@ -13,10 +12,12 @@
         <end type="float" units="ohms">None</end>
     </contact_resistance>
     <data_quality>
-        <rating type="integer">None</rating>
-        <warning_comments>None</warning_comments>
-        <warning_flags>None</warning_flags>
-        <author>None</author>
+        <warning>None</warning>
+        <rating>
+            <author>None</author>
+            <method>None</method>
+            <value type="integer">None</value>
+        </rating>
     </data_quality>
     <dc>
         <start type="float" units="volts">None</start>
@@ -28,24 +29,29 @@
         <applied type="boolean">None</applied>
         <comments>None</comments>
     </filter>
+    <measurement_azimuth type="float" units="degrees">0.0</measurement_azimuth>
     <negative>
-        <comments>None</comments>
-        <datum>WGS84</datum>
-        <latitude type="float">None</latitude>
-        <longitude type="float">None</longitude>
-        <elevation type="float">None</elevation>
+        <id>None</id>
+        <manufacturer>None</manufacturer>
+        <type>None</type>
+        <model>None</model>
+        <latitude type="float" units="degrees">None</latitude>
+        <longitude type="float" units="degrees">None</longitude>
+        <elevation type="float" units="degrees">None</elevation>
     </negative>
     <positive>
-        <comments>None</comments>
-        <datum>WGS84</datum>
-        <latitude type="float">None</latitude>
-        <longitude type="float">None</longitude>
-        <elevation type="float">None</elevation>
+        <id>None</id>
+        <manufacturer>None</manufacturer>
+        <type>None</type>
+        <model>None</model>
+        <latitude type="float" units="degrees">None</latitude>
+        <longitude type="float" units="degrees">None</longitude>
+        <elevation type="float" units="degrees">None</elevation>
     </positive>
     <sample_rate type="float" units="samples per second">None</sample_rate>
     <time_period>
-        <start>1980-01-01T00:00:00+00:00</start>
         <end>1980-01-01T00:00:00+00:00</end>
+        <start>1980-01-01T00:00:00+00:00</start>
     </time_period>
     <type>None</type>
     <units>None</units>

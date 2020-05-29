@@ -458,7 +458,7 @@ def from_csv(csv_fn):
     attribute_dict = {}
     for line in lines[1:]:
         line_dict = dict([(key, ss.strip()) for key, ss in
-                          zip(header, line.strip().split(','))])
+                          zip(header, line.strip().split(',', len(header)-1))])
 
         key_name = validate_attribute(line_dict['attribute'])
         line_dict.pop('attribute')
@@ -488,7 +488,16 @@ def to_csv(level_dict, csv_fn):
     for key in sorted(list(level_dict.keys())):
         line = [key]
         for rkey in REQUIRED_KEYS[1:]:
-            line.append('{0}'.format(level_dict[key][rkey]))
+            value = level_dict[key][rkey]
+            if isinstance(value, (list, tuple)):
+                if len(value) == 0:
+                    line.append('None')
+                else:
+                    line.append('"{0}"'.format(value).replace(',',
+                                                              '|').replace(
+                                                                  "'", ''))
+            else:
+                line.append('{0}'.format(level_dict[key][rkey]))
         lines.append(','.join(line))
     
     with csv_fn.open('w') as fid:

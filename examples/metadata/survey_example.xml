@@ -2,10 +2,10 @@
 <survey>
     <acquired_by>
         <author>None</author>
-        <organization>None</organization>
-        <url>None</url>
-        <email>None</email>
+        <comments>None</comments>
     </acquired_by>
+    <archive_id>None</archive_id>
+    <archive_network>None</archive_network>
     <citation_dataset>
         <doi>None</doi>
     </citation_dataset>
@@ -13,25 +13,28 @@
         <doi>None</doi>
     </citation_journal>
     <comments>None</comments>
-    <conditions_of_use>None</conditions_of_use>
     <country>None</country>
     <datum>None</datum>
-    <geographic_location>None</geographic_location>
-    <net_code>None</net_code>
+    <geographic_name>None</geographic_name>
+    <name>None</name>
     <northwest_corner>
-        <latitude type="float" units="decimal degrees">None</latitude>
-        <longitude type="float" units="decimal degrees">None</longitude>
+        <latitude type="float" units="degrees">None</latitude>
+        <longitude type="float" units="degrees">None</longitude>
     </northwest_corner>
     <project>None</project>
+    <project_lead>
+        <author>None</author>
+        <organization>None</organization>
+        <email>None</email>
+    </project_lead>
     <release_status>None</release_status>
     <southeast_corner>
-        <latitude type="float" units="decimal degrees">None</latitude>
-        <longitude type="float" units="decimal degrees">None</longitude>
+        <latitude type="float" units="degrees">None</latitude>
+        <longitude type="float" units="degrees">None</longitude>
     </southeast_corner>
     <summary>None</summary>
-    <survey>None</survey>
     <time_period>
-        <start_date>1980-01-01</start_date>
         <end_date>1980-01-01</end_date>
+        <start_date>1980-01-01</start_date>
     </time_period>
 </survey>
