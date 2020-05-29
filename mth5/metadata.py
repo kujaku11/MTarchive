@@ -53,12 +53,13 @@ import logging
 from collections import OrderedDict
 from operator import itemgetter
 
-from mth5.standards.schema import (ATTR_DICT, validate_attribute,
+from mth5.standards.schema import (Standards, validate_attribute,
                                    validate_type)
 from mth5.utils.mttime import MTime
 from mth5.utils.exceptions import MTSchemaError
 from mth5.utils import helpers
 
+ATTR_DICT = Standards().ATTR_DICT
 # =============================================================================
 #  Base class that everything else will inherit
 # =============================================================================

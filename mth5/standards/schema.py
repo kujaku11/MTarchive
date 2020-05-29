@@ -39,7 +39,7 @@ ACCEPTED_STYLES = ['name', 'url', 'email', 'number', 'date', 'free form',
                    'controlled vocabulary', 'alpha numeric']
 
 REQUIRED_KEYS = ['attribute', 'type', 'required', 'units', 'style', 
-                 'description', 'options', 'alias']
+                 'description', 'options', 'alias', 'example']
 
 # =============================================================================
 # Helper functions
@@ -293,8 +293,8 @@ def validate_options(options):
         options = options.replace('[', '').replace(']', '').strip().split('|')
         names = []
         for name in options:
-            if not name.lower() in ['none']:
-                names.append(name)
+            if not name.lower() in ['none', '']:
+                names.append(name.strip())
         options = names
     
     elif isinstance(options, (list, tuple)):
@@ -322,8 +322,8 @@ def validate_alias(alias):
         alias = alias.replace('[', '').replace(']', '').strip().split('|')
         names = []
         for name in alias:
-            if not name.lower() in ['none']:
-                names.append(name)
+            if not name.lower() in ['none', '']:
+                names.append(name.strip())
         alias = names
     
     elif isinstance(alias, (list, tuple)):
@@ -336,6 +336,19 @@ def validate_alias(alias):
         logger.error(msg)
         raise MTSchemaError(msg) 
     return alias
+
+def validate_example(example):
+    """
+    
+    :param example: DESCRIPTION
+    :type example: TYPE
+    :return: DESCRIPTION
+    :rtype: TYPE
+
+    """
+    if not isinstance(example, str):
+        example = '{0}'.format(example)
+    return example
         
 
 def validate_value_dict(value_dict):
@@ -499,7 +512,7 @@ def to_latex(level_dict):
     
     lines = [' & '.join(['\textbf{Metadata Key}', '\textbf{Description}', 
              '\textbf{Type}', '\textbf{Required}', 
-             '\textbf{Style}']) + '\\ \hline']
+             '\textbf{Style}']) + 'hline']
     
     for name, v_dict in level_dict.items():
         line = [name]
@@ -562,9 +575,13 @@ class BaseDict(MutableMapping):
     # The final two methods aren't required, but nice for demo purposes:
     def __str__(self):
         """returns simple dict representation of the mapping"""
-        s = list(sorted(self.__dict__.items(), key=itemgetter(0)))
-        s = ['{0}: {1}'.format(k, v) for k, v in s]
-        return '\n'.join(s)
+        s = dict(sorted(self.__dict__.items(), key=itemgetter(0)))
+        lines = []
+        for key, value in s.items():
+            lines.append('{0}:'.format(key))
+            for name, info in value.items():
+                lines.append('\t{0}: {1}'.format(name, info))
+        return '\n'.join(lines)
     
     def __repr__(self):
         """echoes class, id, & reproducible representation in the REPL"""
@@ -795,12 +812,11 @@ class Standards():
         magnetic_dict.add_dict(self.channel_dict.copy())
         magnetic_dict.add_dict(self.instrument_dict.copy(), 'sensor')
         return magnetic_dict
-# =============================================================================
-# Make ATTR_DICT
-# =============================================================================
-m_obj = Standards()
-
-keys = [fn.stem for fn in CSV_FN_PATHS]
-ATTR_DICT = dict([(key, deepcopy(getattr(m_obj, '{0}_dict'.format(key))))
+    
+    @property
+    def ATTR_DICT(self):
+        keys = [fn.stem for fn in CSV_FN_PATHS]
+        return dict([(key, deepcopy(getattr(self, '{0}_dict'.format(key))))
                   for key in keys])
-logger.debug("Successfully made ATTR_DICT")
+        self.logger.debug("Successfully made ATTR_DICT")
+

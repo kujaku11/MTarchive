@@ -23,13 +23,23 @@ class TestValidators(unittest.TestCase):
         self.name = 'Test/StandardEnd'
         self.type = str
         self.style = 'name'
-        self.header = ['attribute', 'type', 'required', 'units', 'style']
         self.required = True
         self.units = 'mv'
+        self.description = 'test description'
+        self.options = '[option01 | option02 | ...]'
+        self.alias = 'other_name'
+        self.example = 'example name'
+        self.header = ['attribute', 'type', 'required', 'units', 'style',
+                       'description', 'options', 'alias', 'example']
+        
         self.value_dict = {'type': self.type,
                            'required': self.required,
                            'units': self.units,
-                           'style': self.style}
+                           'style': self.style,
+                           'description': self.description,
+                           'options': self.options,
+                           'alias': self.alias,
+                           'example': self.example}
         
         self.name_fail = '0test/WeakSauce'
         self.type_fail = 'value'
@@ -102,7 +112,26 @@ class TestValidators(unittest.TestCase):
     def test_validate_attribue_fail(self):
         self.assertRaises(MTSchemaError,
                           schema.validate_attribute,
-                          self.name_fail)    
+                          self.name_fail)   
+        
+    def test_validate_description(self):
+        self.assertEqual(self.description, 
+                         schema.validate_description(self.description))
+        
+    def test_validated_options(self):
+        valid_list = schema.validate_options(self.options)
+        self.assertIsInstance(schema.validate_options(self.options), list)
+        self.assertListEqual(['option01', 'option02','...'], 
+                              valid_list)
+        valid_list = schema.validate_options(['option01', 'option02','...'])
+        self.assertListEqual(['option01', 'option02','...'], 
+                              valid_list)
+        
+    def test_validate_alias(self):
+        valid_alias = schema.validate_alias(self.alias)
+        self.assertIsInstance(valid_alias, list)
+        self.assertListEqual(valid_alias, ['other_name'])
+        
     
     
         
