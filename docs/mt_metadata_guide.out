@@ -12,7 +12,7 @@
 \BOOKMARK [1][-]{section.4}{Station}{}% 12
 \BOOKMARK [2][-]{subsection.4.1}{Example Station JSON String}{section.4}% 13
 \BOOKMARK [1][-]{section.5}{Run}{}% 14
-\BOOKMARK [2][-]{subsection.5.1}{Example Run XML String}{section.5}% 15
+\BOOKMARK [2][-]{subsection.5.1}{Example Run XML Element}{section.5}% 15
 \BOOKMARK [1][-]{section.6}{Electric Channel}{}% 16
 \BOOKMARK [2][-]{subsection.6.1}{Example Electric Channel JSON String}{section.6}% 17
 \BOOKMARK [1][-]{section.7}{Magnetic Channel}{}% 18

@@ -1106,7 +1106,7 @@ class Electrode(Location, Instrument):
 
         super(Electrode, self).__init__(**kwargs)
 
-        self._attr_dict = ATTR_DICT['electrode']
+        self._attr_dict = ATTR_DICT['instrument']
 
 # =============================================================================
 # Timing System
@@ -1449,7 +1449,7 @@ class Channel(Base):
         self.channel_number = None
         self.component = None
         self.sample_rate = None
-        self.azimuth = 0.0
+        self.measurement_azimuth = 0.0
         self.data_quality = DataQuality()
         self.filter = Filter()
         self.location = Location()
