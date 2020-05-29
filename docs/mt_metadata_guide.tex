@@ -435,11 +435,11 @@ Electric channel refers to a dipole measurement of the electric field for a sing
     	\textbf{Metadata Key} & \textbf{Description} & \textbf{Type} & \textbf{Required} & \textbf{Style}\\ \hline
 	ac.end & ending AC value; if more than one measurement input as a list of number [1, ...] & float & False & number \\ \hline
 	ac.start & starting AC value; if more than one measurement input as a list of number [1, ...] & float & False & number \\ \hline
+	channel\_number & channel number on the data logger & integer & True & number \\ \hline
 	comments & any comments about the channel & string & False & free form \\ \hline
 	component & name of the component measured. Options: [Ex $|$ Ey $|$ Ez $|$ E\# ] & string & True & controlled vocabulary \\ \hline
 	contact\_resistance.end & starting contact resistance; if more than one measurement input as a list of number [1, ...] & float & False & number list \\ \hline
 	contact\_resistance.start & starting contact resistance; if more than one measurement input as a list of number [1, ...] & float & False & number list \\ \hline
-	data\_logger.channel\_number & channel number on the data logger & integer & True & number \\ \hline
 	data\_quality.rating.author & author of who rated the data & string & False & free form \\ \hline
 	data\_quality.rating.method & the method used to rate the data & string & False & free form \\ \hline
 	data\_quality.rating.value & a rating from 1-5 where 1 is bad and 5 is good and 0 if unrated & integer & True & number \\ \hline
@@ -494,11 +494,11 @@ Electric channel refers to a dipole measurement of the electric field for a sing
  "electric": {
     "ac.end": 10.2,
     "ac.start": 12.1,
+    "channel_number": 2,
     "comments": null,
     "component": "EX",
     "contact_resistance.end": 1.2,
     "contact_resistance.start": 1.1,
-    "data_logger.channel_number": 2,
     "data_quality.rating.author": "mt",
     "data_quality.rating.method": "ml",
     "data_quality.rating.value": 4,
@@ -544,9 +544,9 @@ A magnetic channel is a recording of one component of the magnetic field at a si
     \begin{tabular}{|l|p{2.75in}|l|l|p{.95in}|}
     	\hline
     	\textbf{Metadata Key} & \textbf{Description} & \textbf{Type} & \textbf{Required} & \textbf{Style}\\ \hline
+   	channel\_number & channel number on the data logger & integer & True & number  \\ \hline	
 	comments & any comments about the channel & string & False & free form  \\ \hline
 	component & name of the magnetic component measured. Options: [ Hx $|$ Hy $|$ Hz $|$ H\# ] & string & True & controlled vocabulary  \\ \hline
-	data\_logger.channel\_number & channel number on the data logger & integer & True & number  \\ \hline
 	data\_quality.rating.author & author of who rated the data & string & False & free form  \\ \hline
 	data\_quality.rating.method & the method used to rate the data & string & False & free form  \\ \hline
 	data\_quality.rating.value & a rating from 1-5 where 1 is bad and 5 is good and 0 if unrated & integer & True & number  \\ \hline
@@ -687,10 +687,10 @@ Auxiliary channels include state of health channels, temperature, etc.
     \caption[Attributes for Auxiliary Channel]{Attributes for Auxiliary category}
     \begin{tabular}{|l|p{2.75in}|l|l|p{.95in}|}
     	\hline
-    	\textbf{Metadata Key} & \textbf{Description} & \textbf{Type} & \textbf{Required} & \textbf{Style}\\ \hline 
+    	\textbf{Metadata Key} & \textbf{Description} & \textbf{Type} & \textbf{Required} & \textbf{Style}\\ \hline
+    	channel\_number & channel number on the data logger & integer & True & number  \\ \hline 
     	comments & any comments about the channel & string & False & free form  \\ \hline
         component & name of the component measured. Options [ Temperature $|$ batter\_voltage $|$ state\_of\_health $|$ ...] & string & True & controlled vocabulary  \\ \hline
-        data\_logger.channel\_number & channel number on the data logger & integer & True & number  \\ \hline
         data\_quality.rating.author & author of who rated the data & string & False & free form  \\ \hline
         data\_quality.rating.method & the method used to rate the data & string & False & free form  \\ \hline
         data\_quality.rating.value & a rating from 1-5 where 1 is bad and 5 is good and 0 if unrated & integer & True & number  \\ \hline

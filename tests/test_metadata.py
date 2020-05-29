@@ -32,8 +32,14 @@ class TestBase(unittest.TestCase):
         self.maxDiff = None
         self.base_object = metadata.Base()
         self.extra_name = 'ExtraAttribute'
-        self.extra_v_dict = {'type': str, 'required': True, 'units': 'mv',
-                             'style': 'name'}
+        self.extra_v_dict = {'type': str,
+                             'required': True,
+                             'units': 'mv',
+                             'style': 'controlled vocabulary',
+                             'description':'test adding attribute',
+                             'options': ['10', '12'],
+                             'alias': ['other'],
+                             'example': 'extra'}
         self.extra_value = 10
         
     def test_validate_name(self):
@@ -131,7 +137,7 @@ class TestSurveyMetadata(unittest.TestCase):
                            'citation_journal.doi': None,
                            'comments': None,
                            'country': None,
-                           'datum': None,
+                           'datum': 'WGS84',
                            'geographic_name': 'earth',
                            'name': 'entire survey of the earth',
                            'northwest_corner.latitude': 80.0,
@@ -226,7 +232,7 @@ class TestStationMetadata(unittest.TestCase):
                            'location.longitude': -112.98,
                            'orientation.layout_rotation_angle': 0.0,
                            'orientation.method': 'compass',
-                           'orientation.option': 'geographic',
+                           'orientation.option': 'geographic orthogonal',
                            'provenance.comments': None,
                            'provenance.creation_time': '1980-01-01T00:00:00+00:00',
                            'provenance.log': None,
@@ -300,8 +306,8 @@ class TestRun(unittest.TestCase):
                           {'acquired_by.author': 'MT guru',
                            'acquired_by.comments': 'lazy',
                            'channels_recorded_auxiliary': None,
-                           'channels_recorded_electric': '[EX, EY]',
-                           'channels_recorded_magnetic': '[HX, HY, HZ]',
+                           'channels_recorded_electric': ['EX', 'EY'],
+                           'channels_recorded_magnetic': ['HX', 'HY', 'HZ'],
                            'comments': 'Cloudy solar panels failed',
                            'data_logger.firmware.author': 'MT instruments',
                            'data_logger.firmware.name': 'FSGMT',
@@ -316,7 +322,6 @@ class TestRun(unittest.TestCase):
                            'data_logger.power_source.voltage.start': 14.0,
                            'data_logger.timing_system.comments': 'solid',
                            'data_logger.timing_system.drift': .001,
-                           'data_logger.timing_system.comments': 'in trees',
                            'data_logger.timing_system.type': 'GPS',
                            'data_logger.timing_system.uncertainty': .000001,
                            'data_logger.type': 'broadband',
@@ -372,11 +377,11 @@ class TestRun(unittest.TestCase):
                          '2020-01-02T12:20:40.456000+00:00')
         
     def test_n_channels(self):
-        self.run_object.channels_recorded = None
-        self.assertEqual(self.run_object.num_channels, None)
+        self.run_object.from_dict(self.meta_dict)
+        self.assertEqual(self.run_object.n_channels, 5)
         
-        self.run_object.channels_recorded = 'EX, EY, HX, HY, HZ'
-        self.assertEqual(self.run_object.num_channels, 5)
+        self.run_object.channels_recorded_auxiliary = ['T', 'battery']
+        self.assertEqual(self.run_object.n_channels, 7)
 
 class TestChannel(unittest.TestCase):
     def setUp(self):
@@ -385,7 +390,7 @@ class TestChannel(unittest.TestCase):
         self.meta_dict = {'channel':
                           {'comments': 'great',
                            'component': 'Temperature',
-                           'data_logger.channel_number': 1,
+                           'channel_number': 1,
                            'data_quality.rating.author': 'mt',
                            'data_quality.rating.method': 'ml',
                            'data_quality.rating.value': 4,
@@ -436,7 +441,7 @@ class TestElectric(unittest.TestCase):
                            'component': 'EX',
                            'contact_resistance.end': 1.2,
                            'contact_resistance.start': 1.1,
-                           'data_logger.channel_number': 2,
+                           'channel_number': 2,
                            'data_quality.rating.author': 'mt',
                            'data_quality.rating.method': 'ml',
                            'data_quality.rating.value': 4,
@@ -497,9 +502,8 @@ class TestMagnetic(unittest.TestCase):
         self.magnetic_object = metadata.Magnetic()
         self.meta_dict = {'magnetic':
                           {'measurement_azimuth': 0.0,
-                           'data_logger.channel_number': 2,   
+                           'channel_number': 2,   
                            'component': 'hy', 
-                           'data_logger.channel_number': 2,
                            'data_quality.rating.author': 'mt',
                            'data_quality.rating.method': 'ml',
                            'data_quality.rating.value': 4,

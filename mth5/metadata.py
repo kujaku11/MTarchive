@@ -184,6 +184,150 @@ class Base():
 
         """
         return validate_attribute(name)
+    
+    def _validate_type(self, value, v_type, style=None):
+        """
+        validate type from standards
+        
+        """
+
+        if value in [None, 'None', 'none']:
+            return None
+        
+        if v_type is None:
+            msg = ('standards data type is unknown, if you want to ' +
+                   'propogate this attribute using to_dict, to_json or ' +
+                   'to_series, you need to add attribute description using ' +
+                   'class function add_base_attribute.' +\
+                   'Example: \n\t>>> Run.add_base_attribute(new, 10, ' +
+                   '{"type":float, "required": True, "units": None, ' +
+                   '"style": number})')
+            self.logger.info(msg)
+            return value
+        
+        if not isinstance(v_type, type) and isinstance(v_type, str):
+            type_dict = {'string': str,
+                         'integer': int,
+                         'float': float,
+                         'boolean': bool}
+            v_type = type_dict[validate_type(v_type)]
+        else:
+            msg = 'v_type must be a string or type not {0}'.format(v_type)
+
+        if isinstance(value, v_type):
+            if style:
+                if v_type is str and 'list' in style:
+                    value = value.split(',')
+            return value
+
+        else:
+            msg = 'value={0} must be {1} not {2}'
+            info = 'converting {0} to {1}'
+            if isinstance(value, str):
+                if v_type is int:
+                    try:
+                        self.logger.debug(info.format(type(value), v_type))
+                        return int(value)
+                    except ValueError as error:
+                        self.logger.exception(error)
+                        raise MTSchemaError(msg.format(value, v_type,
+                                                       type(value)))
+                elif v_type is float:
+                    try:
+                        self.logger.debug(info.format(type(value), v_type))
+                        return float(value)
+                    except ValueError as error:
+                        self.logger.exception(error)
+                        raise MTSchemaError(msg.format(value, 
+                                                       v_type, type(value)))
+                elif v_type is bool:
+                    if value.lower() in ['false']:
+                        self.logger.debug(info.format(value, False))
+                        return False
+                    elif value.lower() in ['true']:
+                        self.logger.debug(info.format(value, True))
+                        return True
+                    else:
+                        self.logger.exception(msg.format(value, 
+                                                         v_type,
+                                                         type(value)))
+                        raise MTSchemaError(msg.format(value, 
+                                                       v_type,
+                                                       type(value)))
+                elif v_type is str:
+                    return value
+            
+            elif isinstance(value, int):
+                if v_type is float:
+                    self.logger.debug(info.format(type(value), v_type))
+                    return float(value)
+                elif v_type is str:
+                    self.logger.debug(info.format(type(value), v_type))
+                    return '{0:.0f}'.format(value)
+            
+            elif isinstance(value, float):
+                if v_type is int:
+                    self.logger.debug(info.format(type(value), v_type))
+                    return int(value)
+                elif v_type is str:
+                    self.logger.debug(info.format(type(value), v_type))
+                    return '{0}'.format(value)
+            elif isinstance(value, list):
+                if v_type is str:
+                    value = ['{0}'.format(v) for v in value]
+                elif v_type is int:
+                    value = [int(float(v)) for v in value]
+                elif v_type is float:
+                    value = [float(v) for v in value]
+                elif v_type is bool:
+                    value_list = []
+                    for v in value:
+                        if v in [True, 'true', 'True', 'TRUE']:
+                            value_list.append(True)
+                        elif v in [False, 'false', 'False', 'FALSE']:
+                            value_list.append(False)
+                    value = value_list
+                return value
+                
+            else:
+                self.logger.exception(msg.format(value, 
+                                                 v_type,
+                                                 type(value)))
+                raise MTSchemaError(msg.format(value, 
+                                               v_type, 
+                                               type(value)))
+        return None
+    
+    def _validate_option(self, name, option_list):
+        """
+        validate the given attribute name agains possible options and check
+        for aliases
+        
+        :param name: DESCRIPTION
+        :type name: TYPE
+        :param option_list: DESCRIPTION
+        :type option_list: TYPE
+        :param alias_list: DESCRIPTION
+        :type alias_list: TYPE
+        :return: DESCRIPTION
+        :rtype: TYPE
+
+        """
+        if name is None:
+            return True, False, None
+        
+        options = [ss.lower() for ss in option_list]
+        other_possible = False
+        if 'other' in options:
+            other_possible = True
+        if name.lower() in options:
+            return True, other_possible, None
+        elif name.lower() not in options and other_possible:
+            msg = ("{0} not found in options list {1}, but other options" +
+                   " are allowed.  Allowing {2} to be set to {0}.")
+            return True, other_possible, msg
+        
+        return False, other_possible, '{0} not found in options list {1}'
 
     def __setattr__(self, name, value):
         """
@@ -200,9 +344,23 @@ class Base():
                 if not name in skip_list: 
                     self.logger.debug('Setting {0} to {1}'.format(name, 
                                                                   value))
+                    v_dict = self._attr_dict[name]
                     v_type = self._get_standard_type(name)
-                    value = self._validate_type(value, v_type)
-
+                    value = self._validate_type(value, v_type,
+                                                v_dict['style'])
+                    # check options
+                    if v_dict['style'] == 'controlled vocabulary':
+                        options = v_dict['options']
+                        accept, other, msg = self._validate_option(value,
+                                                                   options)
+                        if not accept:
+                            self.logger.error(msg.format(value, options))
+                            raise MTSchemaError(msg.format(value, options))
+                        if other and not accept:
+                            self.logger.warning(msg.format(value, 
+                                                           options,
+                                                           name))
+                        
         super().__setattr__(name, value)
 
     def _get_standard_type(self, name):
@@ -300,23 +458,35 @@ class Base():
         :type value: described in value_dict
         
         :param value_dict: dictionary describing the attribute, must have keys
-                           ['type', 'required', 'style', 'units']
+                           ['type', 'required', 'style', 'units', 'alias',
+                            'description', 'options', 'example']
         :type name: string
     
         * type --> the data type [ str | int | float | bool ]
         * required --> required in the standards [ True | False ]
         * style --> style of the string
         * units --> units of the attribute, must be a string
+        * alias --> other possible names for the attribute
+        * options --> if only a few options are accepted, separated by | or 
+                      comma.b [ option_01 | option_02 | other ]. 
+                      'other' means other options available but not yet defined.
+        * example --> an example of the attribute
         
         :return: DESCRIPTION
         :rtype: TYPE
         
         :Example: ::
             
-            >>> extra = {'type': str, 'style': 'name',
-            >>> ...      'required': False, 'units': None}
+            >>> extra = {'type': str,
+            >>> ...      'style': 'controlled vocabulary',
+            >>> ...      'required': False,
+            >>> ...      'units': celsius,
+            >>> ...      'description': 'local temperature',
+            >>> ...      'alias': ['temp'],
+            >>> ...      'options': [ 'ambient', 'air', 'other'],
+            >>> ...      'example': 'ambient'}
             >>> r = Run()
-            >>> r.add_base_attribute('weather', 'fair', extra)
+            >>> r.add_base_attribute('temperature', 'ambient', extra)
 
         """
         name = self._validate_name(name)
@@ -327,115 +497,7 @@ class Base():
         self.logger.debug('set {0} to {1} as type {2}'.format(name, value,
                                                               value_dict['type']))
 
-    def _validate_type(self, value, v_type, style=None):
-        """
-        validate type from standards
-        
-        """
 
-        if value in [None, 'None', 'none']:
-            return None
-        
-        if v_type is None:
-            msg = ('standards data type is unknown, if you want to ' +
-                   'propogate this attribute using to_dict, to_json or ' +
-                   'to_series, you need to add attribute description using ' +
-                   'class function add_base_attribute.' +\
-                   'Example: \n\t>>> Run.add_base_attribute(new, 10, ' +
-                   '{"type":float, "required": True, "units": None, ' +
-                   '"style": number})')
-            self.logger.info(msg)
-            return value
-        
-        if not isinstance(v_type, type) and isinstance(v_type, str):
-            type_dict = {'string': str,
-                         'integer': int,
-                         'float': float,
-                         'boolean': bool}
-            v_type = type_dict[validate_type(v_type)]
-        else:
-            msg = 'v_type must be a string or type not {0}'.format(v_type)
-
-        if isinstance(value, v_type):
-            return value
-
-        else:
-            msg = 'value={0} must be {1} not {2}'
-            info = 'converting {0} to {1}'
-            if isinstance(value, str):
-                if v_type is int:
-                    try:
-                        self.logger.debug(info.format(type(value), v_type))
-                        return int(value)
-                    except ValueError as error:
-                        self.logger.exception(error)
-                        raise MTSchemaError(msg.format(value, v_type,
-                                                       type(value)))
-                elif v_type is float:
-                    try:
-                        self.logger.debug(info.format(type(value), v_type))
-                        return float(value)
-                    except ValueError as error:
-                        self.logger.exception(error)
-                        raise MTSchemaError(msg.format(value, 
-                                                       v_type, type(value)))
-                elif v_type is bool:
-                    if value.lower() in ['false']:
-                        self.logger.debug(info.format(value, False))
-                        return False
-                    elif value.lower() in ['true']:
-                        self.logger.debug(info.format(value, True))
-                        return True
-                    else:
-                        self.logger.exception(msg.format(value, 
-                                                         v_type,
-                                                         type(value)))
-                        raise MTSchemaError(msg.format(value, 
-                                                       v_type,
-                                                       type(value)))
-                elif v_type is str:
-                    return value
-            
-            elif isinstance(value, int):
-                if v_type is float:
-                    self.logger.debug(info.format(type(value), v_type))
-                    return float(value)
-                elif v_type is str:
-                    self.logger.debug(info.format(type(value), v_type))
-                    return '{0:.0f}'.format(value)
-            
-            elif isinstance(value, float):
-                if v_type is int:
-                    self.logger.debug(info.format(type(value), v_type))
-                    return int(value)
-                elif v_type is str:
-                    self.logger.debug(info.format(type(value), v_type))
-                    return '{0}'.format(value)
-            elif isinstance(value, list):
-                if v_type is str:
-                    value = ['{0}'.format(v) for v in value]
-                elif v_type is int:
-                    value = [int(float(v)) for v in value]
-                elif v_type is float:
-                    value = [float(v) for v in value]
-                elif v_type is bool:
-                    value_list = []
-                    for v in value:
-                        if v in [True, 'true', 'True', 'TRUE']:
-                            value_list.append(True)
-                        elif v in [False, 'false', 'False', 'FALSE']:
-                            value_list.append(False)
-                    value = value_list
-                return value
-                
-            else:
-                self.logger.exception(msg.format(value, 
-                                                 v_type,
-                                                 type(value)))
-                raise MTSchemaError(msg.format(value, 
-                                               v_type, 
-                                               type(value)))
-        return None
                 
     def to_dict(self, nested=False):
         """
@@ -1401,7 +1463,9 @@ class Run(Base):
     def __init__(self, **kwargs):
         self.id = None
         self.sampling_rate = None
-        self.channels_recorded = None
+        self.channels_recorded_auxiliary = None
+        self.channels_recorded_electric = None
+        self.channels_recorded_magnetic = None
         self._n_chan = None
         self.data_type = None
         self.acquired_by = Person()
@@ -1415,11 +1479,14 @@ class Run(Base):
 
         
     @property
-    def num_channels(self):
-        if self.channels_recorded is None:
-            return None
-        else:
-            return len(self.channels_recorded.split(','))
+    def n_channels(self):
+        number = 0
+        for channel in ['auxiliary', 'electric', 'magnetic']:
+            channel_list = getattr(self,
+                                   'channels_recorded_{0}'.format(channel))
+            if channel_list is not None:
+                number += len(channel_list)
+        return number
 
 # =============================================================================
 # Data logger
@@ -1431,7 +1498,6 @@ class DataLogger(Instrument):
         self.timing_system = TimingSystem()
         self.firmware = Software()
         self.power_source = Battery()
-        self.channel_number = None
         super().__init__(**kwargs)
         
         self._attr_dict = ATTR_DICT['datalogger']
