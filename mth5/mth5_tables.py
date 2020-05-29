@@ -4,15 +4,17 @@ Created on Mon Apr 27 11:15:27 2020
 
 @author: jpeacock
 """
-
-import tables
-
+# =============================================================================
+# Imports
+# =============================================================================
+import h5py
+import logging
 from pathlib import Path
+from mth5.utils.exceptions import MTH5Error
 
-
-class MTH5Error(Exception):
-    pass
-
+# =============================================================================
+# Main API
+# =============================================================================
 class MTH5(object):
     """
     container for MT data in HDF5 format

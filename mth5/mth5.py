@@ -24,6 +24,7 @@ import datetime
 import time
 import json
 import dateutil
+import logging
 
 
 import h5py
@@ -31,6 +32,7 @@ import pandas as pd
 import numpy as np
 
 from pathlib import Path
+from mth5.utils.exceptions import MTH5Error
 
 
 # =============================================================================
@@ -134,15 +136,86 @@ class MTH5():
     .. seealso:: https://www.hdfgroup.org/ and h5py()
     """
 
-    def __init__(self):
-        self.mth5_fn = None
+    def __init__(self, filename=None):
         self.mth5_obj = None
-        self.site = Site()
-        self.field_notes = FieldNotes()
-        self.copyright = Copyright()
-        self.software = Software()
-        self.provenance = Provenance()
+        
+        self.__filename = filename
+        if self.__filename:
+            if not isinstance(self.__filename, Path):
+                self.__filename = Path(self.__filename)
 
+        self._class_name = self.__class__.__name__
+        self.logger = logging.getLogger('{0}.{1}'.format(__name__, 
+                                                         self._class_name))
+        
+        self.default_groups = ['stations', 'reports', 'filters']
+        
+    @property
+    def filename(self):
+        if self.h5_is_write():
+            return Path(self.mth5_obj.filename)
+        else:
+            msg = ('MTH5 file is not open or has not been created yet. ' +
+                   'Returning default name')
+            self.logger.warning(msg)
+            return self.__filename
+            
+
+    def open_mth5(self, filename, mode='a'):
+        """
+        open an mth5 file
+        """
+        self.__filename = filename
+        if not isinstance(self.__filename, Path):
+            self.__filename = Path(filename)
+            
+        if self.__filename.exists():
+            if mode in ['w']:
+                self.logger.warning("{0} will be overwritten in 'w' mode".format(
+                    self.__filename.name))
+                self.initialize_file(self.__filename)
+            elif mode in ['a', 'r', 'r+', 'w-', 'x']:
+                self.mth5_obj = h5py.File(self.__filename, mode=mode)
+            else:
+                msg = "mode {0} is not understood".format(mode)
+                self.logger.error(msg)
+                raise MTH5Error(msg)
+        else:
+            if mode in ['a', 'w', 'w-', 'x']:
+                self.initialize_file(self.__filename)
+            else:
+                msg = "Cannot open new file in mode {0} ".format(mode)
+                self.logger.error(msg)
+                raise MTH5Error(msg)
+
+
+    def initialize_file(self, filename):
+        """
+        Initialize the default groups for the file
+        
+        :return: DESCRIPTION
+        :rtype: TYPE
+
+        """
+        
+        self.mth5_obj = h5py.File(self.__filename, 'w')
+        
+        for group in self.default_groups:
+            self.mth5_obj.create_group(group)
+            
+        self.logger.info("Initialized MTH5 file {0}".format(self.filename))
+            
+        return True
+        
+
+    def close_mth5(self):
+        """
+        close mth5 file to make sure everything is flushed to the file
+        """
+
+        self.mth5_obj.flush()       
+        self.mth5_obj.close()
+        
     def h5_is_write(self):
         """
         check to see if the hdf5 file is open and writeable
@@ -156,27 +229,31 @@ class MTH5():
             except ValueError:
                 return False
         return False
-
-    def open_mth5(self, mth5_fn):
+    
+    def add_station(self, station):
         """
-        write an mth5 file
+        Add a station
+        
+        :param station: DESCRIPTION
+        :type station: TYPE
+        :return: DESCRIPTION
+        :rtype: TYPE
+
         """
-        self.mth5_fn = mth5_fn
-
-        if os.path.isfile(self.mth5_fn):
-            print('*** Overwriting {0}'.format(mth5_fn))
-
-        self.mth5_obj = h5py.File(self.mth5_fn, 'w')
-        self.mth5_obj.create_group('calibrations')
-
-    def close_mth5(self):
+        pass
+    
+    def add_run(self, station, run):
         """
-        close mth5 file to make sure everything is flushed to the file
+        add a run to the given station
         """
-
-        self.mth5_obj.flush()
-        self.write_metadata()        
-        self.mth5_obj.close()
+        pass
+    
+    def add_channel(self, station, run, channel):
+        """
+        add a channel to the given station/run
+        """
+        pass
+    
 
     def write_metadata(self):
         """
