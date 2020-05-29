@@ -8,16 +8,17 @@
 \BOOKMARK [2][-]{subsection.2.3}{Units}{section.2}% 8
 \BOOKMARK [2][-]{subsection.2.4}{String Formats}{section.2}% 9
 \BOOKMARK [1][-]{section.3}{Survey}{}% 10
-\BOOKMARK [2][-]{subsection.3.1}{Example Survey XML String}{section.3}% 11
+\BOOKMARK [2][-]{subsection.3.1}{Example Survey XML Element}{section.3}% 11
 \BOOKMARK [1][-]{section.4}{Station}{}% 12
-\BOOKMARK [2][-]{subsection.4.1}{Example Station JSON String}{section.4}% 13
+\BOOKMARK [2][-]{subsection.4.1}{Example Station JSON}{section.4}% 13
 \BOOKMARK [1][-]{section.5}{Run}{}% 14
 \BOOKMARK [2][-]{subsection.5.1}{Example Run XML Element}{section.5}% 15
 \BOOKMARK [1][-]{section.6}{Electric Channel}{}% 16
-\BOOKMARK [2][-]{subsection.6.1}{Example Electric Channel JSON String}{section.6}% 17
+\BOOKMARK [2][-]{subsection.6.1}{Example Electric Channel JSON}{section.6}% 17
 \BOOKMARK [1][-]{section.7}{Magnetic Channel}{}% 18
-\BOOKMARK [2][-]{subsection.7.1}{Example Magnetic Channel JSON String}{section.7}% 19
+\BOOKMARK [2][-]{subsection.7.1}{Example Magnetic Channel JSON}{section.7}% 19
 \BOOKMARK [1][-]{section.8}{Filters}{}% 20
-\BOOKMARK [2][-]{subsection.8.1}{Example Filter JSON String}{section.8}% 21
+\BOOKMARK [2][-]{subsection.8.1}{Example Filter JSON}{section.8}% 21
 \BOOKMARK [1][-]{section.9}{Auxiliary Channels}{}% 22
-\BOOKMARK [2][-]{subsection.9.1}{Example Auxiliary JSON String}{section.9}% 23
+\BOOKMARK [2][-]{subsection.9.1}{Example Auxiliary JSON}{section.9}% 23
+\BOOKMARK [1][-]{appendix.A}{Option Definitions}{}% 24

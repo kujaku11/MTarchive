@@ -36,17 +36,26 @@ CHANGELOG METADATA STANDARDS
 	* Run
 		- nested start/end under time_period
 		- nested data_logger info under run
+		- added metadata_by.author, metadata_by.comments
+		- changed channels_recorded to channels_recorded_auxiliary, channels_recorded_eletric, channels_recorded_magnetic
+		
 	
-	* Channel/Auxiliary
+	* Channel
 		- Add 'type' to distinguish what type of metadata is needed.
 		- Add location to auxiliary channels for consistency.
-		- nested lat, lon, elevation, declination under location	
+		- nested lat, lon, elevation, declination under location
+		- changed azimuth to measurement_azimuth for clarity
+		- made most field notes, like ac, dc, contact resistance as optional
+		- changed data_quality to have a rating category --> data_quality.rating.author, data_quality.rating.value, data_quality.rating.method
+		- removed data_quality.warning_flags
+		- changed data_quailty.warning_notes to data_quality.warning_comments
 	
 	* Electric
 		- Change electric.contact_resistance.start_B_d to electric.contact_resitance.start where start can be a list
-	
+
 	* Magnetic
 		- Change magnetic.h_field.start_min_d to magnetic.h_field_min.start
 		Change magnetic.h_field.start_max_d to magnetic.h_field_max.start
 		- nested lat, lon, elevation, declination under location
+		-
 	

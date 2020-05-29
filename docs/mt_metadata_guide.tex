@@ -5,8 +5,9 @@
 \usepackage{natbib}
 \usepackage{graphicx}
 \usepackage{authblk}
+\usepackage[toc,page]{appendix}
 
-\title{A Standard for Exchangeable Magnetotelluric Data and Metadata}
+\title{A Standard for Exchangeable Magnetotelluric Metadata}
 \date{\textbf{Version 0.0.1c -- May 2020}\footnote{\noindent\textbf{\textit{Corresponding Authors:}}
 		
 		Jared Peacock (\url{jpeacock@usgs.gov})
@@ -25,13 +26,6 @@
 \tableofcontents
 \vspace{1cm}
 
-
-
-%\noindent\textbf{\textit{Corresponding Authors:}}
-%
-%Jared Peacock (\url{jpeacock@usgs.gov})
-%
-%Andy Frassetto (\url{andy.frassetto@iris.edu})
 \newpage
 
 \section{Introduction}
@@ -125,10 +119,11 @@ Each metadata level has a column that describes the style of the input.  These a
 		
 		alpha numeric & a string that contains no spaces and only characters \{a-z, A-Z, 0-9, -, /, \_\} & WGS84 or GEOMAG-USGS \\ \hline
 		controlled vocabulary & Only certain names or words are allowed, in this case examples of acceptable values are provided in the documentation as [ option01 $|$ option02 $|$ ...]. The ... indicates that other options are possible but have not been defined yet. &  station.orientation.option = geographic \\ \hline
+		list & list of entries using a comma separator & 'Ex, Ey, Hx, Hy, Hz, T' \\ \hline
 		number & a number in the form of the data type, number of decimal places has not been implemented yet & 10.0 for float or 10 for int \\ \hline
 		date & ISO formatted date YYYY-MM-DD in UTC & 2020-02-02 \\ \hline
 		date time & ISO formatted date time YYYY-MM-DDThh:mm:ss.ms+00:00 in UTC & 2020-02-02T12:20:45.123456+00:00 \\ \hline
-		email & a valid email address & person@mt.org \\ \hline
+		email & a valid email address & \url{person@mt.org} \\ \hline
 		url & a full URL that a user could put into a web browser  &  \url{https://www.passcal.nmt.edu/} \\ \hline
 		
 		
@@ -140,7 +135,7 @@ Each metadata level has a column that describes the style of the input.  These a
 \newpage
 \section{Survey}
 
-A survey describes an entire dataset that covers a specific time span and region. This may include multiple PIs in multiple data collection episodes but should be confined to a specific experiment. The \verb|Survey| metadata category describes the general parameters of the survey.
+A survey describes an entire data set that covers a specific time span and region. This may include multiple PIs in multiple data collection episodes but should be confined to a specific experiment. The \verb|Survey| metadata category describes the general parameters of the survey.
 
 \begin{table}[h!]
 	\centering
@@ -159,15 +154,15 @@ A survey describes an entire dataset that covers a specific time span and region
 		datum\ & datum of latitude and longitude coordinates, should be a well-known datum [ WGS84 ] and will be the reference datum for all location & string & True & alpha numeric \\ \hline
 		geographic\_name\ & geographic location(s) of survey in general terms & string & True & free form \\ \hline
 		name\ & descriptive name of the survey & string & True & free form \\ \hline
-		northwest\_corner.latitude\ & location of northwest corner of survey [ degrees ] & float & True & number \\ \hline
-		northwest\_corner.longitude\ & location of northwest corner of survey [ degrees] & float & True & number \\ \hline
+		northwest\_corner.latitude\ & location of northwest corner of survey & float & True & number \\ \hline
+		northwest\_corner.longitude\ & location of northwest corner of survey & float & True & number \\ \hline
 		project & alphanumeric name for the project e.g USGS-GEOMAG & string & True & alpha numeric  \\ \hline
 		project\_lead.email & email address of the project lead & string & True & email  \\ \hline
 		project\_lead.name & name of the project lead & string & True & free form  \\ \hline
 		project\_lead.organization & name of the organization for the project lead & string & True & free form  \\ \hline
 		release\_status\ & defined status of how the data can be used. Options are [ Unrestricted Release $|$ Paper Citation Required $|$ Academic Use Only $|$ Conditions Apply ] & string & True & controlled vocabulary \\ \hline
-		southeast\_corner.latitude\ & location of southeast corner of survey [degrees] & float & True & number \\ \hline
-		southeast\_corner.longitude\ & location of southeast corner of survey [degrees] & float & True & number \\ \hline
+		southeast\_corner.latitude\ & location of southeast corner of survey & float & True & number \\ \hline
+		southeast\_corner.longitude\ & location of southeast corner of survey & float & True & number \\ \hline
 		summary\ & summary paragraph of survey including the purpose, difficulties, data quality, summary of outcomes if the data have been processed and modeled & string & True & free form \\ \hline
 		time\_period.end\_date\ & end date of survey in UTC & string & True & date  \\ \hline
 		time\_period.start\_date\ & start date of survey in UTC & string & True & date \\ \hline
@@ -177,7 +172,7 @@ A survey describes an entire dataset that covers a specific time span and region
 \end{table} 
 
 \newpage
-\subsection{Example Survey XML String}
+\subsection{Example Survey XML Element}
 
 \begin{verbatim}
 <?xml version="1.0" ?>
@@ -233,27 +228,27 @@ A survey describes an entire dataset that covers a specific time span and region
 
 A station encompasses a single site where data are collected. If the location changes during a run, then a new station should be created. If the sensors, cables, data logger, battery are replaced during a run but the station remains stations, then this can be recorded in the \verb|Run| metadata but does not require a new station entry.
 
-\begin{table}[h!]
+\begin{table}[ht!]
     \caption[Attributes for Station]{Attributes for Station category}
-    \begin{tabular}{|l|p{2.75in}|l|l|p{.95in}|}
+    \begin{tabular}{|l|p{2.80in}|l|l|p{.95in}|}
         \hline
         \textbf{Metadata Key} & \textbf{Description} & \textbf{Type} & \textbf{Required} & \textbf{Style} \\ \hline
         acquired\_by.author\ & person who acquired the station & string & True & free form  \\ \hline
         acquired\_by.comments\ & comments about who acquired the data, could include the various groups or contractors & string & True & free form \\ \hline
-        archive\_id\ & 5 char name \{A-Z; 1-9\} for station & string & True & controlled vocabulary \\ \hline
-        channel\_layout & how the station was laid out e.g. X or L & string & True & controlled vocabulary \\ \hline
-        channels\_recorded\ & list of channels recorded as a list of comma separated channels.  e.g. 'Ex, Ey, Hx, Hy' & string & True & controlled vocabulary \\ \hline
+        archive\_id\ & 5 char name \{A-Z; 1-9\} for station & string & True & alpha numeric \\ \hline
+        channel\_layout & how the station was laid out. Options [ X $|$ L $|$ ...] & string & True & controlled vocabulary \\ \hline
+        channels\_recorded\ & list of channels recorded  e.g. 'Ex, Ey, Hx, Hy' & string & True & list \\ \hline
         comments\ & any comments about station & string & False & free form \\ \hline
-        data\_type\ & type of data collected, options: [ BB $|$ LP $|$ AMT $|$ Combo $|$ ...] & string & True &  controlled vocabulary \\ \hline
+        data\_type\ & type of data collected, options: [ BBMT $|$ LPMT $|$ AMT $|$ Combo $|$ ...] see Table \ref{tab:em} & string & True &  controlled vocabulary \\ \hline
         geographic\_name\ & closest geographic reference name to station  & string & True & free form\\ \hline
         id\ & name of the station & string & True & free form\\ \hline
         location.declination.comments\ & comments on the declination & string & True & \\ \hline
-        location.declination.model\ & name of the declination model, options: [ EMAG2 $|$ EMM $|$ HDGM $|$ IGRF $|$ WMM ]& string & True & controlled vocabulary \\ \hline
+        location.declination.model\ & name of the declination model. Options: [ EMAG2 $|$ EMM $|$ HDGM $|$ IGRF $|$ WMM ] see \url{https://www.ngdc.noaa.gov/geomag/} for definitions & string & True & controlled vocabulary \\ \hline
         location.declination.value\ & declination value & float & True & number \\ \hline
-        location.latitude\ & longitude location [ degrees (hh.mmss) ] & float & True & number \\ \hline
-        location.longitude\ & latitude location [ degrees (hh.mmss) ] & float & True & number\\ \hline
-        location.elevation\ & elevation [ m ] & float & True & number \\ \hline
-        orientation.option & orientation coordinate system [ geographic $|$ channel-measurement specific $|$ ...] & string & True & controlled vocabulary \\ \hline
+        location.latitude\ & longitude location for station & float & True & number \\ \hline
+        location.longitude\ & latitude location for station & float & True & number\\ \hline
+        location.elevation\ & elevation of station & float & True & number \\ \hline
+        orientation.option & orientation coordinate system [ geographic $|$ geomagnetic $|$ channel-measurement specific $|$ ...] & string & True & controlled vocabulary \\ \hline
         orientation.method & method of orienting the channels [ compass $|$ differential GPS $|$ gyroscope $|$...] & string & False & controlled vocabulary \\ \hline
         orientation.layout\_rotation\_angle & if the data were collected in a coordinate system not geographic, this will specify the angle at which all channels were rotated by. & float & False & number \\ \hline
         provenance.creation\_time & creation time of time series data for storing & string & True & date time\\ \hline
@@ -270,9 +265,10 @@ A station encompasses a single site where data are collected. If the location ch
     \end{tabular}
 \label{tab:station01}
 \end{table}    
-   
+
+\clearpage   
 \newpage
-\subsection{Example Station JSON String}
+\subsection{Example Station JSON}
 
 \begin{verbatim}
 {
@@ -329,7 +325,7 @@ A station encompasses a single site where data are collected. If the location ch
 \newpage
 \section{Run}
 
-A run represents data collected at a single station with a single sampling rate. If the dipole length or other such station parameters are changed between runs, this would require adding a new run.  If the station is relocated then a new station should be created.  If a run has channels that drop out the start and end period will be the minimum time and maximum time for all channels recorded.
+A run represents data collected at a single station with a single sampling rate. If the dipole length or other such station parameters are changed between runs, this would require adding a new run.  If the station is relocated then a new station should be created.  If a run has channels that drop out, the start and end period will be the minimum time and maximum time for all channels recorded. 
 
 \begin{table}[h!]
     \caption[Attributes for Run]{Attributes for Run category}
@@ -337,19 +333,19 @@ A run represents data collected at a single station with a single sampling rate.
         \hline
        \textbf{Metadata Key} & \textbf{Description} & \textbf{Type} & \textbf{Required} & \textbf{Style}\\ \hline acquired\_by.author & author name & string & True & free form  \\ \hline
        acquired\_by.comments & email of the contact person & string & False & email  \\ \hline
-       channels\_recorded\_auxiliary & list of auxiliary channels recorded & string & True & name list  \\ \hline
-       channels\_recorded\_electric & list of electric channels recorded & string & True & name list  \\ \hline
-       channels\_recorded\_magnetic & list of magnetic channels recorded & string & True & name list  \\ \hline
-       comments & any comments on the run & string & False & free form  \\ \hline
+       channels\_recorded\_auxiliary & list of auxiliary channels recorded & string & True & list  \\ \hline
+       channels\_recorded\_electric & list of electric channels recorded. See Table \ref{tab:channel_types} and Table \ref{tab:diretions} & string & True & list  \\ \hline
+       channels\_recorded\_magnetic & list of magnetic channels recorded. See Table \ref{tab:channel_types}  and Table \ref{tab:diretions} & string & True & list  \\ \hline
+       comments & any comments on the run. See Table \ref{tab:channel_types}  and Table \ref{tab:diretions} & string & False & free form  \\ \hline
        data\_logger.firmware.author & author of the firmware & string & False & free form  \\ \hline
        data\_logger.firmware.name & firmware name & string & False & free form  \\ \hline
        data\_logger.firmware.version & firmware version & string & False & free form  \\ \hline
        data\_logger.id & instrument ID number can be serial number or a designated ID & string & True & free form  \\ \hline
        data\_logger.manufacturer & who manufactured the instrument & string & True & free form  \\ \hline
        data\_logger.model & model version of the instrument & string & False & free form  \\ \hline
-       data\_logger.power\_source.comments & any comment about the battery & string & False & name  \\ \hline
-       data\_logger.power\_source.id & battery id & string & False & name  \\ \hline
-       data\_logger.power\_source.type & battery type & string & True & name  \\ \hline
+       data\_logger.power\_source.comments & any comment about the battery & string & False & free form  \\ \hline
+       data\_logger.power\_source.id & battery id & string & False & free form\\ \hline
+       data\_logger.power\_source.type & battery type & string & True & free form  \\ \hline
        data\_logger.power\_source.voltage.end & end voltage & float & False & number  \\ \hline
        data\_logger.power\_source.voltage.start & starting voltage & float & False & number  \\ \hline
        data\_logger.timing\_system.comments & any comment on timing system & string & False & free form  \\ \hline
@@ -357,15 +353,15 @@ A run represents data collected at a single station with a single sampling rate.
        data\_logger.timing\_system.type & type of timing system & string & False & free form  \\ \hline
        data\_logger.timing\_system.uncertainty & estimated uncertainty of the timing system & float & False & number  \\ \hline
        data\_logger.type & instrument type & string & True & free form  \\ \hline
-       data\_type & type of data recoreded for this run & string & True & controlled vocabulary  \\ \hline
+       data\_type & type of data recoreded for this run. Options: [ BBMT $|$ LPMT $|$ AMT $|$ Combo $|$ ...] see Table \ref{tab:em} for more details  & string & True & controlled vocabulary  \\ \hline
        id & run ID should be station.archive\_id\{a-z\} & string & True & alpha numeric  \\ \hline
        metadata\_by.author & metadata author name & string & True & free form  \\ \hline
        metadata\_by.comments & comments on metadata & string & False & free form  \\ \hline
        provenance.comments & any comments on provenance of the data & string & False & free form  \\ \hline
        provenance.log & a history of changes made to the data & string & False & free form  \\ \hline
        sampling\_rate & rate of sampling renureded for this run & float & True & number  \\ \hline
-       time\_period.end & end date and time of collection in UTC & string & True & date time  \\ \hline
-       time\_period.start & start date and time of collection in UTC & string & True & date time  \\ \hline
+       time\_period.end & maximum end time of all run channels & string & True & date time  \\ \hline
+       time\_period.start & minimum start time of all run channels & string & True & date time  \\ \hline
     \end{tabular}
     \label{tab:run}
 \end{table}
@@ -409,7 +405,7 @@ A run represents data collected at a single station with a single sampling rate.
             <comments>connector cable chewed by rats</comments>
         </power_source>
     </data_logger>
-    <data_type>MT</data_type>
+    <data_type>BBMT</data_type>
     <id>mt01a</id>
     <metadata_by>
          <author>student</author>
@@ -451,9 +447,9 @@ Electric channel refers to a dipole measurement of the electric field for a sing
 	dc.end & ending DC value; if more than one measurement input as a list of number [1, ...] & float & False & number \\ \hline
 	dc.start & starting DC value; if more than one measurement input as a list of number [1, ...] & float & False & number \\ \hline
 	dipole\_length & length of the dipole & float & True & number \\ \hline
-	filter.applied & boolean if filter has been applied or not. If more than one filter input as a comma separated list.  Needs to be the same length as name or if only one entry is given it is assumed to apply to all filters listed. & boolean & True & name list \\ \hline
+	filter.applied & boolean if filter has been applied or not. If more than one filter input as a comma separated list.  Needs to be the same length as name or if only one entry is given it is assumed to apply to all filters listed. & boolean & True & list \\ \hline
 	filter.comments & any comments on filters & string & False & name \\ \hline
-	filter.name & name of filter applied or to be applies. If more than one filter input as a comma separated list & string & True & name list \\ \hline
+	filter.name & name of filter applied or to be applies. If more than one filter input as a comma separated list & string & True & list \\ \hline
 	measurement\_azimuth & azimuth of channel in measurement coordinates & float & True & number \\ \hline
     
     \end{tabular}
@@ -491,7 +487,7 @@ Electric channel refers to a dipole measurement of the electric field for a sing
 
 \clearpage
 \newpage
-\subsection{Example Electric Channel JSON String}
+\subsection{Example Electric Channel JSON}
 
 \begin{verbatim}
 {
@@ -555,9 +551,9 @@ A magnetic channel is a recording of one component of the magnetic field at a si
 	data\_quality.rating.method & the method used to rate the data & string & False & free form  \\ \hline
 	data\_quality.rating.value & a rating from 1-5 where 1 is bad and 5 is good and 0 if unrated & integer & True & number  \\ \hline
 	data\_quality.warning & any warnings about the data that should be noted & string & False & free form  \\ \hline
-	filter.applied & boolean if filter has been applied or not. If more than one filter input as a comma separated list.  Needs to be the same length as name or if only one entry is given it is assumed to apply to all filters listed. & boolean & True & name list  \\ \hline
+	filter.applied & boolean if filter has been applied or not. If more than one filter input as a comma separated list.  Needs to be the same length as name or if only one entry is given it is assumed to apply to all filters listed. & boolean & True & list  \\ \hline
 	filter.comments & any comments on filters & string & False & name  \\ \hline
-	filter.name & name of filter applied or to be applies. If more than one filter input as a comma separated list & string & True & name list  \\ \hline
+	filter.name & name of filter applied or to be applies. If more than one filter input as a comma separated list & string & True & list  \\ \hline
 	h\_field\_max.end & maximum magnetic field strength at end & float & False & number  \\ \hline
 	h\_field\_max.start & maximum magnetic field strength at beginning & float & False & number  \\ \hline
 	h\_field\_min.end & minimum magnetic field strength at end  & float & False & number  \\ \hline
@@ -580,7 +576,7 @@ A magnetic channel is a recording of one component of the magnetic field at a si
 \end{table}
 
 \newpage
-\subsection{Example Magnetic Channel JSON String}
+\subsection{Example Magnetic Channel JSON}
 
 \begin{verbatim}
 {
@@ -649,7 +645,7 @@ It is important to note that filters will be identified by name and must be cons
     \item \verb|lowpass_10hz| $\longrightarrow$ low pass filter below 10 Hz
 \end{itemize}
 
-In each channel there are keys to identify filters that can or have been applied to the data to get an appropriate signal.  This can be a list of filter names or a single filter name.  An \verb|applied| key also exists for the user to input whether that filter has been applied.  Can be a single Boolean \verb|True| if all filters have been applied, \verb|False| if none of the filters have been applied.  Or can be a list the same length and the filter name list identifying if the filter has been applied.  \verb|name: "[counts2mv, notch60hz, e_gain]"| and \verb|applied: "[True, False, True]"|. 
+In each channel there are keys to identify filters that can or have been applied to the data to get an appropriate signal.  This can be a list of filter names or a single filter name.  An \verb|applied| key also exists for the user to input whether that filter has been applied.  Can be a single Boolean \verb|True| if all filters have been applied, \verb|False| if none of the filters have been applied.  Or can be a list the same length and the filter list identifying if the filter has been applied.  \verb|name: "[counts2mv, notch_60hz, e_gain]"| and \verb|applied: "[True, False, True]"|. 
 
 \begin{table}[htb!]
     \caption[Attributes for Filter]{Attributes for Filters}
@@ -666,7 +662,7 @@ In each channel there are keys to identify filters that can or have been applied
     \label{tab:filter}
 \end{table}
 
-\subsection{Example Filter JSON String} 
+\subsection{Example Filter JSON} 
 
 \begin{verbatim}
 {
@@ -676,7 +672,7 @@ In each channel there are keys to identify filters that can or have been applied
          "units_in": "counts",
          "units_out": "mV",
          "calibration_date": "2015-07-01",
-        "comments": "Accurate to .001 mV"
+        "comments": "Accurate to 0.001 mV"
     }
 }
 \end{verbatim}
@@ -699,9 +695,9 @@ Auxiliary channels include state of health channels, temperature, etc.
         data\_quality.rating.method & the method used to rate the data & string & False & free form  \\ \hline
         data\_quality.rating.value & a rating from 1-5 where 1 is bad and 5 is good and 0 if unrated & integer & True & number  \\ \hline
         data\_quality.warning & any warnings about the data that should be noted & string & False & free form  \\ \hline
-        filter.applied & boolean if filter has been applied or not. If more than one filter input as a comma separated list.  Needs to be the same length as name or if only one entry is given it is assumed to apply to all filters listed. & boolean & True & name list  \\ \hline
+        filter.applied & boolean if filter has been applied or not. If more than one filter input as a comma separated list.  Needs to be the same length as name or if only one entry is given it is assumed to apply to all filters listed. & boolean & True & list  \\ \hline
         filter.comments & any comments on filters & string & False & name  \\ \hline
-        filter.name & name of filter applied or to be applies. If more than one filter input as a comma separated list & string & True & name list  \\ \hline
+        filter.name & name of filter applied or to be applies. If more than one filter input as a comma separated list & string & True & list  \\ \hline
         location.elevation & elevation of location in datum specified at survey level & float & False & number  \\ \hline
         location.latitude & latitude of location in datum specified at survey level & float & False & number  \\ \hline
         location.longitude & longitude of location in datum specified at survey level & float & False & number  \\ \hline
@@ -716,7 +712,7 @@ Auxiliary channels include state of health channels, temperature, etc.
 \end{table}
 
 \newpage
-\subsection{Example Auxiliary JSON String} 
+\subsection{Example Auxiliary JSON} 
 
 \begin{verbatim}
 <auxiliary>
@@ -758,5 +754,54 @@ Auxiliary channels include state of health channels, temperature, etc.
     <units>celsius</units>
 </auxiliary>
 \end{verbatim}
+
+\newpage
+\appendix
+\section{Option Definitions}
+\label{appendix}
+
+\begin{table}[h!]
+	\centering
+	\caption[Electromagnetic Period Bands]{Generalized electromagnetic period bands.  Some overlap, use the closest definition.}
+	\begin{tabular}{|l|c|c|}
+		\hline
+		\textbf{Data Type} & \textbf{Definition}  & \textbf{Period Range [s]} \\ \hline
+		RMT & radio magnetotellurics &  $10^{-6}$ -- $10^{-4}$\\ \hline	
+		AMT &  audio magnetotellurics & $10^{-4}$ -- $10^{0}$ \\ \hline
+		BBMT & broadband magnetotellurics & $10^{-1}$ -- $10^{3}$ \\ \hline
+		LPMT & long period magnetotellurics  &  $10^{2}$ -- $10^{5}$ \\ \hline
+		ULPMT & ultra long period magnetotellurics  &  $10^{5}$ -- $10^{7}$ \\ \hline		
+	\end{tabular}
+	\label{tab:em}
+\end{table}
+
+\begin{table}[h!]
+	\centering
+	\caption[Channel Components]{These are the common channel components.  More can be added.}
+	\begin{tabular}{|l|c|}
+		\hline
+		\textbf{Channel Type} & \textbf{Definition} \\ \hline
+		E & electric field measurement  \\ \hline	
+		H & magnetic field measurement \\ \hline
+		T & temperature \\ \hline
+		Battery & battery   \\ \hline
+		SOH & state-of-health channel   \\ \hline		
+	\end{tabular}
+	\label{tab:channel_types}
+\end{table}
+
+\begin{table}[h!]
+	\centering
+	\caption[Channel Direction]{Channel Direction.  The convention for many MT setups follows the right-hand-rule with X in the northern direction, Y in the eastern direction, and Z positive down.  If the setup has multiple channels in the same direction they can be labeled with a number.  For instance if you measure multiple electric fields Ex01, Ey01, Ex02, Ey02.}
+	\begin{tabular}{|l|c|}
+		\hline
+		\textbf{Direction} & \textbf{Definition} \\ \hline
+		x & north direction  \\ \hline	
+		y & east direction \\ \hline
+		z & vertical direction \\ \hline
+		\# \{0--9\} & variable directions   \\ \hline		
+	\end{tabular}
+	\label{tab:diretions}
+\end{table}
 
 \end{document}
