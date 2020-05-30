@@ -148,7 +148,8 @@ class MTH5():
         self.logger = logging.getLogger('{0}.{1}'.format(__name__, 
                                                          self._class_name))
         
-        self.default_groups = ['stations', 'reports', 'filters']
+        self._default_master_group = 'survey'
+        self._default_subgroups =['stations', 'reports', 'filters']
         
     @property
     def filename(self):
@@ -200,12 +201,13 @@ class MTH5():
         
         self.mth5_obj = h5py.File(self.__filename, 'w')
         
-        for group in self.default_groups:
-            self.mth5_obj.create_group(group)
+        self.mth5_obj.create_group(self._default_master_group)
+        
+        for group in self._default_subgroups:
+            self.mth5_obj.create_group('{0}/{1}'.format(
+                self._default_master_group, group))
             
         self.logger.info("Initialized MTH5 file {0}".format(self.filename))
-            
-        return True
         
 
     def close_mth5(self):
@@ -255,14 +257,9 @@ class MTH5():
         pass
     
 
-    def write_metadata(self):
+    def write_metadata(self, meta_dict):
         """
         Write metadata to the HDf5 file as json strings under the headings:
-            * site
-            * field_notes
-            * copyright
-            * provenance
-            * software
         """
         if self.h5_is_write():
             for attr in ['site', 'field_notes', 'copyright', 'provenance',

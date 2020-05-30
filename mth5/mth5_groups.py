@@ -10,7 +10,7 @@ Created on Fri May 29 15:09:48 2020
 # =============================================================================
 # Imports
 # =============================================================================
-import h5py
+import numpy as np
 from mth5 import metadata
 
 # =============================================================================
@@ -22,16 +22,45 @@ class BaseGroup():
     including attributes and data.
     """
     
-    def __init__(self, *args, **kwargs):
-        self.relative_path = None
-        self.mth5_obj = None
+    def __init__(self, group, *args, **kwargs):
+        self.group = group
+        self.numpy_translation = {'integer': np.int,
+                                  'float': np.float,
+                                  'string': None,
+                                  'boolean': np.bool_}
+        
+    def __str__(self):
+        lines = ['{0}:'.format(self.group.name)]
+        for key, value in self.group.items():
+            lines.append('\t{0}: {1}'.format(key, value))
+        return '\n'.join(lines)
         
     def read_metadata(self):
-        pass
-    
+        """
+        read metadata
+        
+        :return: DESCRIPTION
+        :rtype: TYPE
+
+        """
+        return dict([(key, value) for key, value in self.group.attrs.items()])
+               
     def write_metadata(self, meta_dict):
-        pass
-    
+        """
+        Write metadata from a dictionary
+        
+        :param meta_dict: DESCRIPTION
+        :type meta_dict: TYPE
+        :return: DESCRIPTION
+        :rtype: TYPE
+
+        """
+        
+        for key, value in meta_dict.items():
+            if value is None:
+                value = 'none'
+            self.group.attrs.create(key, value)
+
     def read_data(self):
         pass
     
