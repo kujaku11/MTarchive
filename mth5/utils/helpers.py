@@ -219,8 +219,10 @@ def to_numpy_type(value):
     """
     Need to make the attributes friendly with Numpy and HDF5.  
     
-    For numbers and bool this is straight forward.  But for strings this can 
-    be a challenge.  
+    For numbers and bool this is straight forward they are automatically 
+    mapped in h5py to a numpy type.  
+    
+    But for strings this can be a challenge, especially a list of strings.  
     
     HDF5 should only deal with ASCII characters or Unicode.  No binary data
     is allowed.

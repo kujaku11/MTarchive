@@ -10,12 +10,14 @@ Created on Fri May 29 15:09:48 2020
 # =============================================================================
 # Imports
 # =============================================================================
+import inspect
 import numpy as np
 import weakref
 
 from mth5 import metadata
 from mth5.utils.helpers import to_numpy_type
 
+meta_classes = dict(inspect.getmembers(metadata, inspect.isclass))
 # =============================================================================
 # 
 # =============================================================================
@@ -26,7 +28,9 @@ class BaseGroup():
     """
     
     def __init__(self, group, *args, **kwargs):
-        self.group = weakref.proxy(group)
+        self.group = weakref.ref(group)()
+        self._class_name = self.__class__.__name__
+        self.metadata = meta_classes[self._class_name.split('Group')[0]]
         
     def __str__(self):
         lines = ['{0}:'.format(self.group.name)]
@@ -42,7 +46,10 @@ class BaseGroup():
         :rtype: TYPE
 
         """
-        return dict([(key, value) for key, value in self.group.attrs.items()])
+        meta_dict = dict([(key, value) for key, value in 
+                          self.group.attrs.items()])
+        
+        self.metadata.from_dict({self.__class__.__name__: meta_dict})
                
     def write_metadata(self, meta_dict):
         """
@@ -69,12 +76,16 @@ class BaseGroup():
     
     
 
-class StationGroup():
+class StationGroup(BaseGroup):
     """
     holds the station group
     
     """
-    pass
+    
+    def __init__(self, *args, **kwargs):
+        
+        super(StationGroup, self).__init__(*args, **kwargs)
+    
     
 class RunGroup():
     """
