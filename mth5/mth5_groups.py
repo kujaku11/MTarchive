@@ -11,7 +11,10 @@ Created on Fri May 29 15:09:48 2020
 # Imports
 # =============================================================================
 import numpy as np
+import weakref
+
 from mth5 import metadata
+from mth5.utils.helpers import to_numpy_type
 
 # =============================================================================
 # 
@@ -23,11 +26,7 @@ class BaseGroup():
     """
     
     def __init__(self, group, *args, **kwargs):
-        self.group = group
-        self.numpy_translation = {'integer': np.int,
-                                  'float': np.float,
-                                  'string': None,
-                                  'boolean': np.bool_}
+        self.group = weakref.proxy(group)
         
     def __str__(self):
         lines = ['{0}:'.format(self.group.name)]
@@ -59,7 +58,7 @@ class BaseGroup():
         for key, value in meta_dict.items():
             if value is None:
                 value = 'none'
-            self.group.attrs.create(key, value)
+            self.group.attrs.create(key, to_numpy_type(value))
 
     def read_data(self):
         pass

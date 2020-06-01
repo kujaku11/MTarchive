@@ -5,11 +5,12 @@ Created on Fri May 22 16:49:06 2020
 @author: jpeacock
 """
 
-from collections.abc import MutableMapping
+from collections.abc import MutableMapping, Iterable
 from collections import OrderedDict, defaultdict
 from xml.etree import cElementTree as et 
 from xml.dom import minidom
 from operator import itemgetter
+import numpy as np
   
 # code to convert ini_dict to flattened dictionary 
 # default seperater '_' 
@@ -213,4 +214,28 @@ def element_to_dict(element):
 def element_to_string(element):
     return minidom.parseString(et.tostring(element).decode()).toprettyxml(
             indent='    ')
+
+def to_numpy_type(value):
+    """
+    Need to make the attributes friendly with Numpy and HDF5.  
+    
+    For numbers and bool this is straight forward.  But for strings this can 
+    be a challenge.  
+    
+    HDF5 should only deal with ASCII characters or Unicode.  No binary data
+    is allowed.
+    """
+
+    if isinstance(value, (str, np.str_, int, float, bool, complex,
+                          np.int, np.float, np.bool, np.complex)):
+        return value
+    if isinstance(value, Iterable):
+        if np.any([type(x) in [str, bytes, np.str_] for x in value]):
+            return np.array(value, dtype='S')
+        else:
+            return np.array(value)
+    
+    else:
+        raise TypeError('Type {0} not understood'.format(type(value)))
+    
     
