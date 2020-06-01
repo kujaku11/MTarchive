@@ -30,7 +30,7 @@ class BaseGroup():
     def __init__(self, group, *args, **kwargs):
         self.group = weakref.ref(group)()
         self._class_name = self.__class__.__name__
-        self.metadata = meta_classes[self._class_name.split('Group')[0]]
+        self.metadata = meta_classes[self._class_name.split('Group')[0]]()
         
     def __str__(self):
         lines = ['{0}:'.format(self.group.name)]
@@ -72,9 +72,6 @@ class BaseGroup():
     
     def write_data(self):
         pass
-    
-    
-    
 
 class StationGroup(BaseGroup):
     """
@@ -84,23 +81,32 @@ class StationGroup(BaseGroup):
     
     def __init__(self, *args, **kwargs):
         
-        super(StationGroup, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
     
     
-class RunGroup():
+class RunGroup(BaseGroup):
     """
     holds the run group
     """
-    pass
+   
+    def __init__(self, *args, **kwargs):
+        
+        super().__init__(*args, **kwargs)
     
-class ChannelGroup():
+class ChannelGroup(BaseGroup):
     """
     holds a channel
     """
-    pass
     
-class CalibrationGroup():
+    def __init__(self, *args, **kwargs):
+        
+        super().__init__(*args, **kwargs)
+    
+class CalibrationGroup(BaseGroup):
     """
     holds calibration group
     """
-    pass
+    
+    def __init__(self, *args, **kwargs):
+        
+        super().__init__(*args, **kwargs)

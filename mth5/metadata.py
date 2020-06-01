@@ -723,7 +723,7 @@ class Location(Base):
         :param latitude: latitude in decimal degrees or other format
         :type latitude: float or string
         """
-        if latitude in [None, 'None']:
+        if latitude in [None, 'None', 'none']:
             return None
         try:
             lat_value = float(latitude)
@@ -753,7 +753,7 @@ class Location(Base):
         :param latitude: longitude in decimal degrees or other format
         :type latitude: float or string
         """
-        if longitude in [None, 'None']:
+        if longitude in [None, 'None', 'none']:
             return None
         try:
             lon_value = float(longitude)
@@ -1445,7 +1445,7 @@ class Station(Base):
         self.location = Location()
         self.time_period = TimePeriod()
 
-        super(Station, self).__init__()
+        super(Station, self).__init__(**kwargs)
 
         self._attr_dict = ATTR_DICT['station']
 
