@@ -358,6 +358,10 @@ class MTH5Table():
         
         self.dataframe.drop(remove_index, inplace=True)
         
+    def to_nparray(self):
+        return np.array([tuple(v) for v in self.dataframe.values.tolist()], 
+                 dtype=self.dtypes)
+        
         
         
           
