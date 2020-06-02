@@ -25,6 +25,7 @@ import time
 import json
 import dateutil
 import logging
+import weakref
 
 import h5py
 import pandas as pd
@@ -36,7 +37,8 @@ from platform import platform
 from mth5.utils.exceptions import MTH5Error
 from mth5 import __version__
 from mth5.utils.mttime import get_now_utc
-from mth5 import mth5_groups 
+from mth5 import mth5_groups as m5groups 
+from mth5.helpers import get_tree, close_open_files
 
 # =============================================================================
 # MT HDF5 file
@@ -140,7 +142,7 @@ class MTH5():
     """
 
     def __init__(self, filename=None):
-        self.mth5_obj = None
+        self.__hdf5_obj = None
         
         self.__filename = filename
         if self.__filename:
@@ -151,9 +153,9 @@ class MTH5():
         self.logger = logging.getLogger('{0}.{1}'.format(__name__, 
                                                          self._class_name))
         
-        self._default_master_group = 'Survey'
-        self._default_subgroups =['Stations', 'Reports', 'Filters',
-                                  'Standards']
+        self._default_root_name = 'Survey'
+        self._default_subgroup_names =['Stations', 'Reports', 'Filters',
+                                       'Standards']
         
         self._file_attrs = {'file.type': 'MTH5',
                             'file.access.platform': platform(),
@@ -161,23 +163,86 @@ class MTH5():
                             'MTH5.version': __version__,
                             'MTH5.software': 'pymth5'}
         
+        self._station_summary = {'max_size': (1000,),
+                                 'dtype': np.dtype([('name', 'S5'),
+                                                    ('start', 'S32'),
+                                                    ('end', 'S32'),
+                                                    ('components', 'S100'),
+                                                    ('measurement_type',
+                                                     'S12'),
+                                                    ('location.latitude',
+                                                     np.float),
+                                                    ('location.longitude',
+                                                     np.float)])}
+        
     def __str__(self):
-        return recursive_hdf5_tree(self.mth5_obj, [])
+        return get_tree(self.__hdf5_obj)
         
     @property
     def filename(self):
         if self.h5_is_write():
-            return Path(self.mth5_obj.filename)
+            return Path(self.__hdf5_obj.filename)
         else:
             msg = ('MTH5 file is not open or has not been created yet. ' +
                    'Returning default name')
             self.logger.warning(msg)
             return self.__filename
-            
+
+    @property
+    def survey_group(self):
+        if self.h5_is_write():
+            return m5groups.SurveyGroup(self.__hdf5_obj['/Survey'])
+        else:
+            self.logger.info("File is closed cannot access /Survey")
+            return None
+        
+    @property
+    def reports_group(self):
+        if self.h5_is_write():
+            return m5groups.ReportsGroup(self.__hdf5_obj['/Survey/Reports'])
+        else:
+            self.logger.info("File is closed cannot access /Reports")
+            return None
+
+    @property
+    def filters_group(self):
+        if self.h5_is_write():
+            return m5groups.FiltersGroup(self.__hdf5_obj['/Survey/Filters'])
+        else:
+            self.logger.info("File is closed cannot access /Filters")
+            return None        
+
+    @property
+    def standards_group(self):
+        if self.h5_is_write():
+            return m5groups.StandardsGroup(
+                self.__hdf5_obj['/Survey/Standards'])
+        else:
+            self.logger.info("File is closed cannot access /Standards")
+            return None 
+
+    @property
+    def stations_group(self):
+        if self.h5_is_write():
+            return m5groups.StationGroup(self.__hdf5_obj['/Survey/Stations'])
+        else:
+            self.logger.info("File is closed cannot access /Reports")
+            return None
 
     def open_mth5(self, filename, mode='a'):
         """
         open an mth5 file
+        
+        :return: Survey Group 
+        :type: m5groups.SurveyGroup
+        
+        :Example: ::
+            
+            >>> from mth5 import mth5
+            >>> mth5_object = mth5.MTH5()
+            >>> survey_object = mth5_object.open_mth5('Test.mth5', 'w')
+            
+        
         """
         self.__filename = filename
         if not isinstance(self.__filename, Path):
@@ -188,77 +253,76 @@ class MTH5():
                 self.logger.warning("{0} will be overwritten in 'w' mode".format(
                     self.__filename.name))
                 try:
-                    survey_group = self.initialize_file(self.__filename)
+                    self.initialize_file(self.__filename)
                 except OSError as error:
                     msg = ('{0}. Need to close any references to {1} first. ' +
                            'Then reopen the file in the preferred mode')
                     self.logger.exception(msg.format(error, self.__filename))
             elif mode in ['a', 'r', 'r+', 'w-', 'x']:
-                self.mth5_obj = h5py.File(self.__filename, mode=mode)
-                survey_group = mth5_groups.SurveyGroup(
-                    self.mth5_obj['Survey'])
+                self.__hdf5_obj = h5py.File(self.__filename, mode=mode)
+
             else:
                 msg = "mode {0} is not understood".format(mode)
                 self.logger.error(msg)
                 raise MTH5Error(msg)
         else:
             if mode in ['a', 'w', 'w-', 'x']:
-                survey_group = self.initialize_file(self.__filename)
+                self.initialize_file(self.__filename)
             else:
                 msg = "Cannot open new file in mode {0} ".format(mode)
                 self.logger.error(msg)
                 raise MTH5Error(msg)
-        return survey_group
-
 
     def initialize_file(self, filename):
         """
         Initialize the default groups for the file
         
         :return: Survey Group
-        :rtype: mth5_groups.SurveyGroup
+        :rtype: m5groups.SurveyGroup
 
         """
         
-        self.mth5_obj = h5py.File(self.__filename, 'w')
+        self.__hdf5_obj = h5py.File(self.__filename, 'w')
         
-        # write general metadat
-        self.mth5_obj.attrs.update(self._file_attrs)
+        # write general metadata
+        self.__hdf5_obj.attrs.update(self._file_attrs)
         
-        survey_group = self.mth5_obj.create_group(self._default_master_group)
-        survey_obj = mth5_groups.SurveyGroup(survey_group)
+        survey_group = self.__hdf5_obj.create_group(self._default_root_name)
+        survey_obj = m5groups.SurveyGroup(survey_group)
         survey_obj.write_metadata()
         
-        for group in self._default_subgroups:
-            self.mth5_obj.create_group('{0}/{1}'.format(
-                self._default_master_group, group))
+        for group_name in self._default_subgroup_names:
+            grp = self.__hdf5_obj.create_group('{0}/{1}'.format(
+                    self._default_root_name, group_name))
+            if 'station' in group_name.lower():
+                grp.create_dataset('Summary',
+                                   (1, ),
+                                   maxshape=self._station_summary['max_size'],
+                                   dtype=self._station_summary['dtype'])
             
         self.logger.info("Initialized MTH5 file {0} in mode {1}".format(
             self.filename, 'w'))
         
-        return survey_obj
-    
-    def _initialize_station(self):
-        pass
-        
+        return survey_obj        
 
     def close_mth5(self):
         """
         close mth5 file to make sure everything is flushed to the file
         """
-
-        self.mth5_obj.flush()       
-        self.mth5_obj.close()
+        fn = str(self.filename)
+        self.__hdf5_obj.flush()       
+        self.__hdf5_obj.close()
+        self.logger.info("Flushed and closed {0}".format(fn))
         
     def h5_is_write(self):
         """
         check to see if the hdf5 file is open and writeable
         """
-        if isinstance(self.mth5_obj, h5py.File):
+        if isinstance(self.__hdf5_obj, h5py.File):
             try:
-                if 'w' in self.mth5_obj.mode or '+' in self.mth5_obj.mode:
+                if 'w' in self.__hdf5_obj.mode or '+' in self.__hdf5_obj.mode:
                     return True
-                elif self.mth5_obj.mode == 'r':
+                elif self.__hdf5_obj.mode == 'r':
                     return False
             except ValueError:
                 return False
@@ -276,17 +340,16 @@ class MTH5():
         :rtype: TYPE
 
         """
-        group_name = '{0}/{1}/{2}'.format('Survey', 'Stations', name)
         
         try:
-            station_group = self.mth5_obj.create_group(group_name)
-            self.logger.debug("Created group {0}".format(station_group))
+            station_group = self.stations_group.create_group(name)
+            self.logger.debug("Created group {0}".format(station_group.name))
         except ValueError:
             msg = "Group {0} alread exists, returning existing group"
-            self.logger.info(msg.format(group_name))
-            station_group = self.mth5_obj[group_name]
+            self.logger.info(msg.format(name))
+            station_group = self.station_group[name]
         
-        return mth5_groups.StationGroup(station_group)
+        return m5groups.StationGroup(station_group)
         
         
     
@@ -303,14 +366,14 @@ class MTH5():
         pass
     
 
-    def write_metadata(self, meta_dict):
-        """
-        Write metadata to the HDf5 file as json strings under the headings:
-        """
-        if self.h5_is_write():
-            for attr in ['site', 'field_notes', 'copyright', 'provenance',
-                         'software']:
-                self.mth5_obj.attrs[attr] = getattr(self, attr).to_json()
+    # def write_metadata(self, meta_dict):
+    #     """
+    #     Write metadata to the HDf5 file as json strings under the headings:
+    #     """
+    #     if self.h5_is_write():
+    #         for attr in ['site', 'field_notes', 'copyright', 'provenance',
+    #                      'software']:
+    #             self.__hdf5_obj.attrs[attr] = getattr(self, attr).to_json()
 
 #     def add_schedule(self, schedule_obj, compress=True):
 #         """
@@ -330,7 +393,7 @@ class MTH5():
 
 #         if self.h5_is_write():
 #             ### create group for schedule action
-#             schedule = self.mth5_obj.require_group(schedule_obj.name)
+#             schedule = self.__hdf5_obj.require_group(schedule_obj.name)
 #             ### add metadata
 #             for attr in schedule_obj._attrs_list:
 #                 schedule.attrs[attr] = getattr(schedule_obj, attr)
@@ -347,7 +410,7 @@ class MTH5():
 #                                             data=getattr(schedule_obj, comp))
 #             ### set the convenience attribute to the schedule
 #             setattr(self, schedule_obj.name, Schedule())
-#             getattr(self, schedule_obj.name).from_mth5(self.mth5_obj, 
+#             getattr(self, schedule_obj.name).from_mth5(self.__hdf5_obj, 
 #                                                        schedule_obj.name)
             
 #         else:
@@ -369,7 +432,7 @@ class MTH5():
 #         if self.h5_is_write():
 #             try:
 #                 delattr(self, schedule_name)
-#                 del self.mth5_obj['/{0}'.format(schedule_name)]
+#                 del self.__hdf5_obj['/{0}'.format(schedule_name)]
 #             except AttributeError:
 #                 print("Could not find {0}, not an attribute".format(schedule_name))
 
@@ -387,7 +450,7 @@ class MTH5():
 #         """
 
 #         if self.h5_is_write():
-#             cal = self.mth5_obj['/calibrations'].require_group(calibration_obj.name)
+#             cal = self.__hdf5_obj['/calibrations'].require_group(calibration_obj.name)
 #             cal.attrs['metadata'] = calibration_obj.to_json()
 #             for col in calibration_obj._col_list:
 #                 if compress:
@@ -401,7 +464,7 @@ class MTH5():
             
 #             ### set the convenience attribute to the calibration
 #             setattr(self, calibration_obj.name, Calibration())
-#             getattr(self, calibration_obj.name).from_mth5(self.mth5_obj, 
+#             getattr(self, calibration_obj.name).from_mth5(self.__hdf5_obj, 
 #                                                           calibration_obj.name)
 #         else:
 #             raise MTH5Error('{0} is not writeable'.format(self.mth5_fn))
@@ -422,7 +485,7 @@ class MTH5():
 #         if self.h5_is_write():
 #             try:
 #                 delattr(self, calibration_name)
-#                 del self.mth5_obj['calibrations/{0}'.format(calibration_name)]
+#                 del self.__hdf5_obj['calibrations/{0}'.format(calibration_name)]
 #             except AttributeError:
 #                 print("Could not find {0}, not an attribute".format(calibration_name))
 #         else:
@@ -437,7 +500,7 @@ class MTH5():
 #             if 'sch' in key:
 #                 for attr in getattr(self, key)._attrs_list:
 #                     value = getattr(getattr(self, key), attr)
-#                     self.mth5_obj[key].attrs[attr] = value
+#                     self.__hdf5_obj[key].attrs[attr] = value
 
 #     def read_mth5(self, mth5_fn):
 #         """
@@ -452,21 +515,21 @@ class MTH5():
 #         self.mth5_fn = mth5_fn
 #         ### read in file and give write permissions in case the user wants to
 #         ### change any parameters
-#         self.mth5_obj = h5py.File(self.mth5_fn, 'r+')
+#         self.__hdf5_obj = h5py.File(self.mth5_fn, 'r+')
 #         for attr in ['site', 'field_notes', 'copyright', 'provenance',
 #                      'software']:
-#             getattr(self, attr).from_json(self.mth5_obj.attrs[attr])
+#             getattr(self, attr).from_json(self.__hdf5_obj.attrs[attr])
 
-#         for key in self.mth5_obj.keys():
+#         for key in self.__hdf5_obj.keys():
 #             if 'sch' in key:
 #                 setattr(self, key, Schedule())
-#                 getattr(self, key).from_mth5(self.mth5_obj, key)
+#                 getattr(self, key).from_mth5(self.__hdf5_obj, key)
 #             elif 'cal' in key:
 #                 try:
-#                     for ckey in self.mth5_obj[key].keys():
+#                     for ckey in self.__hdf5_obj[key].keys():
 #                         m_attr = 'calibration_{0}'.format(ckey)
 #                         setattr(self, m_attr, Calibration())
-#                         getattr(self, m_attr).from_mth5(self.mth5_obj, ckey)
+#                         getattr(self, m_attr).from_mth5(self.__hdf5_obj, ckey)
 #                 except KeyError:
 #                     print('No Calibration Data')
 
@@ -630,12 +693,3 @@ class MTH5():
 # #             Error
 # # ==============================================================================
 
-def recursive_hdf5_tree(group, lines=[]):
-    if isinstance(group, (h5py._hl.group.Group, h5py._hl.files.File)):
-        for key, value in group.items():
-            lines.append('-{0}: {1}'.format(key, value))
-            recursive_hdf5_tree(value, lines)
-    elif isinstance(group, h5py._hl.dataset.Dataset):
-        for key, value in group.attrs.items():
-            lines.append('\t-{0}: {1}'.format(key, value))
-    return '\n'.join(lines)
