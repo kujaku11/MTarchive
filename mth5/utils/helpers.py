@@ -236,8 +236,20 @@ def to_numpy_type(value):
             return np.array(value, dtype='S')
         else:
             return np.array(value)
+        
+    if value is None:
+        return 'none'
     
     else:
         raise TypeError('Type {0} not understood'.format(type(value)))
     
-    
+def recursive_hdf5_tree(group):
+    lines = []
+    if isinstance(group, (h5py._hl.group.Group, h5py._hl.files.File)):
+        for key, value in group.items():
+            lines.append('\t-{0}: {1}'.format(key, value))
+            recursive_hdf5_tree(value,sep=sep+'\t')
+    elif isinstance(group, h5py._hl.dataset.Dataset):
+        for key, value in group.attrs.items():
+            lines.append('\t-{0}: {1}'.format(key, value))
+    return '\n'.join(lines)

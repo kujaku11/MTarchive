@@ -26,14 +26,17 @@ import json
 import dateutil
 import logging
 
-
 import h5py
 import pandas as pd
 import numpy as np
 
 from pathlib import Path
-from mth5.utils.exceptions import MTH5Error
+from platform import platform
 
+from mth5.utils.exceptions import MTH5Error
+from mth5 import __version__
+from mth5.utils.mttime import get_now_utc
+from mth5 import mth5_groups 
 
 # =============================================================================
 # MT HDF5 file
@@ -148,8 +151,18 @@ class MTH5():
         self.logger = logging.getLogger('{0}.{1}'.format(__name__, 
                                                          self._class_name))
         
-        self._default_master_group = 'survey'
-        self._default_subgroups =['stations', 'reports', 'filters']
+        self._default_master_group = 'Survey'
+        self._default_subgroups =['Stations', 'Reports', 'Filters',
+                                  'Standards']
+        
+        self._file_attrs = {'file.type': 'MTH5',
+                            'file.access.platform': platform(),
+                            'file.access.time': get_now_utc(),
+                            'MTH5.version': __version__,
+                            'MTH5.software': 'pymth5'}
+        
+    def __str__(self):
+        return recursive_hdf5_tree(self.mth5_obj, [])
         
     @property
     def filename(self):
@@ -174,40 +187,59 @@ class MTH5():
             if mode in ['w']:
                 self.logger.warning("{0} will be overwritten in 'w' mode".format(
                     self.__filename.name))
-                self.initialize_file(self.__filename)
+                try:
+                    survey_group = self.initialize_file(self.__filename)
+                except OSError as error:
+                    msg = ('{0}. Need to close any references to {1} first. ' +
+                           'Then reopen the file in the preferred mode')
+                    self.logger.exception(msg.format(error, self.__filename))
             elif mode in ['a', 'r', 'r+', 'w-', 'x']:
                 self.mth5_obj = h5py.File(self.__filename, mode=mode)
+                survey_group = mth5_groups.SurveyGroup(
+                    self.mth5_obj['Survey'])
             else:
                 msg = "mode {0} is not understood".format(mode)
                 self.logger.error(msg)
                 raise MTH5Error(msg)
         else:
             if mode in ['a', 'w', 'w-', 'x']:
-                self.initialize_file(self.__filename)
+                survey_group = self.initialize_file(self.__filename)
             else:
                 msg = "Cannot open new file in mode {0} ".format(mode)
                 self.logger.error(msg)
                 raise MTH5Error(msg)
+        return survey_group
 
 
     def initialize_file(self, filename):
         """
         Initialize the default groups for the file
         
-        :return: DESCRIPTION
-        :rtype: TYPE
+        :return: Survey Group
+        :rtype: mth5_groups.SurveyGroup
 
         """
         
         self.mth5_obj = h5py.File(self.__filename, 'w')
         
-        self.mth5_obj.create_group(self._default_master_group)
+        # write general metadat
+        self.mth5_obj.attrs.update(self._file_attrs)
+        
+        survey_group = self.mth5_obj.create_group(self._default_master_group)
+        survey_obj = mth5_groups.SurveyGroup(survey_group)
+        survey_obj.write_metadata()
         
         for group in self._default_subgroups:
             self.mth5_obj.create_group('{0}/{1}'.format(
                 self._default_master_group, group))
             
-        self.logger.info("Initialized MTH5 file {0}".format(self.filename))
+        self.logger.info("Initialized MTH5 file {0} in mode {1}".format(
+            self.filename, 'w'))
+        
+        return survey_obj
+    
+    def _initialize_station(self):
+        pass
         
 
     def close_mth5(self):
@@ -232,9 +264,11 @@ class MTH5():
                 return False
         return False
     
-    def add_station(self, station):
+    def add_station(self, name):
         """
-        Add a station
+        Add a station and returns the group container.  The station name
+        needs to be the same as the archive_id name.  A 5 character 
+        alphanumeric string.
         
         :param station: DESCRIPTION
         :type station: TYPE
@@ -242,7 +276,19 @@ class MTH5():
         :rtype: TYPE
 
         """
-        pass
+        group_name = '{0}/{1}/{2}'.format('Survey', 'Stations', name)
+        
+        try:
+            station_group = self.mth5_obj.create_group(group_name)
+            self.logger.debug("Created group {0}".format(station_group))
+        except ValueError:
+            msg = "Group {0} alread exists, returning existing group"
+            self.logger.info(msg.format(group_name))
+            station_group = self.mth5_obj[group_name]
+        
+        return mth5_groups.StationGroup(station_group)
+        
+        
     
     def add_run(self, station, run):
         """
@@ -266,321 +312,330 @@ class MTH5():
                          'software']:
                 self.mth5_obj.attrs[attr] = getattr(self, attr).to_json()
 
-    def add_schedule(self, schedule_obj, compress=True):
-        """
-        add a schedule object to the HDF5 file
+#     def add_schedule(self, schedule_obj, compress=True):
+#         """
+#         add a schedule object to the HDF5 file
 
-        :param schedule_obj: container holding the time series data as a
-                             pandas.DataFrame with columns as components
-                             and indexed by time.
-        :type schedule_obj: mtf5.Schedule object
+#         :param schedule_obj: container holding the time series data as a
+#                              pandas.DataFrame with columns as components
+#                              and indexed by time.
+#         :type schedule_obj: mtf5.Schedule object
         
-        :param bool compress: [ True | False ] to internally compress the data
+#         :param bool compress: [ True | False ] to internally compress the data
         
-        .. note:: will name the schedule according to schedule_obj.name.  
-                  Should be schedule_## where ## is the order of the schedule
-                  as a 2 character digit [0-9][0-9] 
-        """
+#         .. note:: will name the schedule according to schedule_obj.name.  
+#                   Should be schedule_## where ## is the order of the schedule
+#                   as a 2 character digit [0-9][0-9] 
+#         """
 
-        if self.h5_is_write():
-            ### create group for schedule action
-            schedule = self.mth5_obj.require_group(schedule_obj.name)
-            ### add metadata
-            for attr in schedule_obj._attrs_list:
-                schedule.attrs[attr] = getattr(schedule_obj, attr)
+#         if self.h5_is_write():
+#             ### create group for schedule action
+#             schedule = self.mth5_obj.require_group(schedule_obj.name)
+#             ### add metadata
+#             for attr in schedule_obj._attrs_list:
+#                 schedule.attrs[attr] = getattr(schedule_obj, attr)
 
-            ### add datasets for each channel
-            for comp in schedule_obj.comp_list:
-                if compress:
-                    schedule.create_dataset(comp.lower(),
-                                            data=getattr(schedule_obj, comp),
-                                            compression='gzip',
-                                            compression_opts=9)
-                else:
-                    schedule.create_dataset(comp.lower(),
-                                            data=getattr(schedule_obj, comp))
-            ### set the convenience attribute to the schedule
-            setattr(self, schedule_obj.name, Schedule())
-            getattr(self, schedule_obj.name).from_mth5(self.mth5_obj, 
-                                                       schedule_obj.name)
+#             ### add datasets for each channel
+#             for comp in schedule_obj.comp_list:
+#                 if compress:
+#                     schedule.create_dataset(comp.lower(),
+#                                             data=getattr(schedule_obj, comp),
+#                                             compression='gzip',
+#                                             compression_opts=9)
+#                 else:
+#                     schedule.create_dataset(comp.lower(),
+#                                             data=getattr(schedule_obj, comp))
+#             ### set the convenience attribute to the schedule
+#             setattr(self, schedule_obj.name, Schedule())
+#             getattr(self, schedule_obj.name).from_mth5(self.mth5_obj, 
+#                                                        schedule_obj.name)
             
-        else:
-            raise MTH5Error('{0} is not writeable'.format(self.mth5_fn))
+#         else:
+#             raise MTH5Error('{0} is not writeable'.format(self.mth5_fn))
             
-    def remove_schedule(self, schedule_name):
-        """
-        Remove a schedule item given schedule name.
+#     def remove_schedule(self, schedule_name):
+#         """
+#         Remove a schedule item given schedule name.
         
-        :param str schedule_name: schedule name verbatim of the one you want
-                                  to delete.
+#         :param str schedule_name: schedule name verbatim of the one you want
+#                                   to delete.
                                   
-        .. note:: This does not free up memory, it just simply deletes the 
-                  link to the schedule item.  See
-                  http://docs.h5py.org/en/stable/high/group.html.  The best
-                  method would be to build a different file without the data
-                  your are trying to delete.
-        """
-        if self.h5_is_write():
-            try:
-                delattr(self, schedule_name)
-                del self.mth5_obj['/{0}'.format(schedule_name)]
-            except AttributeError:
-                print("Could not find {0}, not an attribute".format(schedule_name))
+#         .. note:: This does not free up memory, it just simply deletes the 
+#                   link to the schedule item.  See
+#                   http://docs.h5py.org/en/stable/high/group.html.  The best
+#                   method would be to build a different file without the data
+#                   your are trying to delete.
+#         """
+#         if self.h5_is_write():
+#             try:
+#                 delattr(self, schedule_name)
+#                 del self.mth5_obj['/{0}'.format(schedule_name)]
+#             except AttributeError:
+#                 print("Could not find {0}, not an attribute".format(schedule_name))
 
-        else:
-            raise MTH5Error("File not open")
+#         else:
+#             raise MTH5Error("File not open")
             
-    def add_calibration(self, calibration_obj, compress=True):
-        """
-        add calibrations for sensors
+#     def add_calibration(self, calibration_obj, compress=True):
+#         """
+#         add calibrations for sensors
 
-        :param calibration_obj: calibration object that has frequency, real,
-                                imaginary attributes
-        :type calibration_obj: mth5.Calibration
+#         :param calibration_obj: calibration object that has frequency, real,
+#                                 imaginary attributes
+#         :type calibration_obj: mth5.Calibration
 
-        """
+#         """
 
-        if self.h5_is_write():
-            cal = self.mth5_obj['/calibrations'].require_group(calibration_obj.name)
-            cal.attrs['metadata'] = calibration_obj.to_json()
-            for col in calibration_obj._col_list:
-                if compress:
-                    cal.create_dataset(col.lower(),
-                                       data=getattr(calibration_obj, col),
-                                       compression='gzip',
-                                       compression_opts=9)
-                else:
-                    cal.create_dataset(col.lower(),
-                                       data=getattr(calibration_obj, col))
+#         if self.h5_is_write():
+#             cal = self.mth5_obj['/calibrations'].require_group(calibration_obj.name)
+#             cal.attrs['metadata'] = calibration_obj.to_json()
+#             for col in calibration_obj._col_list:
+#                 if compress:
+#                     cal.create_dataset(col.lower(),
+#                                        data=getattr(calibration_obj, col),
+#                                        compression='gzip',
+#                                        compression_opts=9)
+#                 else:
+#                     cal.create_dataset(col.lower(),
+#                                        data=getattr(calibration_obj, col))
             
-            ### set the convenience attribute to the calibration
-            setattr(self, calibration_obj.name, Calibration())
-            getattr(self, calibration_obj.name).from_mth5(self.mth5_obj, 
-                                                          calibration_obj.name)
-        else:
-            raise MTH5Error('{0} is not writeable'.format(self.mth5_fn))
+#             ### set the convenience attribute to the calibration
+#             setattr(self, calibration_obj.name, Calibration())
+#             getattr(self, calibration_obj.name).from_mth5(self.mth5_obj, 
+#                                                           calibration_obj.name)
+#         else:
+#             raise MTH5Error('{0} is not writeable'.format(self.mth5_fn))
             
-    def remove_calibration(self, calibration_name):
-        """
-        Remove a calibration item given calibration name.
+#     def remove_calibration(self, calibration_name):
+#         """
+#         Remove a calibration item given calibration name.
         
-        :param str calibration_name: calibration name verbatim of the one you
-                                     want to delete.
+#         :param str calibration_name: calibration name verbatim of the one you
+#                                      want to delete.
                                   
-        .. note:: This does not free up memory, it just simply deletes the 
-                  link to the schedule item.  See
-                  http://docs.h5py.org/en/stable/high/group.html.  The best
-                  method would be to build a different file without the data
-                  your are trying to delete.
-        """
-        if self.h5_is_write():
-            try:
-                delattr(self, calibration_name)
-                del self.mth5_obj['calibrations/{0}'.format(calibration_name)]
-            except AttributeError:
-                print("Could not find {0}, not an attribute".format(calibration_name))
-        else:
-            raise MTH5Error("File not open")
+#         .. note:: This does not free up memory, it just simply deletes the 
+#                   link to the schedule item.  See
+#                   http://docs.h5py.org/en/stable/high/group.html.  The best
+#                   method would be to build a different file without the data
+#                   your are trying to delete.
+#         """
+#         if self.h5_is_write():
+#             try:
+#                 delattr(self, calibration_name)
+#                 del self.mth5_obj['calibrations/{0}'.format(calibration_name)]
+#             except AttributeError:
+#                 print("Could not find {0}, not an attribute".format(calibration_name))
+#         else:
+#             raise MTH5Error("File not open")
     
-    def update_schedule_metadata(self):
-        """
-        update schedule metadata on the HDF file
-        """
+#     def update_schedule_metadata(self):
+#         """
+#         update schedule metadata on the HDF file
+#         """
         
-        for key in self.__dict__.keys():
-            if 'sch' in key:
-                for attr in getattr(self, key)._attrs_list:
-                    value = getattr(getattr(self, key), attr)
-                    self.mth5_obj[key].attrs[attr] = value
+#         for key in self.__dict__.keys():
+#             if 'sch' in key:
+#                 for attr in getattr(self, key)._attrs_list:
+#                     value = getattr(getattr(self, key), attr)
+#                     self.mth5_obj[key].attrs[attr] = value
 
-    def read_mth5(self, mth5_fn):
-        """
-        Read MTH5 file and update attributes
+#     def read_mth5(self, mth5_fn):
+#         """
+#         Read MTH5 file and update attributes
         
-        :param str mth5_fn: full path to mth5 file
-        """
+#         :param str mth5_fn: full path to mth5 file
+#         """
         
-        if not os.path.isfile(mth5_fn):
-            raise MTH5Error("Could not find {0}, check path".format(mth5_fn))
+#         if not os.path.isfile(mth5_fn):
+#             raise MTH5Error("Could not find {0}, check path".format(mth5_fn))
 
-        self.mth5_fn = mth5_fn
-        ### read in file and give write permissions in case the user wants to
-        ### change any parameters
-        self.mth5_obj = h5py.File(self.mth5_fn, 'r+')
-        for attr in ['site', 'field_notes', 'copyright', 'provenance',
-                     'software']:
-            getattr(self, attr).from_json(self.mth5_obj.attrs[attr])
+#         self.mth5_fn = mth5_fn
+#         ### read in file and give write permissions in case the user wants to
+#         ### change any parameters
+#         self.mth5_obj = h5py.File(self.mth5_fn, 'r+')
+#         for attr in ['site', 'field_notes', 'copyright', 'provenance',
+#                      'software']:
+#             getattr(self, attr).from_json(self.mth5_obj.attrs[attr])
 
-        for key in self.mth5_obj.keys():
-            if 'sch' in key:
-                setattr(self, key, Schedule())
-                getattr(self, key).from_mth5(self.mth5_obj, key)
-            elif 'cal' in key:
-                try:
-                    for ckey in self.mth5_obj[key].keys():
-                        m_attr = 'calibration_{0}'.format(ckey)
-                        setattr(self, m_attr, Calibration())
-                        getattr(self, m_attr).from_mth5(self.mth5_obj, ckey)
-                except KeyError:
-                    print('No Calibration Data')
+#         for key in self.mth5_obj.keys():
+#             if 'sch' in key:
+#                 setattr(self, key, Schedule())
+#                 getattr(self, key).from_mth5(self.mth5_obj, key)
+#             elif 'cal' in key:
+#                 try:
+#                     for ckey in self.mth5_obj[key].keys():
+#                         m_attr = 'calibration_{0}'.format(ckey)
+#                         setattr(self, m_attr, Calibration())
+#                         getattr(self, m_attr).from_mth5(self.mth5_obj, ckey)
+#                 except KeyError:
+#                     print('No Calibration Data')
 
-    def update_metadata_from_cfg(self, mth5_cfg_fn):
-        """
-        read a configuration file for all the mth5 attributes
+#     def update_metadata_from_cfg(self, mth5_cfg_fn):
+#         """
+#         read a configuration file for all the mth5 attributes
 
-        :param mth5_cfg_fn: full path to configuration file for mth5 file
-        :type mth5_cfg_fn: string
+#         :param mth5_cfg_fn: full path to configuration file for mth5 file
+#         :type mth5_cfg_fn: string
 
-        The configuration file has the format::
+#         The configuration file has the format::
             
-            ###===================================================###
-            ### Metadata Configuration File for Science Base MTH5 ###
-            ###===================================================###
+#             ###===================================================###
+#             ### Metadata Configuration File for Science Base MTH5 ###
+#             ###===================================================###
 
-            ### Site information --> mainly for location
-            site.id = MT Test
-            site.coordinate_system = Geomagnetic North
-            site.datum = WGS84
-            site.declination = 15.5
-            site.declination_epoch = 1995
-            site.elevation = 1110
-            site.elev_units = meters
-            site.latitude = 40.12434
-            site.longitude = -118.345
-            site.survey = Test
-            site.start_date = 2018-05-07T20:10:00.0
-            site.end_date = 2018-07-07T10:20:30.0
-            #site._date_fmt = None
+#             ### Site information --> mainly for location
+#             site.id = MT Test
+#             site.coordinate_system = Geomagnetic North
+#             site.datum = WGS84
+#             site.declination = 15.5
+#             site.declination_epoch = 1995
+#             site.elevation = 1110
+#             site.elev_units = meters
+#             site.latitude = 40.12434
+#             site.longitude = -118.345
+#             site.survey = Test
+#             site.start_date = 2018-05-07T20:10:00.0
+#             site.end_date = 2018-07-07T10:20:30.0
+#             #site._date_fmt = None
 
-            ### Field Notes --> for instrument setup
-            # Data logger information
-            field_notes.data_logger.id = ZEN_test
-            field_notes.data_logger.manufacturer = Zonge
-            field_notes.data_logger.type = 32-Bit 5-channel GPS synced
-        """
-        usgs_str = 'U.S. Geological Survey'
-        # read in the configuration file
-        with open(mth5_cfg_fn, 'r') as fid:
-            lines = fid.readlines()
+#             ### Field Notes --> for instrument setup
+#             # Data logger information
+#             field_notes.data_logger.id = ZEN_test
+#             field_notes.data_logger.manufacturer = Zonge
+#             field_notes.data_logger.type = 32-Bit 5-channel GPS synced
+#         """
+#         usgs_str = 'U.S. Geological Survey'
+#         # read in the configuration file
+#         with open(mth5_cfg_fn, 'r') as fid:
+#             lines = fid.readlines()
 
-        for line in lines:
-            # skip comment lines
-            if line.find('#') == 0 or len(line.strip()) < 2:
-                continue
-            # make a key = value pair
-            key, value = [item.strip() for item in line.split('=', 1)]
+#         for line in lines:
+#             # skip comment lines
+#             if line.find('#') == 0 or len(line.strip()) < 2:
+#                 continue
+#             # make a key = value pair
+#             key, value = [item.strip() for item in line.split('=', 1)]
 
-            if value == 'usgs_str':
-                value = usgs_str
-            if value.find('[') >= 0 and value.find(']') >= 0 and value.find('<') != 0:
-                value = value.replace('[', '').replace(']', '')
-                value = [v.strip() for v in value.split(',')]
-            if value.find('.') > 0:
-                try:
-                    value = float(value)
-                except ValueError:
-                    pass
-            else:
-                try:
-                    value = int(value)
-                except ValueError:
-                    pass
+#             if value == 'usgs_str':
+#                 value = usgs_str
+#             if value.find('[') >= 0 and value.find(']') >= 0 and value.find('<') != 0:
+#                 value = value.replace('[', '').replace(']', '')
+#                 value = [v.strip() for v in value.split(',')]
+#             if value.find('.') > 0:
+#                 try:
+#                     value = float(value)
+#                 except ValueError:
+#                     pass
+#             else:
+#                 try:
+#                     value = int(value)
+#                 except ValueError:
+#                     pass
 
-            # if there is a dot, meaning an object with an attribute separate
-            if key.count('.') == 0:
-                setattr(self, key, value)
-            elif key.count('.') == 1:
-                obj, obj_attr = key.split('.')
-                setattr(getattr(self, obj), obj_attr, value)
-            elif key.count('.') == 2:
-                obj, obj_attr_01, obj_attr_02 = key.split('.')
-                setattr(getattr(getattr(self, obj), obj_attr_01), obj_attr_02,
-                        value)
+#             # if there is a dot, meaning an object with an attribute separate
+#             if key.count('.') == 0:
+#                 setattr(self, key, value)
+#             elif key.count('.') == 1:
+#                 obj, obj_attr = key.split('.')
+#                 setattr(getattr(self, obj), obj_attr, value)
+#             elif key.count('.') == 2:
+#                 obj, obj_attr_01, obj_attr_02 = key.split('.')
+#                 setattr(getattr(getattr(self, obj), obj_attr_01), obj_attr_02,
+#                         value)
 
-    def update_metadata_from_series(self, station_series, update_time=False):
-        """
-        Update metadata from a pandas.Series with old keys as columns:
-            * station
-            * latitude
-            * longitude
-            * elevation
-            * declination
-            * start_date
-            * stop_date
-            * datum
-            * coordinate_system
-            * units
-            * instrument_id
-            * ex_azimuth
-            * ex_length
-            * ex_sensor
-            * ex_num
-            * ey_azimuth
-            * ey_length
-            * ey_sensor
-            * ey_num
-            * hx_azimuth
-            * hx_sensor
-            * hx_num
-            * hy_azimuth
-            * hy_sensor
-            * hy_num
-            * hz_azimuth
-            * hz_sensor
-            * hz_num
-            * quality
+#     def update_metadata_from_series(self, station_series, update_time=False):
+#         """
+#         Update metadata from a pandas.Series with old keys as columns:
+#             * station
+#             * latitude
+#             * longitude
+#             * elevation
+#             * declination
+#             * start_date
+#             * stop_date
+#             * datum
+#             * coordinate_system
+#             * units
+#             * instrument_id
+#             * ex_azimuth
+#             * ex_length
+#             * ex_sensor
+#             * ex_num
+#             * ey_azimuth
+#             * ey_length
+#             * ey_sensor
+#             * ey_num
+#             * hx_azimuth
+#             * hx_sensor
+#             * hx_num
+#             * hy_azimuth
+#             * hy_sensor
+#             * hy_num
+#             * hz_azimuth
+#             * hz_sensor
+#             * hz_num
+#             * quality
 
-        :param station_series: pandas.Series with the above index values
-        :type station_series: pandas.Series
+#         :param station_series: pandas.Series with the above index values
+#         :type station_series: pandas.Series
         
-        :param update_time: boolean to update the start and stop time
-        :type update_time: [ True | False ]
-        """
-        if isinstance(station_series, pd.DataFrame):
-            station_series = station_series.iloc[0]
+#         :param update_time: boolean to update the start and stop time
+#         :type update_time: [ True | False ]
+#         """
+#         if isinstance(station_series, pd.DataFrame):
+#             station_series = station_series.iloc[0]
 
-        assert isinstance(station_series, pd.Series), \
-                'station_series is not a pandas.Series'
+#         assert isinstance(station_series, pd.Series), \
+#                 'station_series is not a pandas.Series'
 
-        for key in station_series.index:
-            value = getattr(station_series, key)
-            if key in self.site._attrs_list:
-                setattr(self.site, key, value)
-            elif key == 'start_date':
-                if not update_time:
-                    continue
-                attr = key
-                setattr(self.site, attr, value)
-            elif key == 'stop_date':
-                if not update_time:
-                    continue
-                attr = 'end_date'
-                setattr(self.site, attr, value)
-            elif key == 'instrument_id':
-                self.field_notes.data_logger.id = value
-            elif key == 'quality':
-                self.field_notes.data_quality.rating = value
-            elif key == 'notes':
-                self.field_notes.data_quality.comments = value
-            elif key == 'station':
-                self.site.id = value
-            elif key == 'units':
-                self.site.elev_units = value
-            elif key[0:2] in ['ex', 'ey', 'hx', 'hy', 'hz']:
-                comp = key[0:2]
-                attr = key.split('_')[1]
-                if attr == 'num':
-                    attr = 'chn_num'
-                if attr == 'sensor':
-                    attr = 'id'
-                if 'e' in comp:
-                    setattr(getattr(self.field_notes, 'electrode_{0}'.format(comp)),
-                            attr, value)
-                elif 'h' in comp:
-                    setattr(getattr(self.field_notes, 'magnetometer_{0}'.format(comp)),
-                            attr, value)
+#         for key in station_series.index:
+#             value = getattr(station_series, key)
+#             if key in self.site._attrs_list:
+#                 setattr(self.site, key, value)
+#             elif key == 'start_date':
+#                 if not update_time:
+#                     continue
+#                 attr = key
+#                 setattr(self.site, attr, value)
+#             elif key == 'stop_date':
+#                 if not update_time:
+#                     continue
+#                 attr = 'end_date'
+#                 setattr(self.site, attr, value)
+#             elif key == 'instrument_id':
+#                 self.field_notes.data_logger.id = value
+#             elif key == 'quality':
+#                 self.field_notes.data_quality.rating = value
+#             elif key == 'notes':
+#                 self.field_notes.data_quality.comments = value
+#             elif key == 'station':
+#                 self.site.id = value
+#             elif key == 'units':
+#                 self.site.elev_units = value
+#             elif key[0:2] in ['ex', 'ey', 'hx', 'hy', 'hz']:
+#                 comp = key[0:2]
+#                 attr = key.split('_')[1]
+#                 if attr == 'num':
+#                     attr = 'chn_num'
+#                 if attr == 'sensor':
+#                     attr = 'id'
+#                 if 'e' in comp:
+#                     setattr(getattr(self.field_notes, 'electrode_{0}'.format(comp)),
+#                             attr, value)
+#                 elif 'h' in comp:
+#                     setattr(getattr(self.field_notes, 'magnetometer_{0}'.format(comp)),
+#                             attr, value)
 
-# ==============================================================================
-#             Error
-# ==============================================================================
+# # ==============================================================================
+# #             Error
+# # ==============================================================================
 
+def recursive_hdf5_tree(group, lines=[]):
+    if isinstance(group, (h5py._hl.group.Group, h5py._hl.files.File)):
+        for key, value in group.items():
+            lines.append('-{0}: {1}'.format(key, value))
+            recursive_hdf5_tree(value, lines)
+    elif isinstance(group, h5py._hl.dataset.Dataset):
+        for key, value in group.attrs.items():
+            lines.append('\t-{0}: {1}'.format(key, value))
+    return '\n'.join(lines)

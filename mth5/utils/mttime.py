@@ -263,3 +263,15 @@ class MTime():
 
         """
         self.dt_object = self.validate_tzinfo(datetime.datetime.utcnow())
+
+def get_now_utc():
+    """
+    Get the current time in UTC format
+    :return: ISO formatted string of current time in UTC
+    :rtype: string
+    
+    """
+    
+    m_obj = MTime()
+    m_obj.now()
+    return m_obj.iso_str

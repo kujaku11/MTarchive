@@ -90,9 +90,10 @@ class Base():
             self.set_attr_from_name(name, value)
 
     def __str__(self):
-        lines = []
-        for name, value in self.to_dict().items():
-            lines.append('{0} = {1}'.format(name, value))
+        meta_dict = self.to_dict()[self._class_name.lower()]
+        lines = ['{0}:'.format(self._class_name)]
+        for name, value in meta_dict.items():
+            lines.append('\t{0} = {1}'.format(name, value))
         return '\n'.join(lines)
 
     def __repr__(self):
@@ -438,8 +439,10 @@ class Base():
             try:
                 helpers.recursive_split_setattr(self, name, value)
             except AttributeError as error:
-                msg = ("must set {0} to a class in metadata first " +
-                       "before setting {1}.")
+                msg = ("{0} is not in the current standards.  " + 
+                       "To properly add the attribute use " +
+                       "add_base_attribute.")
+                
                 self.logger.info(msg.format(self, name))
                 self.logger.exception(error)
                 raise AttributeError(error)
