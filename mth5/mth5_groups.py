@@ -15,10 +15,12 @@ import numpy as np
 import weakref
 import logging
 import h5py
+import pandas as pd
 
 from mth5 import metadata
 from mth5.utils.helpers import to_numpy_type
 from mth5.helpers import get_tree
+from mth5.utils.exceptions import MTH5TableError
 
 
 meta_classes = dict(inspect.getmembers(metadata, inspect.isclass))
@@ -37,10 +39,19 @@ class BaseGroup():
             # has to be a public or private attribute otherwise if its __ it
             # will not propagate
             self.hdf5_group = weakref.ref(group)()
-        self._class_name = self.__class__.__name__
-        self.metadata = meta_classes[self._class_name.split('Group')[0]]()
+        
         self.logger = logging.getLogger('{0}.{1}'.format(__name__, 
                                                          self._class_name))
+        
+        try:
+            self.metadata = meta_classes[self._class_name.split('Group')[0]]()
+        except KeyError:
+            self.metadata = metadata.Base()
+            
+        self.logger.debug("setting metadata for {0} to {1}".format(
+                self._class_name, type(self.metadata)))
+            
+        
         
         self._summary_defaults = {'name': 'Summary',
                                   'max_shape': (10000, ),
@@ -55,6 +66,10 @@ class BaseGroup():
     def __eq__(self, other):
         pass
         
+    @property
+    def _class_name(self):
+        return self.__class__.__name__
+    
     def read_metadata(self):
         """
         read metadata
@@ -141,19 +156,20 @@ class StationGroup(BaseGroup):
     """
     
     def __init__(self, group, **kwargs):
-        self._station_summary = {'max_size': (1000,),
-                                 'dtype': np.dtype([('name', 'S5'),
-                                                    ('start', 'S32'),
-                                                    ('end', 'S32'),
-                                                    ('components', 'S100'),
-                                                    ('measurement_type',
-                                                     'S12'),
-                                                    ('location.latitude',
-                                                     np.float),
-                                                    ('location.longitude',
-                                                     np.float)])}
         
         super().__init__(group, **kwargs)
+        self._summary_defaults = {'name': 'Summary',
+                                  'max_shape': (1000,),
+                                  'dtype': np.dtype([('name', 'S5'),
+                                                     ('start', 'S32'),
+                                                     ('end', 'S32'),
+                                                     ('components', 'S100'),
+                                                     ('measurement_type',
+                                                      'S12'),
+                                                     ('location.latitude',
+                                                      np.float),
+                                                     ('location.longitude',
+                                                      np.float)])}
         
     @property
     def name(self):
@@ -242,6 +258,108 @@ class AuxiliaryGroup(BaseGroup):
     def __init__(self, group, **kwargs):
         
         super().__init__(group, **kwargs)
+        
+class MTH5Table():
+    """
+    we will try to use Pandas as the table container.
     
+    All functionality of pandas.Dataframe will be provided in 
+    MTH5Table.dataframe.  Some helper functions are provided for convenience.
+    
+    """
+    
+    def __init__(self, hdf5_dataset):
+        self.logger = logging.getLogger('{0}.{1}'.format(
+            __name__, self.__class__.__name__))
+        
+        if isinstance(hdf5_dataset, h5py.Dataset):
+            self.dataframe = pd.DataFrame(np.array(hdf5_dataset,
+                                                 dtype=hdf5_dataset.dtype))
+        else:
+            msg = "Input must be a h5py.Dataset not {0}".format(
+                type(hdf5_dataset))
+            self.logger.error(msg)
+            raise MTH5TableError(msg)
+            
+    @property
+    def dtypes(self):
+        try:
+            return self.dataframe.dtypes
+        except AttributeError as error:
+            msg = '{0}, dataframe is not initiated yet'.format(error)
+            self.logger.warning(msg)
+            return None
+            
+    def add_row(self, row):
+        """
+        Add a row to the table.
+        
+        row must be of the same data type as the table, can be a DataFrame
+        or numpy.ndarray with correct data type
+        
+        
+        :param row: row entry for the table
+        :type row: TYPE
+        :return: DESCRIPTION
+        :rtype: TYPE
+
+        """
+        
+        if not isinstance(row, (np.ndarray, pd.DataFrame)):
+            msg = ("Input must be an numpy.ndarray or pandas.DataFrame" + 
+                   "not {0}".format(type(row)))
+        if isinstance(row, np.ndarray):
+            row = pd.DataFrame(row)
+        
+        try:
+            compare = row.dtypes == self.dataframe.dtypes
+        except ValueError as error:
+            msg = '{0}\ninput dtypes:\n{1}\n\nTable dtypes:\n{2}'.format(
+                error, row.dtypes, self.dtypes)
+            self.logger.exception(msg)
+            raise ValueError(msg)
+        if not compare.all(axis=None):
+            msg = ("Row is not the correct data type, should be \n{0}\n " +
+                   " not \n{1}")
+
+            self.logger.error(msg.format(row.dtypes, self.dtypes))
+            raise ValueError(msg.format(row.dtypes, self.dtypes))
+        self.dataframe = self.dataframe.append(row, ignore_index=True)
+        
+    def remove_row(self, key, value):
+        """
+        Delete a row based on a key and given value
+        
+        
+        :param key: DESCRIPTION
+        :type key: TYPE
+        :param value: DESCRIPTION
+        :type value: TYPE
+        :return: DESCRIPTION
+        :rtype: TYPE
+
+        """
+        if key not in list(self.dtypes.keys()):
+            msg = "{0} not in dtype:\n{1}".format(key,
+                                                  list(self.dtypes.keys()))
+            self.logger.error(msg)
+            raise ValueError(msg)
+            
+        remove_index = self.dataframe.index[getattr(self.dataframe,
+                                                    key) == value]
+        if len(remove_index) == 1:
+            self.logger.debug("found {0} = {1} at index {2}, removing".format(
+                key, value, remove_index))
+        elif len(remove_index) > 1:
+            self.logger.info("found {0} = {1} at indexes {2}, removing".format(
+                key, value, remove_index))
+        else:
+            self.logger.info("did not find {0} = {1}".format(key, value))
+        
+        self.dataframe.drop(remove_index, inplace=True)
+        
+        
+        
+          
 
 

@@ -17,3 +17,6 @@ class MTTimeError(Exception):
 
 class MTH5Error(Exception):
     pass
+
+class MTH5TableError(Exception):
+    pass

@@ -281,13 +281,10 @@ class MTH5():
         survey_obj.write_metadata()
         
         for group_name in self._default_subgroup_names:
-            grp = self.__hdf5_obj.create_group('{0}/{1}'.format(
-                    self._default_root_name, group_name))
-            if 'station' in group_name.lower():
-                grp.create_dataset('Summary',
-                                   (1, ),
-                                   maxshape=self._station_summary['max_size'],
-                                   dtype=self._station_summary['dtype'])
+            self.__hdf5_obj.create_group('{0}/{1}'.format(
+                self._default_root_name, group_name))
+            m5_grp = getattr(self, '{0}_group'.format(group_name.lower()))
+            m5_grp.initialize_summary_table()
             
         self.logger.info("Initialized MTH5 file {0} in mode {1}".format(
             self.filename, 'w'))
