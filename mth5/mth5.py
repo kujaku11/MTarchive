@@ -163,17 +163,6 @@ class MTH5():
                             'MTH5.version': __version__,
                             'MTH5.software': 'pymth5'}
         
-        self._station_summary = {'max_size': (1000,),
-                                 'dtype': np.dtype([('name', 'S5'),
-                                                    ('start', 'S32'),
-                                                    ('end', 'S32'),
-                                                    ('components', 'S100'),
-                                                    ('measurement_type',
-                                                     'S12'),
-                                                    ('location.latitude',
-                                                     np.float),
-                                                    ('location.longitude',
-                                                     np.float)])}
         
     def __str__(self):
         return get_tree(self.__hdf5_obj)

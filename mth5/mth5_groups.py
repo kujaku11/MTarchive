@@ -42,6 +42,10 @@ class BaseGroup():
         self.logger = logging.getLogger('{0}.{1}'.format(__name__, 
                                                          self._class_name))
         
+        self._summary_defaults = {'name': 'Summary',
+                                  'max_shape': (10000, ),
+                                  'dtype': np.dtype([('default', np.float)])}
+        
         for key, value in kwargs.items():
             setattr(self, key, value)
         
@@ -84,6 +88,27 @@ class BaseGroup():
     def write_data(self):
         pass
     
+    def initialize_summary_table(self):
+        """
+        Initialize summary table based on default values
+        :return: DESCRIPTION
+        :rtype: TYPE
+
+        """
+        
+        self.hdf5_group.create_dataset(
+            self._summary_defaults['name'], 
+            (1, ),
+            maxshape=self._summary_defaults['max_shape'],
+            dtype=self._summary_defaults['dtype'])
+        
+        self.logger.debug(
+            "Created {0} table with max_shape = {1}, dtype={2}".format(
+                self._summary_defaults['name'],
+                self._summary_defaults['max_shape'],
+                self._summary_defaults['dtype']))
+        
+   
 class SurveyGroup(BaseGroup):
     """
     holds the survey group
@@ -116,6 +141,17 @@ class StationGroup(BaseGroup):
     """
     
     def __init__(self, group, **kwargs):
+        self._station_summary = {'max_size': (1000,),
+                                 'dtype': np.dtype([('name', 'S5'),
+                                                    ('start', 'S32'),
+                                                    ('end', 'S32'),
+                                                    ('components', 'S100'),
+                                                    ('measurement_type',
+                                                     'S12'),
+                                                    ('location.latitude',
+                                                     np.float),
+                                                    ('location.longitude',
+                                                     np.float)])}
         
         super().__init__(group, **kwargs)
         
@@ -130,6 +166,8 @@ class StationGroup(BaseGroup):
     @property
     def summary_table(self):
         return self.hdf5_group['Summary']
+    
+
         
 class ReportsGroup(BaseGroup):
     """
