@@ -15,7 +15,7 @@
 \usepackage{caption}
 
 \title{A Standard for Exchangeable Magnetotelluric Metadata}
-\date{\textbf{Version 0.0.1c -- May 2020}\footnote{\noindent\textbf{\textit{Corresponding Authors:}}
+\date{\textbf{Version 0.0.1d -- June 2020}\footnote{\noindent\textbf{\textit{Corresponding Authors:}}
 		
 		Jared Peacock (\url{jpeacock@usgs.gov})
 		
@@ -214,13 +214,13 @@ A survey describes an entire data set that covers a specific time span and regio
 	\caption*{Attributes for Survey Category Continued}
 	\begin{tabular}{p{.305\textwidth}p{.47\textwidth}p{.2\textwidth}}
 		\textbf{Metadata Key} & \textbf{Description} & \textbf{Example} \\ \toprule
-		\entry{project}{True}{None}{string}{free form}{alphanumeric name for the project e.g USGS-GEOMAG}{YUTOO}
-		\entry{project\_lead.author}{True}{None}{string}{free form}{author name}{person name}		
-		\entry{project\_lead.email}{True}{None}{string}{email}{email of the contact person}{mt.guru@em.org}
-		\entry{project\_lead.organization}{True}{None}{string}{free form}{organization name}{mt gurus}
-		\entry{release\_status}{True}{None}{string}{controlled vocabulary}{how the data can be used}{unrestricted release}
-		\entry{southeast\_corner.latitude}{True}{decimal degrees}{float}{number}{latitude of location in datum specified at survey level}{23.134}
-		\entry{southeast\_corner.longitude}{True}{decimal degrees}{float}{number}{longitude of location in datum specified at survey level}{14.23}
+		\entry{project}{True}{None}{string}{free form}{Alphanumeric name for the project.  This is different than the archive\_id in that it describes the overall project.  For example if the project is to estimate geomagnetic hazards that project may be GEOMAG but the survey could be YKN20, which will be the archive\_id.}{GEOMAG}
+		\entry{project\_lead.author}{True}{None}{string}{free form}{author name}{Name the project lead.  This should be the person in charge who is responsible for the data.}		
+		\entry{project\_lead.email}{True}{None}{string}{email}{Email of the project lead.  This is in case there are any questions about data.}{mt.guru@em.org}
+		\entry{project\_lead.organization}{True}{None}{string}{free form}{Organization name of the project lead.}{MT Gurus}
+		\entry{release\_status}{True}{None}{string}{controlled vocabulary}{How the data can be used. The options are based on Creative Commons (\url{https://creativecommons.org/licenses/}).  Options: \qquad [ CC0 $|$ CC BY $|$ CC BY-SA$|$ CC BY-ND $|$ CC BY-NC-SA $|$ CC BY-NC-ND]}{CC0}
+		\entry{southeast\_corner.latitude}{True}{decimal degrees}{float}{number}{Latitude of the southeast corner of the survey in the datum specified.}{23.134}
+		\entry{southeast\_corner.longitude}{True}{decimal degrees}{float}{number}{Longitude of the southeast corner of the survey in the datum specified.}{14.23}
 		
 	\end{tabular}
 	\label{tab:survey3}
@@ -233,9 +233,9 @@ A survey describes an entire data set that covers a specific time span and regio
 	\caption*{Attributes for Survey Category Continued}
 	\begin{tabular}{p{.275\textwidth}p{.5\textwidth}p{.2\textwidth}}
 		\textbf{Metadata Key} & \textbf{Description} & \textbf{Example} \\ \toprule
-		\entry{summary}{True}{None}{string}{free form}{summary paragraph of survey including the purpose; difficulties; data quality; summary of outcomes if the data have been processed and modeled}{long project of characterizing mineral resources in Yukon}
-		\entry{time\_period.end\_date}{True}{None}{string}{date}{end date of the survey in UTC}{1/2/1995}
-		\entry{time\_period.start\_date}{True}{None}{string}{date}{start date of the survey in UTC}{1/2/2020}
+		\entry{summary}{True}{None}{string}{free form}{Summary paragraph of the survey including the purpose; difficulties; data quality; summary of outcomes if the data have been processed and modeled.}{Long project of characterizing mineral resources in Yukon}
+		\entry{time\_period.end\_date}{True}{None}{string}{date}{End date of the survey in UTC.}{1995-02-01}
+		\entry{time\_period.start\_date}{True}{None}{string}{date}{Start date of the survey in UTC.}{2020-06-21}
 		
 	\end{tabular}
 	\label{tab:survey4}
@@ -275,7 +275,7 @@ A survey describes an entire data set that covers a specific time span and regio
         <organization>EM Ltd.</organization>
         <author>M. Tee</author>
     </project_lead>
-    <release_status>Unrestricted Release</release_status>
+    <release_status>CC0</release_status>
     <southeast_corner>
         <latitude type="float" units="decimal degrees">-110.0</latitude>
         <longitude type="float" units="decimal degrees">65.12</longitude>
@@ -285,8 +285,7 @@ A survey describes an entire data set that covers a specific time span and regio
              some interesting signal from the aurora.  Modeled data
              image large scale crustal features like the 
              "fingers of god" that suggest large mineral deposits.
-             Evidence for crustal shortening during the Miocene and 
-             multiple plutonic events. </summary>
+    </summary>
     <time_period>
         <end_date>1995-01-01</end_date>
         <start_date>2020-01-01</start_date>
@@ -294,60 +293,95 @@ A survey describes an entire data set that covers a specific time span and regio
 </survey>
 \end{verbatim}
 
+\clearpage
 \newpage
 \section{Station}
 
-A station encompasses a single site where data are collected. If the location changes during a run, then a new station should be created. If the sensors, cables, data logger, battery are replaced during a run but the station remains stations, then this can be recorded in the \verb|Run| metadata but does not require a new station entry.
+A station encompasses a single site where data are collected. If the location changes during a run, then a new station should be created and subsequently a new run under the new station. If the sensors, cables, data logger, battery are replaced during a run but the station remains stations, then this can be recorded in the \verb|Run| metadata but does not require a new station entry.
 
-\begin{table}[ht!]
-    \caption[Attributes for Station]{Attributes for Station category}
-    \begin{tabular}{|l|p{2.80in}|l|l|p{.95in}|}
-        \hline
-        \textbf{Metadata Key} & \textbf{Description} & \textbf{Type} & \textbf{Required} & \textbf{Style} \\ \hline
-        acquired\_by.author\ & person who acquired the station & string & True & free form  \\ \hline
-        acquired\_by.comments\ & comments about who acquired the data, could include the various groups or contractors & string & True & free form \\ \hline
-        archive\_id\ & 5 char name \{A-Z; 1-9\} for station & string & True & alpha numeric \\ \hline
-        channel\_layout & how the station was laid out. Options [ X $|$ L $|$ ...] & string & True & controlled vocabulary \\ \hline
-        channels\_recorded\ & list of channels recorded  e.g. 'Ex, Ey, Hx, Hy' & string & True & list \\ \hline
-        comments\ & any comments about station & string & False & free form \\ \hline
-        data\_type\ & type of data collected, options: [ BBMT $|$ LPMT $|$ AMT $|$ Combo $|$ ...] see Table \ref{tab:em} & string & True &  controlled vocabulary \\ \hline
-        geographic\_name\ & closest geographic reference name to station  & string & True & free form\\ \hline
-        id\ & name of the station & string & True & free form\\ \hline
-        location.declination.comments\ & comments on the declination & string & True & \\ \hline
-        location.declination.model\ & name of the declination model. Options: [ EMAG2 $|$ EMM $|$ HDGM $|$ IGRF $|$ WMM ] see \url{https://www.ngdc.noaa.gov/geomag/} for definitions & string & True & controlled vocabulary \\ \hline
-        location.declination.value\ & declination value & float & True & number \\ \hline
-        location.latitude\ & longitude location for station & float & True & number \\ \hline
-        location.longitude\ & latitude location for station & float & True & number\\ \hline
-        location.elevation\ & elevation of station & float & True & number \\ \hline
-        orientation.option & orientation coordinate system [ geographic $|$ geomagnetic $|$ channel-measurement specific $|$ ...] & string & True & controlled vocabulary \\ \hline
-        orientation.method & method of orienting the channels [ compass $|$ differential GPS $|$ gyroscope $|$...] & string & False & controlled vocabulary \\ \hline
-        orientation.layout\_rotation\_angle & if the data were collected in a coordinate system not geographic, this will specify the angle at which all channels were rotated by. & float & False & number \\ \hline
-        provenance.creation\_time & creation time of time series data for storing & string & True & date time\\ \hline
-        provenance.comments\ & any comments on the history of the data & string & False & free form\\ \hline
-        provenance.log\ & log of any changes made to time series data & string & False & free form\\ \hline
-        provenance.software.author\ & author of software used to store time series & string & True & free form\\ \hline
-        provenance.software.name\ & name of software used to store time series & string & True & free form\\ \hline
-        provenance.software.version\ & version of software used to store time series & string & True & free form\\ \hline
-        provenance.submitter.author\ & name of person or group archive data & string & True & free form\\ \hline
-        provenance.submitter.email\ & email of person or group archiving & string & True  & email \\ \hline
-        provenance.submitter.organization\ & name of organization or institution archiving & string & True & free form \\ \hline
-        time\_period.start\ & start time and date of data logging in UTC & string & True & date time\\ \hline
-        time\_period.end\ & stop time and date of data logging in UTC & string & True & date time \\ \hline
-    \end{tabular}
-\label{tab:station01}
-\end{table}    
+\begin{table}[h!]
+	\caption[Attributes for Station Category]{Attributes for Station Category}
+	\begin{tabular}{p{.305\textwidth}p{.47\textwidth}p{.2\textwidth}}
+		\textbf{Metadata Key} & \textbf{Description} & \textbf{Example} \\ \toprule
+		\entry{acquired\_by.author}{True}{None}{string}{free form}{Name of person or group that collected the station data and will be the point of contact if any questions arise about the data.}{person name}
+		\entry{acquired\_by.comments}{False}{None}{string}{email}{Email of the contact person who collected the data for the station.}{expert digger}
+		\entry{archive\_id}{True}{None}{string}{alpha numeric}{Station name that is archived {a-z;A-Z;0-9}.  For IRIS this is a 5 character string.}{MT201}
+		\entry{channel\_layout}{False}{None}{string}{controlled vocabulary}{How the dipoles and magnetic channels of the station were laid out.  Options: [ L $|$ + $|$ other]}{+}
+		\entry{channels\_recorded}{True}{None}{string}{controlled vocabulary}{List of components recorded by the station. Should be a summary of all channels recorded dropped channels will be recorded in Run.  \qquad Options: [ Ex $|$ Ey $|$ Hx $|$ Hy $|$ Hz $|$ T $|$ Battery $|$ other ]}{ Ex, Ey, Hx, Hy, Hz, T}
+		\entry{comments}{False}{None}{string}{free form}{Any comments on the station that would be important for a user.}{Pipeline near by.}
+	\end{tabular}
+	\label{tab:station}
+\end{table}
+
+
+\clearpage
+\newpage
+\begin{table}[h!]
+	\caption*{Attributes for Station Category Continued}
+	\begin{tabular}{p{.305\textwidth}p{.47\textwidth}p{.2\textwidth}}
+		\textbf{Metadata Key} & \textbf{Description} & \textbf{Example} \\ \toprule
+		\entry{data\_type}{True}{None}{string}{controlled vocabulary}{All types of data recorded by the station. If multiple types input as a comma separated list. \qquad Options: [ RMT $|$ AMT $|$ BBMT $|$ LPMT $|$ ULPMT $|$ other ]}{BBMT}
+		\entry{geographic\_name}{True}{None}{string}{free form}{Closest geographic name to the station, should be rather general.  For further details about geographic names see \url{https://www.usgs.gov/core-science-systems/ngp/board-on-geographic-names}}{"Whitehorse, YK"}
+		\entry{id}{True}{None}{string}{free form}{Station name.  This can be a longer name than the archive\_id name and be a more explanatory name.}{bear hallabaloo}
+		\entry{location.declination.comments}{True}{None}{string}{free form}{Any comments on declination that are important to an end user.}{Estimated from WMM-2016}
+		\entry{location.declination.model}{True}{None}{string}{controlled vocabulary}{Name of the geomagnetic reference model as \{model\_name\}\{-\}\{YYYY\}. Model options: \qquad [ EMAG2 $|$ EMM $|$ HDGM $|$ IGRF $|$ WMM ]}{WMM-2016}
+		\entry{location.declination.value}{True}{degrees}{float}{number}{Declination angle relative to geographic north positive clockwise estimated from location and geomagnetic model.}{12.3}
+		\entry{location.elevation}{True}{meters}{float}{number}{Elevation of station location in datum specified at survey level.}{123.4}
+	\end{tabular}
+\end{table}
+
+\clearpage
+\newpage
+\begin{table}[h!]
+	\caption*{Attributes for Station Category Continued}
+	\begin{tabular}{p{.305\textwidth}p{.47\textwidth}p{.2\textwidth}}
+		\textbf{Metadata Key} & \textbf{Description} & \textbf{Example} \\ \toprule
+		\entry{location.latitude}{True}{degrees}{float}{number}{Latitude of station location in datum specified at survey level.}{23.134}
+		\entry{location.longitude}{True}{degrees}{float}{number}{Longitude of station location in datum specified at survey level.}{14.23}
+		\entry{orientation.layout\_rotation\_angle}{False}{degrees}{float}{number}{If the data were collected in a coordinate system that is neither geomagnetic or geographic but still orthogonal this angle will specify the rotation of the layout.  For example if you layout your x component N30W and your y component N120W, then the rotation angle would be N30E.}{0}
+		\entry{orientation.method}{True}{None}{string}{controlled vocabulary}{Method for orienting station channels.  Options: [ compass $|$ GPS $|$ theodolite $|$ other ]}{compass}
+		\entry{orientation.option}{True}{None}{string}{controlled vocabulary}{How the data are archived with respect to channel orientation.  This will help a user orient the data into the proper coordinate system. \qquad Options: ['channel-measurement specific', 'geographic orthogonal', 'geomagnetic orthogonal', 'site-specific orthogonal']}{geomagnetic-orthogonal}
+		\entry{provenance.comments}{False}{None}{string}{free form}{Any comments on provenance of the data}{From a graduated graduate student.}
+		\entry{provenance.creation\_time}{True}{None}{string}{date time}{date and time the file was created}{2020-02-08 T12:23:40.324600 +00:00}
+	\end{tabular}
+\end{table}
+
+\clearpage
+\newpage
+\begin{table}[h!]
+	\caption*{Attributes for Station Category Continued}
+	\begin{tabular}{p{.305\textwidth}p{.47\textwidth}p{.2\textwidth}}
+		\textbf{Metadata Key} & \textbf{Description} & \textbf{Example} \\ \toprule
+		\entry{provenance.log}{False}{None}{string}{free form}{A history of any changes made to the data}{2020-02-10 T14:24:45 +00:00 updated station metadata.}
+		\entry{provenance.software.author}{True}{None}{string}{free form}{Author of the software used to create the data files.}{programmer 01}
+		\entry{provenance.software.name}{True}{None}{string}{free form}{Name of the software used to create data files}{mtrules}
+		\entry{provenance.software.version}{True}{None}{string}{free form}{Version of the software used to create data files}{12.01a}
+		\entry{provenance.submitter.author}{True}{None}{string}{free form}{Name of the person submitting the data to the archive.}{person name}
+		\entry{provenance.submitter.email}{True}{None}{string}{email}{Email of the person submitting the data to the archive.}{mt.guru@em.org}
+		\entry{provenance.submitter.organization}{True}{None}{string}{free form}{Name of the organization that is submitting data to the archive.}{mt gurus}
+	\end{tabular}
+\end{table}
+
+\clearpage
+\newpage
+\begin{table}[h!]
+	\caption*{Attributes for Station Category Continued}
+	\begin{tabular}{p{.305\textwidth}p{.47\textwidth}p{.2\textwidth}}
+		\textbf{Metadata Key} & \textbf{Description} & \textbf{Example} \\ \toprule
+		\entry{time\_period.end}{True}{None}{string}{time}{end date and time of collection in UTC}{2020-02-04 T16:23:45.453670 +00:00}
+		\entry{time\_period.start}{True}{None}{string}{time}{start date and time of collection in UTC}{2020-02-01 T09:23:45.453670 +00:00}
+	\end{tabular}
+\end{table}
 
 \clearpage   
 \newpage
 \subsection{Example Station JSON}
 
 \begin{verbatim}
-{
-    "station": {
+{    "station": {
         "acquired_by": {
             "author": "mt",
-            "comments": null
-        },
+            "comments": null},
         "archive_id": "MT012",
         "channel_layout": "L",
         "channels_recorded": "Ex, Ey, Hx, Hy",
@@ -362,14 +396,11 @@ A station encompasses a single site where data are collected. If the location ch
             "declination": {
                 "value": 12.3,
                 "comments": null,
-                "model": "WMM"
-            }
-        },
+                "model": "WMM"}},
         "orientation": {
             "method": "compass",
             "option": "geographic",
-            "layout_rotation_angle": 0.0
-        },
+            "layout_rotation_angle": 0.0},
         "provenance": {
             "comments": null,
             "creation_time": "1980-01-01T00:00:00+00:00",
@@ -377,65 +408,170 @@ A station encompasses a single site where data are collected. If the location ch
             "software": {
                 "author": "test",
                 "version": "1.0a",
-                "name": "name"
-            },
+                "name": "name"},
             "submitter": {
                 "author": "name",
                 "organization": null,
-                "email": "test@here.org"
-            }
-        },
+                "email": "test@here.org"}},
         "time_period": {
             "end": "1980-01-01T00:00:00+00:00",
-            "start": "1980-01-01T00:00:00+00:00"
-        }
-    }
+            "start": "1980-01-01T00:00:00+00:00"}
+         }
 }
 \end{verbatim}
 
 \newpage
 \section{Run}
 
-A run represents data collected at a single station with a single sampling rate. If the dipole length or other such station parameters are changed between runs, this would require adding a new run.  If the station is relocated then a new station should be created.  If a run has channels that drop out, the start and end period will be the minimum time and maximum time for all channels recorded. 
+A run represents data collected at a single station with a single sampling rate. If the dipole length or other such station parameters are changed between runs, this would require adding a new run.  If the station is relocated then a new station should be created.  If a run has channels that drop out, the start and end period will be the minimum time and maximum time for all channels recorded. Note that run metadata should be derived from the data.  
 
 \begin{table}[h!]
-    \caption[Attributes for Run]{Attributes for Run category}
-    \begin{tabular}{|l|p{2.55in}|l|l|p{.95in}|}
-        \hline
-       \textbf{Metadata Key} & \textbf{Description} & \textbf{Type} & \textbf{Required} & \textbf{Style}\\ \hline acquired\_by.author & author name & string & True & free form  \\ \hline
-       acquired\_by.comments & email of the contact person & string & False & email  \\ \hline
-       channels\_recorded\_auxiliary & list of auxiliary channels recorded & string & True & list  \\ \hline
-       channels\_recorded\_electric & list of electric channels recorded. See Table \ref{tab:channel_types} and Table \ref{tab:diretions} & string & True & list  \\ \hline
-       channels\_recorded\_magnetic & list of magnetic channels recorded. See Table \ref{tab:channel_types}  and Table \ref{tab:diretions} & string & True & list  \\ \hline
-       comments & any comments on the run. See Table \ref{tab:channel_types}  and Table \ref{tab:diretions} & string & False & free form  \\ \hline
-       data\_logger.firmware.author & author of the firmware & string & False & free form  \\ \hline
-       data\_logger.firmware.name & firmware name & string & False & free form  \\ \hline
-       data\_logger.firmware.version & firmware version & string & False & free form  \\ \hline
-       data\_logger.id & instrument ID number can be serial number or a designated ID & string & True & free form  \\ \hline
-       data\_logger.manufacturer & who manufactured the instrument & string & True & free form  \\ \hline
-       data\_logger.model & model version of the instrument & string & False & free form  \\ \hline
-       data\_logger.power\_source.comments & any comment about the battery & string & False & free form  \\ \hline
-       data\_logger.power\_source.id & battery id & string & False & free form\\ \hline
-       data\_logger.power\_source.type & battery type & string & True & free form  \\ \hline
-       data\_logger.power\_source.voltage.end & end voltage & float & False & number  \\ \hline
-       data\_logger.power\_source.voltage.start & starting voltage & float & False & number  \\ \hline
-       data\_logger.timing\_system.comments & any comment on timing system & string & False & free form  \\ \hline
-       data\_logger.timing\_system.drift & estimated drift of the timing system & float & False & number  \\ \hline
-       data\_logger.timing\_system.type & type of timing system & string & False & free form  \\ \hline
-       data\_logger.timing\_system.uncertainty & estimated uncertainty of the timing system & float & False & number  \\ \hline
-       data\_logger.type & instrument type & string & True & free form  \\ \hline
-       data\_type & type of data recoreded for this run. Options: [ BBMT $|$ LPMT $|$ AMT $|$ Combo $|$ ...] see Table \ref{tab:em} for more details  & string & True & controlled vocabulary  \\ \hline
-       id & run ID should be station.archive\_id\{a-z\} & string & True & alpha numeric  \\ \hline
-       metadata\_by.author & metadata author name & string & True & free form  \\ \hline
-       metadata\_by.comments & comments on metadata & string & False & free form  \\ \hline
-       provenance.comments & any comments on provenance of the data & string & False & free form  \\ \hline
-       provenance.log & a history of changes made to the data & string & False & free form  \\ \hline
-       sampling\_rate & rate of sampling renureded for this run & float & True & number  \\ \hline
-       time\_period.end & maximum end time of all run channels & string & True & date time  \\ \hline
-       time\_period.start & minimum start time of all run channels & string & True & date time  \\ \hline
-    \end{tabular}
-    \label{tab:run}
+	\caption[Attributes for Run Category]{Attributes for Run Category}
+	\begin{tabular}{p{.305\textwidth}p{.47\textwidth}p{.2\textwidth}}
+		\textbf{Metadata Key} & \textbf{Description} & \textbf{Example} \\ \toprule
+		\entry{acquired\_by.author}{True}{None}{string}{free form}{Name of the person or persons who acquired the run data.  This can be different from the station.acquired\_by and survey.acquired\_by.}{M.T. Nubee}
+		\entry{acquired\_by.comments}{False}{None}{string}{email}{Email of the contact person who collected the run.}{\url{mt@nubee.org}}
+		\entry{channels\_recorded\_auxiliary}{True}{None}{string}{name list}{List of auxiliary channels recorded}{T, battery}
+		\entry{channels\_recorded\_electric}{True}{None}{string}{name list}{List of electric channels recorded}{Ex, Ey}
+		\entry{channels\_recorded\_magnetic}{True}{None}{string}{name list}{List of magnetic channels recorded}{Hx, Hy, Hz}
+		\entry{comments}{False}{None}{string}{free form}{Any comments on the run that would be important for a user.}{Badger attacked Ex.}
+	\end{tabular}
+	\label{tab:run}
 \end{table}
+
+\clearpage
+\newpage
+\begin{table}[h!]
+	\caption*{Attributes for Run Category}
+	\begin{tabular}{p{.305\textwidth}p{.47\textwidth}p{.2\textwidth}}
+		\textbf{Metadata Key} & \textbf{Description} & \textbf{Example} \\ \toprule
+		\entry{comments}{False}{None}{string}{free form}{Any comments on the run that would be important for a user.}{cows chewed cables at 9am local time.}
+		\entry{data\_logger.firmware.author}{True}{None}{string}{free form}{Author of the firmware that runs the data logger.}{instrument engineer}
+		\entry{data\_logger.firmware.name}{True}{None}{string}{free form}{Name of the firmware the data logger runs.}{mtrules}
+		\entry{data\_logger.firmware.version}{True}{None}{string}{free form}{Version of the firmware that runs the data logger.}{12.01a}
+		\entry{data\_logger.id}{True}{None}{string}{free form}{instrument ID number can be serial number or a designated ID}{mt01}
+		\entry{data\_logger.manufacturer}{True}{None}{string}{free form}{who manufactured the instrument}{mt gurus}
+		\entry{data\_logger.model}{False}{None}{string}{free form}{model version of the instrument}{falcon5}
+	\end{tabular}
+	\label{tab:}
+\end{table}
+
+\clearpage
+\newpage
+\begin{table}[h!]
+	\caption*{Attributes for Run Category}
+	\begin{tabular}{p{.305\textwidth}p{.47\textwidth}p{.2\textwidth}}
+		\textbf{Metadata Key} & \textbf{Description} & \textbf{Example} \\ \toprule
+		\entry{data\_logger.power\_source.comments}{False}{None}{string}{name}{any comment about the battery}{this is a comment}
+		\entry{data\_logger.power\_source.id}{False}{None}{string}{name}{battery id}{battery01}
+		\entry{data\_logger.power\_source.type}{True}{None}{string}{name}{battery type}{pb-acid gel cell}
+		\entry{data\_logger.power\_source.voltage.end}{True}{volts}{float}{number}{end voltage}{12.1}
+		\entry{data\_logger.power\_source.voltage.start}{True}{volts}{float}{number}{starting voltage}{14.3}
+		\entry{data\_logger.timing\_system.comments}{False}{None}{string}{free form}{any comment on timing system}{GPS locked with internal quartz clock}
+		\entry{data\_logger.timing\_system.drift}{True}{seconds}{float}{number}{estimated drift of the timing system}{0.001}
+	\end{tabular}
+	\label{tab:}
+\end{table}
+
+\clearpage
+\newpage
+\begin{table}[h!]
+	\caption*{Attributes for Run Category}
+	\begin{tabular}{p{.305\textwidth}p{.47\textwidth}p{.2\textwidth}}
+		\textbf{Metadata Key} & \textbf{Description} & \textbf{Example} \\ \toprule
+		\entry{data\_logger.timing\_system.type}{True}{None}{string}{free form}{type of timing system}{GPS}
+		\entry{data\_logger.timing\_system.uncertainty}{True}{seconds}{float}{number}{estimated uncertainty of the timing system}{0.0002}
+		\entry{data\_logger.type}{True}{None}{string}{free form}{instrument type}{broadband 32-bit}
+		\entry{data\_type}{True}{None}{string}{controlled vocabulary}{type of data recoreded for this run.  Options: ['RMT', 'AMT', 'BBMT', 'LPMT', 'ULPMT', 'other']}{BBMT}
+		\entry{id}{True}{None}{string}{alpha numeric}{run ID should be station name followed by an alphabet letter for the run}{mt02b}
+		\entry{metadata\_by.author}{True}{None}{string}{free form}{author name}{person name}
+		\entry{metadata\_by.comments}{False}{None}{string}{email}{email of the contact person}{expert digger}
+	\end{tabular}
+	\label{tab:}
+\end{table}
+
+\clearpage
+\newpage
+\begin{table}[h!]
+	\caption*{Attributes for Run Category}
+	\begin{tabular}{p{.305\textwidth}p{.47\textwidth}p{.2\textwidth}}
+		\textbf{Metadata Key} & \textbf{Description} & \textbf{Example} \\ \toprule
+		\entry{provenance.comments}{False}{None}{string}{free form}{any comments on provenance of the data}{all good}
+		\entry{provenance.log}{False}{None}{string}{free form}{a history of changes made to the data}{2020-02-10T14:24:45+00:00 updated metadata}
+		\entry{sampling\_rate}{True}{samples per second}{float}{number}{rate of sampling renureded for this run}{100}
+		\entry{time\_period.end}{True}{None}{string}{time}{end date and time of collection in UTC}{2020-02-04T16:23:45.453670+00:00}
+		\entry{time\_period.start}{True}{None}{string}{time}{start date and time of collection in UTC}{2020-02-01T09:23:45.453670+00:00}
+	\end{tabular}
+	\label{tab:}
+\end{table}
+
+%
+%\clearpage
+%\newpage
+%\begin{table}[h!]
+%	\caption*{Attributes for Run Category}
+%	\begin{tabular}{p{.305\textwidth}p{.47\textwidth}p{.2\textwidth}}
+%		\textbf{Metadata Key} & \textbf{Description} & \textbf{Example} \\ \toprule
+%		\entry{data\_logger.type}{True}{None}{string}{free form}{instrument type}{broadband 32-bit}
+%		\entry{data\_type}{True}{None}{string}{controlled vocabulary}{type of data recoreded for this run.  Options: ['RMT', 'AMT', 'BBMT', 'LPMT', 'ULPMT', 'other']}{BBMT}
+%		\entry{id}{True}{None}{string}{alpha numeric}{run ID should be station name followed by an alphabet letter for the run}{mt02b}
+%		\entry{metadata\_by.author}{True}{None}{string}{free form}{author name}{person name}
+%		\entry{metadata\_by.comments}{False}{None}{string}{email}{email of the contact person}{expert digger}
+%		\entry{provenance.comments}{False}{None}{string}{free form}{any comments on provenance of the data}{all good}
+%		\entry{provenance.log}{False}{None}{string}{free form}{a history of changes made to the data}{2020-02-10T14:24:45+00:00 updated metadata}
+%	\end{tabluar}
+%\end{table}
+%
+%\clearpage
+%\newpage
+%\begin{table}[h!]
+%	\caption*{Attributes for Run Category}
+%	\begin{tabular}{p{.305\textwidth}p{.47\textwidth}p{.2\textwidth}}
+%		\textbf{Metadata Key} & \textbf{Description} & \textbf{Example} \\ \toprule
+%		\entry{sampling\_rate}{True}{samples per second}{float}{number}{rate of sampling renureded for this run}{100}
+%		\entry{time\_period.end}{True}{None}{string}{time}{end date and time of collection in UTC}{2020-02-04T16:23:45.453670+00:00}
+%		\entry{time\_period.start}{True}{None}{string}{time}{start date and time of collection in UTC}{2020-02-01T09:23:45.453670+00:00}
+%	\end{tabluar}
+%\end{table}
+
+%\begin{table}[h!]
+%    \caption[Attributes for Run]{Attributes for Run category}
+%    \begin{tabular}{|l|p{2.55in}|l|l|p{.95in}|}
+%        \hline
+%       \textbf{Metadata Key} & \textbf{Description} & \textbf{Type} & \textbf{Required} & \textbf{Style}\\ \hline acquired\_by.author & author name & string & True & free form  \\ \hline
+%       acquired\_by.comments & email of the contact person & string & False & email  \\ \hline
+%       channels\_recorded\_auxiliary & list of auxiliary channels recorded & string & True & list  \\ \hline
+%       channels\_recorded\_electric & list of electric channels recorded. See Table \ref{tab:channel_types} and Table \ref{tab:diretions} & string & True & list  \\ \hline
+%       channels\_recorded\_magnetic & list of magnetic channels recorded. See Table \ref{tab:channel_types}  and Table \ref{tab:diretions} & string & True & list  \\ \hline
+%       comments & any comments on the run. See Table \ref{tab:channel_types}  and Table \ref{tab:diretions} & string & False & free form  \\ \hline
+%       data\_logger.firmware.author & author of the firmware & string & False & free form  \\ \hline
+%       data\_logger.firmware.name & firmware name & string & False & free form  \\ \hline
+%       data\_logger.firmware.version & firmware version & string & False & free form  \\ \hline
+%       data\_logger.id & instrument ID number can be serial number or a designated ID & string & True & free form  \\ \hline
+%       data\_logger.manufacturer & who manufactured the instrument & string & True & free form  \\ \hline
+%       data\_logger.model & model version of the instrument & string & False & free form  \\ \hline
+%       data\_logger.power\_source.comments & any comment about the battery & string & False & free form  \\ \hline
+%       data\_logger.power\_source.id & battery id & string & False & free form\\ \hline
+%       data\_logger.power\_source.type & battery type & string & True & free form  \\ \hline
+%       data\_logger.power\_source.voltage.end & end voltage & float & False & number  \\ \hline
+%       data\_logger.power\_source.voltage.start & starting voltage & float & False & number  \\ \hline
+%       data\_logger.timing\_system.comments & any comment on timing system & string & False & free form  \\ \hline
+%       data\_logger.timing\_system.drift & estimated drift of the timing system & float & False & number  \\ \hline
+%       data\_logger.timing\_system.type & type of timing system & string & False & free form  \\ \hline
+%       data\_logger.timing\_system.uncertainty & estimated uncertainty of the timing system & float & False & number  \\ \hline
+%       data\_logger.type & instrument type & string & True & free form  \\ \hline
+%       data\_type & type of data recoreded for this run. Options: [ BBMT $|$ LPMT $|$ AMT $|$ Combo $|$ ...] see Table \ref{tab:em} for more details  & string & True & controlled vocabulary  \\ \hline
+%       id & run ID should be station.archive\_id\{a-z\} & string & True & alpha numeric  \\ \hline
+%       metadata\_by.author & metadata author name & string & True & free form  \\ \hline
+%       metadata\_by.comments & comments on metadata & string & False & free form  \\ \hline
+%       provenance.comments & any comments on provenance of the data & string & False & free form  \\ \hline
+%       provenance.log & a history of changes made to the data & string & False & free form  \\ \hline
+%       sampling\_rate & rate of sampling renureded for this run & float & True & number  \\ \hline
+%       time\_period.end & maximum end time of all run channels & string & True & date time  \\ \hline
+%       time\_period.start & minimum start time of all run channels & string & True & date time  \\ \hline
+%    \end{tabular}
+%    \label{tab:run}
+%\end{table}
 
 \newpage
 \subsection{Example Run XML Element}

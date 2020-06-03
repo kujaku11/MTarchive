@@ -505,7 +505,7 @@ def to_csv(level_dict, csv_fn):
     logger.info('Wrote dictionary to {0}'.format(csv_fn))
     return csv_fn
     
-def to_latex(level_dict):
+def to_latex(level_dict, level, max_entries=7, first_table_len=7):
     """
     
     :param level_dict: DESCRIPTION
@@ -514,21 +514,51 @@ def to_latex(level_dict):
     :rtype: TYPE
 
     """
-    level_dict = OrderedDict(sorted(level_dict.items(),
-                                    key=itemgetter(0)))
+    beginning = ['\clearpage', '\\newpage',
+                 '\\begin{table}[h!]', 
+                 '\caption*{{Attributes for {0} Category}}'.format(level),
+                 '\\begin{tabular}{p{.305\\textwidth}p{.47\\textwidth}p{.2\\textwidth}}']
+    
+    end = ['\end{tabular}', '\label{tab:}', '\end{table}']
+    header = [' & '.join(['\\textbf{Metadata Key}',
+                         '\\textbf{Description}', 
+                         '\\textbf{Example}']) + ' \\\\ \\toprule']
     
     order = ['name', 'required', 'units', 'type', 'style', 'description',
              'example']
     
-    lines = [' & '.join(['\\textbf{Metadata Key}', '\\textbf{Description}', 
-             '\\textbf{Example}']) + ' \\\\ \\toprule']
+   
+    level_dict = OrderedDict(sorted(level_dict.items(),
+                                    key=itemgetter(0)))
     
+
+    ntables = int(len(level_dict)/max_entries)
+    if len(level_dict) // max_entries > 0:
+        ntables += 1
+    
+    lines = []
     for name, v_dict in level_dict.items():
+        if not v_dict['options'] in [None, 'none', 'None', []]:
+            v_dict['description'] += '.  Options: {0}'.format(
+                v_dict['options'])
         line = [r'\entry{{{0}}}'.format(name) +
                 ''.join(['{{{0}}}'.format(v_dict[ii]) for ii in order[1:]])]
         lines.append(line[0])
+            
+    all_lines = beginning + header + ['\n'.join(lines[0:first_table_len])] +\
+        end
+    for ii in range(ntables-1):
+        stable = beginning + header
+        for kk in range(max_entries):
+            index = first_table_len + max_entries * ii + kk
+            try:
+                stable.append(lines[index].replace('_', '\_'))
+            except IndexError:
+                break
+        stable += end
+        all_lines.append('\n'.join(stable))
     
-    return '\n'.join(lines)
+    return all_lines
 # =============================================================================
 # base dictionary
 # =============================================================================
