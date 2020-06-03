@@ -517,19 +517,18 @@ def to_latex(level_dict):
     level_dict = OrderedDict(sorted(level_dict.items(),
                                     key=itemgetter(0)))
     
-    order = ['description', 'type', 'required', 'style']
+    order = ['name', 'required', 'units', 'type', 'style', 'description',
+             'example']
     
-    lines = [' & '.join(['\textbf{Metadata Key}', '\textbf{Description}', 
-             '\textbf{Type}', '\textbf{Required}', 
-             '\textbf{Style}']) + 'hline']
+    lines = [' & '.join(['\\textbf{Metadata Key}', '\\textbf{Description}', 
+             '\\textbf{Example}']) + ' \\\\ \\toprule']
     
     for name, v_dict in level_dict.items():
-        line = [name]
-        for key in order:
-            line.append('{0}'.format(v_dict[key]))
-        lines.append(' & '.join(line) + r'  hline')
+        line = [r'\entry{{{0}}}'.format(name) +
+                ''.join(['{{{0}}}'.format(v_dict[ii]) for ii in order[1:]])]
+        lines.append(line[0])
     
-    return lines
+    return '\n'.join(lines)
 # =============================================================================
 # base dictionary
 # =============================================================================

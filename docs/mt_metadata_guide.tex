@@ -1,11 +1,18 @@
-\documentclass{article}
+\documentclass[12pt]{article}
 
 \usepackage[hmargin=.65in, vmargin=.75in]{geometry}
 \usepackage[citecolor=blue, colorlinks=True, linkcolor=blue, urlcolor=blue]{hyperref}
 \usepackage{natbib}
 \usepackage{graphicx}
+\usepackage{multirow}
+\usepackage{tabularx}
+\usepackage[table, svgnames]{xcolor}
 \usepackage{authblk}
+\usepackage{booktabs}
 \usepackage[toc,page]{appendix}
+\usepackage[T1]{fontenc}
+\usepackage{enumitem}
+\usepackage{caption}
 
 \title{A Standard for Exchangeable Magnetotelluric Metadata}
 \date{\textbf{Version 0.0.1c -- May 2020}\footnote{\noindent\textbf{\textit{Corresponding Authors:}}
@@ -17,7 +24,18 @@
 \affil[1]{Portable Array Seismic Studies of the Continental Lithosphere, Incorporated Research Institutions for Seismology}
 
 \newcommand{\attr}[1]{\textbf{#1}}
-\renewcommand{\arraystretch}{1.25}
+\renewcommand{\arraystretch}{1.0}
+
+\newcommand{\entry}[7]{
+	\textbf{#1} 
+	\begin{itemize}[topsep=5pt,itemsep=-.1pt,parsep=-2pt,partopsep=0pt,labelwidth=2em,align=left,itemindent=1em]
+		\begin{small}
+			\item[Required:] #2
+			\item[Units:] #3
+			\item[Type:] #4
+			\item[Style:] #5
+		\end{small}
+	\end{itemize} & #6 & #7 \\ \midrule}
 
 \begin{document}
 	
@@ -25,6 +43,8 @@
 
 \tableofcontents
 \vspace{1cm}
+
+\rowcolors{1}{white}{AliceBlue}
 
 \newpage
 
@@ -81,24 +101,24 @@ All latitude and longitude locations are given in decimal degrees in the well kn
 All angles of orientation are given in decimal degrees.  Orientation of channels should be given in geographic coordinates where angles are assumed to be clockwise positive from Geographic North = 0.  If a station was collected not in geographic coordinates this needs to be specified in \verb|station.orientation.option| and the \verb|station.layout_rotation_angle| needs to be specified.   
 
 \subsection{Units}
-Units should all be from the metric system.  Abbreviations and full names are acceptable, for example \verb|mV| and \verb|millivolts|.  Table \ref{tab:units} summarizes common acceptable units:
+Acceptable units are only those from the International System of Units (SI).  Only long names in all lower case are acceptable.  Table \ref{tab:units} summarizes common acceptable units:
 
 
-\begin{table}[h!]
+\begin{table}[!h]
 	\centering
 	\caption[Acceptable units]{Acceptable units}
-	\begin{tabular}{|l|c|c|}
-		\hline
-		\textbf{Measurement Type} & \textbf{Unit Long Name}  & \textbf{Unit Short Name} \\ \hline
-		Angles & degrees & deg \\ \hline
+	\begin{tabular}{ll}
+		\toprule
+		\textbf{Measurement Type} & \textbf{Unit Name} \\ \midrule
+		Angles & degrees \\ \midrule
 		
-		Distance &  meters & m \\ \hline
-		Latitude/Longitude & decimal degrees & deg \\ \hline
-		Resistance & Ohms  &  Ohms \\ \hline
-		Resistivity & Ohm-meters & Ohm-m, Ohmm \\ \hline
-		Temperature & Celsius & C \\ \hline
-		Time & seconds & s \\ \hline
-		Voltage & Volts & V \\ \hline
+		Distance &  meters  \\ \midrule
+		Latitude/Longitude & decimal degrees \\ \midrule
+		Resistance & ohms   \\ \midrule
+		Resistivity & ohm-meters \\ \midrule
+		Temperature & celsius\\ \midrule
+		Time & seconds\\ \midrule
+		Voltage & volts \\ \bottomrule
 		
 		
 	\end{tabular}
@@ -112,24 +132,41 @@ Each metadata level has a column that describes the style of the input.  These a
 \begin{table}[htb!]
 	\centering
 	\caption[Acceptable String Formats]{Acceptable String Formats}
-	\begin{tabular}{|l|p{3.in}|c|}
-		\hline
-		\textbf{Style} & \textbf{Description}  & \textbf{Example} \\ \hline
-		free form & an unregulated string that can contain \{a-z, A-Z, 0-9\} and special characters & This is free form! \\ \hline
+	\begin{tabular}{p{.8in}p{3.1in}c}
+		\toprule
+		\textbf{Style} & \textbf{Description}  & \textbf{Example} \\ \midrule
+		free form & an unregulated string that can contain \{a-z, A-Z, 0-9\} and special characters & This is free form! \\ \midrule
 		
-		alpha numeric & a string that contains no spaces and only characters \{a-z, A-Z, 0-9, -, /, \_\} & WGS84 or GEOMAG-USGS \\ \hline
-		controlled vocabulary & Only certain names or words are allowed, in this case examples of acceptable values are provided in the documentation as [ option01 $|$ option02 $|$ ...]. The ... indicates that other options are possible but have not been defined yet. &  station.orientation.option = geographic \\ \hline
-		list & list of entries using a comma separator & 'Ex, Ey, Hx, Hy, Hz, T' \\ \hline
-		number & a number in the form of the data type, number of decimal places has not been implemented yet & 10.0 for float or 10 for int \\ \hline
-		date & ISO formatted date YYYY-MM-DD in UTC & 2020-02-02 \\ \hline
-		date time & ISO formatted date time YYYY-MM-DDThh:mm:ss.ms+00:00 in UTC & 2020-02-02T12:20:45.123456+00:00 \\ \hline
-		email & a valid email address & \url{person@mt.org} \\ \hline
-		url & a full URL that a user could put into a web browser  &  \url{https://www.passcal.nmt.edu/} \\ \hline
+		alpha numeric & a string that contains no spaces and only characters \{a-z, A-Z, 0-9, -, /, \_\} & WGS84 or GEOMAG-USGS \\ \midrule
+		controlled vocabulary & Only certain names or words are allowed, in this case examples of acceptable values are provided in the documentation as [ option01 $|$ option02 $|$ ...]. The ... indicates that other options are possible but have not been defined yet. &  station.orientation.option = geographic \\ \midrule
+		list & list of entries using a comma separator & 'Ex, Ey, Hx, Hy, Hz, T' \\ \midrule
+		number & a number in the form of the data type, number of decimal places has not been implemented yet & 10.0 for float or 10 for int \\ \midrule
+		date & ISO formatted date YYYY-MM-DD in UTC & 2020-02-02 \\ \midrule
+		date time & ISO formatted date time YYYY-MM-DDThh:mm:ss.ms+00:00 in UTC & 2020-02-02T12:20:45.123456+00:00 \\ \midrule
+		email & a valid email address & \url{person@mt.org} \\ \midrule
+		url & a full URL that a user could put into a web browser  &  \url{https://www.passcal.nmt.edu/} \\ \bottomrule
 		
 		
 	\end{tabular}
 	\label{tab:values}
 \end{table}
+
+%\begin{table}[h!]
+%	\centering
+%	\caption[Attributes for Survey]{Attributes for Survey category}
+%	\begin{tabular}{p{.25\textwidth}p{.6\textwidth}p{.15\textwidth}}
+%		\hline
+%		\textbf{Metadata Key} & \textbf{Description} & \textbf{Example} \\ \toprule
+%		attribute
+%		\begin{itemize}[noitemsep,topsep=0pt,parsep=0pt,partopsep=0pt,labelwidth=2em,align=left,itemindent=1em]
+%			\item[Units:] None
+%			\item[Type:] float
+%			\item[Required:] True
+%			\item[Style:] free form
+%		\end{itemize} & A survey describes an entire data set that covers a specific time span and region. This may include multiple PIs in multiple data collection episodes but should be confined to a specific experiment. & this is an exampe \\ \midrule
+%		\entry{attribute}{none}{boolean}{True}{bool}{description}{false}
+%	\end{tabular}
+%\end{table}
 
 \clearpage
 \newpage
@@ -138,39 +175,73 @@ Each metadata level has a column that describes the style of the input.  These a
 A survey describes an entire data set that covers a specific time span and region. This may include multiple PIs in multiple data collection episodes but should be confined to a specific experiment. The \verb|Survey| metadata category describes the general parameters of the survey.
 
 \begin{table}[h!]
-	\centering
-	\caption[Attributes for Survey]{Attributes for Survey category}
-	\begin{tabular}{|l|p{2.75in}|l|c|p{.95in}|}
-		\hline
-		\textbf{Metadata Key} & \textbf{Description} & \textbf{Type} & \textbf{Required}  & \textbf{Style}  \\ \hline
-		acquired\_by.author\ & who acquired the data, this can be different than the project\_lead if a contractor was used & string & True & free form  \\ \hline
-		acquired\_by.comments\ & comments about who acquired the data, could include the various groups or contractors & string & False & free form \\ \hline
-		archive\_id & alphanumeric name for the project e.g USGS-GEOMAG & string & True & alpha numeric  \\ \hline
-		archive\_network & network code given by PASSCAL/IRIS/FDSN & string & True & alpha numeric  \\ \hline
-		citation\_dataset.doi & citation dataset doi number & string & True & url  \\ \hline
-		citation\_journal.doi & citation journal doi & string & False & url  \\ \hline
-		comments\ & comments about survey that are not in the summary & string & False & free form \\ \hline
-		country\ & country/countries survey located in, if multiple they should be comma separated & string & False & free form \\ \hline
-		datum\ & datum of latitude and longitude coordinates, should be a well-known datum [ WGS84 ] and will be the reference datum for all location & string & True & alpha numeric \\ \hline
-		geographic\_name\ & geographic location(s) of survey in general terms & string & True & free form \\ \hline
-		name\ & descriptive name of the survey & string & True & free form \\ \hline
-		northwest\_corner.latitude\ & location of northwest corner of survey & float & True & number \\ \hline
-		northwest\_corner.longitude\ & location of northwest corner of survey & float & True & number \\ \hline
-		project & alphanumeric name for the project e.g USGS-GEOMAG & string & True & alpha numeric  \\ \hline
-		project\_lead.email & email address of the project lead & string & True & email  \\ \hline
-		project\_lead.name & name of the project lead & string & True & free form  \\ \hline
-		project\_lead.organization & name of the organization for the project lead & string & True & free form  \\ \hline
-		release\_status\ & defined status of how the data can be used. Options are [ Unrestricted Release $|$ Paper Citation Required $|$ Academic Use Only $|$ Conditions Apply ] & string & True & controlled vocabulary \\ \hline
-		southeast\_corner.latitude\ & location of southeast corner of survey & float & True & number \\ \hline
-		southeast\_corner.longitude\ & location of southeast corner of survey & float & True & number \\ \hline
-		summary\ & summary paragraph of survey including the purpose, difficulties, data quality, summary of outcomes if the data have been processed and modeled & string & True & free form \\ \hline
-		time\_period.end\_date\ & end date of survey in UTC & string & True & date  \\ \hline
-		time\_period.start\_date\ & start date of survey in UTC & string & True & date \\ \hline
-	
+	\caption[Attributes for Survey]{Attributes for Survey Category}
+	\begin{tabular}{p{.275\textwidth}p{.5\textwidth}p{.2\textwidth}}
+	\textbf{Metadata Key} & \textbf{Description} & \textbf{Example} \\ \toprule
+	\entry{acquired\_by.author}{True}{None}{string}{free form}{Name of the person or persons who acquired the data.  This can be different from the project lead if a contractor or different group collected the data.}{person name}
+	\entry{acquired\_by.comments}{False}{None}{string}{email}{Email of the contact person who acquired the data. This is in case there are any questions about aspects of how the data were collected or any inconsistencies in the data.}{expert digger}
+	\entry{archive\_id}{True}{None}{string}{alpha numeric}{Alphanumeric name provided by the archive.  For IRIS this will be a 5 character string.}{YKN20}
+	\entry{archive\_network}{True}{None}{string}{alpha numeric}{Network code given by PASSCAL/IRIS/FDSN.  This will be a two character string that describes who and where the network operates.}{EM}
+	\entry{citation\_dataset.doi}{True}{None}{string}{url}{The full url of the doi number provided by the archive that describes the raw data}{\url{http://doi.10.adfabe}}
+	\entry{citation\_journal.doi}{True}{None}{string}{url}{The full url of the doi number for a journal article(s) that uses these data.  If multiple journal articles use these data provide as a comma separated string of urls. }{\url{http://doi.10.xbsfs}, or \url{http://doi.10.xbsfs}, \url{http://doi.10.xbsfs2}}
 	\end{tabular}
 	\label{tab:survey}
 \end{table} 
 
+\clearpage
+\newpage
+
+\begin{table}[h!]
+	\caption*{Attributes for Survey Category Continued}
+	\begin{tabular}{p{.305\textwidth}p{.47\textwidth}p{.2\textwidth}}
+		\textbf{Metadata Key} & \textbf{Description} & \textbf{Example} \\ \toprule
+		\entry{comments}{True}{None}{string}{free form}{Any comments about the survey that are important for any user to know.}{Solar activity low.}	
+		\entry{country}{True}{None}{string}{free form}{Country(s) countries that the survey is located in. If multiple input as comma separated names}{"USA, Canada"}
+		\entry{datum}{True}{None}{string}{controlled vocabulary}{The reference datum for all geographic coordinates throughout the survey. It is up to the user to be sure that all coordinates are projected into this datum.  Should be a well-known datum: \qquad [ WGS84 $|$ NAD83 $|$ OSGB36 $|$ GDA94 $|$ ETRS89 $|$ PZ-90.11 $|$ other ].}{WGS84}
+		\entry{geographic\_name}{True}{None}{string}{free form}{Geographic names that encompass the survey.  These should be broad geographic names.  Further information can be found at \url{https://www.usgs.gov/core-science-systems/ngp/board-on-geographic-names}}{Yukon}
+		\entry{name}{True}{None}{string}{free form}{Descriptive name of the survey, similar to the title of a journal article.}{MT Characterization of Yukon Terrane}
+		\entry{northwest\_corner.latitude}{True}{decimal degrees}{float}{number}{Latitude of the northwest corner of the survey in the datum specified.}{23.134}
+		\entry{northwest\_corner.longitude}{True}{decimal degrees}{float}{number}{Longitude of the northwest corner of the survey in the datum specified.}{14.23}
+	
+	\end{tabular}
+	\label{tab:survey2}
+\end{table} 
+
+\clearpage
+\newpage
+
+\begin{table}[h!]
+	\caption*{Attributes for Survey Category Continued}
+	\begin{tabular}{p{.305\textwidth}p{.47\textwidth}p{.2\textwidth}}
+		\textbf{Metadata Key} & \textbf{Description} & \textbf{Example} \\ \toprule
+		\entry{project}{True}{None}{string}{free form}{alphanumeric name for the project e.g USGS-GEOMAG}{YUTOO}
+		\entry{project\_lead.author}{True}{None}{string}{free form}{author name}{person name}		
+		\entry{project\_lead.email}{True}{None}{string}{email}{email of the contact person}{mt.guru@em.org}
+		\entry{project\_lead.organization}{True}{None}{string}{free form}{organization name}{mt gurus}
+		\entry{release\_status}{True}{None}{string}{controlled vocabulary}{how the data can be used}{unrestricted release}
+		\entry{southeast\_corner.latitude}{True}{decimal degrees}{float}{number}{latitude of location in datum specified at survey level}{23.134}
+		\entry{southeast\_corner.longitude}{True}{decimal degrees}{float}{number}{longitude of location in datum specified at survey level}{14.23}
+		
+	\end{tabular}
+	\label{tab:survey3}
+\end{table}
+
+\clearpage
+\newpage
+
+\begin{table}[h!]
+	\caption*{Attributes for Survey Category Continued}
+	\begin{tabular}{p{.275\textwidth}p{.5\textwidth}p{.2\textwidth}}
+		\textbf{Metadata Key} & \textbf{Description} & \textbf{Example} \\ \toprule
+		\entry{summary}{True}{None}{string}{free form}{summary paragraph of survey including the purpose; difficulties; data quality; summary of outcomes if the data have been processed and modeled}{long project of characterizing mineral resources in Yukon}
+		\entry{time\_period.end\_date}{True}{None}{string}{date}{end date of the survey in UTC}{1/2/1995}
+		\entry{time\_period.start\_date}{True}{None}{string}{date}{start date of the survey in UTC}{1/2/2020}
+		
+	\end{tabular}
+	\label{tab:survey4}
+\end{table}   
+
+\clearpage
 \newpage
 \subsection{Example Survey XML Element}
 
