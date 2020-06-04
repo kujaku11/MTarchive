@@ -15,7 +15,6 @@ import numpy as np
 import weakref
 import logging
 import h5py
-import pandas as pd
 
 from mth5 import metadata
 from mth5.utils.helpers import to_numpy_type
@@ -70,6 +69,10 @@ class BaseGroup():
     def _class_name(self):
         return self.__class__.__name__
     
+    @property
+    def summary_table(self):
+        return MTH5Table(self.hdf5_group['Summary'])
+    
     def read_metadata(self):
         """
         read metadata
@@ -111,11 +114,15 @@ class BaseGroup():
 
         """
         
-        self.hdf5_group.create_dataset(
+        summary_table = self.hdf5_group.create_dataset(
             self._summary_defaults['name'], 
             (1, ),
             maxshape=self._summary_defaults['max_shape'],
             dtype=self._summary_defaults['dtype'])
+        
+        summary_table.attrs.update({'type': 'summary table',
+                                    'last_updated': 'date_time',
+                                    'reference': summary_table.ref})
         
         self.logger.debug(
             "Created {0} table with max_shape = {1}, dtype={2}".format(
@@ -158,9 +165,10 @@ class StationGroup(BaseGroup):
     def __init__(self, group, **kwargs):
         
         super().__init__(group, **kwargs)
+        
         self._summary_defaults = {'name': 'Summary',
                                   'max_shape': (1000,),
-                                  'dtype': np.dtype([('name', 'S5'),
+                                  'dtype': np.dtype([('archive_id', 'S5'),
                                                      ('start', 'S32'),
                                                      ('end', 'S32'),
                                                      ('components', 'S100'),
@@ -179,9 +187,7 @@ class StationGroup(BaseGroup):
     def name(self, name):
         self.metadata.archive_id = name
         
-    @property
-    def summary_table(self):
-        return self.hdf5_group['Summary']
+
     
 
         
@@ -195,6 +201,12 @@ class ReportsGroup(BaseGroup):
         
         super().__init__(group, **kwargs)
         
+        self._summary_defaults = {'name': 'Summary',
+                                  'max_shape': (1000,),
+                                  'dtype': np.dtype([('name', 'S5'),
+                                                     ('type', 'S32'),
+                                                     ('summary', 'S200')])}
+        
 class StandardsGroup(BaseGroup):
     """
     holds the standards group
@@ -204,6 +216,8 @@ class StandardsGroup(BaseGroup):
     def __init__(self, group, **kwargs):
         
         super().__init__(group, **kwargs) 
+        
+        
         
 class FiltersGroup(BaseGroup):
     """
@@ -261,10 +275,9 @@ class AuxiliaryGroup(BaseGroup):
         
 class MTH5Table():
     """
-    we will try to use Pandas as the table container.
+    Use the underlying NumPy basics
     
-    All functionality of pandas.Dataframe will be provided in 
-    MTH5Table.dataframe.  Some helper functions are provided for convenience.
+    
     
     """
     
@@ -273,97 +286,97 @@ class MTH5Table():
             __name__, self.__class__.__name__))
         
         if isinstance(hdf5_dataset, h5py.Dataset):
-            self.dataframe = pd.DataFrame(np.array(hdf5_dataset,
-                                                 dtype=hdf5_dataset.dtype))
+            self.array = weakref.ref(hdf5_dataset)()
         else:
             msg = "Input must be a h5py.Dataset not {0}".format(
                 type(hdf5_dataset))
             self.logger.error(msg)
             raise MTH5TableError(msg)
             
+    def __str__(self):
+        length_dict = dict([(key, max([len(str(b)) for b in self.array[key]]))
+                            for key in list(self.dtype.names)])
+        lines = [' | '.join(['index']+['{0:^{1}}'.format(name, 
+                                                         length_dict[name]) 
+                             for name in list(self.dtype.names)])]
+        lines.append('-' * len(lines[0]))
+        for ii, row in enumerate(self.array):
+            line = ['{0:^5}'.format(ii)]
+            for element, key in zip(row, list(self.dtype.names)):
+                if isinstance(element, (np.bytes_)):
+                    element = element.decode()
+                line.append('{0:^{1}}'.format(element, length_dict[key]))
+            lines.append(' | '.join(line))
+        return '\n'.join(lines)
+                    
+            
     @property
-    def dtypes(self):
+    def dtype(self):
         try:
-            return self.dataframe.dtypes
+            return self.array.dtype
         except AttributeError as error:
             msg = '{0}, dataframe is not initiated yet'.format(error)
             self.logger.warning(msg)
             return None
+        
+    def check_dtypes(self, other_dtype):
+        """
+        Check to make sure datatypes match
+        """
+        
+        if self.dtype == other_dtype:
+            return True
+        
+        return False
+    
+    @property
+    def shape(self):
+        return self.array.shape
+    
+    @property
+    def nrows(self):
+        return self.array.shape[0]
+        
             
-    def add_row(self, row):
+    def add_row(self, row, index=None):
         """
         Add a row to the table.
         
-        row must be of the same data type as the table, can be a DataFrame
-        or numpy.ndarray with correct data type
+        row must be of the same data type as the table
         
         
         :param row: row entry for the table
         :type row: TYPE
-        :return: DESCRIPTION
-        :rtype: TYPE
+        
+        :param index: index of row to add
+        :type index: integer, if None is given then the row is added to the
+                     end of the array
+                     
+        :return: index of the row added
+        :rtype: integer
 
         """
         
-        if not isinstance(row, (np.ndarray, pd.DataFrame)):
-            msg = ("Input must be an numpy.ndarray or pandas.DataFrame" + 
+        if not isinstance(row, (np.ndarray)):
+            msg = ("Input must be an numpy.ndarray" + 
                    "not {0}".format(type(row)))
         if isinstance(row, np.ndarray):
-            row = pd.DataFrame(row)
-        
-        try:
-            compare = row.dtypes == self.dataframe.dtypes
-        except ValueError as error:
-            msg = '{0}\ninput dtypes:\n{1}\n\nTable dtypes:\n{2}'.format(
-                error, row.dtypes, self.dtypes)
-            self.logger.exception(msg)
-            raise ValueError(msg)
-        if not compare.all(axis=None):
-            msg = ("Row is not the correct data type, should be \n{0}\n " +
-                   " not \n{1}")
+            if not self.check_dtypes(row.dtype):
+                msg = '{0}\nInput dtypes:\n{1}\n\nTable dtypes:\n{2}'.format(
+                    'Data types are not equal:', row.dtype, self.dtype)
+                self.logger.error(msg)
+                raise ValueError(msg)
 
-            self.logger.error(msg.format(row.dtypes, self.dtypes))
-            raise ValueError(msg.format(row.dtypes, self.dtypes))
-        self.dataframe = self.dataframe.append(row, ignore_index=True)
+        if index is None:
+            index = self.nrows - 1
+            new_shape = tuple([self.nrows] + [ii for ii in self.shape[1:]])
+            print(new_shape)
+            self.array.resize(new_shape)
         
-    def remove_row(self, key, value):
-        """
-        Delete a row based on a key and given value
+        # add the row
+        self.array[index] = row
+        self.logger.debug('Added row as index {0} with values {1}'.format(
+            index, row))
         
+        return index
         
-        :param key: DESCRIPTION
-        :type key: TYPE
-        :param value: DESCRIPTION
-        :type value: TYPE
-        :return: DESCRIPTION
-        :rtype: TYPE
-
-        """
-        if key not in list(self.dtypes.keys()):
-            msg = "{0} not in dtype:\n{1}".format(key,
-                                                  list(self.dtypes.keys()))
-            self.logger.error(msg)
-            raise ValueError(msg)
-            
-        remove_index = self.dataframe.index[getattr(self.dataframe,
-                                                    key) == value]
-        if len(remove_index) == 1:
-            self.logger.debug("found {0} = {1} at index {2}, removing".format(
-                key, value, remove_index))
-        elif len(remove_index) > 1:
-            self.logger.info("found {0} = {1} at indexes {2}, removing".format(
-                key, value, remove_index))
-        else:
-            self.logger.info("did not find {0} = {1}".format(key, value))
-        
-        self.dataframe.drop(remove_index, inplace=True)
-        
-    def to_nparray(self):
-        return np.array([tuple(v) for v in self.dataframe.values.tolist()], 
-                 dtype=self.dtypes)
-        
-        
-        
-          
-
-
