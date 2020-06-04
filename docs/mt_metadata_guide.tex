@@ -322,7 +322,7 @@ A station encompasses a single site where data are collected. If the location ch
 \newpage
 \begin{table}[h!]
 	\caption*{Attributes for Station Category Continued}
-	\begin{tabular}{p{.305\textwidth}>{\raggedright}p{.47\textwidth}p{.2\textwidth}}
+	\begin{tabular}{p{.345\textwidth}>{\raggedright}p{.44\textwidth}p{.2\textwidth}}
 		\textbf{Metadata Key} & \textbf{Description} & \textbf{Example} \\ \toprule
 		\entry{data\_type}{True}{None}{String}{Controlled Vocabulary}{All types of data recorded by the station. If multiple types input as a comma separated list. \qquad Options: [ RMT $|$ AMT $|$ BBMT $|$ LPMT $|$ ULPMT $|$ other ]}{BBMT}
 		\entry{geographic\_name}{True}{None}{String}{Free Form}{Closest geographic name to the station, should be rather general.  For further details about geographic names see \url{https://www.usgs.gov/core-science-systems/ngp/board-on-geographic-names}}{"Whitehorse, YK"}
@@ -338,7 +338,7 @@ A station encompasses a single site where data are collected. If the location ch
 \newpage
 \begin{table}[h!]
 	\caption*{Attributes for Station Category Continued}
-	\begin{tabular}{p{.305\textwidth}>{\raggedright}p{.47\textwidth}p{.2\textwidth}}
+	\begin{tabular}{p{.40\textwidth}>{\raggedright}p{.385\textwidth}p{.2\textwidth}}
 		\textbf{Metadata Key} & \textbf{Description} & \textbf{Example} \\ \toprule
 		\entry{location.latitude}{True}{degrees}{Float}{Number}{Latitude of station location in datum specified at survey level.}{23.134}
 		\entry{location.longitude}{True}{degrees}{Float}{Number}{Longitude of station location in datum specified at survey level.}{14.23}
@@ -354,14 +354,14 @@ A station encompasses a single site where data are collected. If the location ch
 \newpage
 \begin{table}[h!]
 	\caption*{Attributes for Station Category Continued}
-	\begin{tabular}{p{.305\textwidth}>{\raggedright}p{.47\textwidth}p{.2\textwidth}}
+	\begin{tabular}{p{.385\textwidth}>{\raggedright}p{.39\textwidth}p{.2\textwidth}}
 		\textbf{Metadata Key} & \textbf{Description} & \textbf{Example} \\ \toprule
 		\entry{provenance.log}{False}{None}{String}{Free Form}{A history of any changes made to the data}{2020-02-10 T14:24:45+00:00 updated station metadata.}
 		\entry{provenance.software.author}{True}{None}{String}{Free Form}{Author of the software used to create the data files.}{programmer 01}
 		\entry{provenance.software.name}{True}{None}{String}{Free Form}{Name of the software used to create data files}{mtrules}
 		\entry{provenance.software.version}{True}{None}{String}{Free Form}{Version of the software used to create data files}{12.01a}
 		\entry{provenance.submitter.author}{True}{None}{String}{Free Form}{Name of the person submitting the data to the archive.}{person name}
-		\entry{provenance.submitter.Email}{True}{None}{String}{Email}{Email of the person submitting the data to the archive.}{mt.guru@em.org}
+		\entry{provenance.submitter.email}{True}{None}{String}{Email}{Email of the person submitting the data to the archive.}{mt.guru@em.org}
 		\entry{provenance.submitter.organization}{True}{None}{String}{Free Form}{Name of the organization that is submitting data to the archive.}{MT Gurus}
 	\end{tabular}
 \end{table}
@@ -431,7 +431,7 @@ A run represents data collected at a single station with a single sampling rate.
 
 \begin{table}[h!]
 	\caption[Attributes for Run Category]{Attributes for Run Category}
-	\begin{tabular}{p{.305\textwidth}>{\raggedright}p{.47\textwidth}p{.2\textwidth}}
+	\begin{tabular}{p{.345\textwidth}>{\raggedright}p{.43\textwidth}p{.2\textwidth}}
 		\textbf{Metadata Key} & \textbf{Description} & \textbf{Example} \\ \toprule
 		\entry{acquired\_by.author}{True}{None}{String}{Free Form}{Name of the person or persons who acquired the run data.  This can be different from the station.acquired\_by and survey.acquired\_by.}{M.T. Nubee}
 		\entry{acquired\_by.comments}{False}{None}{String}{Email}{Email of the contact person who collected the run.}{\url{mt@nubee.org}}
