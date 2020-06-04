@@ -275,7 +275,10 @@ class AuxiliaryGroup(BaseGroup):
         
 class MTH5Table():
     """
-    Use the underlying NumPy basics
+    Use the underlying NumPy basics, there are simple actions in this table, 
+    if a user wants to use something more sophisticated for querying they 
+    should try using a pandas table.  In this case entries in the table 
+    are more difficult to change and datatypes need to be kept track of. 
     
     
     
@@ -308,7 +311,19 @@ class MTH5Table():
                 line.append('{0:^{1}}'.format(element, length_dict[key]))
             lines.append(' | '.join(line))
         return '\n'.join(lines)
-                    
+    
+    def __eq__(self, other):
+        if isinstance(other, MTH5Table): 
+            return self.array == other.array
+        elif isinstance(other, h5py.Dataset):
+            return self.array == other
+        else:
+            msg = "Cannot compare type={0}".format(type(other))
+            self.logger.error(msg)
+            raise TypeError(msg)
+            
+    def __ne__(self, other):
+        return not self.__eq__(other)                    
             
     @property
     def dtype(self):
