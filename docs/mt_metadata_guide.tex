@@ -42,6 +42,8 @@
 \maketitle
 
 \tableofcontents
+\addcontentsline{toc}{section}{\listtablename}
+\listoftables
 \vspace{1cm}
 
 \rowcolors{1}{white}{AliceBlue}
@@ -83,7 +85,7 @@ Specific and required formatting standards for location, time and date, and angl
 
 \subsubsection{Time and Date Format}
 
-All time and dates are given as an ISO formatted date-time string in the UTC time zone.  The ISO date time format is \verb|YYYY-MM-DDThh:mm:ss.ms+00:00|, where UTC is represented by \verb|+00:00|. If the data requires a different time zone this can be accommodated but it is recommended that UTC be used whenever possible. Milliseconds can be accurate to 6 decimal places.  ISO dates are formatted \verb|YYYY-MM-DD|. 
+All time and dates are given as an ISO formatted date-time String in the UTC time zone.  The ISO Date Time format is \verb|YYYY-MM-DDThh:mm:ss.ms+00:00|, where UTC is represented by \verb|+00:00|. If the data requires a different time zone this can be accommodated but it is recommended that UTC be used whenever possible. Milliseconds can be accurate to 6 decimal places.  ISO dates are formatted \verb|YYYY-MM-DD|. 
 
 \subsubsection{Location}
 
@@ -137,16 +139,16 @@ Each metadata level has a column that describes the style of the input.  These a
 	\begin{tabular}{p{.8in}p{3.1in}c}
 		\toprule
 		\textbf{Style} & \textbf{Description}  & \textbf{Example} \\ \midrule
-		free form & an unregulated string that can contain \{a-z, A-Z, 0-9\} and special characters & This is free form! \\ \midrule
+		Free Form & An unregulated String that can contain \{a-z, A-Z, 0-9\} and special characters & This is Free Form! \\ \midrule
 		
-		alpha numeric & a string that contains no spaces and only characters \{a-z, A-Z, 0-9, -, /, \_\} & WGS84 or GEOMAG-USGS \\ \midrule
-		controlled vocabulary & Only certain names or words are allowed, in this case examples of acceptable values are provided in the documentation as [ option01 $|$ option02 $|$ ...]. The ... indicates that other options are possible but have not been defined yet. &  station.orientation.option = geographic \\ \midrule
-		list & list of entries using a comma separator & 'Ex, Ey, Hx, Hy, Hz, T' \\ \midrule
-		number & a number in the form of the data type, number of decimal places has not been implemented yet & 10.0 for float or 10 for int \\ \midrule
+		alpha numeric & A String that contains no spaces and only characters \{a-z, A-Z, 0-9, -, /, \_\} & WGS84 or GEOMAG-USGS \\ \midrule
+		Controlled Vocabulary & Only certain names or words are allowed, in this case examples of acceptable values are provided in the documentation as [ option01 $|$ option02 $|$ ...]. The ... indicates that other options are possible but have not been defined yet. &  station.orientation.option = geographic \\ \midrule
+		list & List of entries using a comma separator & Ex, Ey, Hx, Hy, Hz, T' \\ \midrule
+		Number & A Number in the form of the data type, Number of decimal places has not been implemented yet & 10.0 for Float or 10 for int \\ \midrule
 		date & ISO formatted date YYYY-MM-DD in UTC & 2020-02-02 \\ \midrule
-		date time & ISO formatted date time YYYY-MM-DDThh:mm:ss.ms+00:00 in UTC & 2020-02-02T12:20:45.123456+00:00 \\ \midrule
-		email & a valid email address & \url{person@mt.org} \\ \midrule
-		url & a full URL that a user could put into a web browser  &  \url{https://www.passcal.nmt.edu/} \\ \bottomrule
+		Date Time & ISO formatted Date Time YYYY-MM-DDThh:mm:ss.ms+00:00 in UTC & 2020-02-02T12:20:45.123456+00:00 \\ \midrule
+		Email & A valid Email address & \url{person@mt.org} \\ \midrule
+		url & A full URL that a user could put into a web browser  &  \url{https://www.passcal.nmt.edu/} \\ \bottomrule
 		
 		
 	\end{tabular}
@@ -162,9 +164,9 @@ Each metadata level has a column that describes the style of the input.  These a
 %		attribute
 %		\begin{itemize}[noitemsep,topsep=0pt,parsep=0pt,partopsep=0pt,labelwidth=2em,align=left,itemindent=1em]
 %			\item[Units:] None
-%			\item[Type:] float
+%			\item[Type:] Float
 %			\item[Required:] True
-%			\item[Style:] free form
+%			\item[Style:] Free Form
 %		\end{itemize} & A survey describes an entire data set that covers a specific time span and region. This may include multiple PIs in multiple data collection episodes but should be confined to a specific experiment. & this is an exampe \\ \midrule
 %		\entry{attribute}{none}{boolean}{True}{bool}{description}{false}
 %	\end{tabular}
@@ -178,14 +180,14 @@ A survey describes an entire data set that covers a specific time span and regio
 
 \begin{table}[h!]
 	\caption[Attributes for Survey]{Attributes for Survey Category}
-	\begin{tabular}{p{.275\textwidth}p{.5\textwidth}p{.2\textwidth}}
+	\begin{tabular}{p{.275\textwidth}>{\raggedright}p{.5\textwidth}p{.2\textwidth}}
 	\textbf{Metadata Key} & \textbf{Description} & \textbf{Example} \\ \toprule
-	\entry{acquired\_by.author}{True}{None}{string}{free form}{Name of the person or persons who acquired the data.  This can be different from the project lead if a contractor or different group collected the data.}{person name}
-	\entry{acquired\_by.comments}{False}{None}{string}{email}{Email of the contact person who acquired the data. This is in case there are any questions about aspects of how the data were collected or any inconsistencies in the data.}{expert digger}
-	\entry{archive\_id}{True}{None}{string}{alpha numeric}{Alphanumeric name provided by the archive.  For IRIS this will be a 5 character string.}{YKN20}
-	\entry{archive\_network}{True}{None}{string}{alpha numeric}{Network code given by PASSCAL/IRIS/FDSN.  This will be a two character string that describes who and where the network operates.}{EM}
-	\entry{citation\_dataset.doi}{True}{None}{string}{url}{The full url of the doi number provided by the archive that describes the raw data}{\url{http://doi.10.adfabe}}
-	\entry{citation\_journal.doi}{True}{None}{string}{url}{The full url of the doi number for a journal article(s) that uses these data.  If multiple journal articles use these data provide as a comma separated string of urls. }{\url{http://doi.10.xbsfs}, or \url{http://doi.10.xbsfs}, \url{http://doi.10.xbsfs2}}
+	\entry{acquired\_by.author}{True}{None}{String}{Free Form}{Name of the person or persons who acquired the data.  This can be different from the project lead if a contractor or different group collected the data.}{person name}
+	\entry{acquired\_by.comments}{False}{None}{String}{Email}{Email of the contact person who acquired the data. This is in case there are any questions about aspects of how the data were collected or any inconsistencies in the data.}{expert digger}
+	\entry{archive\_id}{True}{None}{String}{alpha numeric}{Alphanumeric name provided by the archive.  For IRIS this will be a 5 character String.}{YKN20}
+	\entry{archive\_network}{True}{None}{String}{alpha numeric}{Network code given by PASSCAL/IRIS/FDSN.  This will be a two character String that describes who and where the network operates.}{EM}
+	\entry{citation\_dataset.doi}{True}{None}{String}{url}{The full url of the doi Number provided by the archive that describes the raw data}{\url{http://doi.10.adfabe}}
+	\entry{citation\_journal.doi}{True}{None}{String}{url}{The full url of the doi Number for a journal article(s) that uses these data.  If multiple journal articles use these data provide as a comma separated String of urls. }{\url{http://doi.10.xbsfs}, or \url{http://doi.10.xbsfs}, \url{http://doi.10.xbsfs2}}
 	\end{tabular}
 	\label{tab:survey}
 \end{table} 
@@ -195,15 +197,15 @@ A survey describes an entire data set that covers a specific time span and regio
 
 \begin{table}[h!]
 	\caption*{Attributes for Survey Category Continued}
-	\begin{tabular}{p{.305\textwidth}p{.47\textwidth}p{.2\textwidth}}
+	\begin{tabular}{p{.305\textwidth}>{\raggedright}p{.47\textwidth}p{.2\textwidth}}
 		\textbf{Metadata Key} & \textbf{Description} & \textbf{Example} \\ \toprule
-		\entry{comments}{True}{None}{string}{free form}{Any comments about the survey that are important for any user to know.}{Solar activity low.}	
-		\entry{country}{True}{None}{string}{free form}{Country(s) countries that the survey is located in. If multiple input as comma separated names}{"USA, Canada"}
-		\entry{datum}{True}{None}{string}{controlled vocabulary}{The reference datum for all geographic coordinates throughout the survey. It is up to the user to be sure that all coordinates are projected into this datum.  Should be a well-known datum: \qquad [ WGS84 $|$ NAD83 $|$ OSGB36 $|$ GDA94 $|$ ETRS89 $|$ PZ-90.11 $|$ other ].}{WGS84}
-		\entry{geographic\_name}{True}{None}{string}{free form}{Geographic names that encompass the survey.  These should be broad geographic names.  Further information can be found at \url{https://www.usgs.gov/core-science-systems/ngp/board-on-geographic-names}}{Yukon}
-		\entry{name}{True}{None}{string}{free form}{Descriptive name of the survey, similar to the title of a journal article.}{MT Characterization of Yukon Terrane}
-		\entry{northwest\_corner.latitude}{True}{decimal degrees}{float}{number}{Latitude of the northwest corner of the survey in the datum specified.}{23.134}
-		\entry{northwest\_corner.longitude}{True}{decimal degrees}{float}{number}{Longitude of the northwest corner of the survey in the datum specified.}{14.23}
+		\entry{comments}{True}{None}{String}{Free Form}{Any comments about the survey that are important for any user to know.}{Solar activity low.}	
+		\entry{country}{True}{None}{String}{Free Form}{Country(s) countries that the survey is located in. If multiple input as comma separated names.}{"USA, Canada"}
+		\entry{datum}{True}{None}{String}{Controlled Vocabulary}{The reference datum for all geographic coordinates throughout the survey. It is up to the user to be sure that all coordinates are projected into this datum.  Should be a well-known datum: \qquad [ WGS84 $|$ NAD83 $|$ OSGB36 $|$ GDA94 $|$ ETRS89 $|$ PZ-90.11 $|$ other ].}{WGS84}
+		\entry{geographic\_name}{True}{None}{String}{Free Form}{Geographic names that encompass the survey.  These should be broad geographic names.  Further information can be found at \url{https://www.usgs.gov/core-science-systems/ngp/board-on-geographic-names}}{Yukon}
+		\entry{name}{True}{None}{String}{Free Form}{Descriptive name of the survey, similar to the title of a journal article.}{MT Characterization of Yukon Terrane}
+		\entry{northwest\_corner.latitude}{True}{decimal degrees}{Float}{Number}{Latitude of the northwest corner of the survey in the datum specified.}{23.134}
+		\entry{northwest\_corner.longitude}{True}{decimal degrees}{Float}{Number}{Longitude of the northwest corner of the survey in the datum specified.}{14.23}
 	
 	\end{tabular}
 	\label{tab:survey2}
@@ -214,15 +216,15 @@ A survey describes an entire data set that covers a specific time span and regio
 
 \begin{table}[h!]
 	\caption*{Attributes for Survey Category Continued}
-	\begin{tabular}{p{.305\textwidth}p{.47\textwidth}p{.2\textwidth}}
+	\begin{tabular}{p{.305\textwidth}>{\raggedright}p{.47\textwidth}p{.2\textwidth}}
 		\textbf{Metadata Key} & \textbf{Description} & \textbf{Example} \\ \toprule
-		\entry{project}{True}{None}{string}{free form}{Alphanumeric name for the project.  This is different than the archive\_id in that it describes the overall project.  For example if the project is to estimate geomagnetic hazards that project may be GEOMAG but the survey could be YKN20, which will be the archive\_id.}{GEOMAG}
-		\entry{project\_lead.author}{True}{None}{string}{free form}{author name}{Name the project lead.  This should be the person in charge who is responsible for the data.}		
-		\entry{project\_lead.email}{True}{None}{string}{email}{Email of the project lead.  This is in case there are any questions about data.}{mt.guru@em.org}
-		\entry{project\_lead.organization}{True}{None}{string}{free form}{Organization name of the project lead.}{MT Gurus}
-		\entry{release\_status}{True}{None}{string}{controlled vocabulary}{How the data can be used. The options are based on Creative Commons (\url{https://creativecommons.org/licenses/}).  Options: \qquad [ CC0 $|$ CC BY $|$ CC BY-SA$|$ CC BY-ND $|$ CC BY-NC-SA $|$ CC BY-NC-ND]}{CC0}
-		\entry{southeast\_corner.latitude}{True}{decimal degrees}{float}{number}{Latitude of the southeast corner of the survey in the datum specified.}{23.134}
-		\entry{southeast\_corner.longitude}{True}{decimal degrees}{float}{number}{Longitude of the southeast corner of the survey in the datum specified.}{14.23}
+		\entry{project}{True}{None}{String}{Free Form}{Alphanumeric name for the project.  This is different than the archive\_id in that it describes the overall project.  For example if the project is to estimate geomagnetic hazards that project may be GEOMAG but the survey could be YKN20, which will be the archive\_id.}{GEOMAG}
+		\entry{project\_lead.author}{True}{None}{String}{Free Form}{Name of the project lead.  This should be a person who is responsible for the data.}{Magneto}		
+		\entry{project\_lead.Email}{True}{None}{String}{Email}{Email of the project lead.  This is in case there are any questions about data.}{mt.guru@em.org}
+		\entry{project\_lead.organization}{True}{None}{String}{Free Form}{Organization name of the project lead.}{MT Gurus}
+		\entry{release\_status}{True}{None}{String}{Controlled Vocabulary}{How the data can be used. The options are based on Creative Commons (\url{https://creativecommons.org/licenses/}).  Options: \qquad [ CC 0 $|$ CC BY $|$ CC BY-SA$|$ CC BY-ND $|$ CC BY-NC-SA $|$ CC BY-NC-ND]}{CC 0}
+		\entry{southeast\_corner.latitude}{True}{decimal degrees}{Float}{Number}{Latitude of the southeast corner of the survey in the datum specified.}{23.134}
+		\entry{southeast\_corner.longitude}{True}{decimal degrees}{Float}{Number}{Longitude of the southeast corner of the survey in the datum specified.}{14.23}
 		
 	\end{tabular}
 	\label{tab:survey3}
@@ -233,11 +235,11 @@ A survey describes an entire data set that covers a specific time span and regio
 
 \begin{table}[h!]
 	\caption*{Attributes for Survey Category Continued}
-	\begin{tabular}{p{.275\textwidth}p{.5\textwidth}p{.2\textwidth}}
+	\begin{tabular}{p{.275\textwidth}>{\raggedright}p{.5\textwidth}p{.2\textwidth}}
 		\textbf{Metadata Key} & \textbf{Description} & \textbf{Example} \\ \toprule
-		\entry{summary}{True}{None}{string}{free form}{Summary paragraph of the survey including the purpose; difficulties; data quality; summary of outcomes if the data have been processed and modeled.}{Long project of characterizing mineral resources in Yukon}
-		\entry{time\_period.end\_date}{True}{None}{string}{date}{End date of the survey in UTC.}{1995-02-01}
-		\entry{time\_period.start\_date}{True}{None}{string}{date}{Start date of the survey in UTC.}{2020-06-21}
+		\entry{summary}{True}{None}{String}{Free Form}{Summary paragraph of the survey including the purpose; difficulties; data quality; summary of outcomes if the data have been processed and modeled.}{Long project of characterizing mineral resources in Yukon}
+		\entry{time\_period.end\_date}{True}{None}{String}{date}{End date of the survey in UTC.}{1995-02-01}
+		\entry{time\_period.start\_date}{True}{None}{String}{date}{Start date of the survey in UTC.}{2020-06-21}
 		
 	\end{tabular}
 	\label{tab:survey4}
@@ -268,19 +270,19 @@ A survey describes an entire data set that covers a specific time span and regio
     <geographic_name>Yukon</geographic_name>
     <name>Imaging Gold Deposits of the Yukon Province</name>
     <northwest_corner>
-        <latitude type="float" units="decimal degrees">-130</latitude>
-        <longitude type="float" units="decimal degrees">75.9</longitude>
+        <latitude type="Float" units="decimal degrees">-130</latitude>
+        <longitude type="Float" units="decimal degrees">75.9</longitude>
     </northwest_corner>
     <project>AURORA</project>
     <project_lead>
-        <email>m.tee@mt.org</email>
+        <Email>m.tee@mt.org</Email>
         <organization>EM Ltd.</organization>
         <author>M. Tee</author>
     </project_lead>
     <release_status>CC0</release_status>
     <southeast_corner>
-        <latitude type="float" units="decimal degrees">-110.0</latitude>
-        <longitude type="float" units="decimal degrees">65.12</longitude>
+        <latitude type="Float" units="decimal degrees">-110.0</latitude>
+        <longitude type="Float" units="decimal degrees">65.12</longitude>
     </southeast_corner>
     <summary>This survey spanned multiple years with graduate students
              collecting the data.  Lots of curious bears and moose,
@@ -303,14 +305,14 @@ A station encompasses a single site where data are collected. If the location ch
 
 \begin{table}[h!]
 	\caption[Attributes for Station Category]{Attributes for Station Category}
-	\begin{tabular}{p{.305\textwidth}p{.47\textwidth}p{.2\textwidth}}
+	\begin{tabular}{p{.305\textwidth}>{\raggedright}p{.47\textwidth}p{.2\textwidth}}
 		\textbf{Metadata Key} & \textbf{Description} & \textbf{Example} \\ \toprule
-		\entry{acquired\_by.author}{True}{None}{string}{free form}{Name of person or group that collected the station data and will be the point of contact if any questions arise about the data.}{person name}
-		\entry{acquired\_by.comments}{False}{None}{string}{email}{Email of the contact person who collected the data for the station.}{expert digger}
-		\entry{archive\_id}{True}{None}{string}{alpha numeric}{Station name that is archived {a-z;A-Z;0-9}.  For IRIS this is a 5 character string.}{MT201}
-		\entry{channel\_layout}{False}{None}{string}{controlled vocabulary}{How the dipoles and magnetic channels of the station were laid out.  Options: [ L $|$ + $|$ other]}{+}
-		\entry{channels\_recorded}{True}{None}{string}{controlled vocabulary}{List of components recorded by the station. Should be a summary of all channels recorded dropped channels will be recorded in Run.  \qquad Options: [ Ex $|$ Ey $|$ Hx $|$ Hy $|$ Hz $|$ T $|$ Battery $|$ other ]}{ Ex, Ey, Hx, Hy, Hz, T}
-		\entry{comments}{False}{None}{string}{free form}{Any comments on the station that would be important for a user.}{Pipeline near by.}
+		\entry{acquired\_by.author}{True}{None}{String}{Free Form}{Name of person or group that collected the station data and will be the point of contact if any questions arise about the data.}{person name}
+		\entry{acquired\_by.comments}{False}{None}{String}{Email}{Email of the contact person who collected the data for the station.}{expert digger}
+		\entry{archive\_id}{True}{None}{String}{alpha numeric}{Station name that is archived {a-z;A-Z;0-9}.  For IRIS this is a 5 character String.}{MT201}
+		\entry{channel\_layout}{False}{None}{String}{Controlled Vocabulary}{How the dipoles and magnetic channels of the station were laid out.  Options: [ L $|$ + $|$ other]}{+}
+		\entry{channels\_recorded}{True}{None}{String}{Controlled Vocabulary}{List of components recorded by the station. Should be a summary of all channels recorded dropped channels will be recorded in Run.  \qquad Options: [ Ex $|$ Ey $|$ Hx $|$ Hy $|$ Hz $|$ T $|$ Battery $|$ other ]}{ Ex, Ey, Hx, Hy, Hz, T}
+		\entry{comments}{False}{None}{String}{Free Form}{Any comments on the station that would be important for a user.}{Pipeline near by.}
 	\end{tabular}
 	\label{tab:station}
 \end{table}
@@ -320,15 +322,15 @@ A station encompasses a single site where data are collected. If the location ch
 \newpage
 \begin{table}[h!]
 	\caption*{Attributes for Station Category Continued}
-	\begin{tabular}{p{.305\textwidth}p{.47\textwidth}p{.2\textwidth}}
+	\begin{tabular}{p{.305\textwidth}>{\raggedright}p{.47\textwidth}p{.2\textwidth}}
 		\textbf{Metadata Key} & \textbf{Description} & \textbf{Example} \\ \toprule
-		\entry{data\_type}{True}{None}{string}{controlled vocabulary}{All types of data recorded by the station. If multiple types input as a comma separated list. \qquad Options: [ RMT $|$ AMT $|$ BBMT $|$ LPMT $|$ ULPMT $|$ other ]}{BBMT}
-		\entry{geographic\_name}{True}{None}{string}{free form}{Closest geographic name to the station, should be rather general.  For further details about geographic names see \url{https://www.usgs.gov/core-science-systems/ngp/board-on-geographic-names}}{"Whitehorse, YK"}
-		\entry{id}{True}{None}{string}{free form}{Station name.  This can be a longer name than the archive\_id name and be a more explanatory name.}{bear hallabaloo}
-		\entry{location.declination.comments}{True}{None}{string}{free form}{Any comments on declination that are important to an end user.}{Estimated from WMM-2016}
-		\entry{location.declination.model}{True}{None}{string}{controlled vocabulary}{Name of the geomagnetic reference model as \{model\_name\}\{-\}\{YYYY\}. Model options: \qquad [ EMAG2 $|$ EMM $|$ HDGM $|$ IGRF $|$ WMM ]}{WMM-2016}
-		\entry{location.declination.value}{True}{degrees}{float}{number}{Declination angle relative to geographic north positive clockwise estimated from location and geomagnetic model.}{12.3}
-		\entry{location.elevation}{True}{meters}{float}{number}{Elevation of station location in datum specified at survey level.}{123.4}
+		\entry{data\_type}{True}{None}{String}{Controlled Vocabulary}{All types of data recorded by the station. If multiple types input as a comma separated list. \qquad Options: [ RMT $|$ AMT $|$ BBMT $|$ LPMT $|$ ULPMT $|$ other ]}{BBMT}
+		\entry{geographic\_name}{True}{None}{String}{Free Form}{Closest geographic name to the station, should be rather general.  For further details about geographic names see \url{https://www.usgs.gov/core-science-systems/ngp/board-on-geographic-names}}{"Whitehorse, YK"}
+		\entry{id}{True}{None}{String}{Free Form}{Station name.  This can be a longer name than the archive\_id name and be a more explanatory name.}{bear hallabaloo}
+		\entry{location.declination.comments}{True}{None}{String}{Free Form}{Any comments on declination that are important to an end user.}{Different than recorded declination from data logger.}
+		\entry{location.declination.model}{True}{None}{String}{Controlled Vocabulary}{Name of the geomagnetic reference model as \{model\_name\}\{-\}\{YYYY\}. Model options: \qquad [ EMAG2 $|$ EMM $|$ HDGM $|$ IGRF $|$ WMM ]}{WMM-2016}
+		\entry{location.declination.value}{True}{degrees}{Float}{Number}{Declination angle relative to geographic north positive clockwise estimated from location and geomagnetic model.}{12.3}
+		\entry{location.elevation}{True}{meters}{Float}{Number}{Elevation of station location in datum specified at survey level.}{123.4}
 	\end{tabular}
 \end{table}
 
@@ -336,15 +338,15 @@ A station encompasses a single site where data are collected. If the location ch
 \newpage
 \begin{table}[h!]
 	\caption*{Attributes for Station Category Continued}
-	\begin{tabular}{p{.305\textwidth}p{.47\textwidth}p{.2\textwidth}}
+	\begin{tabular}{p{.305\textwidth}>{\raggedright}p{.47\textwidth}p{.2\textwidth}}
 		\textbf{Metadata Key} & \textbf{Description} & \textbf{Example} \\ \toprule
-		\entry{location.latitude}{True}{degrees}{float}{number}{Latitude of station location in datum specified at survey level.}{23.134}
-		\entry{location.longitude}{True}{degrees}{float}{number}{Longitude of station location in datum specified at survey level.}{14.23}
-		\entry{orientation.layout\_rotation\_angle}{False}{degrees}{float}{number}{If the data were collected in a coordinate system that is neither geomagnetic or geographic but still orthogonal this angle will specify the rotation of the layout.  For example if you layout your x component N30W and your y component N120W, then the rotation angle would be N30E.}{0}
-		\entry{orientation.method}{True}{None}{string}{controlled vocabulary}{Method for orienting station channels.  Options: [ compass $|$ GPS $|$ theodolite $|$ other ]}{compass}
-		\entry{orientation.option}{True}{None}{string}{controlled vocabulary}{How the data are archived with respect to channel orientation.  This will help a user orient the data into the proper coordinate system. \qquad Options: ['channel-measurement specific', 'geographic orthogonal', 'geomagnetic orthogonal', 'site-specific orthogonal']}{geomagnetic-orthogonal}
-		\entry{provenance.comments}{False}{None}{string}{free form}{Any comments on provenance of the data}{From a graduated graduate student.}
-		\entry{provenance.creation\_time}{True}{None}{string}{date time}{date and time the file was created}{2020-02-08 T12:23:40.324600 +00:00}
+		\entry{location.latitude}{True}{degrees}{Float}{Number}{Latitude of station location in datum specified at survey level.}{23.134}
+		\entry{location.longitude}{True}{degrees}{Float}{Number}{Longitude of station location in datum specified at survey level.}{14.23}
+		\entry{orientation.layout\_rotation\_angle}{False}{degrees}{Float}{Number}{If the data were collected in a coordinate system that is neither geomagnetic or geographic but still orthogonal this angle will specify the rotation of the layout.  For example if you layout your x component N30W and your y component N60E, then the rotation angle would be N30E.}{0}
+		\entry{orientation.method}{True}{None}{String}{Controlled Vocabulary}{Method for orienting station channels.  Options: [ compass $|$ GPS $|$ theodolite $|$ other ]}{compass}
+		\entry{orientation.option}{True}{None}{String}{Controlled Vocabulary}{How the data are archived with respect to channel orientation.  This will help a user orient the data into the proper coordinate system. \qquad Options: ['channel-measurement specific', 'geographic orthogonal', 'geomagnetic orthogonal', 'site-specific orthogonal']}{geomagnetic-orthogonal}
+		\entry{provenance.comments}{False}{None}{String}{Free Form}{Any comments on provenance of the data}{From a graduated graduate student.}
+		\entry{provenance.creation\_time}{True}{None}{String}{Date Time}{date and time the file was created}{2020-02-08 T12:23:40.324600 +00:00}
 	\end{tabular}
 \end{table}
 
@@ -352,15 +354,15 @@ A station encompasses a single site where data are collected. If the location ch
 \newpage
 \begin{table}[h!]
 	\caption*{Attributes for Station Category Continued}
-	\begin{tabular}{p{.305\textwidth}p{.47\textwidth}p{.2\textwidth}}
+	\begin{tabular}{p{.305\textwidth}>{\raggedright}p{.47\textwidth}p{.2\textwidth}}
 		\textbf{Metadata Key} & \textbf{Description} & \textbf{Example} \\ \toprule
-		\entry{provenance.log}{False}{None}{string}{free form}{A history of any changes made to the data}{2020-02-10 T14:24:45 +00:00 updated station metadata.}
-		\entry{provenance.software.author}{True}{None}{string}{free form}{Author of the software used to create the data files.}{programmer 01}
-		\entry{provenance.software.name}{True}{None}{string}{free form}{Name of the software used to create data files}{mtrules}
-		\entry{provenance.software.version}{True}{None}{string}{free form}{Version of the software used to create data files}{12.01a}
-		\entry{provenance.submitter.author}{True}{None}{string}{free form}{Name of the person submitting the data to the archive.}{person name}
-		\entry{provenance.submitter.email}{True}{None}{string}{email}{Email of the person submitting the data to the archive.}{mt.guru@em.org}
-		\entry{provenance.submitter.organization}{True}{None}{string}{free form}{Name of the organization that is submitting data to the archive.}{mt gurus}
+		\entry{provenance.log}{False}{None}{String}{Free Form}{A history of any changes made to the data}{2020-02-10 T14:24:45+00:00 updated station metadata.}
+		\entry{provenance.software.author}{True}{None}{String}{Free Form}{Author of the software used to create the data files.}{programmer 01}
+		\entry{provenance.software.name}{True}{None}{String}{Free Form}{Name of the software used to create data files}{mtrules}
+		\entry{provenance.software.version}{True}{None}{String}{Free Form}{Version of the software used to create data files}{12.01a}
+		\entry{provenance.submitter.author}{True}{None}{String}{Free Form}{Name of the person submitting the data to the archive.}{person name}
+		\entry{provenance.submitter.Email}{True}{None}{String}{Email}{Email of the person submitting the data to the archive.}{mt.guru@em.org}
+		\entry{provenance.submitter.organization}{True}{None}{String}{Free Form}{Name of the organization that is submitting data to the archive.}{MT Gurus}
 	\end{tabular}
 \end{table}
 
@@ -368,10 +370,10 @@ A station encompasses a single site where data are collected. If the location ch
 \newpage
 \begin{table}[h!]
 	\caption*{Attributes for Station Category Continued}
-	\begin{tabular}{p{.305\textwidth}p{.47\textwidth}p{.2\textwidth}}
+	\begin{tabular}{p{.305\textwidth}>{\raggedright}p{.47\textwidth}p{.2\textwidth}}
 		\textbf{Metadata Key} & \textbf{Description} & \textbf{Example} \\ \toprule
-		\entry{time\_period.end}{True}{None}{string}{time}{end date and time of collection in UTC}{2020-02-04 T16:23:45.453670 +00:00}
-		\entry{time\_period.start}{True}{None}{string}{time}{start date and time of collection in UTC}{2020-02-01 T09:23:45.453670 +00:00}
+		\entry{time\_period.end}{True}{None}{String}{Date Time}{End date and time of collection in UTC}{2020-02-04 T16:23:45.453670 +00:00}
+		\entry{time\_period.start}{True}{None}{String}{Date Time}{Start date and time of collection in UTC}{2020-02-01 T09:23:45.453670 +00:00}
 	\end{tabular}
 \end{table}
 
@@ -429,14 +431,14 @@ A run represents data collected at a single station with a single sampling rate.
 
 \begin{table}[h!]
 	\caption[Attributes for Run Category]{Attributes for Run Category}
-	\begin{tabular}{p{.305\textwidth}p{.47\textwidth}p{.2\textwidth}}
+	\begin{tabular}{p{.305\textwidth}>{\raggedright}p{.47\textwidth}p{.2\textwidth}}
 		\textbf{Metadata Key} & \textbf{Description} & \textbf{Example} \\ \toprule
-		\entry{acquired\_by.author}{True}{None}{string}{free form}{Name of the person or persons who acquired the run data.  This can be different from the station.acquired\_by and survey.acquired\_by.}{M.T. Nubee}
-		\entry{acquired\_by.comments}{False}{None}{string}{email}{Email of the contact person who collected the run.}{\url{mt@nubee.org}}
-		\entry{channels\_recorded\_auxiliary}{True}{None}{string}{name list}{List of auxiliary channels recorded}{T, battery}
-		\entry{channels\_recorded\_electric}{True}{None}{string}{name list}{List of electric channels recorded}{Ex, Ey}
-		\entry{channels\_recorded\_magnetic}{True}{None}{string}{name list}{List of magnetic channels recorded}{Hx, Hy, Hz}
-		\entry{comments}{False}{None}{string}{free form}{Any comments on the run that would be important for a user.}{Badger attacked Ex.}
+		\entry{acquired\_by.author}{True}{None}{String}{Free Form}{Name of the person or persons who acquired the run data.  This can be different from the station.acquired\_by and survey.acquired\_by.}{M.T. Nubee}
+		\entry{acquired\_by.comments}{False}{None}{String}{Email}{Email of the contact person who collected the run.}{\url{mt@nubee.org}}
+		\entry{channels\_recorded\_auxiliary}{True}{None}{String}{name list}{List of auxiliary channels recorded}{T, battery}
+		\entry{channels\_recorded\_electric}{True}{None}{String}{name list}{List of electric channels recorded}{Ex, Ey}
+		\entry{channels\_recorded\_magnetic}{True}{None}{String}{name list}{List of magnetic channels recorded}{Hx, Hy, Hz}
+		\entry{comments}{False}{None}{String}{Free Form}{Any comments on the run that would be important for a user.}{Badger attacked Ex.}
 	\end{tabular}
 	\label{tab:run}
 \end{table}
@@ -445,15 +447,15 @@ A run represents data collected at a single station with a single sampling rate.
 \newpage
 \begin{table}[h!]
 	\caption*{Attributes for Run Category Continued}
-	\begin{tabular}{p{.325\textwidth}p{.45\textwidth}p{.2\textwidth}}
+	\begin{tabular}{p{.325\textwidth}>{\raggedright}p{.45\textwidth}p{.2\textwidth}}
 		\textbf{Metadata Key} & \textbf{Description} & \textbf{Example} \\ \toprule
-		\entry{comments}{False}{None}{string}{free form}{Any comments on the run that would be important for a user.}{cows chewed cables at 9am local time.}
-		\entry{data\_logger.firmware.author}{True}{None}{string}{free form}{Author of the firmware that runs the data logger.}{instrument engineer}
-		\entry{data\_logger.firmware.name}{True}{None}{string}{free form}{Name of the firmware the data logger runs.}{mtrules}
-		\entry{data\_logger.firmware.version}{True}{None}{string}{free form}{Version of the firmware that runs the data logger.}{12.01a}
-		\entry{data\_logger.id}{True}{None}{string}{free form}{instrument ID number can be serial number or a designated ID}{mt01}
-		\entry{data\_logger.manufacturer}{True}{None}{string}{free form}{Name of person or company that manufactured the data logger.}{MT Gurus}
-		\entry{data\_logger.model}{False}{None}{string}{free form}{Model version of the data logger.}{falcon5}
+		\entry{comments}{False}{None}{String}{Free Form}{Any comments on the run that would be important for a user.}{cows chewed cables at 9am local time.}
+		\entry{data\_logger.firmware.author}{True}{None}{String}{Free Form}{Author of the firmware that runs the data logger.}{instrument engineer}
+		\entry{data\_logger.firmware.name}{False}{None}{String}{Free Form}{Name of the firmware the data logger runs.}{mtrules}
+		\entry{data\_logger.firmware.version}{False}{None}{String}{Free Form}{Version of the firmware that runs the data logger.}{12.01a}
+		\entry{data\_logger.id}{False}{None}{String}{Free Form}{instrument ID Number can be serial Number or a designated ID}{mt01}
+		\entry{data\_logger.manufacturer}{True}{None}{String}{Free Form}{Name of person or company that manufactured the data logger.}{MT Gurus}
+		\entry{data\_logger.model}{False}{None}{String}{Free Form}{Model version of the data logger.}{falcon5}
 	\end{tabular}
 \end{table}
 
@@ -461,15 +463,15 @@ A run represents data collected at a single station with a single sampling rate.
 \newpage
 \begin{table}[h!]
 	\caption*{Attributes for Run Category Continued}
-	\begin{tabular}{p{.45\textwidth}p{.325\textwidth}p{.2\textwidth}}
+	\begin{tabular}{p{.45\textwidth}>{\raggedright}p{.325\textwidth}p{.2\textwidth}}
 		\textbf{Metadata Key} & \textbf{Description} & \textbf{Example} \\ \toprule
-		\entry{data\_logger.power\_source.comments}{False}{None}{string}{name}{Any comment about the power source.}{Used a solar panel and it was cloudy.}
-		\entry{data\_logger.power\_source.id}{False}{None}{string}{name}{Battery ID or name}{battery01}
-		\entry{data\_logger.power\_source.type}{True}{None}{string}{name}{Battery type}{pb-acid gel cell}
-		\entry{data\_logger.power\_source.voltage.end}{True}{volts}{float}{number}{End voltage}{12.1}
-		\entry{data\_logger.power\_source.voltage.start}{True}{volts}{float}{number}{Starting voltage}{14.3}
-		\entry{data\_logger.timing\_system.comments}{False}{None}{string}{free form}{any comment on timing system}{GPS locked with internal quartz clock}
-		\entry{data\_logger.timing\_system.drift}{True}{seconds}{float}{number}{Estimated drift of the timing system}{0.001}
+		\entry{data\_logger.power\_source.comments}{False}{None}{String}{name}{Any comment about the power source.}{Used a solar panel and it was cloudy.}
+		\entry{data\_logger.power\_source.id}{False}{None}{String}{name}{Battery ID or name}{battery01}
+		\entry{data\_logger.power\_source.type}{False}{None}{String}{name}{Battery type}{pb-acid gel cell}
+		\entry{data\_logger.power\_source.voltage.end}{False}{volts}{Float}{Number}{End voltage}{12.1}
+		\entry{data\_logger.power\_source.voltage.start}{False}{volts}{Float}{Number}{Starting voltage}{14.3}
+		\entry{data\_logger.timing\_system.comments}{False}{None}{String}{Free Form}{any comment on timing system}{GPS locked with internal quartz clock}
+		\entry{data\_logger.timing\_system.drift}{False}{seconds}{Float}{Number}{Estimated drift of the timing system}{0.001}
 	\end{tabular}
 	\label{tab:}
 \end{table}
@@ -478,15 +480,15 @@ A run represents data collected at a single station with a single sampling rate.
 \newpage
 \begin{table}[h!]
 	\caption*{Attributes for Run Category Continued}
-	\begin{tabular}{p{.45\textwidth}p{.325\textwidth}p{.2\textwidth}}
+	\begin{tabular}{p{.45\textwidth}>{\raggedright}p{.325\textwidth}p{.2\textwidth}}
 		\textbf{Metadata Key} & \textbf{Description} & \textbf{Example} \\ \toprule
-		\entry{data\_logger.timing\_system.type}{True}{None}{string}{free form}{Type of timing system used in the data logger.}{GPS}
-		\entry{data\_logger.timing\_system.uncertainty}{True}{seconds}{float}{number}{Estimated uncertainty of the timing system.}{0.0002}
-		\entry{data\_logger.type}{True}{None}{string}{free form}{Type of data logger, this should specify the bit rate and any other parameters of the data logger.}{broadband 32-bit}
-		\entry{data\_type}{True}{None}{string}{controlled vocabulary}{Type of data recorded for this run.  Options: [ RMT $|$ AMT $|$ BBMT $|$ LPMT $|$ ULPMT $|$ other]}{BBMT}
-		\entry{id}{True}{None}{string}{alpha numeric}{Name of the run.  Should be station name followed by an alphabet letter for the run}{MT302b}
-		\entry{metadata\_by.author}{True}{None}{string}{free form}{author name}{Person who input the metadata.}
-		\entry{metadata\_by.comments}{False}{None}{string}{email}{Email of the contact person who input the metadata.}{undergraduate}
+		\entry{data\_logger.timing\_system.type}{False}{None}{String}{Free Form}{Type of timing system used in the data logger.}{GPS}
+		\entry{data\_logger.timing\_system.uncertainty}{False}{seconds}{Float}{Number}{Estimated uncertainty of the timing system.}{0.0002}
+		\entry{data\_logger.type}{True}{None}{String}{Free Form}{Type of data logger, this should specify the bit rate and any other parameters of the data logger.}{broadband 32-bit}
+		\entry{data\_type}{True}{None}{String}{Controlled Vocabulary}{Type of data recorded for this run.  Options: [ RMT $|$ AMT $|$ BBMT $|$ LPMT $|$ ULPMT $|$ other]}{BBMT}
+		\entry{id}{True}{None}{String}{alpha numeric}{Name of the run.  Should be station name followed by an alphabet letter for the run.}{MT302b}
+		\entry{metadata\_by.author}{True}{None}{String}{Free Form}{author name}{Person who input the metadata.}
+		\entry{metadata\_by.comments}{False}{None}{String}{Email}{Email of the contact person who input the metadata.}{undergraduate}
 	\end{tabular}
 \end{table}
 
@@ -494,13 +496,13 @@ A run represents data collected at a single station with a single sampling rate.
 \newpage
 \begin{table}[h!]
 	\caption*{Attributes for Run Category}
-	\begin{tabular}{p{.305\textwidth}p{.47\textwidth}p{.2\textwidth}}
+	\begin{tabular}{p{.305\textwidth}>{\raggedright}p{.47\textwidth}p{.2\textwidth}}
 		\textbf{Metadata Key} & \textbf{Description} & \textbf{Example} \\ \toprule
-		\entry{provenance.comments}{False}{None}{string}{free form}{Any comments on provenance of the data that would be useful to users.}{all good}
-		\entry{provenance.log}{False}{None}{string}{free form}{A history of changes made to the data}{2020-02-10 T14:24:45 +00:00 updated metadata}
-		\entry{sampling\_rate}{True}{samples per second}{float}{number}{Sampling rate for the recorded run.}{100}
-		\entry{time\_period.end}{True}{None}{string}{time}{End date and time of collection in UTC}{2020-02-04 T16:23:45.453670 +00:00}
-		\entry{time\_period.start}{True}{None}{string}{time}{Start date and time of collection in UTC}{2020-02-01 T09:23:45.453670 +00:00}
+		\entry{provenance.comments}{False}{None}{String}{Free Form}{Any comments on provenance of the data that would be useful to users.}{all good}
+		\entry{provenance.log}{False}{None}{String}{Free Form}{A history of changes made to the data.}{2020-02-10 T14:24:45 +00:00 updated metadata}
+		\entry{sampling\_rate}{True}{samples per second}{Float}{Number}{Sampling rate for the recorded run.}{100}
+		\entry{time\_period.end}{True}{None}{String}{Date Time}{End date and time of collection in UTC.}{2020-02-04 T16:23:45.453670 +00:00}
+		\entry{time\_period.start}{True}{None}{String}{Date Time}{Start date and time of collection in UTC.}{2020-02-01 T09:23:45.453670 +00:00}
 	\end{tabular}
 	\label{tab:}
 \end{table}
@@ -512,7 +514,7 @@ A run represents data collected at a single station with a single sampling rate.
 <run>
     <acquired_by>
         <author>T. Lurric</author>
-        <email>mt@mt.org</email>
+        <email>mt@mt.org</Email>
     </acquired_by>
     <channels_recorded_auxiliary>[Temperature]</channels_recorded_auxiliary>
     <channels_recorded_electric>[Ex, Ey]</channels_recorded_electric>
@@ -525,9 +527,9 @@ A run represents data collected at a single station with a single sampling rate.
         <model>best</model>
         <timing_system>
             <comments>Internal clock locked every 10 seconds</comments>
-            <drift type="float" units="seconds">0.00001</drift>
+            <drift type="Float" units="seconds">0.00001</drift>
             <type>GPS</type>
-            <uncertainty type="float" units="seconds">0.0001</uncertainty>
+            <uncertainty type="Float" units="seconds">0.0001</uncertainty>
         </timing_system>
         <firmware>
             <author>T. Lurric</author>
@@ -538,8 +540,8 @@ A run represents data collected at a single station with a single sampling rate.
             <type>Pb-acid gel cell</type>
             <id>10</id>
             <voltage>
-                <start type="float" units="volts">13.9</start>
-                <end type="float" units="volts">12.1</end>
+                <start type="Float" units="volts">13.9</start>
+                <end type="Float" units="volts">12.1</end>
             </voltage>
             <comments>connector cable chewed by rats</comments>
         </power_source>
@@ -554,7 +556,7 @@ A run represents data collected at a single station with a single sampling rate.
         <comments>redone by grad student</comments>
         <log>2020-01-01T00:00:00+00:00 updated metadata</log>
     </provenance>
-    <sampling_rate type="float" units="samples per second">256.0</sampling_rate>
+    <sampling_rate type="Float" units="samples per second">256.0</sampling_rate>
     <time_period>
         <start>2020-01-01T00:00:00+00:00</start>
         <end>2020-02-01T00:00:00+00:00</end>
@@ -570,14 +572,14 @@ Electric channel refers to a dipole measurement of the electric field for a sing
 
 \begin{table}[h!]
 	\caption[Attributes for Electric Category]{Attributes for Electric Category}
-	\begin{tabular}{p{.305\textwidth}p{.47\textwidth}p{.2\textwidth}}
+	\begin{tabular}{p{.305\textwidth}>{\raggedright}p{.47\textwidth}p{.2\textwidth}}
 		\textbf{Metadata Key} & \textbf{Description} & \textbf{Example} \\ \toprule
-		\entry{ac.end}{False}{volts}{float}{number}{Ending AC value; if more than one measurement input as a list of number [1 2 ...]}{45.3, 49.5}
-		\entry{ac.start}{False}{volts}{float}{number}{Starting AC value; if more than one measurement input as a list of number [1 2 ...]}{52.1, 55.8}
-		\entry{channel\_number}{True}{None}{integer}{number}{Channel number on the data logger of the recorded channel.}{1}
-		\entry{comments}{False}{None}{string}{free form}{Any comments about the channel}{Lightning storm at 6pm local time}
-		\entry{component}{True}{None}{string}{controlled vocabulary}{Name of the component measured.  Options: [ Ex $|$ Ey $|$ other]}{Ex}
-		\entry{contact\_resistance.end}{False}{ohms}{float}{number list}{Starting contact resistance; if more than one measurement input as a list of number [1 2 ...]}{1.5, 1.8}
+		\entry{ac.end}{False}{volts}{Float}{Number}{Ending AC value; if more than one measurement input as a list of Number [1 2 ...]}{45.3, 49.5}
+		\entry{ac.start}{False}{volts}{Float}{Number}{Starting AC value; if more than one measurement input as a list of Number [1 2 ...]}{52.1, 55.8}
+		\entry{channel\_number}{True}{None}{Integer}{Number}{Channel Number on the data logger of the recorded channel.}{1}
+		\entry{comments}{False}{None}{String}{Free Form}{Any comments about the channel that would be useful to a user.}{Lightning storm at 6pm local time}
+		\entry{component}{True}{None}{String}{Controlled Vocabulary}{Name of the component measured.  Options: [ Ex $|$ Ey $|$ other]}{Ex}
+		\entry{contact\_resistance.end}{False}{ohms}{Float}{Number list}{Starting contact resistance; if more than one measurement input as a list of Number [1 2 ...]}{1.5, 1.8}
 	\end{tabular}
 	\label{tab:electric}
 \end{table}
@@ -586,15 +588,15 @@ Electric channel refers to a dipole measurement of the electric field for a sing
 \newpage
 \begin{table}[h!]
 	\caption*{Attributes for Electric Category Continued}
-	\begin{tabular}{p{.305\textwidth}p{.47\textwidth}p{.2\textwidth}}
+	\begin{tabular}{p{.305\textwidth}>{\raggedright}p{.47\textwidth}p{.2\textwidth}}
 		\textbf{Metadata Key} & \textbf{Description} & \textbf{Example} \\ \toprule
-		\entry{contact\_resistance.start}{False}{ohms}{float}{number list}{Starting contact resistance; if more than one measurement input as a list of number [1 2 ...]}{"[1.2, 1.4]"}
-		\entry{data\_quality.rating.author}{False}{None}{string}{free form}{Name of person or organization who rated the data}{gradstudet ace}
-		\entry{data\_quality.rating.method}{False}{None}{string}{free form}{The method used to rate the data, should be a descriptive name and not just the name of a software package.}{standard deviation}
-		\entry{data\_quality.rating.value}{True}{None}{integer}{number}{Rating from 1-5 where 1 is bad and 5 is good and 0 if unrated.  Options: [ 0 $|$ 1 $|$ 2 $|$ 3 $|$ 4 $|$ 5 ]}{4}
-		\entry{data\_quality.warning}{False}{None}{string}{free form}{Any warnings about the data that should be noted for users.}{periodic pipeline noise}
-		\entry{dc.end}{False}{volts}{float}{number}{Ending DC value; if more than one measurement input as a list of number [1 2 ...]}{1.5}
-		\entry{dc.start}{False}{volts}{float}{number}{Starting DC value; if more than one measurement input as a list of number [1 2 ...]}{1.1}
+		\entry{contact\_resistance.start}{False}{ohms}{Float}{Number list}{Starting contact resistance; if more than one measurement input as a list of Number [1 2 ...]}{1.2, 1.4}
+		\entry{data\_quality.rating.author}{False}{None}{String}{Free Form}{Name of person or organization who rated the data.}{graduate student ace}
+		\entry{data\_quality.rating.method}{False}{None}{String}{Free Form}{The method used to rate the data, should be a descriptive name and not just the name of a software package.}{standard deviation}
+		\entry{data\_quality.rating.value}{True}{None}{Integer}{Number}{Rating from 1-5 where 1 is bad and 5 is good and 0 if unrated.  Options: [ 0 $|$ 1 $|$ 2 $|$ 3 $|$ 4 $|$ 5 ]}{4}
+		\entry{data\_quality.warning}{False}{None}{String}{Free Form}{Any warnings about the data that should be noted for users.}{periodic pipeline noise}
+		\entry{dc.end}{False}{volts}{Float}{Number}{Ending DC value; if more than one measurement input as a list of Number [1 2 ...]}{1.5}
+		\entry{dc.start}{False}{volts}{Float}{Number}{Starting DC value; if more than one measurement input as a list of Number [1 2 ...]}{1.1}
 	\end{tabular}
 \end{table}
 
@@ -602,15 +604,15 @@ Electric channel refers to a dipole measurement of the electric field for a sing
 \newpage
 \begin{table}[h!]
 	\caption*{Attributes for Electric Category  Continued}
-	\begin{tabular}{p{.305\textwidth}p{.47\textwidth}p{.2\textwidth}}
+	\begin{tabular}{p{.305\textwidth}>{\raggedright}p{.47\textwidth}p{.2\textwidth}}
 		\textbf{Metadata Key} & \textbf{Description} & \textbf{Example} \\ \toprule
-		\entry{dipole\_length}{True}{meters}{float}{number}{Length of the dipole}{55.25}
+		\entry{dipole\_length}{True}{meters}{Float}{Number}{Length of the dipole}{55.25}
 		\entry{filter.applied}{True}{None}{boolean}{name list}{Boolean if filter has been applied or not. If more than one filter input as a comma separated list.  Needs to be the same length as name or if only one entry is given it is assumed to apply to all filters listed.}{True, False}
-		\entry{filter.comments}{False}{None}{string}{name}{Any comments on filters that is important for users.}{low pass is not calibrated}
-		\entry{filter.name}{True}{None}{string}{name list}{Name of filter applied or to be applies. If more than one filter input as a comma separated list}{"counts2mv, lowpass\_magnetic"}
-		\entry{measurement\_azimuth}{True}{degrees}{float}{number}{Azimuth of channel in geographic coordinates.  The submitter must insure that the azimuth is relative to geographic north clockwise positive.}{0}
-		\entry{negative.elevation}{True}{degrees}{float}{number}{Elevation of negative electrode in datum specified at survey level}{123.4}
-		\entry{negative.id}{True}{None}{string}{free form}{Negative electrode ID number, can be serial number or a designated ID}{electrode01}
+		\entry{filter.comments}{False}{None}{String}{name}{Any comments on filters that is important for users.}{low pass is not calibrated}
+		\entry{filter.name}{True}{None}{String}{name list}{Name of filter applied or to be applies. If more than one filter input as a comma separated list.}{"counts2mv, lowpass\_magnetic"}
+		\entry{measurement\_azimuth}{True}{degrees}{Float}{Number}{Azimuth of channel in geographic coordinates.  The submitter must insure that the azimuth is relative to geographic north clockwise positive.}{0}
+		\entry{negative.elevation}{True}{degrees}{Float}{Number}{Elevation of negative electrode in datum specified at survey level}{123.4}
+		\entry{negative.id}{True}{None}{String}{Free Form}{Negative electrode ID Number, can be serial number or a designated ID.}{electrode01}
 	\end{tabular}
 \end{table}
 
@@ -618,15 +620,15 @@ Electric channel refers to a dipole measurement of the electric field for a sing
 \newpage
 \begin{table}[h!]
 	\caption*{Attributes for Electric Category Continued}
-	\begin{tabular}{p{.305\textwidth}p{.47\textwidth}p{.2\textwidth}}
+	\begin{tabular}{p{.305\textwidth}>{\raggedright}p{.47\textwidth}p{.2\textwidth}}
 		\textbf{Metadata Key} & \textbf{Description} & \textbf{Example} \\ \toprule
-		\entry{negative.latitude}{True}{degrees}{float}{number}{Latitude of negative electrode in datum specified at survey level.}{23.134}
-		\entry{negative.longitude}{True}{degrees}{float}{number}{Longitude of negative electrode in datum specified at survey level.}{14.23}
-		\entry{negative.manufacturer}{True}{None}{string}{free form}{Person or organization that manufactured the electrode}{Electro-Dudes}
-		\entry{negative.model}{False}{None}{string}{free form}{Model version of the electrode.}{falcon5}
-		\entry{negative.type}{True}{None}{string}{free form}{Type of electrode, should specify the chemistry.}{Ag-AgCl}
-		\entry{positive.elevation}{True}{degrees}{float}{number}{Elevation of the positive electrode in datum specified at survey level.}{123.4}
-		\entry{positive.id}{True}{None}{string}{free form}{Positive electrode ID number, can be serial number or a designated ID}{electrode02}
+		\entry{negative.latitude}{True}{degrees}{Float}{Number}{Latitude of negative electrode in datum specified at survey level.}{23.134}
+		\entry{negative.longitude}{True}{degrees}{Float}{Number}{Longitude of negative electrode in datum specified at survey level.}{14.23}
+		\entry{negative.manufacturer}{True}{None}{String}{Free Form}{Person or organization that manufactured the electrode.}{Electro-Dudes}
+		\entry{negative.model}{False}{None}{String}{Free Form}{Model version of the electrode.}{falcon5}
+		\entry{negative.type}{True}{None}{String}{Free Form}{Type of electrode, should specify the chemistry.}{Ag-AgCl}
+		\entry{positive.elevation}{True}{degrees}{Float}{Number}{Elevation of the positive electrode in datum specified at survey level.}{123.4}
+		\entry{positive.id}{True}{None}{String}{Free Form}{Positive electrode ID Number, can be serial Number or a designated ID.}{electrode02}
 	\end{tabular}
 \end{table}
 
@@ -634,15 +636,15 @@ Electric channel refers to a dipole measurement of the electric field for a sing
 \newpage
 \begin{table}[h!]
 	\caption*{Attributes for Electric Category Continued}
-	\begin{tabular}{p{.305\textwidth}p{.47\textwidth}p{.2\textwidth}}
+	\begin{tabular}{p{.305\textwidth}>{\raggedright}p{.47\textwidth}p{.2\textwidth}}
 		\textbf{Metadata Key} & \textbf{Description} & \textbf{Example} \\ \toprule
-		\entry{positive.latitude}{True}{degrees}{float}{number}{Latitude of positive electrode in datum specified at survey level}{23.134}
-		\entry{positive.longitude}{True}{degrees}{float}{number}{Longitude of positive electrode in datum specified at survey level}{14.23}
-		\entry{positive.manufacturer}{True}{None}{string}{free form}{Name of group or person that manufactured the electrode.}{Electro-Dudes}
-		\entry{positive.model}{False}{None}{string}{free form}{Model version of the electrode.}{falcon5}
-		\entry{positive.type}{True}{None}{string}{free form}{Type of electrode, should include chemistry of the electrode.}{Pb-PbCl}
-		\entry{sample\_rate}{True}{samples per second}{float}{number}{Sample rate of the channel}{8}
-		\entry{time\_period.end}{True}{None}{string}{time}{End date and time of collection in UTC}{2020-02-04 T16:23:45.453670 +00:00}
+		\entry{positive.latitude}{True}{degrees}{Float}{Number}{Latitude of positive electrode in datum specified at survey level.}{23.134}
+		\entry{positive.longitude}{True}{degrees}{Float}{Number}{Longitude of positive electrode in datum specified at survey level.}{14.23}
+		\entry{positive.manufacturer}{True}{None}{String}{Free Form}{Name of group or person that manufactured the electrode.}{Electro-Dudes}
+		\entry{positive.model}{False}{None}{String}{Free Form}{Model version of the electrode.}{falcon5}
+		\entry{positive.type}{True}{None}{String}{Free Form}{Type of electrode, should include chemistry of the electrode.}{Pb-PbCl}
+		\entry{sample\_rate}{True}{samples per second}{Float}{Number}{Sample rate of the channel.}{8}
+		\entry{time\_period.end}{True}{None}{String}{Date Time}{End date and time of collection in UTC}{2020-02-04 T16:23:45.453670 +00:00}
 	\end{tabular}
 \end{table}
 
@@ -650,11 +652,11 @@ Electric channel refers to a dipole measurement of the electric field for a sing
 \newpage
 \begin{table}[h!]
 	\caption*{Attributes for Electric Category Continued}
-	\begin{tabular}{p{.305\textwidth}p{.47\textwidth}p{.2\textwidth}}
+	\begin{tabular}{p{.305\textwidth}>{\raggedright}p{.47\textwidth}p{.2\textwidth}}
 		\textbf{Metadata Key} & \textbf{Description} & \textbf{Example} \\ \toprule
-		\entry{time\_period.start}{True}{None}{string}{time}{Start date and time of collection in UTC}{2020-02-01T 09:23:45.453670 +00:00}
-		\entry{type}{True}{None}{string}{free form}{Data type for the channel}{electric}
-		\entry{units}{True}{None}{string}{controlled vocabulary}{Units of the data, if archived data should always be in counts.  Options: [ counts $|$ millivolts ]}{counts}
+		\entry{time\_period.start}{True}{None}{String}{Date Time}{Start date and time of collection in UTC.}{2020-02-01T 09:23:45.453670 +00:00}
+		\entry{type}{True}{None}{String}{Free Form}{Data type for the channel.}{electric}
+		\entry{units}{True}{None}{String}{Controlled Vocabulary}{Units of the data, if archived data should always be in counts.  Options: [ counts $|$ millivolts ]}{counts}
 	\end{tabular}
 \end{table} 
  
@@ -713,14 +715,14 @@ A magnetic channel is a recording of one component of the magnetic field at a si
 
 \begin{table}[h!]
 	\caption[Attributes for Magnetic Category]{Attributes for Magnetic Category}
-	\begin{tabular}{p{.305\textwidth}p{.47\textwidth}p{.2\textwidth}}
+	\begin{tabular}{p{.305\textwidth}>{\raggedright}p{.47\textwidth}p{.2\textwidth}}
 		\textbf{Metadata Key} & \textbf{Description} & \textbf{Example} \\ \toprule
-		\entry{channel\_number}{True}{None}{integer}{number}{Channel number on the data logger.}{1}
-		\entry{comments}{False}{None}{string}{free form}{Any comments about the channel that would be useful to a user}{Pc1 at 6pm local time.}
-		\entry{component}{True}{None}{string}{controlled vocabulary}{Name of the component measured.  Options: [ Hx $|$ Hy $|$ Hz $|$ other]}{Hx}
-		\entry{data\_quality.rating.author}{False}{None}{string}{free form}{Name of person or organization who rated the data}{gradstudet ace}
-		\entry{data\_quality.rating.method}{False}{None}{string}{free form}{The method used to rate the data, should be a descriptive name and not just the name of a software package.}{standard deviation}
-		\entry{data\_quality.rating.value}{True}{None}{integer}{number}{Rating from 1-5 where 1 is bad and 5 is good and 0 if unrated.  Options: [ 0 $|$ 1 $|$ 2 $|$ 3 $|$ 4 $|$ 5 ]}{4}
+		\entry{channel\_number}{True}{None}{Integer}{Number}{Channel Number on the data logger.}{1}
+		\entry{comments}{False}{None}{String}{Free Form}{Any comments about the channel that would be useful to a user.}{Pc1 at 6pm local time.}
+		\entry{component}{True}{None}{String}{Controlled Vocabulary}{Name of the component measured.  Options: [ Hx $|$ Hy $|$ Hz $|$ other]}{Hx}
+		\entry{data\_quality.rating.author}{False}{None}{String}{Free Form}{Name of person or organization who rated the data.}{graduate student ace}
+		\entry{data\_quality.rating.method}{False}{None}{String}{Free Form}{The method used to rate the data, should be a descriptive name and not just the name of a software package.}{standard deviation}
+		\entry{data\_quality.rating.value}{True}{None}{Integer}{Number}{Rating from 1-5 where 1 is bad and 5 is good and 0 if unrated.  Options: [ 0 $|$ 1 $|$ 2 $|$ 3 $|$ 4 $|$ 5 ]}{4}
 	\end{tabular}
 	\label{tab:magnetic}
 \end{table}
@@ -729,15 +731,15 @@ A magnetic channel is a recording of one component of the magnetic field at a si
 \newpage
 \begin{table}[h!]
 	\caption*{Attributes for Magnetic Category Continued}
-	\begin{tabular}{p{.305\textwidth}p{.47\textwidth}p{.2\textwidth}}
+	\begin{tabular}{p{.305\textwidth}>{\raggedright}p{.47\textwidth}p{.2\textwidth}}
 		\textbf{Metadata Key} & \textbf{Description} & \textbf{Example} \\ \toprule
-		\entry{data\_quality.warning}{False}{None}{string}{free form}{Any warnings about the data that should be noted for users.}{periodic pipeline noise}
+		\entry{data\_quality.warning}{False}{None}{String}{Free Form}{Any warnings about the data that should be noted for users.}{periodic pipeline noise}
 		\entry{filter.applied}{True}{None}{boolean}{name list}{Boolean if filter has been applied or not. If more than one filter input as a comma separated list.  Needs to be the same length as name or if only one entry is given it is assumed to apply to all filters listed.}{True, False}
-		\entry{filter.comments}{False}{None}{string}{name}{Any comments on filters that is important for users.}{low pass is not calibrated}
-		\entry{filter.name}{True}{None}{string}{name list}{Name of filter applied or to be applies. If more than one filter input as a comma separated list}{"counts2mv, lowpass\_magnetic"}
-		\entry{h\_field\_max.end}{True}{nanotesla}{float}{number}{Maximum magnetic field strength at end of measurement.}{34526.1}
-		\entry{h\_field\_max.start}{True}{nanotesla}{float}{number}{Maximum magnetic field strength at beginning of measurement.}{34565.2}
-		\entry{h\_field\_min.end}{True}{nanotesla}{float}{number}{Minimum magnetic field strength at end of measurement.}{50453.2}
+		\entry{filter.comments}{False}{None}{String}{name}{Any comments on filters that is important for users.}{low pass is not calibrated}
+		\entry{filter.name}{True}{None}{String}{name list}{Name of filter applied or to be applies. If more than one filter input as a comma separated list.}{"counts2mv, lowpass\_magnetic"}
+		\entry{h\_field\_max.end}{False}{nanotesla}{Float}{Number}{Maximum magnetic field strength at end of measurement.}{34526.1}
+		\entry{h\_field\_max.start}{False}{nanotesla}{Float}{Number}{Maximum magnetic field strength at beginning of measurement.}{34565.2}
+		\entry{h\_field\_min.end}{False}{nanotesla}{Float}{Number}{Minimum magnetic field strength at end of measurement.}{50453.2}
 	\end{tabular}
 \end{table}
 
@@ -745,30 +747,30 @@ A magnetic channel is a recording of one component of the magnetic field at a si
 \newpage
 \begin{table}[h!]
 	\caption*{Attributes for Magnetic Category Continued}
-	\begin{tabular}{p{.305\textwidth}p{.47\textwidth}p{.2\textwidth}}
+	\begin{tabular}{p{.305\textwidth}>{\raggedright}p{.47\textwidth}p{.2\textwidth}}
 		\textbf{Metadata Key} & \textbf{Description} & \textbf{Example} \\ \toprule
-		\entry{h\_field\_min.start}{True}{nt}{float}{number}{Minimum magnetic field strength at beginning of measurement}{40345.1}
-		\entry{location.elevation}{True}{degrees}{float}{number}{elevation of magnetometer in datum specified at survey level.}{123.4}
-		\entry{location.latitude}{True}{degrees}{float}{number}{Latitude of magnetometer in datum specified at survey level.}{23.134}
-		\entry{location.longitude}{True}{degrees}{float}{number}{Longitude of magnetometer in datum specified at survey level.}{14.23}
-		\entry{measurement\_azimuth}{True}{degrees}{float}{number}{Azimuth of channel in geographic coordinates.  The submitter must insure that the azimuth is relative to geographic north clockwise positive.}{0}
-		\entry{sample\_rate}{True}{samples per second}{float}{number}{Sample rate of the channel.}{8}
-		\entry{sensor.id}{True}{None}{string}{free form}{Sensor ID number or serial number.}{mag01}
+		\entry{h\_field\_min.start}{False}{nt}{Float}{Number}{Minimum magnetic field strength at beginning of measurement.}{40345.1}
+		\entry{location.elevation}{False}{degrees}{Float}{Number}{elevation of magnetometer in datum specified at survey level.}{123.4}
+		\entry{location.latitude}{False}{degrees}{Float}{Number}{Latitude of magnetometer in datum specified at survey level.}{23.134}
+		\entry{location.longitude}{False}{degrees}{Float}{Number}{Longitude of magnetometer in datum specified at survey level.}{14.23}
+		\entry{measurement\_azimuth}{True}{degrees}{Float}{Number}{Azimuth of channel in geographic coordinates.  The submitter must insure that the azimuth is relative to geographic north clockwise positive.}{0}
+		\entry{sample\_rate}{True}{samples per second}{Float}{Number}{Sample rate of the channel.}{8}
+		\entry{sensor.id}{True}{None}{String}{Free Form}{Sensor ID Number or serial Number.}{mag01}
 	\end{tabular}
 \end{table}
 \clearpage
 \newpage
 \begin{table}[h!]
 	\caption*{Attributes for Magnetic Category Continued}
-	\begin{tabular}{p{.305\textwidth}p{.47\textwidth}p{.2\textwidth}}
+	\begin{tabular}{p{.305\textwidth}>{\raggedright}p{.47\textwidth}p{.2\textwidth}}
 		\textbf{Metadata Key} & \textbf{Description} & \textbf{Example} \\ \toprule
-		\entry{sensor.manufacturer}{True}{None}{string}{free form}{Person or organization that manufactured the magnetic sensor.}{Magnets}
-		\entry{sensor.model}{False}{None}{string}{free form}{Model version of the magnetic sensor.}{falcon5}
-		\entry{sensor.type}{True}{None}{string}{free form}{Type of magnetic sensor, should describe the type of magnetic field measurement.}{induction coil}
-		\entry{time\_period.end}{True}{None}{string}{time}{End date and time of collection in UTC}{2020-02-04 T16:23:45.453670 +00:00}
-		\entry{time\_period.start}{True}{None}{string}{time}{Start date and time of collection in UTC}{2020-02-01 T09:23:45.453670 +00:00}
-		\entry{type}{True}{None}{string}{free form}{Data type for the channel}{magnetic}
-		\entry{units}{True}{None}{string}{controlled vocabulary}{units of the data.  if archiving should always be counts.  Options: [ counts $|$ nanotesla ]}{counts}
+		\entry{sensor.manufacturer}{True}{None}{String}{Free Form}{Person or organization that manufactured the magnetic sensor.}{Magnets}
+		\entry{sensor.model}{False}{None}{String}{Free Form}{Model version of the magnetic sensor.}{falcon5}
+		\entry{sensor.type}{True}{None}{String}{Free Form}{Type of magnetic sensor, should describe the type of magnetic field measurement.}{induction coil}
+		\entry{time\_period.end}{True}{None}{String}{Date Time}{End date and time of collection in UTC.}{2020-02-04 T16:23:45.453670 +00:00}
+		\entry{time\_period.start}{True}{None}{String}{Date Time}{Start date and time of collection in UTC.}{2020-02-01 T09:23:45.453670 +00:00}
+		\entry{type}{True}{None}{String}{Free Form}{Data type for the channel}{magnetic}
+		\entry{units}{True}{None}{String}{Controlled Vocabulary}{units of the data.  if archiving should always be counts.  Options: [ counts $|$ nanotesla ]}{counts}
 	\end{tabular}
 \end{table}
 
@@ -824,10 +826,10 @@ A magnetic channel is a recording of one component of the magnetic field at a si
 
 It is important to note that filters will be identified by name and must be consistent throughout the file. Names should be descriptive and self evident. Examples:
 \begin{itemize}
-    \item \verb|coil_2284| $\longrightarrow$ induction coil number 2284
+    \item \verb|coil_2284| $\longrightarrow$ induction coil Number 2284
     \item \verb|counts2mv| $\longrightarrow$ conversion from counts to mV
     \item \verb|e_gain| $\longrightarrow$ electric field gain 
-    \item \verb|datalogger_024| $\longrightarrow$ data logger number 24 response
+    \item \verb|datalogger_024| $\longrightarrow$ data logger Number 24 response
     \item \verb|notch_60hz| $\longrightarrow$ notch filter for 60 Hz and harmonics
     \item \verb|lowpass_10hz| $\longrightarrow$ low pass filter below 10 Hz
 \end{itemize}
@@ -836,13 +838,13 @@ In each channel there are keys to identify filters that can or have been applied
 
 \begin{table}[h!]
 	\caption[Attributes for Filter Category]{Attributes for Filter Category}
-	\begin{tabular}{p{.305\textwidth}p{.47\textwidth}p{.2\textwidth}}
+	\begin{tabular}{p{.305\textwidth}>{\raggedright}p{.47\textwidth}p{.2\textwidth}}
 		\textbf{Metadata Key} & \textbf{Description} & \textbf{Example} \\ \toprule
-		\entry{type}{True}{None}{string}{controlled vocabulary}{Filter type. Options: [look up $|$ poles zeros $|$ converter $|$ FIR $|$ ...] }{lookup}
-		\entry{name}{True}{None}{string}{alpha numeric}{Unique name for the filter such that it is easy to query.}{counts2mv}
-		\entry{units\_in}{True}{None}{string}{controlled vocabulary}{The input units for the filter. Should be SI units or counts.}{counts}
-		\entry{units\_out}{True}{None}{string}{controlled vocabulary}{The output units for the filter. Should be SI units or counts.}{millivolts}
-		\entry{calibration\_date}{False}{None}{string}{date time}{If the filter is a calibration include the calibration date.}{2010-01-01 T00:00:00 +00:00}
+		\entry{type}{True}{None}{String}{Controlled Vocabulary}{Filter type. Options: [look up $|$ poles zeros $|$ converter $|$ FIR $|$ ...] }{lookup}
+		\entry{name}{True}{None}{String}{alpha numeric}{Unique name for the filter such that it is easy to query.  See above for some examples.}{counts2mv}
+		\entry{units\_in}{True}{None}{String}{Controlled Vocabulary}{The input units for the filter. Should be SI units or counts.}{counts}
+		\entry{units\_out}{True}{None}{String}{Controlled Vocabulary}{The output units for the filter. Should be SI units or counts.}{millivolts}
+		\entry{calibration\_date}{False}{None}{String}{Date Time}{If the filter is a calibration include the calibration date.}{2010-01-01 T00:00:00 +00:00}
 		
 	\end{tabular}
 	\label{tab:filter}
@@ -871,14 +873,14 @@ In each channel there are keys to identify filters that can or have been applied
 Auxiliary channels include state of health channels, temperature, etc.  
 \begin{table}[h!]
 	\caption[Attributes of Auxiliary Category]{Attributes for Auxiliary Category }
-	\begin{tabular}{p{.305\textwidth}p{.47\textwidth}p{.2\textwidth}}
+	\begin{tabular}{p{.305\textwidth}>{\raggedright}p{.47\textwidth}p{.2\textwidth}}
 		\textbf{Metadata Key} & \textbf{Description} & \textbf{Example} \\ \toprule
-		\entry{channel\_number}{True}{None}{integer}{number}{Channel number on the data logger.}{1}
-		\entry{comments}{False}{None}{string}{free form}{Any comments about the channel that would be useful to a user}{Pc1 at 6pm local time.}
-		\entry{component}{True}{None}{string}{controlled vocabulary}{Name of the component measured.  Options: [ temperature $|$ battery $|$ other]}{temperature}
-		\entry{data\_quality.rating.author}{False}{None}{string}{free form}{Name of person or organization who rated the data}{graduate student ace}
-		\entry{data\_quality.rating.method}{False}{None}{string}{free form}{The method used to rate the data, should be a descriptive name and not just the name of a software package.}{standard deviation}
-		\entry{data\_quality.rating.value}{True}{None}{integer}{number}{Rating from 1-5 where 1 is bad and 5 is good and 0 if unrated.  Options: [ 0 $|$ 1 $|$ 2 $|$ 3 $|$ 4 $|$ 5 ]}{4}
+		\entry{channel\_number}{True}{None}{Integer}{Number}{Channel Number on the data logger.}{1}
+		\entry{comments}{False}{None}{String}{Free Form}{Any comments about the channel that would be useful to a user}{Pc1 at 6pm local time.}
+		\entry{component}{True}{None}{String}{Controlled Vocabulary}{Name of the component measured.  Options: [ temperature $|$ battery $|$ other]}{temperature}
+		\entry{data\_quality.rating.author}{False}{None}{String}{Free Form}{Name of person or organization who rated the data}{graduate student ace}
+		\entry{data\_quality.rating.method}{False}{None}{String}{Free Form}{The method used to rate the data, should be a descriptive name and not just the name of a software package.}{standard deviation}
+		\entry{data\_quality.rating.value}{True}{None}{Integer}{Number}{Rating from 1-5 where 1 is bad and 5 is good and 0 if unrated.  Options: [ 0 $|$ 1 $|$ 2 $|$ 3 $|$ 4 $|$ 5 ]}{4}
 	\end{tabular}
 	\label{tab:auxiliary}
 \end{table}
@@ -887,15 +889,15 @@ Auxiliary channels include state of health channels, temperature, etc.
 \newpage
 \begin{table}[h!]
 	\caption*{Attributes for Auxiliary Category Continued}
-	\begin{tabular}{p{.305\textwidth}p{.47\textwidth}p{.2\textwidth}}
+	\begin{tabular}{p{.305\textwidth}>{\raggedright}p{.47\textwidth}p{.2\textwidth}}
 		\textbf{Metadata Key} & \textbf{Description} & \textbf{Example} \\ \toprule
-		\entry{data\_quality.warning}{False}{None}{string}{free form}{Any warnings about the data that should be noted for users.}{periodic pipeline noise}
+		\entry{data\_quality.warning}{False}{None}{String}{Free Form}{Any warnings about the data that should be noted for users.}{periodic pipeline noise}
 		\entry{filter.applied}{True}{None}{boolean}{name list}{Boolean if filter has been applied or not. If more than one filter input as a comma separated list.  Needs to be the same length as name or if only one entry is given it is assumed to apply to all filters listed.}{True, False}
-		\entry{filter.comments}{False}{None}{string}{name}{Any comments on filters that is important for users.}{low pass is not calibrated}
-		\entry{filter.name}{True}{None}{string}{name list}{Name of filter applied or to be applies. If more than one filter input as a comma separated list}{"counts2mv, lowpass"}
-		\entry{location.elevation}{True}{degrees}{float}{number}{Elevation of channel location in datum specified at survey level.}{123.4}
-		\entry{location.latitude}{True}{degrees}{float}{number}{Latitude of channel location in datum specified at survey level.}{23.134}
-		\entry{location.longitude}{True}{degrees}{float}{number}{Longitude of channel location in datum specified at survey level.}{14.23}
+		\entry{filter.comments}{False}{None}{String}{name}{Any comments on filters that is important for users.}{low pass is not calibrated}
+		\entry{filter.name}{True}{None}{String}{name list}{Name of filter applied or to be applies. If more than one filter input as a comma separated list}{"counts2mv, lowpass"}
+		\entry{location.elevation}{False}{degrees}{Float}{Number}{Elevation of channel location in datum specified at survey level.}{123.4}
+		\entry{location.latitude}{False}{degrees}{Float}{Number}{Latitude of channel location in datum specified at survey level.}{23.134}
+		\entry{location.longitude}{False}{degrees}{Float}{Number}{Longitude of channel location in datum specified at survey level.}{14.23}
 	\end{tabular}
 \end{table}
 
@@ -903,44 +905,17 @@ Auxiliary channels include state of health channels, temperature, etc.
 \newpage
 \begin{table}[h!]
 	\caption*{Attributes for Auxiliary Category Continued}
-	\begin{tabular}{p{.305\textwidth}p{.47\textwidth}p{.2\textwidth}}
+	\begin{tabular}{p{.305\textwidth}>{\raggedright}p{.47\textwidth}p{.2\textwidth}}
 		\textbf{Metadata Key} & \textbf{Description} & \textbf{Example} \\ \toprule
-		\entry{measurement\_azimuth}{True}{degrees}{float}{number}{Azimuth of channel in geographic coordinates.  The user must insure all azimuths are relative to geographic north positive clockwise for archiving.}{0}
-		\entry{sample\_rate}{True}{samples per second}{float}{number}{Sample rate of the channel.}{8}
-		\entry{time\_period.end}{True}{None}{string}{time}{End date and time of collection in UTC.}{2020-02-04 T16:23:45.453670 +00:00}
-		\entry{time\_period.start}{True}{None}{string}{time}{Start date and time of collection in UTC.}{2020-02-01 T09:23:45.453670 +00:00}
-		\entry{type}{True}{None}{string}{free form}{Data type for the channel.}{temperature}
-		\entry{units}{True}{None}{string}{controlled vocabulary}{Units of the data.  Options: SI units or counts.}{celsius}
+		\entry{measurement\_azimuth}{True}{degrees}{Float}{Number}{Azimuth of channel in geographic coordinates.  The user must insure all azimuths are relative to geographic north positive clockwise for archiving.}{0}
+		\entry{sample\_rate}{True}{samples per second}{Float}{Number}{Sample rate of the channel.}{8}
+		\entry{time\_period.end}{True}{None}{String}{time}{End date and time of collection in UTC.}{2020-02-04 T16:23:45.453670 +00:00}
+		\entry{time\_period.start}{True}{None}{String}{time}{Start date and time of collection in UTC.}{2020-02-01 T09:23:45.453670 +00:00}
+		\entry{type}{True}{None}{String}{Free Form}{Data type for the channel.}{temperature}
+		\entry{units}{True}{None}{String}{Controlled Vocabulary}{Units of the data.  Options: SI units or counts.}{celsius}
 	\end{tabular}
 \end{table}
 
-%\begin{table}[htb!]
-%    \caption[Attributes for Auxiliary Channel]{Attributes for Auxiliary category}
-%    \begin{tabular}{|l|p{2.75in}|l|l|p{.95in}|}
-%    	\hline
-%    	\textbf{Metadata Key} & \textbf{Description} & \textbf{Type} & \textbf{Required} & \textbf{Style}\\ \hline
-%    	channel\_number & channel number on the data logger & integer & True & number  \\ \hline 
-%    	comments & any comments about the channel & string & False & free form  \\ \hline
-%        component & name of the component measured. Options [ Temperature $|$ batter\_voltage $|$ state\_of\_health $|$ ...] & string & True & controlled vocabulary  \\ \hline
-%        data\_quality.rating.author & author of who rated the data & string & False & free form  \\ \hline
-%        data\_quality.rating.method & the method used to rate the data & string & False & free form  \\ \hline
-%        data\_quality.rating.value & a rating from 1-5 where 1 is bad and 5 is good and 0 if unrated & integer & True & number  \\ \hline
-%        data\_quality.warning & any warnings about the data that should be noted & string & False & free form  \\ \hline
-%        filter.applied & boolean if filter has been applied or not. If more than one filter input as a comma separated list.  Needs to be the same length as name or if only one entry is given it is assumed to apply to all filters listed. & boolean & True & list  \\ \hline
-%        filter.comments & any comments on filters & string & False & name  \\ \hline
-%        filter.name & name of filter applied or to be applies. If more than one filter input as a comma separated list & string & True & list  \\ \hline
-%        location.elevation & elevation of location in datum specified at survey level & float & False & number  \\ \hline
-%        location.latitude & latitude of location in datum specified at survey level & float & False & number  \\ \hline
-%        location.longitude & longitude of location in datum specified at survey level & float & False & number  \\ \hline
-%        measurement\_azimuth & azimuth of channel in measurement coordinates & float & True & number  \\ \hline
-%        sample\_rate & sample rate & float & True & number  \\ \hline
-%        time\_period.end & end date and time of collection in UTC & string & True & date time  \\ \hline
-%        time\_period.start & start date and time of collection in UTC & string & True & date time  \\ \hline
-%        type & data type for the channel & string & True & free form  \\ \hline
-%        units & units of the data options are related to the data type [ counts $|$ ... ] & string & True & controlled vocabulary \\ \hline
-%    \end{tabular}
-%    \label{tab:aux}
-%\end{table}
 
 \newpage
 \subsection{Example Auxiliary JSON} 
@@ -950,14 +925,14 @@ Auxiliary channels include state of health channels, temperature, etc.
     <comments>great</comments>
     <component>Temperature</component>
     <data_logger>
-        <channel_number type="integer">1</channel_number>
+        <channel_number type="Integer">1</channel_number>
     </data_logger>
     <data_quality>
         <warning>None</warning>
         <rating>
             <author>mt</author>
             <method>ml</method>
-            <value type="integer">4</value>
+            <value type="Integer">4</value>
         </rating>
     </data_quality>
     <filter>
@@ -971,12 +946,12 @@ Auxiliary channels include state of health channels, temperature, etc.
         <comments>test</comments>
     </filter>
     <location>
-        <latitude type="float" units="degrees">12.324</latitude>
-        <longitude type="float" units="degrees">-112.03</longitude>
-        <elevation type="float" units="degrees">1234.0</elevation>
+        <latitude type="Float" units="degrees">12.324</latitude>
+        <longitude type="Float" units="degrees">-112.03</longitude>
+        <elevation type="Float" units="degrees">1234.0</elevation>
     </location>
-    <measurement_azimuth type="float" units="degrees">0.0</measurement_azimuth>
-    <sample_rate type="float" units="samples per second">8.0</sample_rate>
+    <measurement_azimuth type="Float" units="degrees">0.0</measurement_azimuth>
+    <sample_rate type="Float" units="samples per second">8.0</sample_rate>
     <time_period>
         <end>2020-01-01T00:00:00+00:00</end>
         <start>2020-01-04T00:00:00+00:00</start>
@@ -1023,7 +998,7 @@ Auxiliary channels include state of health channels, temperature, etc.
 
 \begin{table}[h!]
 	\centering
-	\caption[Channel Direction]{Channel Direction.  The convention for many MT setups follows the right-hand-rule with X in the northern direction, Y in the eastern direction, and Z positive down.  If the setup has multiple channels in the same direction they can be labeled with a number.  For instance if you measure multiple electric fields Ex01, Ey01, Ex02, Ey02.}
+	\caption[Channel Direction]{Channel Direction.  The convention for many MT setups follows the right-hand-rule with X in the northern direction, Y in the eastern direction, and Z positive down.  If the setup has multiple channels in the same direction they can be labeled with a Number.  For instance if you measure multiple electric fields Ex01, Ey01, Ex02, Ey02.}
 	\begin{tabular}{lc}
 		\toprule
 		\textbf{Direction} & \textbf{Definition} \\ \midrule
