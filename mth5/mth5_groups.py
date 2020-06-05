@@ -156,6 +156,7 @@ class SurveyGroup(BaseGroup):
         station_obj.write_metadata()
         return station_obj
     
+
 class StationGroup(BaseGroup):
     """
     holds the station group
@@ -186,11 +187,7 @@ class StationGroup(BaseGroup):
     @name.setter
     def name(self, name):
         self.metadata.archive_id = name
-        
 
-    
-
-        
 class ReportsGroup(BaseGroup):
     """
     holds the reports group
@@ -216,6 +213,49 @@ class StandardsGroup(BaseGroup):
     def __init__(self, group, **kwargs):
         
         super().__init__(group, **kwargs) 
+        
+        self._summary_defaults = {'name': 'Summary',
+                                  'max_shape': (500,),
+                                  'dtype': np.dtype([('attribute', 'S72'),
+                                                     ('type', 'S15'),
+                                                     ('required', np.bool_),
+                                                     ('style', 'S72'),
+                                                     ('units', 'S32'),
+                                                     ('description', 'S300'),
+                                                     ('options', 'S150'),
+                                                     ('alias', 'S72'),
+                                                     ('example', 'S72')])} 
+    
+    def from_dict(self, summary_dict):
+        """
+        Fill summary table from a dictionary 
+        
+        :param summary_dict: DESCRIPTION
+        :type summary_dict: TYPE
+        :return: DESCRIPTION
+        :rtype: TYPE
+
+        """
+        
+        for key, v_dict in summary_dict.items():
+            key_list = [key]
+            for dkey in self.summary_table.dtype.names[1:]:
+                value = v_dict[dkey]
+                
+                if isinstance(value, list):
+                    if len(value) == 0:
+                        value = ''
+                        
+                    else:
+                        value = ','.join(['{0}'.format(ii) for ii in 
+                                                  value])
+                if value is None:
+                    value = ''
+                    
+                key_list.append(value)
+            
+            key_list = np.array([tuple(key_list)], self.summary_table.dtype)
+            index = self.summary_table.add_row(key_list)
         
         
         
@@ -383,9 +423,8 @@ class MTH5Table():
                 raise ValueError(msg)
 
         if index is None:
-            index = self.nrows - 1
-            new_shape = tuple([self.nrows] + [ii for ii in self.shape[1:]])
-            print(new_shape)
+            index = self.nrows
+            new_shape = tuple([self.nrows + 1] + [ii for ii in self.shape[1:]])
             self.array.resize(new_shape)
         
         # add the row

@@ -857,4 +857,20 @@ class Standards():
         return dict([(key, deepcopy(getattr(self, '{0}_dict'.format(key))))
                   for key in keys])
         self.logger.debug("Successfully made ATTR_DICT")
+        
+    def summarize_standards(self, levels=['survey', 'station', 'run', 
+                                          'auxiliary', 'electric',
+                                          'magnetic']):
+        """
+        Summarize the metadata definitions
+        
+        :return: DESCRIPTION
+        :rtype: TYPE
 
+        """
+        summary_dict = BaseDict()
+        for name in levels:
+            summary_dict.add_dict(getattr(self, '{0}_dict'.format(name)),
+                                  name)
+            
+        return summary_dict
