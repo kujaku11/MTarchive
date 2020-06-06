@@ -166,7 +166,7 @@ class MTH5():
         
     def __str__(self):
         return get_tree(self.__hdf5_obj)
-        
+    
     @property
     def filename(self):
         if self.h5_is_write():

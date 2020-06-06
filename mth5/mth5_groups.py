@@ -52,9 +52,11 @@ class BaseGroup():
             
         
         
-        self._summary_defaults = {'name': 'Summary',
+        self._defaults_summary_attrs = {'name': 'Summary',
                                   'max_shape': (10000, ),
                                   'dtype': np.dtype([('default', np.float)])}
+        
+        self._default_group_attr = {}
         
         for key, value in kwargs.items():
             setattr(self, key, value)
@@ -84,7 +86,7 @@ class BaseGroup():
         meta_dict = dict([(key, value) for key, value in 
                           self.hdf5_group.attrs.items()])
         
-        self.metadata.from_dict({self.__class__.__name__: meta_dict})
+        self.metadata.from_dict({self._class_name: meta_dict})
                
     def write_metadata(self):
         """
@@ -115,10 +117,10 @@ class BaseGroup():
         """
         
         summary_table = self.hdf5_group.create_dataset(
-            self._summary_defaults['name'], 
+            self._defaults_summary_attrs['name'], 
             (1, ),
-            maxshape=self._summary_defaults['max_shape'],
-            dtype=self._summary_defaults['dtype'])
+            maxshape=self._defaults_summary_attrs['max_shape'],
+            dtype=self._defaults_summary_attrs['dtype'])
         
         summary_table.attrs.update({'type': 'summary table',
                                     'last_updated': 'date_time',
@@ -126,9 +128,9 @@ class BaseGroup():
         
         self.logger.debug(
             "Created {0} table with max_shape = {1}, dtype={2}".format(
-                self._summary_defaults['name'],
-                self._summary_defaults['max_shape'],
-                self._summary_defaults['dtype']))
+                self._defaults_summary_attrs['name'],
+                self._defaults_summary_attrs['max_shape'],
+                self._defaults_summary_attrs['dtype']))
         
    
 class SurveyGroup(BaseGroup):
@@ -167,7 +169,7 @@ class StationGroup(BaseGroup):
         
         super().__init__(group, **kwargs)
         
-        self._summary_defaults = {'name': 'Summary',
+        self._defaults_summary_attrs = {'name': 'Summary',
                                   'max_shape': (1000,),
                                   'dtype': np.dtype([('archive_id', 'S5'),
                                                      ('start', 'S32'),
@@ -198,7 +200,7 @@ class ReportsGroup(BaseGroup):
         
         super().__init__(group, **kwargs)
         
-        self._summary_defaults = {'name': 'Summary',
+        self._defaults_summary_attrs = {'name': 'Summary',
                                   'max_shape': (1000,),
                                   'dtype': np.dtype([('name', 'S5'),
                                                      ('type', 'S32'),
@@ -214,7 +216,7 @@ class StandardsGroup(BaseGroup):
         
         super().__init__(group, **kwargs) 
         
-        self._summary_defaults = {'name': 'Summary',
+        self._defaults_summary_attrs = {'name': 'Summary',
                                   'max_shape': (500,),
                                   'dtype': np.dtype([('attribute', 'S72'),
                                                      ('type', 'S15'),
@@ -337,6 +339,13 @@ class MTH5Table():
             raise MTH5TableError(msg)
             
     def __str__(self):
+        """
+        return a string that shows the table in text form
+    
+        :return: text representation of the table
+        :rtype: string
+
+        """
         length_dict = dict([(key, max([len(str(b)) for b in self.array[key]]))
                             for key in list(self.dtype.names)])
         lines = [' | '.join(['index']+['{0:^{1}}'.format(name, 
@@ -391,7 +400,63 @@ class MTH5Table():
     @property
     def nrows(self):
         return self.array.shape[0]
+    
+    def locate(self, column, value, test='eq'):
+        """
         
+        locate index where column is equal to value
+        :param column: DESCRIPTION
+        :type column: TYPE
+        :param value: DESCRIPTION
+        :type value: TYPE
+        :type test: type of test to try
+            * 'eq': equals
+            * 'lt': less than
+            * 'le': less than or equal to
+            * 'gt': greater than
+            * 'ge': greater than or equal to.
+            * 'be': between or equal to
+            * 'bt': between
+            
+        If be or bt input value as a list of 2 values
+            
+        :return: DESCRIPTION
+        :rtype: TYPE
+
+        """
+        if isinstance(value, str):
+            value = np.bytes_(value)
+            
+        # use numpy datetime for testing against time.    
+        if column in ['start', 'end', 'start_date', 'end_date']:
+            test_array = self.array[column].astype(np.datetime64)
+            value = np.datetime64(value)
+        else:
+            test_array = self.array[column]
+        
+        if test == 'eq':
+            index_values = np.where(test_array == value)[0] 
+        elif test == 'lt':
+            index_values = np.where(test_array < value)[0]
+        elif test == 'le':
+            index_values = np.where(test_array <= value)[0]
+        elif test == 'gt':
+            index_values = np.where(test_array > value)[0]
+        elif test == 'ge':
+            index_values = np.where(test_array >= value)[0]
+        elif test == 'be':
+            if not isinstance(value, (list, tuple, np.ndarray)):
+                msg = ("If testing for between value must be an iterable of" +
+                      " length 2.")
+                self.logger.error(msg)
+                raise ValueError(msg)
+                
+            index_values = np.where((test_array > value[0]) & 
+                                    (test_array < value[1]))[0]
+        else:
+            raise ValueError('Test {0} not understood'.format(test))
+            
+        return index_values
             
     def add_row(self, row, index=None):
         """
