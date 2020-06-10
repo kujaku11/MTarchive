@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """
+This module provides tools to convert MT metadata to a StationXML file.
+
 Created on Tue Jun  9 19:53:32 2020
 
 @author: jpeacock
@@ -9,13 +11,15 @@ Created on Tue Jun  9 19:53:32 2020
 # Imports
 # =============================================================================
 from obspy.core import inventory
+from obspy.core.util import AttribDict
+
 from mth5 import metadata
 from copy import deepcopy
 import logging
 
 logger = logging.getLogger(__name__)
 # =============================================================================
-# Translate between metadata and inventory: Network
+# Translate between metadata and inventory: mapping dictionaries 
 # =============================================================================
 base_translator = {'alternate_code': None,
                    'code': None,
@@ -45,7 +49,7 @@ station_translator.update({'alternate_code': None,
                            'data_availability': None,
                            'description': 'comments',
                            'elevation': 'location.elevation',
-                           'end_date': 'time_period.start',
+                           'end_date': 'time_period.end',
                            'equipments': None,
                            'external_references': None,
                            'geology': None,
@@ -65,14 +69,10 @@ channel_translator.update({'azimuth': 'measurement_azimuth',
                            'calibration_units_description': None,
                            'clock_drift_in_seconds_per_sample': None,
                            'data_logger': 'run.special',
-                           # 'depth': 'location.elevation',
                            'description': None,
                            'dip': 'measurement_tilt',
-                           # 'elevation': 'location.elevation',
                            'end_date': 'time_period.end',
                            'equipments': None,
-                           # 'latitude': 'location.latitude',
-                           # 'longitude': 'location.longitude',
                            'pre_amplifier': None,
                            'response': None,
                            'sample_rate': 'sample_rate',
@@ -115,11 +115,12 @@ measurement_code_dict = {"tilt": "A",
                          'tide': 'T', 
                          'wind': 'W'}
 
-orientation_code_dict = {'x': 'N',
-                         'y': 'E',
-                         'z': 'Z',
-                         '0-90': '1',
-                         '90-180': '2'}
+orientation_code_dict = {'N': {'min': 0, 'max': 5},
+                         'E': {'min': 85, 'max': 90},
+                         'Z': {'min': 0, 'max': 5},
+                         '1': {'min': 5, 'max': 45},
+                         '2': {'min': 45, 'max': 85},
+                         '3': {'min': 5, 'max': 85}}
 
 release_dict = {'CC 0': 'open',
                 'CC BY': 'partial',
@@ -128,13 +129,14 @@ release_dict = {'CC 0': 'open',
                 'CC BY-NC-SA': 'partial',
                 'CC BY-NC-NC': 'closed'}
 
-def make_location_code(channel_obj):
+def get_location_code(channel_obj):
     """
+    Get the location code given the components and channel number
     
-    :param channel_obj: DESCRIPTION
-    :type channel_obj: TYPE
-    :return: DESCRIPTION
-    :rtype: TYPE
+    :param channel_obj: Channel object
+    :type channel_obj: `mth5.metadata.Channel`
+    :return: 2 character location code
+    :rtype: string
 
     """
     
@@ -143,42 +145,150 @@ def make_location_code(channel_obj):
     
     return location_code
 
+
+def get_period_code(sample_rate):
+    """
+    Get the SEED sampling rate code given a sample rate
+    
+    :param sample_rate: sample rate in samples per second
+    :type sample_rate: float
+    :return: single character SEED sampling code
+    :rtype: string
+
+    """
+    period_code = 'A'
+    for key, v_dict in sorted(period_code_dict.items()):
+        if (sample_rate >= v_dict['min']) and \
+            (sample_rate <= v_dict['max']):
+            period_code = key
+            break
+    return period_code
+
+def get_measurement_code(measurement):
+    """
+    get SEED sensor code given the measurement type
+    
+    :param measurement: measurement type, e.g.
+        * temperature
+        * electric
+        * magnetic
+    :type measurement: string
+    :return: single character SEED sensor code, if the measurement type has
+             not been defined yet Y is returned.
+    :rtype: string
+
+    """
+    sensor_code = 'Y'
+    for key, code in measurement_code_dict.items():
+        if measurement.lower() in key:
+            sensor_code = code
+    return sensor_code
+
+def get_orientation_code(azimuth, orientation='horizontal'):
+    """
+    
+    :param azimuth: DESCRIPTION
+    :type azimuth: TYPE
+    :return: DESCRIPTION
+    :rtype: TYPE
+
+    """
+    orientation_code = '1'
+    horizontal_keys = ['N', 'E', '1', '2']
+    vertical_keys = ['Z', '3']
+    
+    azimuth = abs(azimuth) % 91
+    if orientation == 'horizontal':
+        test_keys = horizontal_keys
+        
+    elif orientation == 'vertical':
+        test_keys = vertical_keys
+        
+    for key in test_keys:
+        angle_min = orientation_code_dict[key]['min']
+        angle_max = orientation_code_dict[key]['max']
+        if (azimuth <= angle_max) and (azimuth >= angle_min):
+            orientation_code = key
+            break
+    return orientation_code
+
 def make_channel_code(channel_obj):
     """
     """
-    period_code = 'A'
-    sensor_code = None
-    orientation_code = None
-    
-    for key, v_dict in sorted(period_code_dict.items()):
-        if (channel_obj.sample_rate >= v_dict['min']) and \
-            (channel_obj.sample_rate <= v_dict['max']):
-            period_code = key
-            break
-            
-    for key, code in measurement_code_dict.items():
-        if channel_obj.type.lower() in key:
-            sensor_code = code
-    
-    azimuth = channel_obj.measurement_azimuth % 180
-    for key, code in orientation_code_dict.items():
-        if key in channel_obj.component.lower():
-            orientation_code = code.upper()
-        if (azimuth > 5) and (azimuth < 85):
-            orientation_code = '1'
-        elif (azimuth > 95) and (azimuth < 175):
-            orientation_code = '2'
-        elif channel_obj.measurement_tilt > 5:
-            orientation_code = '3'
-            
+
+    period_code = get_period_code(channel_obj.sample_rate)
+    sensor_code = get_measurement_code(channel_obj.type)
+    if 'z' in channel_obj.component.lower():
+        orientation_code = get_orientation_code(channel_obj.measurement_tilt,
+                                                orientation='vertical')
+    else:
+        orientation_code = get_orientation_code(channel_obj.measurement_azimuth)        
+     
     channel_code = '{0}{1}{2}'.format(period_code, sensor_code,
                                        orientation_code)
-    if period_code is None or sensor_code is None or orientation_code is None:
-        raise ValueError('Could not make channel code {0}'.format(
-            channel_code))
         
     return channel_code
 
+
+def add_custom_element(obj, custom_name, custom_value, units=None, 
+                       namespace='MT'):
+    """
+    Add a custom MT element to Obspy Inventory object
+    
+    :param obj: obspy.core.inventory object that will have the element added
+    :type obj: obspy.core.inventory object, could be Network, Station,
+                Channel
+    :param custom_key: name of custom element
+    :type custom_key: str
+    
+    :param custom_value: value of custom element
+    :type custom_value: [ int | float | string ]
+    
+    :return: input Obspy.inventory object with custom element
+    :rtype: input Obspy.inventory
+    
+    :Example: ::
+        
+        >>> from obspy.core import inventory
+        >>> from obspy.util import AttribDict()
+        >>> channel_01 = inventory.Channel('SQE', "", 39.0, -112.0, 150, 0,
+        ...                                azimuth=90,
+        ...                                sample_rate=256, dip=0, 
+        ...                                types=['ELECTRIC POTENTIAL'])
+        >>> # add custom element
+        >>> channel_01.extra = AttribDict({'namespace':'MT'})
+        >>> channel_01.extra.FieldNotes = AttribDict({'namespace':'MT'})
+        >>> channel_01.extra.FieldNotes.value = AttribDict({'namespace':'MT'})
+        >>> channel_01.extra.FieldNotes = add_custom_element(
+        >>>...                                    channel_01.extra.FieldNotes,
+        >>>...                                    'ContactResistanceA',
+        >>>...                                    1.2,
+        >>>...                                    units='kOhm')
+
+    """
+    if custom_value is None:
+        return
+    
+    if '.' in custom_name:
+        custom_category, custom_name = custom_name.split('.', 1)
+        if not hasattr(obj, custom_category):
+            obj[custom_category] = AttribDict({'namespace': namespace,
+                                               'value': AttribDict()})
+        add_custom_element(obj[custom_category].value, 
+                           custom_name, 
+                           custom_value, 
+                           units=units, 
+                           namespace=namespace)
+    else:
+        obj[custom_name] = AttribDict({'namespace':namespace})
+        obj[custom_name].value = custom_value
+        if units:
+            assert isinstance(units, str), 'Units must be a string'
+            obj[custom_name].attrib = {'units': units.upper()}
+
+# =============================================================================
+# Translate between metadata and inventory: Survey --> Network
+# ============================================================================= 
 def mt_survey_to_inventory_network(survey_obj):
     """
     
@@ -190,6 +300,10 @@ def mt_survey_to_inventory_network(survey_obj):
     """
     network_obj = inventory.Network(survey_obj.get_attr_from_name(
         network_translator['code']))
+    
+    used_list = ['northwest_corner.latitude', 'northwest_corner.longitude',
+                 'southeast_corner.latitude', 'southeast_corner.longitude',
+                 'time_period.start_date', 'time_period.end_date']
     for inv_key, mth5_key in network_translator.items():
         if mth5_key is None:
             msg = "cannot currently map mth5.survey to network.{0}".format(
@@ -203,6 +317,10 @@ def mt_survey_to_inventory_network(survey_obj):
                                       emails=[survey_obj.project_lead.email])
             operator.contacts = [person]
             network_obj.operators = [operator]
+            used_list.append('project_lead.author')
+            used_list.append('project_lead.email')
+            used_list.append('project_lead.organization')
+            
         
         elif inv_key == 'comments':
             comment = inventory.Comment(survey_obj.comments, id=0)
@@ -214,7 +332,18 @@ def mt_survey_to_inventory_network(survey_obj):
         else:
             setattr(network_obj, inv_key,
                     survey_obj.get_attr_from_name(mth5_key))
-        
+        used_list.append(mth5_key)
+      
+    network_obj.extra = AttribDict()
+    network_obj.extra.MT = AttribDict({'namespace':'MT',
+                                       'value':AttribDict()})
+    
+    for mt_key in survey_obj.get_attribute_list():
+        if not mt_key in used_list:
+            add_custom_element(network_obj.extra.MT.value, mt_key, 
+                               survey_obj.get_attr_from_name(mt_key),
+                               units=survey_obj._attr_dict[mt_key]['units'])
+
     return network_obj
 
 # =============================================================================
@@ -235,6 +364,10 @@ def mt_station_to_inventory_station(station_obj):
                                     station_obj.location.latitude,
                                     station_obj.location.longitude,
                                     station_obj.location.elevation)
+    
+    used_list = ['channels_recorded', 'time_period.start', 'time_period.end',
+                 'location.latitude', 'location.longitude', 
+                 'location.elevation', 'archive_id']
     for inv_key, mth5_key in station_translator.items():
         if mth5_key is None:
             msg = "cannot currently map mth5.station to inventory.station.{0}".format(
@@ -247,15 +380,29 @@ def mt_station_to_inventory_station(station_obj):
             person = inventory.Person(names=[station_obj.acquired_by.author])
             operator.contacts = [person]
             inv_station.operators = [operator]
+            used_list.append('acquired_by.author')
+            used_list.append('acquired_by.organization')
         elif inv_key == 'site':
             inv_station.site.description = station_obj.geographic_name
             inv_station.site.name = station_obj.id
+            used_list.append('geographic_name')
+            used_list.append('id')
         elif inv_key == 'comments':
             comment = inventory.Comment(station_obj.comments, id=0)
             inv_station.comments.append(comment)
         else:
             setattr(inv_station, inv_key,
                     station_obj.get_attr_from_name(mth5_key))
+            
+    inv_station.extra = AttribDict()
+    inv_station.extra.MT = AttribDict({'namespace':'MT',
+                                       'value':AttribDict()})
+    
+    for mt_key in station_obj.get_attribute_list():
+        if not mt_key in used_list:
+            add_custom_element(inv_station.extra.MT.value, mt_key, 
+                               station_obj.get_attr_from_name(mt_key),
+                               units=station_obj._attr_dict[mt_key]['units'])
             
     return inv_station
 
@@ -277,7 +424,7 @@ def mt_electric_to_inventory_channel(electric_obj, run_obj):
     :rtype: TYPE
 
     """  
-    location_code = make_location_code(electric_obj)
+    location_code = get_location_code(electric_obj)
     channel_code = make_channel_code(electric_obj)
 
     inv_channel = inventory.Channel(channel_code, location_code,
@@ -286,6 +433,8 @@ def mt_electric_to_inventory_channel(electric_obj, run_obj):
                                     electric_obj.positive.elevation,
                                     electric_obj.positive.elevation)
     
+    used_list = ['channels_recorded', 'time_period.start', 'time_period.end',
+                 'sample_rate']
     for inv_key, mth5_key in channel_translator.items():
         if mth5_key is None:
             msg = "cannot currently map mth5.station to inventory.station.{0}".format(
@@ -314,6 +463,16 @@ def mt_electric_to_inventory_channel(electric_obj, run_obj):
             setattr(inv_channel, inv_key,
                     electric_obj.get_attr_from_name(mth5_key))
             
+    inv_channel.extra = AttribDict()
+    inv_channel.extra.MT = AttribDict({'namespace':'MT',
+                                       'value':AttribDict()})
+    
+    for mt_key in electric_obj.get_attribute_list():
+        if not mt_key in used_list:
+            add_custom_element(inv_channel.extra.MT.value, mt_key, 
+                               electric_obj.get_attr_from_name(mt_key),
+                               units=electric_obj._attr_dict[mt_key]['units'])
+            
     return inv_channel
             
      
@@ -332,7 +491,7 @@ def mt_channel_to_inventory_channel(channel_obj, run_obj):
     :rtype: TYPE
 
     """  
-    location_code = make_location_code(channel_obj)
+    location_code = get_location_code(channel_obj)
     channel_code = make_channel_code(channel_obj)
 
     inv_channel = inventory.Channel(channel_code, location_code,
@@ -341,6 +500,10 @@ def mt_channel_to_inventory_channel(channel_obj, run_obj):
                                     channel_obj.location.elevation,
                                     channel_obj.location.elevation)
     
+    used_list = ['channels_recorded', 'time_period.start', 'time_period.end',
+                 'sample_rate', 'location.latitude', 'location.longitude', 
+                 'location.elevation', 'measurement_azimuth',
+                 'measurement_tilt', 'units']
     for inv_key, mth5_key in channel_translator.items():
         if mth5_key is None:
             msg = "cannot currently map mth5.station to inventory.station.{0}".format(
@@ -364,10 +527,20 @@ def mt_channel_to_inventory_channel(channel_obj, run_obj):
             comment = inventory.Comment(channel_obj.comments, id=0)
             inv_channel.comments.append(comment)
         elif inv_key == 'types':
-            inv_channel.types = 'GEOPHYSICAL'
+            inv_channel.types = ['GEOPHYSICAL']
         else:
             setattr(inv_channel, inv_key,
                     channel_obj.get_attr_from_name(mth5_key))
+            
+    inv_channel.extra = AttribDict()
+    inv_channel.extra.MT = AttribDict({'namespace':'MT',
+                                       'value':AttribDict()})
+    
+    for mt_key in channel_obj.get_attribute_list():
+        if not mt_key in used_list:
+            add_custom_element(inv_channel.extra.MT.value, mt_key, 
+                               channel_obj.get_attr_from_name(mt_key),
+                               units=channel_obj._attr_dict[mt_key]['units'])
             
     return inv_channel
 

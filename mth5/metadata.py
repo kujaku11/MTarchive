@@ -128,6 +128,16 @@ class Base():
                         self.logger.info(msg)
                         
                 return False
+            
+    def __len__(self):
+        return len(self.get_attribute_list())
+            
+    def get_attribute_list(self):
+        """
+        return a list of the attributes 
+        """
+        
+        return sorted(list(self._attr_dict.keys()))
         
     def attribute_information(self, name=None):
         """
@@ -916,6 +926,7 @@ class Instrument(Base):
         self.id = None
         self.manufacturer = None
         self.type = None
+        self.model = None
         super(Instrument, self).__init__(**kwargs)
 
         self._attr_dict = ATTR_DICT['instrument']
@@ -1243,7 +1254,7 @@ class Orientation(Base):
     how channels are oriented
     """
     def __init__(self, **kwargs):
-        self.option = None
+        self.reference_frame = None
         self.method = None
         
         super(Orientation, self).__init__(**kwargs) 
@@ -1528,8 +1539,9 @@ class Channel(Base):
         self.filter = Filter()
         self.location = Location()
         self.time_period = TimePeriod()
-        self.translated_azimuth = 0.0
-        self.translated_tile = 0.0
+        self.translated_azimuth = None
+        self.translated_tilt = None
+        self.sensor = Instrument()
 
         super(Channel, self).__init__(**kwargs)
         self._attr_dict = ATTR_DICT['channel']      

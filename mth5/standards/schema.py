@@ -824,6 +824,7 @@ class Standards():
         channel_dict.add_dict(self.data_quality_dict.copy(), 'data_quality')
         channel_dict.add_dict(self.filter_dict.copy(), 'filter')
         channel_dict.add_dict(self.time_period_dict.copy(), 'time_period')
+        channel_dict.add_dict(self.instrument_dict.copy(), 'sensor')
         for key, v_dict in self.location_dict.items():
             if 'declination' not in key:
                 channel_dict.update({'{0}.{1}'.format('location', key): v_dict})
@@ -848,7 +849,6 @@ class Standards():
     def magnetic_dict(self):
         magnetic_dict = from_csv(get_level_fn('magnetic'))
         magnetic_dict.add_dict(self.channel_dict.copy())
-        magnetic_dict.add_dict(self.instrument_dict.copy(), 'sensor')
         return magnetic_dict
     
     @property
