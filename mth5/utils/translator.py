@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 # =============================================================================
 base_translator = {'alternate_code': None,
                    'code': None,
-                   'comments': 'comments',
+                   'comments': None,
                    'data_availability': None,
                    'description': None,
                    'historical_code': None,
@@ -30,15 +30,15 @@ base_translator = {'alternate_code': None,
 network_translator = deepcopy(base_translator)
 network_translator.update({'description': 'summary',
                            'comments': 'comments',
-                           'start_date': 'time_period.start_date',
-                           'end_date':'time_period.end_date',
+                           'start_date': 'time_period.start',
+                           'end_date':'time_period.end',
                            'restricted_status': 'release_license',
                            'operators': 'special',
                            'code': 'archive_network'})
 
 station_translator = deepcopy(base_translator)
 station_translator.update({'alternate_code': None,
-                           'channels': 'channels_recorded',
+                           'channels': None,
                            'code': None,
                            'comments': 'provenance.comments',
                            'creation_date': 'time_period.start',
@@ -123,6 +123,13 @@ orientation_code_dict = {'x': 'N',
                          '0-90': '1',
                          '90-180': '2'}
 
+release_dict = {'CC 0': 'open',
+                'CC BY': 'partial',
+                'CC BY-SA': 'partial',
+                'CC BY-ND': 'partial',
+                'CC BY-NC-SA': 'partial',
+                'CC BY-NC-NC': 'closed'}
+
 def make_location_code(channel_obj):
     """
     
@@ -188,13 +195,22 @@ def mt_survey_to_inventory_network(survey_obj):
         if mth5_key is None:
             msg = "cannot currently map mth5.survey to network.{0}".format(
                 inv_key)
-            logger.info(msg)
+            logger.debug(msg)
             continue
         if inv_key == 'operators':
             operator = inventory.Operator(
                 agency=[survey_obj.project_lead.organization])
-            operator.contacts = [survey_obj.project_lead.author]
+            person = inventory.Person(names=[survey_obj.project_lead.author],
+                                      emails=[survey_obj.project_lead.email])
+            operator.contacts = [person]
             network_obj.operators = [operator]
+        
+        elif inv_key == 'comments':
+            comment = inventory.Comment(survey_obj.comments, id=0)
+            network_obj.comments.append(comment)
+        elif inv_key == 'restricted_status':
+            network_obj.restricted_status = \
+                release_dict[survey_obj.release_license]
             
         else:
             setattr(network_obj, inv_key,
@@ -224,16 +240,20 @@ def mt_station_to_inventory_station(station_obj):
         if mth5_key is None:
             msg = "cannot currently map mth5.station to inventory.station.{0}".format(
                 inv_key)
-            logger.info(msg)
+            logger.debug(msg)
             continue
         if inv_key == 'operators':
             operator = inventory.Operator(
                 agency=[station_obj.acquired_by.organization])
-            operator.contacts = [station_obj.acquired_by.author]
+            person = inventory.Person(names=[station_obj.acquired_by.author])
+            operator.contacts = [person]
             inv_station.operators = [operator]
         elif inv_key == 'site':
             inv_station.site.description = station_obj.geographic_name
             inv_station.site.name = station_obj.id
+        elif inv_key == 'comments':
+            comment = inventory.Comment(station_obj.comments, id=0)
+            inv_station.comments.append(comment)
         else:
             setattr(inv_station, inv_key,
                     station_obj.get_attr_from_name(mth5_key))
@@ -271,7 +291,7 @@ def mt_electric_to_inventory_channel(electric_obj, run_obj):
         if mth5_key is None:
             msg = "cannot currently map mth5.station to inventory.station.{0}".format(
                 inv_key)
-            logger.info(msg)
+            logger.debug(msg)
             continue
         if inv_key == 'data_logger':
             dl = inventory.Equipment()
@@ -286,8 +306,11 @@ def mt_electric_to_inventory_channel(electric_obj, run_obj):
             sensor.type = electric_obj.positive.type
             sensor.model = electric_obj.positive.model
             inv_channel.sensor = sensor
+        elif inv_key == 'comments':
+            comment = inventory.Comment(electric_obj.comments, id=0)
+            inv_channel.comments.append(comment)
         elif inv_key == 'types':
-            inv_channel.types = 'GEOPHYSICAL'
+            inv_channel.types = ['GEOPHYSICAL']
         else:
             setattr(inv_channel, inv_key,
                     electric_obj.get_attr_from_name(mth5_key))
@@ -323,7 +346,7 @@ def mt_channel_to_inventory_channel(channel_obj, run_obj):
         if mth5_key is None:
             msg = "cannot currently map mth5.station to inventory.station.{0}".format(
                 inv_key)
-            logger.info(msg)
+            logger.debug(msg)
             continue
         if inv_key == 'data_logger':
             dl = inventory.Equipment()
@@ -338,6 +361,9 @@ def mt_channel_to_inventory_channel(channel_obj, run_obj):
             sensor.type = channel_obj.sensor.type
             sensor.model = channel_obj.sensor.model
             inv_channel.sensor = sensor
+        elif inv_key == 'comments':
+            comment = inventory.Comment(channel_obj.comments, id=0)
+            inv_channel.comments.append(comment)
         elif inv_key == 'types':
             inv_channel.types = 'GEOPHYSICAL'
         else:
@@ -349,7 +375,7 @@ def mt_channel_to_inventory_channel(channel_obj, run_obj):
 # =============================================================================
 # 
 # =============================================================================
-class MTToStatonXML():
+class MTToStationXML():
     """
     translate MT metadata to StationXML
     
@@ -368,7 +394,41 @@ class MTToStatonXML():
                 
         else:
             self.inventory_obj = inventory.Inventory(source='MT Metadata')
+            
+    def find_network_index(self, network):
+        """
+        locat the index where of network
+        """
         
+        for ii, net in enumerate(self.inventory_obj.networks):
+            if network == net.code:
+                return ii
+        return None
+    
+    def find_station_index(self, station, network=None):
+        """
+        locate station
+        
+        :param station: DESCRIPTION
+        :type station: TYPE
+        :param network: DESCRIPTION, defaults to None
+        :type network: TYPE, optional
+        :return: DESCRIPTION
+        :rtype: TYPE
+
+        """
+        
+        if network is not None:
+            network_index = self.find_network_index(network)
+        else:
+            network_index = 0
+
+        for ii, sta in enumerate(
+                self.inventory_obj.networks[network_index].stations):
+            if station == sta.code:
+                return ii
+            
+        return None
         
     def add_network(self, mt_survey_obj):
         """
@@ -380,6 +440,12 @@ class MTToStatonXML():
 
         """
         network_obj = mt_survey_to_inventory_network(mt_survey_obj)
+        
+        if network_obj.code in self.inventory_obj.networks:
+            msg = 'Network {0} is alread in current inventory'.format(
+                network_obj.code)
+            self.logger.error(msg)
+            raise ValueError(msg)
         self.inventory_obj.networks.append(network_obj)
         
         self.logger.debug('Added network {0} to inventory'.format(
@@ -397,15 +463,16 @@ class MTToStatonXML():
 
         """
         if network_code is None:
-            network_code = self.inventory.networks[0].code
+            network_code = self.inventory_obj.networks[0].code
             
-        station_obj = mt_station_to_inventory_station(mt_station_obj,
-                                                      network_code)
+        network_index = self.find_network_index(network_code)
+            
+        station_obj = mt_station_to_inventory_station(mt_station_obj)
         
         # locate the network in the list
-        network_obj = self.inventory_obj.select(network=network_code)
-        network_obj.networks[0].stations.append(station_obj)
-        msg = 'Added station {0} to network {1]'.format(
+        self.inventory_obj.networks[network_index].stations.append(station_obj)
+        
+        msg = 'Added station {0} to network {1}'.format(
             mt_station_obj.archive_id, network_code)
         self.logger.debug(msg)
         
@@ -424,21 +491,22 @@ class MTToStatonXML():
         """
         
         if network_code is None:
-            network_code = self.inventory.networks[0].code  
+            network_code = self.inventory_obj.networks[0].code 
             
-            if mt_channel.type in ['electric']:
-                channel_obj = mt_electric_to_inventory_channel(mt_channel, 
-                                                               mt_run)
-            else:
-                channel_obj = mt_channel_to_inventory_channel(mt_channel,
-                                                              mt_run)
-                
-            station_obj = self.inventory_obj.select(network=network_code,
-                                                    station=station)
-            station_obj.channels.append(channel_obj)
+        network_index = self.find_network_index(network_code)
+        station_index = self.find_station_index(station, network_code)
             
-            self.logger.debug('Added channel {0} with code {1} to station {2} for netowrk {3}'.format(
-                mt_channel.compnent, channel_obj.code, station, network_code))
+        if mt_channel.type in ['electric']:
+            channel_obj = mt_electric_to_inventory_channel(mt_channel, 
+                                                           mt_run)
+        else:
+            channel_obj = mt_channel_to_inventory_channel(mt_channel,
+                                                          mt_run)
+            
+        self.inventory_obj.networks[network_index].stations[station_index].channels.append(channel_obj)
+        
+        self.logger.debug('Added channel {0} with code {1} to station {2} for netowrk {3}'.format(
+            mt_channel.component, channel_obj.code, station, network_code))
             
             
     def to_stationxml(self, station_xml_fn):
