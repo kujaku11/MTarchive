@@ -1523,11 +1523,13 @@ class Channel(Base):
         self.component = None
         self.sample_rate = None
         self.measurement_azimuth = 0.0
+        self.measuremnt_tile = 0.0
         self.data_quality = DataQuality()
         self.filter = Filter()
         self.location = Location()
         self.time_period = TimePeriod()
-        self.data_logger = DataLogger()
+        self.translated_azimuth = 0.0
+        self.translated_tile = 0.0
 
         super(Channel, self).__init__(**kwargs)
         self._attr_dict = ATTR_DICT['channel']      

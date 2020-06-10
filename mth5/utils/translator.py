@@ -37,6 +37,14 @@ network_translator.update({'description': 'summary',
                            'code': 'archive_network'})
 
 def mth5_survey_to_inventory_network(survey_obj):
+    """
+    
+    :param survey_obj: DESCRIPTION
+    :type survey_obj: TYPE
+    :return: DESCRIPTION
+    :rtype: TYPE
+
+    """
     network_obj = inventory.Network(survey_obj.get_attr_from_name(
         network_translator['code']))
     for inv_key, mth5_key in network_translator.items():
@@ -84,6 +92,16 @@ station_translator.update({'alternate_code': None,
                            'water_level': None})        
 
 def mth5_station_to_inventory_station(station_obj, code):
+    """
+    
+    :param station_obj: DESCRIPTION
+    :type station_obj: TYPE
+    :param code: DESCRIPTION
+    :type code: TYPE
+    :return: DESCRIPTION
+    :rtype: TYPE
+
+    """
     inv_station = inventory.Station(code, 
                                     station_obj.location.latitude,
                                     station_obj.location.longitude,
@@ -106,6 +124,55 @@ def mth5_station_to_inventory_station(station_obj, code):
                     station_obj.get_attr_from_name(mth5_key))
             
     return inv_station
-                    
+
+# =============================================================================
+# Translate between metadata and inventory: Channel
+# =============================================================================
+channel_translator = deepcopy(base_translator)
+channel_translator.update({'azimuth': 'measurement_azimuth',
+                           'calibration_units': 'units',
+                           'calibration_units_description': None,
+                           'clock_drift_in_seconds_per_sample': None,
+                           'data_logger': None,
+                           # 'depth': 'location.elevation',
+                           'description': None,
+                           'dip': 'measurement.tilt',
+                           # 'elevation': 'location.elevation',
+                           'end_date': 'time_period.end',
+                           'equipments': None,
+                           # 'latitude': 'location.latitude',
+                           # 'longitude': 'location.longitude',
+                           'pre_amplifier': None,
+                           'response': None,
+                           'sample_rate': 'sample_rate',
+                           'sample_rate_ratio_number_samples': None,
+                           'sample_rate_ratio_number_seconds': None,
+                           'sensor': None,
+                           'start_date': 'time_period.start',
+                           'types': None,
+                           'water_level': None})
+
+def electric_to_inventory_channel(electric_obj, run_obj, code, 
+                                  location_code): 
+    """
+    
+    :param electric_obj: DESCRIPTION
+    :type electric_obj: TYPE
+    :param run_obj: DESCRIPTION
+    :type run_obj: TYPE
+    :param code: DESCRIPTION
+    :type code: TYPE
+    :param location_code: DESCRIPTION
+    :type location_code: TYPE
+    :return: DESCRIPTION
+    :rtype: TYPE
+
+    """  
+
+    inv_channel = inventory.Channel(code, location_code,
+                                    electric_obj.positive.latitude,
+                                    electric_obj.positive.longitude,
+                                    electric_obj.positive.elevation,
+                                    electric_obj.positive.elevation)                 
      
      

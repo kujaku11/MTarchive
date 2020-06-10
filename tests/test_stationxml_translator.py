@@ -115,6 +115,10 @@ class TestStationMetadata(unittest.TestCase):
                          self.station_obj.time_period.end)
         self.assertListEqual(inv_station.channels, 
                              self.station_obj.channels_recorded)
+        self.assertEqual(inv_station.creation_date, 
+                         self.station_obj.time_period.start)
+        self.assertEqual(inv_station.termination_date, 
+                         self.station_obj.time_period.end)
         
         
         
