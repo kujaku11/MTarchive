@@ -1401,10 +1401,9 @@ class Survey(Base):
 
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self):
 
         self.acquired_by = Person()
-        
         self.archive_id = None
         self.archive_network = None
         self.citation_dataset = Citation()
@@ -1416,14 +1415,17 @@ class Survey(Base):
         self.northwest_corner = Location()
         self.project = None
         self.project_lead = Person()
-        self.release_status = None
-        self.net_code = None
+        self.release_license = None
         self.southeast_corner = Location()
         self.summary = None
         self.time_period = TimePeriod()
-        super().__init__()
 
+        super().__init__()
+        
         self._attr_dict = ATTR_DICT['survey']
+        
+
+
 
 
 
@@ -1451,6 +1453,7 @@ class Station(Base):
         super(Station, self).__init__(**kwargs)
 
         self._attr_dict = ATTR_DICT['station']
+    
 
 # =============================================================================
 # Run

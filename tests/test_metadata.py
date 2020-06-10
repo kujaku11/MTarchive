@@ -146,7 +146,7 @@ class TestSurveyMetadata(unittest.TestCase):
                            'project_lead.author': 'T. Lurric',
                            'project_lead.email': 'mt@mt.org',
                            'project_lead.organization': 'mt rules',
-                           'release_status': 'unrestricted release',
+                           'release_license': 'CC-0',
                            'southeast_corner.latitude': -80.,
                            'southeast_corner.longitude': -179.9,
                            'summary': None,
