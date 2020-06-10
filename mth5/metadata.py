@@ -1523,7 +1523,7 @@ class Channel(Base):
         self.component = None
         self.sample_rate = None
         self.measurement_azimuth = 0.0
-        self.measuremnt_tile = 0.0
+        self.measurement_tilt = 0.0
         self.data_quality = DataQuality()
         self.filter = Filter()
         self.location = Location()

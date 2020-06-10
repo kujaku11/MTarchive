@@ -119,6 +119,109 @@ class TestStationMetadata(unittest.TestCase):
                          self.station_obj.time_period.start)
         self.assertEqual(inv_station.termination_date, 
                          self.station_obj.time_period.end)
+        self.assertEqual(inv_station.site.description, 
+                         self.station_obj.geographic_name)
+        
+# =============================================================================
+# 
+# =============================================================================
+class TestElectric2Inventory(unittest.TestCase):
+    def setUp(self):
+        self.electric_obj = metadata.Electric()
+        self.meta_dict = {'electric':
+                          {'ac.end': 10.2,
+                           'ac.start': 12.1,
+                           'comments': None,
+                           'component': 'EX',
+                           'contact_resistance.end': 1.2,
+                           'contact_resistance.start': 1.1,
+                           'channel_number': 2,
+                           'data_quality.rating.author': 'mt',
+                           'data_quality.rating.method': 'ml',
+                           'data_quality.rating.value': 4,
+                           'data_quality.warning': None,
+                           'dc.end': 1.,
+                           'dc.start': 2.,
+                           'dipole_length': 100.0,
+                           'filter.applied': [False],
+                           'filter.comments': None,
+                           'filter.name': ['counts2mv', 'lowpass'],
+                           'measurement_azimuth': 90.0,
+                           'negative.elevation': 100.0,
+                           'negative.id': 'a',
+                           'negative.latitude': 12.12,
+                           'negative.longitude': -111.12,
+                           'negative.manufacturer': 'test',
+                           'negative.model': 'fats',
+                           'negative.type': 'pb-pbcl',
+                           'positive.elevation': 101.,
+                           'positive.id': 'b',
+                           'positive.latitude': 12.123,
+                           'positive.longitude': -111.14,
+                           'positive.manufacturer': 'test',
+                           'positive.model': 'fats',
+                           'positive.type': 'ag-agcl',
+                           'sample_rate': 256.0,
+                           'time_period.end': '1980-01-01T00:00:00+00:00',
+                           'time_period.start': '1980-01-01T00:00:00+00:00',
+                           'type': 'electric',
+                           'units': 'counts'}}
+        self.electric_obj.from_dict(self.meta_dict)
+        
+        self.run_dict = {'run': 
+                          {'acquired_by.author': 'MT guru',
+                           'acquired_by.comments': 'lazy',
+                           'channels_recorded_auxiliary': None,
+                           'channels_recorded_electric': ['EX', 'EY'],
+                           'channels_recorded_magnetic': ['HX', 'HY', 'HZ'],
+                           'comments': 'Cloudy solar panels failed',
+                           'data_logger.firmware.author': 'MT instruments',
+                           'data_logger.firmware.name': 'FSGMT',
+                           'data_logger.firmware.version': '12.120',
+                           'data_logger.id': 'mt091',
+                           'data_logger.manufacturer': 'T. Lurric',
+                           'data_logger.model': 'Ichiban',
+                           'data_logger.power_source.comments': 'rats',
+                           'data_logger.power_source.id': '12',
+                           'data_logger.power_source.type': 'pb acid',
+                           'data_logger.power_source.voltage.end': 12.0,
+                           'data_logger.power_source.voltage.start': 14.0,
+                           'data_logger.timing_system.comments': 'solid',
+                           'data_logger.timing_system.drift': .001,
+                           'data_logger.timing_system.type': 'GPS',
+                           'data_logger.timing_system.uncertainty': .000001,
+                           'data_logger.type': 'broadband',
+                           'data_type': 'mt',
+                           'id': 'mt01a',
+                           'provenance.comments': None,
+                           'provenance.log': None,
+                           'metadata_by.author': 'MT guru',
+                           'metadata_by.comments': 'lazy',
+                           'sampling_rate': 256.0,
+                           'time_period.end': '1980-01-01T00:00:00+00:00',
+                           'time_period.start': '1980-01-01T00:00:00+00:00'}}
+
+        self.run_obj = metadata.Run()
+        self.run_obj.from_dict(self.run_dict)
+        
+    def test_to_inventory_channel(self):
+        inv_channel = translator.electric_to_inventory_channel(
+            self.electric_obj, self.run_obj, 'MT', 'A1')
+        
+        self.assertEqual(inv_channel.latitude,
+                         self.electric_obj.positive.latitude)
+        self.assertEqual(inv_channel.longitude,
+                         self.electric_obj.positive.longitude)
+        self.assertEqual(inv_channel.elevation,
+                         self.electric_obj.positive.elevation)
+        self.assertEqual(inv_channel.depth,
+                         self.electric_obj.positive.elevation)
+        self.assertEqual(inv_channel.azimuth,
+                         self.electric_obj.measurement_azimuth)
+        self.assertEqual(inv_channel.dip,
+                         self.electric_obj.measurement_tilt)
+        self.assertEqual(inv_channel.calibration_units, 
+                         self.electric_obj.units)
         
         
         
