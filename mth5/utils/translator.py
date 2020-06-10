@@ -98,9 +98,7 @@ period_code_dict = {"F": {"min": 1000 , "max": 5000},
                     "R": {"min": 0.0001 , "max": 0.001},
                     "P": {"min": 0.00001 , "max": 0.0001},
                     "T": {"min": 0.000001 , "max": 0.00001},
-                    "Q": {"min": 0, "max": 0.000001},
-                    "A": {"min": 0, "max": 100000},
-                    "O": {"min": 0, "max": 100000}}
+                    "Q": {"min": 0, "max": 0.000001}}
 
 measurement_code_dict = {"tilt": "A",
                          "creep": "B",
@@ -148,14 +146,15 @@ def make_location_code(channel_obj):
 def make_channel_code(channel_obj):
     """
     """
-    period_code = None
+    period_code = 'A'
     sensor_code = None
     orientation_code = None
     
-    for key, v_dict in period_code_dict.items():
+    for key, v_dict in sorted(period_code_dict.items()):
         if (channel_obj.sample_rate >= v_dict['min']) and \
             (channel_obj.sample_rate <= v_dict['max']):
             period_code = key
+            break
             
     for key, code in measurement_code_dict.items():
         if channel_obj.type.lower() in key:
