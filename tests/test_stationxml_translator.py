@@ -42,7 +42,7 @@ class TestSurvey2Network(unittest.TestCase):
         self.survey_obj.from_dict(self.meta_dict)
         
     def test_survey_to_network(self):
-        network_obj = translator.mth5_survey_to_inventory_network(
+        network_obj = translator.mt_survey_to_inventory_network(
             self.survey_obj)
         
         self.assertEqual(network_obj.code, self.survey_obj.archive_network)
@@ -100,8 +100,8 @@ class TestStationMetadata(unittest.TestCase):
         self.station_obj.from_dict(self.meta_dict)
             
     def test_station_to_station(self):
-        inv_station = translator.mth5_station_to_inventory_station(
-            self.station_obj, 'EM')
+        inv_station = translator.mt_station_to_inventory_station(
+            self.station_obj)
         
         self.assertEqual(inv_station.latitude,
                          self.station_obj.location.latitude)
@@ -205,8 +205,8 @@ class TestElectric2Inventory(unittest.TestCase):
         self.run_obj.from_dict(self.run_dict)
         
     def test_to_inventory_channel(self):
-        inv_channel = translator.electric_to_inventory_channel(
-            self.electric_obj, self.run_obj, 'MT', 'A1')
+        inv_channel = translator.mt_electric_to_inventory_channel(
+            self.electric_obj, self.run_obj)
         
         self.assertEqual(inv_channel.latitude,
                          self.electric_obj.positive.latitude)
