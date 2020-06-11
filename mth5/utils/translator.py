@@ -569,6 +569,27 @@ class MTToStationXML():
     Any metadata that does not fit under the StationXML schema will be added
     as extra metadata in the namespace MT.
     
+    MT metadata is mapped into StationXML as:
+        
+        Inventory 
+        ===========
+          |--> Network (MT Survey)
+          -------------- 
+            |--> Station (MT Station)
+            -------------
+              |--> Channel (MT Channel + MT Run)
+              -------------
+              
+    :Example: ::
+        
+        >>> from mth5.utils import translator
+        >>> from mth import metadata
+        >>> mt2xml = translator.MTToStationXML()
+        >>> mt_survey = metadata.Survey()
+        >>> 
+        
+    
+    
     """
     
     def __init__(self, inventory_object=None):

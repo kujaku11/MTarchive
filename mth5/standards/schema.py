@@ -598,12 +598,23 @@ class BaseDict(MutableMapping):
     def __setitem__(self, key, value):
         self.__dict__[key] = validate_value_dict(value)
         
-    def __getitem__(self, key):         
-        return self.__dict__[key]
-    
+    def __getitem__(self, key):
+        try:         
+            return self.__dict__[key]
+        except KeyError as error:
+            msg = ('{0} {1} is not in dictionary yet. '.format(error, key) +
+                   'Returning default schema dictionary.')
+            logger.warning(msg)
+            return {'type': 'string', 'required':False, 'style': 'free form',
+                    'units': None, 'options': None, 
+                    'description': 'user defined', 'example': None}
     def __delitem__(self, key):
-        del self.__dict__[key]
-        
+        try:
+            del self.__dict__[key]
+        except KeyError:
+            msg = 'Key: {0} does not exist'.format(key)
+            logger.info(msg)
+            
     def __iter__(self):
         return iter(self.__dict__)
     

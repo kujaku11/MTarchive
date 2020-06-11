@@ -228,7 +228,8 @@ class Base():
         if isinstance(value, v_type):
             if style:
                 if v_type is str and 'list' in style:
-                    value = value.split(',')
+                    value = value.replace('[', '').replace(']', '').split(',')
+                    value = [ss.strip() for ss in value]
             return value
 
         else:
@@ -453,7 +454,7 @@ class Base():
                        "To properly add the attribute use " +
                        "add_base_attribute.")
                 
-                self.logger.info(msg.format(self, name))
+                self.logger.error(msg.format(name))
                 self.logger.exception(error)
                 raise AttributeError(error)
         else:
@@ -557,6 +558,7 @@ class Base():
             msg = ('name of input dictionary is not the same as class type' +
                    'input = {0}, class type = {1}'.format(class_name, 
                                                           self._class_name))
+            self.logger.warning(msg)
         
         # be sure to flatten the dictionary first for easier transform
         meta_dict = helpers.flatten_dict(meta_dict[class_name])
@@ -1454,6 +1456,7 @@ class Station(Base):
         self.datum = None
         self.num_channels = None
         self.channels_recorded = None
+        self.channel_layout = None
         self.data_type = None
         self.orientation = Orientation()
         self.acquired_by = Person()
