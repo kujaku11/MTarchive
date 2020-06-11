@@ -134,7 +134,7 @@ def get_location_code(channel_obj):
     Get the location code given the components and channel number
     
     :param channel_obj: Channel object
-    :type channel_obj: `mth5.metadata.Channel`
+    :type channel_obj: :class:`~mth5.metadata.Channel`
     :return: 2 character location code
     :rtype: string
 
@@ -186,11 +186,13 @@ def get_measurement_code(measurement):
 
 def get_orientation_code(azimuth, orientation='horizontal'):
     """
+    Get orientation code given angle and orientation.  This is a general
+    code and the true azimuth is stored in channel
     
-    :param azimuth: DESCRIPTION
-    :type azimuth: TYPE
-    :return: DESCRIPTION
-    :rtype: TYPE
+    :param azimuth: angel assuming 0 is north, 90 is east, 0 is vertical down
+    :type azimuth: float
+    :return: single character SEED orientation code
+    :rtype: string
 
     """
     orientation_code = '1'
@@ -214,6 +216,13 @@ def get_orientation_code(azimuth, orientation='horizontal'):
 
 def make_channel_code(channel_obj):
     """
+    Make the 3 character SEED channel code
+    
+    :param channel_obj: Channel metadata
+    :type channel_obj: :class:`~mth5.metadata.Channel`
+    :return: 3 character channel code
+    :type: string
+    
     """
 
     period_code = get_period_code(channel_obj.sample_rate)
@@ -235,17 +244,16 @@ def add_custom_element(obj, custom_name, custom_value, units=None,
     """
     Add a custom MT element to Obspy Inventory object
     
-    :param obj: obspy.core.inventory object that will have the element added
-    :type obj: obspy.core.inventory object, could be Network, Station,
-                Channel
-    :param custom_key: name of custom element
+    :param obj: :class:`~obspy.core.inventory.Inventory` object that will 
+                have the element added
+    :type obj: :class:`~obspy.core.inventory.Inventory`
+    
+    :param custom_key: name of custom element, if the key has a '.' it will
+                       be recursively split to assure proper nesting.
     :type custom_key: str
     
     :param custom_value: value of custom element
     :type custom_value: [ int | float | string ]
-    
-    :return: input Obspy.inventory object with custom element
-    :rtype: input Obspy.inventory
     
     :Example: ::
         
@@ -266,6 +274,7 @@ def add_custom_element(obj, custom_name, custom_value, units=None,
         >>>...                                    units='kOhm')
 
     """
+    
     if custom_value is None:
         return
     
@@ -291,9 +300,12 @@ def add_custom_element(obj, custom_name, custom_value, units=None,
 # ============================================================================= 
 def mt_survey_to_inventory_network(survey_obj):
     """
+    Translate MT survey metadata to inventory Network in StationXML
     
-    :param survey_obj: DESCRIPTION
-    :type survey_obj: TYPE
+    Metadata that does not fit under StationXML schema is added as extra.
+    
+    :param survey_obj: MT survey metadata
+    :type survey_obj: :class:`~mth5.metadata.Survey`
     :return: DESCRIPTION
     :rtype: TYPE
 
@@ -333,7 +345,8 @@ def mt_survey_to_inventory_network(survey_obj):
             setattr(network_obj, inv_key,
                     survey_obj.get_attr_from_name(mth5_key))
         used_list.append(mth5_key)
-      
+     
+    # add any extra metadata that does not fit with StationXML schema
     network_obj.extra = AttribDict()
     network_obj.extra.MT = AttribDict({'namespace':'MT',
                                        'value':AttribDict()})
@@ -351,13 +364,15 @@ def mt_survey_to_inventory_network(survey_obj):
 # =============================================================================      
 def mt_station_to_inventory_station(station_obj):
     """
+    Translate MT station metadata to inventory station
     
-    :param station_obj: DESCRIPTION
-    :type station_obj: TYPE
-    :param code: DESCRIPTION
-    :type code: TYPE
-    :return: DESCRIPTION
-    :rtype: TYPE
+    Metadata that does not fit under StationXML schema is added as extra.
+    
+    :param station_obj: MT station metadata
+    :type station_obj: :class:`~mth5.metadata.Station`
+
+    :return: StationXML Station element
+    :rtype: :class:`~obspy.core.inventory.Station`
 
     """
     inv_station = inventory.Station(station_obj.archive_id, 
@@ -409,19 +424,19 @@ def mt_station_to_inventory_station(station_obj):
 # =============================================================================
 # Translate between metadata and inventory: Channel
 # =============================================================================
-def mt_electric_to_inventory_channel(electric_obj, run_obj): 
+def mt_electric_to_inventory_channel(electric_obj, run_obj):
     """
     
-    :param electric_obj: DESCRIPTION
-    :type electric_obj: TYPE
-    :param run_obj: DESCRIPTION
-    :type run_obj: TYPE
-    :param code: DESCRIPTION
-    :type code: TYPE
-    :param location_code: DESCRIPTION
-    :type location_code: TYPE
-    :return: DESCRIPTION
-    :rtype: TYPE
+    Translate MT electric channel metadata to inventory channel
+    
+    Metadata that does not fit under StationXML schema is added as extra.
+    
+    :param electric_obj: MT electric channel metadata
+    :type electric_obj: :class:`~mth5.metadata.Electric`
+    :param run_obj: MT run metadata to get data logger information
+    :type run_obj: :class:`~mth5.metadata.Run`
+    :return: StationXML channel
+    :rtype: :class:`~obspy.core.inventory.Channel`
 
     """  
     location_code = get_location_code(electric_obj)
@@ -479,16 +494,16 @@ def mt_electric_to_inventory_channel(electric_obj, run_obj):
 def mt_channel_to_inventory_channel(channel_obj, run_obj): 
     """
     
-    :param electric_obj: DESCRIPTION
-    :type electric_obj: TYPE
-    :param run_obj: DESCRIPTION
-    :type run_obj: TYPE
-    :param code: DESCRIPTION
-    :type code: TYPE
-    :param location_code: DESCRIPTION
-    :type location_code: TYPE
-    :return: DESCRIPTION
-    :rtype: TYPE
+    Translate MT channel metadata to inventory channel
+    
+    Metadata that does not fit under StationXML schema is added as extra.
+    
+    :param channel_obj: MT electric channel metadata
+    :type channel_obj: :class:`~mth5.metadata.Channel`
+    :param run_obj: MT run metadata to get data logger information
+    :type run_obj: :class:`~mth5.metadata.Run`
+    :return: StationXML channel
+    :rtype: :class:`~obspy.core.inventory.Channel`
 
     """  
     location_code = get_location_code(channel_obj)
@@ -549,7 +564,10 @@ def mt_channel_to_inventory_channel(channel_obj, run_obj):
 # =============================================================================
 class MTToStationXML():
     """
-    translate MT metadata to StationXML
+    Translate MT metadata to StationXML using Obspy Inventory classes.
+    
+    Any metadata that does not fit under the StationXML schema will be added
+    as extra metadata in the namespace MT.
     
     """
     
