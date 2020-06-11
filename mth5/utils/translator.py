@@ -664,9 +664,10 @@ class MTToStationXML():
         
         :param mt_station_obj: MT station metadata
         :type mt_station_obj: :class:`~mth5.metadata.Station`
-        :param network_code: Network code that the station belongs to
-        :type network_code: 2 character code. Defaults to None which will 
-                            use Inventory.networks[0]
+        :param network_code: Network code that the station belongs to. 
+                             Defaults to None which will  use
+                             Inventory.networks[0]
+        :type network_code: 2 character code. optional
 
         """
         if network_code is None:
@@ -685,15 +686,26 @@ class MTToStationXML():
         
     def add_channel(self, mt_channel, mt_run, station, network_code=None):
         """
+        Add a station from a MT channel and run objects. The run object is
+        needed to fill the datalogger information.
         
-        :param mt_channel: DESCRIPTION
-        :type mt_channel: TYPE
-        :param station: DESCRIPTION
-        :type station: TYPE
-        :param network_code: DESCRIPTION, defaults to None
-        :type network_code: TYPE, optional
-        :return: DESCRIPTION
-        :rtype: TYPE
+        Will fill the appropriate metadata in 
+        Inventory.Network[network].station[station], any metadata that
+        does not fit within the StationXML schema will be added as extra.
+        
+        :param mt_channel: MT channel metadata
+        :type mt_channel: :class:`~mth5.metadata.Channel`, 
+                          :class:`~mth5.metadata.Electric`, 
+                          :class:`~mth5.metadata.Magnetic`,
+                          :class:`~mth5.metadata.Auxiliary`
+        :param mt_run: MT run metadata
+        :dtype mt_run: :class:`~mth5.metadata.Run`
+        :param station: Station name to add the channel to
+        :type station: 5 character string
+        :param network_code: Network code that the station belongs to. 
+                             Defaults to None which will  use
+                             Inventory.networks[0]
+        :type network_code: 2 character code. optional
 
         """
         
@@ -714,11 +726,12 @@ class MTToStationXML():
             
     def to_stationxml(self, station_xml_fn):
         """
+        Write a StationXML file using Inventory.write
         
-        :param station_xml_fn: DESCRIPTION
-        :type station_xml_fn: TYPE
-        :return: DESCRIPTION
-        :rtype: TYPE
+        :param station_xml_fn: Full path to StationXML file
+        :type station_xml_fn: string or Path
+        :return: path to StationXML
+        :rtype: Path
 
         """
         if not isinstance(station_xml_fn, Path):
@@ -733,5 +746,7 @@ class MTToStationXML():
                                  format='stationxml',
                                  validate=True)
         self.logger.info('Wrote StationXML to {0}'.format(station_xml_fn))
+        
+        return station_xml_fn
         
         
