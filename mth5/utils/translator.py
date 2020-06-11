@@ -549,12 +549,30 @@ class MTToStationXML():
         
         >>> from mth5.utils import translator
         >>> from mth import metadata
+        >>> # survey_dict = metadata for survey 
         >>> mt2xml = translator.MTToStationXML()
         >>> mt_survey = metadata.Survey()
-        >>> 
+        >>> mt_survey.from_dict(survey_dict)
+        >>> mt2xml.add_network(mt_survey)
+    
+    :Add a station from an xml file with root <station>: ::
         
+        >>> from xml.etree import ElementTree as et
+        >>> mt_station = metadata.Station()
+        >>> mt_station.from_xml(et.parse("mt_station_xml_fn.xml").getroot())
+        >>> mt2xml.add_station(mt_station)
     
-    
+    :Add a channel from an json files with {channel:{}} and {run:{}} format: ::
+
+        >>> import json
+        >>> mt_electric = metadata.Electric()
+        >>> with open("electric_json_fn.json", 'r') as fid:
+        >>> ... mt_electric.from_json(json.load(fid))
+        >>> mt_run = metadata.Run()
+        >>> with open("run_json_fn.json", 'r') as fid:
+        >>> ... mt_run.from_json(json.load(fid))
+        >>> mt2xml.add_channel(mt_electric, mt_run, mt_station.archive_id)
+        
     """
     
     def __init__(self, inventory_object=None):
@@ -573,7 +591,14 @@ class MTToStationXML():
             
     def find_network_index(self, network):
         """
-        locat the index where of network
+        locate the index of given network
+        
+        :param network: name of the network to look for
+        :type network: 2 character string
+        
+        :return: index of network in inventory.networks
+        :rtype: int
+        
         """
         
         for ii, net in enumerate(self.inventory_obj.networks):
@@ -583,14 +608,16 @@ class MTToStationXML():
     
     def find_station_index(self, station, network=None):
         """
-        locate station
+        locate the index of given station in 
+        Inventory.networks[network].stations
         
-        :param station: DESCRIPTION
-        :type station: TYPE
-        :param network: DESCRIPTION, defaults to None
-        :type network: TYPE, optional
-        :return: DESCRIPTION
-        :rtype: TYPE
+        :param station: 5 character SEED station name
+        :type station: 5 character string
+        :param network: Network name, defaults to None which will use 
+                        Inventory.networks[0] 
+        :type network: 2 character string, optional
+        :return: Index of station in Inventory.networks[network].stations
+        :rtype: int
 
         """
         
@@ -608,11 +635,12 @@ class MTToStationXML():
         
     def add_network(self, mt_survey_obj):
         """
+        Add a network from an MT survey object.  Will fill the appropriate
+        metadata in Inventory.Network, any metadata that does not fit within
+        the StationXML schema will be added as extra.
         
-        :param mt_survey_obj: DESCRIPTION
-        :type mt_survey_obj: TYPE
-        :return: DESCRIPTION
-        :rtype: TYPE
+        :param mt_survey_obj: MT Survey metadata 
+        :type mt_survey_obj: :class:`~mth5.metadata.Survey`
 
         """
         network_obj = mt_survey_to_inventory_network(mt_survey_obj)
@@ -630,12 +658,15 @@ class MTToStationXML():
     def add_station(self, mt_station_obj, network_code=None):
         """
         
-        :param mt_station_obj: DESCRIPTION
-        :type mt_station_obj: TYPE
-        :param network_code: DESCRIPTION
-        :type network_code: TYPE
-        :return: DESCRIPTION
-        :rtype: TYPE
+        Add a station from an MT station object.  Will fill the appropriate
+        metadata in Inventory.Network[network].station, any metadata that
+        does not fit within the StationXML schema will be added as extra.
+        
+        :param mt_station_obj: MT station metadata
+        :type mt_station_obj: :class:`~mth5.metadata.Station`
+        :param network_code: Network code that the station belongs to
+        :type network_code: 2 character code. Defaults to None which will 
+                            use Inventory.networks[0]
 
         """
         if network_code is None:
