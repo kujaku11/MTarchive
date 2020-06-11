@@ -1,2 +1,2 @@
 attribute,type,required,style,units,description,options,alias,example
-warning,str,FALSE,free form,none,any warnings about the data that should be noted,none,none,periodic pipeline noise
+warnings,str,FALSE,free form,none,any warnings about the data that should be noted,none,none,periodic pipeline noise

@@ -81,7 +81,7 @@ class Base():
         self.comments = None
         self._attr_dict = {}
         
-        self._class_name = self.__class__.__name__
+        self._class_name = validate_attribute(self.__class__.__name__)
         
         self.logger = logging.getLogger('{0}.{1}'.format(__name__, 
                                                          self._class_name))
@@ -698,9 +698,9 @@ class Location(Base):
         self.datum = 'WGS84'
         self.declination = Declination()
 
-        self._elevation = None
-        self._latitude = None
-        self._longitude = None
+        self._elevation = 0.0
+        self._latitude = 0.0
+        self._longitude = 0.0
 
         super(Location, self).__init__(**kwargs)
 
@@ -739,14 +739,15 @@ class Location(Base):
         :type latitude: float or string
         """
         if latitude in [None, 'None', 'none']:
-            return None
+            self.logger.info('Latitude is None, setting to 0')
+            return 0.0
         try:
             lat_value = float(latitude)
 
         except TypeError:
-            self.logger.info('Could not convert {0} setting to None'.format(
+            self.logger.info('Could not convert {0} setting to 0'.format(
                              latitude))
-            return None
+            return 0.0
 
         except ValueError:
             self.logger.debug('Latitude is a string {0}'.format(latitude))
@@ -769,14 +770,15 @@ class Location(Base):
         :type latitude: float or string
         """
         if longitude in [None, 'None', 'none']:
-            return None
+            self.logger.info('Longitude is None, setting to 0')
+            return 0.0
         try:
             lon_value = float(longitude)
 
         except TypeError:
-            self.logger.info('Could not convert {0} setting to None'.format(
+            self.logger.info('Could not convert {0} setting to 0'.format(
                              longitude))
-            return None
+            return 0.0
 
         except ValueError:
             self.logger.debug('Longitude is a string {0}'.format(longitude))
@@ -974,7 +976,7 @@ class DataQuality(Base):
     def __init__(self, **kwargs):
 
         self.rating = Rating()
-        self.warning = None
+        self.warnings = None
 
         super(DataQuality, self).__init__(**kwargs)
 

@@ -187,6 +187,8 @@ def dict_to_xml(meta_dict, attr_dict=None):
 def element_to_dict(element):
     """
     
+    .. todo:: Add way to read in attritues like units and validate them.
+    
     :param element: DESCRIPTION
     :type element: TYPE
     :return: DESCRIPTION
@@ -200,23 +202,23 @@ def element_to_dict(element):
         for dc in map(element_to_dict, children):
             for k, v in dc.items():
                 child_dict[k].append(v)
-        meta_dict = {element.tag: {k: v[0] 
-                                   if len(v) == 1 else v 
-                                   for k, v in child_dict.items()}}
-        if 'item' in meta_dict[element.tag].keys():
-            meta_dict[element.tag] = meta_dict[element.tag]['item']
+        meta_dict = {
+            element.tag: {k: v[0] if len(v) == 1 else v for k, v in child_dict.items()}
+        }
+        if "item" in meta_dict[element.tag].keys():
+            meta_dict[element.tag] = meta_dict[element.tag]["item"]
 
     # going to skip attributes for now, later can check them against
     # standards
-    if element.attrib:
-        meta_dict[element.tag].update((k, v)
-                                      for k, v in element.attrib.items())
+    # if element.attrib:
+    #     meta_dict['attr_dict'][element.tag] = dict([(k, v)
+    #                                   for k, v in element.attrib.items()])
 
     if element.text:
         text = element.text.strip()
         if children or element.attrib:
             if text:
-              meta_dict[element.tag]['value'] = text
+                meta_dict[element.tag] = text
         else:
             meta_dict[element.tag] = text
 

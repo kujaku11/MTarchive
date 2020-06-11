@@ -13,6 +13,8 @@ Created on Tue Jun  9 19:53:32 2020
 from obspy.core import inventory
 from obspy.core.util import AttribDict
 
+from pathlib import Path
+
 from mth5 import metadata
 from copy import deepcopy
 import logging
@@ -424,82 +426,18 @@ def mt_station_to_inventory_station(station_obj):
 # =============================================================================
 # Translate between metadata and inventory: Channel
 # =============================================================================
-def mt_electric_to_inventory_channel(electric_obj, run_obj):
-    """
-    
-    Translate MT electric channel metadata to inventory channel
-    
-    Metadata that does not fit under StationXML schema is added as extra.
-    
-    :param electric_obj: MT electric channel metadata
-    :type electric_obj: :class:`~mth5.metadata.Electric`
-    :param run_obj: MT run metadata to get data logger information
-    :type run_obj: :class:`~mth5.metadata.Run`
-    :return: StationXML channel
-    :rtype: :class:`~obspy.core.inventory.Channel`
-
-    """  
-    location_code = get_location_code(electric_obj)
-    channel_code = make_channel_code(electric_obj)
-
-    inv_channel = inventory.Channel(channel_code, location_code,
-                                    electric_obj.positive.latitude,
-                                    electric_obj.positive.longitude,
-                                    electric_obj.positive.elevation,
-                                    electric_obj.positive.elevation)
-    
-    used_list = ['channels_recorded', 'time_period.start', 'time_period.end',
-                 'sample_rate']
-    for inv_key, mth5_key in channel_translator.items():
-        if mth5_key is None:
-            msg = "cannot currently map mth5.station to inventory.station.{0}".format(
-                inv_key)
-            logger.debug(msg)
-            continue
-        if inv_key == 'data_logger':
-            dl = inventory.Equipment()
-            dl.manufacturer = run_obj.data_logger.manufacturer
-            dl.model = run_obj.data_logger.model
-            dl.serial_number = run_obj.data_logger.id
-            dl.type = run_obj.data_logger.type
-            inv_channel.data_logger = dl
-        elif inv_key == 'sensor':
-            sensor = inventory.Equipment()
-            sensor.manufacturer = electric_obj.positive.manufacturer
-            sensor.type = electric_obj.positive.type
-            sensor.model = electric_obj.positive.model
-            inv_channel.sensor = sensor
-        elif inv_key == 'comments':
-            comment = inventory.Comment(electric_obj.comments, id=0)
-            inv_channel.comments.append(comment)
-        elif inv_key == 'types':
-            inv_channel.types = ['GEOPHYSICAL']
-        else:
-            setattr(inv_channel, inv_key,
-                    electric_obj.get_attr_from_name(mth5_key))
-            
-    inv_channel.extra = AttribDict()
-    inv_channel.extra.MT = AttribDict({'namespace':'MT',
-                                       'value':AttribDict()})
-    
-    for mt_key in electric_obj.get_attribute_list():
-        if not mt_key in used_list:
-            add_custom_element(inv_channel.extra.MT.value, mt_key, 
-                               electric_obj.get_attr_from_name(mt_key),
-                               units=electric_obj._attr_dict[mt_key]['units'])
-            
-    return inv_channel
-            
-     
-def mt_channel_to_inventory_channel(channel_obj, run_obj): 
+def mt_channel_to_inventory_channel(channel_obj, run_obj):
     """
     
     Translate MT channel metadata to inventory channel
     
     Metadata that does not fit under StationXML schema is added as extra.
     
-    :param channel_obj: MT electric channel metadata
-    :type channel_obj: :class:`~mth5.metadata.Channel`
+    :param channel_obj: MT  channel metadata
+    :type channel_obj: :class:`~mth5.metadata.Channel`, 
+                       :class:`~mth5.metadata.Electric`, 
+                       :class:`~mth5.metadata.Magnetic`,
+                       :class:`~mth5.metadata.Auxiliary`, 
     :param run_obj: MT run metadata to get data logger information
     :type run_obj: :class:`~mth5.metadata.Run`
     :return: StationXML channel
@@ -509,11 +447,19 @@ def mt_channel_to_inventory_channel(channel_obj, run_obj):
     location_code = get_location_code(channel_obj)
     channel_code = make_channel_code(channel_obj)
 
-    inv_channel = inventory.Channel(channel_code, location_code,
-                                    channel_obj.location.latitude,
-                                    channel_obj.location.longitude,
-                                    channel_obj.location.elevation,
-                                    channel_obj.location.elevation)
+    is_electric = channel_obj.type in ['electric']
+    if is_electric:
+        inv_channel = inventory.Channel(channel_code, location_code,
+                                        channel_obj.positive.latitude,
+                                        channel_obj.positive.longitude,
+                                        channel_obj.positive.elevation,
+                                        channel_obj.positive.elevation)
+    else:
+        inv_channel = inventory.Channel(channel_code, location_code,
+                                        channel_obj.location.latitude,
+                                        channel_obj.location.longitude,
+                                        channel_obj.location.elevation,
+                                        channel_obj.location.elevation)
     
     used_list = ['channels_recorded', 'time_period.start', 'time_period.end',
                  'sample_rate', 'location.latitude', 'location.longitude', 
@@ -525,6 +471,7 @@ def mt_channel_to_inventory_channel(channel_obj, run_obj):
                 inv_key)
             logger.debug(msg)
             continue
+        
         if inv_key == 'data_logger':
             dl = inventory.Equipment()
             dl.manufacturer = run_obj.data_logger.manufacturer
@@ -532,15 +479,32 @@ def mt_channel_to_inventory_channel(channel_obj, run_obj):
             dl.serial_number = run_obj.data_logger.id
             dl.type = run_obj.data_logger.type
             inv_channel.data_logger = dl
+        
         elif inv_key == 'sensor':
-            sensor = inventory.Equipment()
-            sensor.manufacturer = channel_obj.sensor.manufacturer
-            sensor.type = channel_obj.sensor.type
-            sensor.model = channel_obj.sensor.model
-            inv_channel.sensor = sensor
+            if is_electric:
+                sensor = inventory.Equipment()
+                sensor.manufacturer = channel_obj.positive.manufacturer
+                sensor.type = channel_obj.positive.type
+                sensor.model = channel_obj.positive.model
+                inv_channel.sensor = sensor
+            else:
+                sensor = inventory.Equipment()
+                sensor.manufacturer = channel_obj.sensor.manufacturer
+                sensor.type = channel_obj.sensor.type
+                sensor.model = channel_obj.sensor.model
+                inv_channel.sensor = sensor
+        
         elif inv_key == 'comments':
             comment = inventory.Comment(channel_obj.comments, id=0)
             inv_channel.comments.append(comment)
+        
+        # obspy only allows angles (0, 360)
+        elif inv_key in ['azimuth']:
+            inv_channel.azimuth = channel_obj.measurement_azimuth % 360
+        
+        elif inv_key in ['dip']:
+            inv_channel.dip = channel_obj.measurement_tilt % 360
+            
         elif inv_key == 'types':
             inv_channel.types = ['GEOPHYSICAL']
         else:
@@ -558,6 +522,7 @@ def mt_channel_to_inventory_channel(channel_obj, run_obj):
                                units=channel_obj._attr_dict[mt_key]['units'])
             
     return inv_channel
+            
 
 # =============================================================================
 # 
@@ -707,12 +672,8 @@ class MTToStationXML():
         network_index = self.find_network_index(network_code)
         station_index = self.find_station_index(station, network_code)
             
-        if mt_channel.type in ['electric']:
-            channel_obj = mt_electric_to_inventory_channel(mt_channel, 
-                                                           mt_run)
-        else:
-            channel_obj = mt_channel_to_inventory_channel(mt_channel,
-                                                          mt_run)
+        channel_obj = mt_channel_to_inventory_channel(mt_channel,
+                                                      mt_run)
             
         self.inventory_obj.networks[network_index].stations[station_index].channels.append(channel_obj)
         
@@ -729,8 +690,16 @@ class MTToStationXML():
         :rtype: TYPE
 
         """
+        if not isinstance(station_xml_fn, Path):
+            station_xml_fn = Path(station_xml_fn)
         
-        self.inventory_obj.write(station_xml_fn, format='stationxml',
+        if station_xml_fn.exists():
+            msg = 'File {0} already exists and will be over written'.format(
+                station_xml_fn)
+            self.logger.warning(msg)
+        
+        self.inventory_obj.write(station_xml_fn.as_posix(),
+                                 format='stationxml',
                                  validate=True)
         self.logger.info('Wrote StationXML to {0}'.format(station_xml_fn))
         

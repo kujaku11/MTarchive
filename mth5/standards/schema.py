@@ -132,7 +132,7 @@ def validate_attribute(name):
         
     if original != name:
         msg = 'input name {0} converted to {1} following MTH5 standards'
-        logger.info(msg.format(original, name))
+        logger.debug(msg.format(original, name))
         
     return name
         
