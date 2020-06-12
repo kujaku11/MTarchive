@@ -1,3 +1,5 @@
+![MTH5 Logo](https://github.com/kujaku11/MTarchive/blob/tables/mth5_logo.png)
+
 # MTarchive
 
 The goal of MTarchive is to develop a standard format and tools for archiving magnetotelluric (MT) time series data.  
@@ -9,7 +11,6 @@ The metadata follows the standards proposed by the [IRIS-PASSCAL MT Software wor
 **Note: This is a work in progress.  Feel free to comment or send me a message at jpeacock@usgs.gov on the data format.**
 
 ## Modules
-![MTH5 Logo](https://github.com/kujaku11/MTarchive/blob/tables/mth5_logo.png)
 
 * **mth5** --> This will eventually be the main module, but for now resides here.  MTH5 includes reading and writing of HDF5 files formatted specifically for MT data that adheres to the proposed metadata standards.  MTH5 based on h5py and numpy which was chosen because we are dealing mainly with arrays and will hopefully be able to be used in parallel.  
 
