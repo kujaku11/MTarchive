@@ -60,7 +60,7 @@
 
 Researchers using magnetotelluric (MT) methods lack a standardized format for storing time series data and metadata. Commercially available MT instruments produce data in formats that range from proprietary binary to ASCII, whereas recent datasets from the U.S. MT community have utilized institutional formats or heavily adapted formats like miniSEED. In many cases, the available metadata for MT time series are incomplete and loosely standardized; and overall, these datasets are not "user friendly". This lack of a standardized resource impedes the exchange and broader use of these data beyond a small community of specialists.
 
-The \href{https://www.iris.edu/hq/programs/passcal/magnetotelluricnstrumentation}{IRIS PASSCAL MT facility} maintains a pool of MT instruments that are freely available to U.S. Principal Investigators (PIs). Datasets collected with these instruments are subject to data sharing requirements, and an IRIS \href{https://www.iris.edu/hq/aboutris/governance/mtoft}{working group} advises the development of sustainable data formats and workflows for this facility. Following in the spirit of the standard created for \href{https://library.seg.org/doi/10.1190/geo2018-0679.1}{MT transfer function} datasets, this document outlines a new metadata standard for level 0,1,and 2 MT time series data (\href{https://earthdata.nasa.gov/collaborate/open-data-services-and-software/data-information-policy/data-levels}{Data Levels}). Following community approval of these standards, MTH5 (an HDF5 MT specific format) will be developed later in 2020.
+The \href{https://www.iris.edu/hq/programs/passcal/magnetotelluric_instrumentation}{IRIS PASSCAL MT facility} maintains a pool of MT instruments that are freely available to U.S. Principal Investigators (PIs). Datasets collected with these instruments are subject to data sharing requirements, and an IRIS \href{https://www.iris.edu/hq/about_iris/governance/mt_soft}{working group} advises the development of sustainable data formats and workflows for this facility. Following in the spirit of the standard created for \href{https://library.seg.org/doi/10.1190/geo2018-0679.1}{MT transfer function} datasets, this document outlines a new metadata standard for level 0,1,and 2 MT time series data (\href{https://earthdata.nasa.gov/collaborate/open-data-services-and-software/data-information-policy/data-levels}{Data Levels}). Following community approval of these standards, MTH5 (an HDF5 MT specific format) will be developed later in 2020.
 
 The Python 3 module written for these standards and MTH5 is being developed at \url{https://github.com/kujaku11/MTarchive/tree/tables}.
 
@@ -106,7 +106,7 @@ All latitude and longitude locations are given in decimal degrees in the well kn
 
 \subsubsection{Angles}
 
-All angles of orientation are given in decimal degrees.  Orientation of channels should be given in a geographic or a geomagnetic reference frame where the right-hand coordinates are assumed to be North = 0, East = 90, and vertical is positive downward.  The coordinate reference frame is given at the station level \verb|station.orientation.reference_frame|.  Two angles to describe the orientation of a sensor is given by \verb|channel.measurement_azimuth| and \verb|channel.measurement_tilt|.  In a geographic or geomagnetic reference frame, the azimuth refers to the horizontal angle relative to north positive clockwise, and the tilt refers to the vertical angle with 0 perpendicular downwards.  So a tilt angle of 0 points downward, 90 is parallel with the surface, and 180 points upwards.  
+All angles of orientation are given in decimal degrees.  Orientation of channels should be given in a geographic or a geomagnetic reference frame where the right-hand coordinates are assumed to be North = 0, East = 90, and vertical is positive downward (Figure \ref{fig:reference}).  The coordinate reference frame is given at the station level \verb|station.orientation.reference_frame|.  Two angles to describe the orientation of a sensor is given by \verb|channel.measurement_azimuth| and \verb|channel.measurement_tilt|.  In a geographic or geomagnetic reference frame, the azimuth refers to the horizontal angle relative to north positive clockwise, and the tilt refers to the vertical angle with 0 perpendicular downwards. In this reference frame, a tilt angle of 0 points downward, 90 is parallel with the surface, and 180 points upwards.  
 
 Archived data should remain in measurement coordinates. Any transformation of coordinates for derived products can store the transformation angles at the channel level in \\ \verb|channel.transformed_azimuth| and \verb|channel.transformed_tilt|, the transformed reference frame can then be recorded in \verb|station.orientation.transformed_reference_frame|.      
 
@@ -146,7 +146,7 @@ Acceptable units are only those from the International System of Units (SI).  On
 
 \subsection{String Formats}
 
-Each metadata can have a specific string style, such as date and time or alpha-numeric.  These are described in Table \ref{tab:values}.  Note that any list should be comma separated.
+Each metadata keyword can have a specific string style, such as date and time or alpha-numeric.  These are described in Table \ref{tab:values}.  Note that any list should be comma separated.
 
 \begin{table}[hb!]
 	\centering
@@ -158,7 +158,7 @@ Each metadata can have a specific string style, such as date and time or alpha-n
 		
 		Alpha Numeric & A string that contains no spaces and only characters \{a-z, A-Z, 0-9, -, /, \_\} & WGS84 or GEOMAG-USGS \\ \midrule
 		Controlled Vocabulary & Only certain names or words are allowed. In this case, examples of acceptable values are provided in the documentation as [ option01 $|$ option02 $|$ ...]. The ... indicates that other options are possible but have not been defined yet &  reference\_frame = geographic \\ \midrule
-		List & List of entries using a comma separator & Ex, Ey, Hx, Hy, Hz, T' \\ \midrule
+		List & List of entries using a comma separator & Ex, Ey, Hx, Hy, Hz, T \\ \midrule
 		Number & A number according to the data type; number of decimal places has not been implemented yet & 10.0 (float) or 10 (integer) \\ \midrule
 		Date & ISO formatted date YYYY-MM-DD in UTC & 2020-02-02 \\ \midrule
 		Date Time & ISO formatted date time YYYY-MM-DDThh:mm:ss.ms+00:00 in UTC & 2020-02-02T12:20:45.123456+00:00 \\ \midrule
@@ -299,7 +299,7 @@ A survey describes an entire data set that covers a specific time span and regio
 \newpage
 \section{Station}
 
-A station encompasses a single site where data are collected. If the location changes during a run, then a new station should be created and subsequently a new run under the new station. If the sensors, cables, data logger, battery are replaced during a run but the station remains stations, then this can be recorded in the \verb|Run| metadata but does not require a new station entry.
+A station encompasses a single site where data are collected. If the location changes during a run, then a new station should be created and subsequently a new run under the new station. If the sensors, cables, data logger, battery, etc. are replaced during a run but the station remains in the same location, then this can be recorded in the \verb|Run| metadata but does not require a new station entry.
 
 \begin{table}[h!]
 	\caption[Attributes for Station ]{Attributes for Station }
