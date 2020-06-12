@@ -12,9 +12,9 @@
     <geographic_name>None</geographic_name>
     <id>None</id>
     <location>
-        <latitude type="float" units="degrees">None</latitude>
-        <longitude type="float" units="degrees">None</longitude>
-        <elevation type="float" units="degrees">None</elevation>
+        <latitude type="float" units="degrees">0.0</latitude>
+        <longitude type="float" units="degrees">0.0</longitude>
+        <elevation type="float" units="degrees">0.0</elevation>
         <declination>
             <comments>None</comments>
             <model>None</model>
@@ -22,9 +22,8 @@
         </declination>
     </location>
     <orientation>
-        <option>None</option>
         <method>None</method>
-        <layout_rotation_angle type="float" units="degrees">None</layout_rotation_angle>
+        <reference_frame>None</reference_frame>
     </orientation>
     <provenance>
         <creation_time>1980-01-01T00:00:00+00:00</creation_time>

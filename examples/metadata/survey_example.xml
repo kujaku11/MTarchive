@@ -18,8 +18,8 @@
     <geographic_name>None</geographic_name>
     <name>None</name>
     <northwest_corner>
-        <latitude type="float" units="degrees">None</latitude>
-        <longitude type="float" units="degrees">None</longitude>
+        <latitude type="float" units="degrees">0.0</latitude>
+        <longitude type="float" units="degrees">0.0</longitude>
     </northwest_corner>
     <project>None</project>
     <project_lead>
@@ -27,10 +27,10 @@
         <organization>None</organization>
         <email>None</email>
     </project_lead>
-    <release_status>None</release_status>
+    <release_license>None</release_license>
     <southeast_corner>
-        <latitude type="float" units="degrees">None</latitude>
-        <longitude type="float" units="degrees">None</longitude>
+        <latitude type="float" units="degrees">0.0</latitude>
+        <longitude type="float" units="degrees">0.0</longitude>
     </southeast_corner>
     <summary>None</summary>
     <time_period>

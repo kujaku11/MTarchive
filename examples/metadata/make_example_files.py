@@ -14,7 +14,7 @@ p = Path(r"c:\Users\jpeacock\Documents\GitHub\MTarchive\examples\metadata")
 
 style = 'xml'
 
-for c in ['Survey', 'Station', 'Run', 'Channel', 'Electric', 'Magnetic']:  
+for c in ['Survey']:#, 'Station', 'Run', 'Channel', 'Electric', 'Magnetic']:  
     s = getattr(metadata, c)()
     if style == 'xml':
         x = s.to_xml()

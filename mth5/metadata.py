@@ -351,6 +351,7 @@ class Base():
         skip_list = ['latitude', 'longitude',  'elevation',
                      'start_date', 'end_date', 'start', 'end',
                      'name', 'applied', 'logger']
+         
         if hasattr(self, '_attr_dict'):
             if name[0] != '_':
                 if not name in skip_list: 
@@ -1438,11 +1439,6 @@ class Survey(Base):
         super().__init__()
         
         self._attr_dict = ATTR_DICT['survey']
-        
-
-
-
-
 
 # =============================================================================
 # Station Class

@@ -604,10 +604,11 @@ class BaseDict(MutableMapping):
         except KeyError as error:
             msg = ('{0} {1} is not in dictionary yet. '.format(error, key) +
                    'Returning default schema dictionary.')
-            logger.warning(msg)
+            logger.debug(msg)
             return {'type': 'string', 'required':False, 'style': 'free form',
                     'units': None, 'options': None, 
                     'description': 'user defined', 'example': None}
+        
     def __delitem__(self, key):
         try:
             del self.__dict__[key]

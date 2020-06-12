@@ -131,7 +131,7 @@ class TestSurveyMetadata(unittest.TestCase):
         self.meta_dict = {'survey':
                           {'acquired_by.author': 'MT',
                            'acquired_by.comments': 'tired',
-                           'archive_id': 'MT01',
+                           'archive_id': 'MT001',
                            'archive_network': 'EM',
                            'citation_dataset.doi': 'http://doi.####',
                            'citation_journal.doi': None,
