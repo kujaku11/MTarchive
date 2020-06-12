@@ -9,6 +9,7 @@ The metadata follows the standards proposed by the IRIS-PASSCAL MT Software work
 Note: This is a work in progress.  Feel free to comment or send me a message at jpeacock@usgs.gov on the data format.
 
 ## Modules
+![MTH5 Logo](https://github.com/kujaku11/MTarchive/blob/tables/mth5_logo.png)
 
 * **mth5** --> includes reading and writing of HDF5 files formatted specifically for MT data.
 
