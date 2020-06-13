@@ -10,14 +10,13 @@ Created on Tue Jun  9 19:53:32 2020
 # =============================================================================
 # Imports
 # =============================================================================
-from obspy.core import inventory
-from obspy.core.util import AttribDict
+import logging
 
 from pathlib import Path
-
-from mth5 import metadata
 from copy import deepcopy
-import logging
+
+from obspy.core import inventory
+from obspy.core.util import AttribDict
 
 logger = logging.getLogger(__name__)
 # =============================================================================

@@ -165,7 +165,13 @@ class MTH5():
         
         
     def __str__(self):
-        return get_tree(self.__hdf5_obj)
+        if self.h5_is_write():
+            return get_tree(self.__hdf5_obj)
+        else:
+            return 'HDF5 file is closed and cannot be accessed.'
+        
+    def __repr__(self):
+        return self.__str__()
     
     @property
     def filename(self):
@@ -180,7 +186,7 @@ class MTH5():
     @property
     def survey_group(self):
         if self.h5_is_write():
-            return m5groups.SurveyGroup(self.__hdf5_obj['/Survey'])
+            return m5groups.MasterSurveyGroup(self.__hdf5_obj['/Survey'])
         else:
             self.logger.info("File is closed cannot access /Survey")
             return None
@@ -213,9 +219,9 @@ class MTH5():
     @property
     def stations_group(self):
         if self.h5_is_write():
-            return m5groups.StationGroup(self.__hdf5_obj['/Survey/Stations'])
+            return m5groups.MasterStationGroup(self.__hdf5_obj['/Survey/Stations'])
         else:
-            self.logger.info("File is closed cannot access /Reports")
+            self.logger.info("File is closed cannot access /Stations")
             return None
 
     def open_mth5(self, filename, mode='a'):
@@ -285,6 +291,7 @@ class MTH5():
                 self._default_root_name, group_name))
             m5_grp = getattr(self, '{0}_group'.format(group_name.lower()))
             m5_grp.initialize_summary_table()
+            m5_grp.write_metadata()
             
         self.logger.info("Initialized MTH5 file {0} in mode {1}".format(
             self.filename, 'w'))
@@ -313,6 +320,19 @@ class MTH5():
             except ValueError:
                 return False
         return False
+    
+    def from_reference(self, h5_reference):
+        """
+        Get an HDF5 group, dataset, etc from a reference
+        
+        :param h5_reference: DESCRIPTION
+        :type h5_reference: TYPE
+        :return: DESCRIPTION
+        :rtype: TYPE
+
+        """
+        
+        return self.__hdf5_obj[h5_reference]
     
     def add_station(self, name):
         """

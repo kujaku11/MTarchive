@@ -42,10 +42,23 @@ class BaseGroup():
         self.logger = logging.getLogger('{0}.{1}'.format(__name__, 
                                                          self._class_name))
         
-        try:
-            self.metadata = meta_classes[self._class_name.split('Group')[0]]()
-        except KeyError:
-            self.metadata = metadata.Base()
+        self.metadata = metadata.Base()
+        if self._class_name not in ['Standards']:
+            try:
+                self.metadata = meta_classes[self._class_name]()
+            except KeyError:
+                self.metadata = metadata.Base()
+            
+        self.metadata.add_base_attribute('mth5_type', 
+                                         self._class_name.split('Group')[0],
+                                         {'type':str, 
+                                          'required':True,
+                                          'style':'free form',
+                                          'description': 'type of group', 
+                                          'units':None,
+                                          'options':[],
+                                          'alias':[],
+                                          'example':'group_name'})
             
         self.logger.debug("setting metadata for {0} to {1}".format(
                 self._class_name, type(self.metadata)))
@@ -56,20 +69,29 @@ class BaseGroup():
                                   'max_shape': (10000, ),
                                   'dtype': np.dtype([('default', np.float)])}
         
-        self._default_group_attr = {}
         
         for key, value in kwargs.items():
             setattr(self, key, value)
         
     def __str__(self):
-        return get_tree(self.hdf5_group)
+        try: 
+            self.hdf5_group.ref
+            
+            return get_tree(self.hdf5_group)
+        except ValueError:
+            msg = 'MTH5 file is closed and cannot be accessed.'
+            self.logger.warning(msg)
+            return msg
+    
+    def __repr__(self):
+        return self.__str__()
     
     def __eq__(self, other):
         pass
         
     @property
     def _class_name(self):
-        return self.__class__.__name__
+        return self.__class__.__name__.split('Group')[0]
     
     @property
     def summary_table(self):
@@ -159,7 +181,7 @@ class SurveyGroup(BaseGroup):
         return station_obj
     
 
-class StationGroup(BaseGroup):
+class MasterStationGroup(BaseGroup):
     """
     holds the station group
     
@@ -168,6 +190,11 @@ class StationGroup(BaseGroup):
     def __init__(self, group, **kwargs):
         
         super().__init__(group, **kwargs)
+        
+        self.metadata = metadata.Base()
+        
+        self._default_group_attr = {'type': self._class_name.split('Group')[0],
+                                    'h5_reference': self.hdf5_group.ref}
         
         self._defaults_summary_attrs = {'name': 'Summary',
                                   'max_shape': (1000,),
@@ -180,7 +207,37 @@ class StationGroup(BaseGroup):
                                                      ('location.latitude',
                                                       np.float),
                                                      ('location.longitude',
-                                                      np.float)])}
+                                                      np.float),
+                                                     ('hdf5_reference', 
+                                                      h5py.ref_dtype)])}
+        
+    @property
+    def name(self):
+        return self.metadata.archive_id
+    
+    @name.setter
+    def name(self, name):
+        self.metadata.archive_id = name
+        
+class StationGroup(BaseGroup):
+    """
+    holds the station group
+    
+    """
+    
+    def __init__(self, group, **kwargs):
+        
+        super().__init__(group, **kwargs)
+        
+        self._defaults_summary_attrs = {'name': 'Summary',
+                                        'max_shape': (1000,),
+                                        'dtype': np.dtype([
+                                            ('id', 'S5'),
+                                            ('start', 'S32'),
+                                            ('end', 'S32'),
+                                            ('components', 'S100'),
+                                            ('measurement_type', 'S12'),
+                                            ('sample_rate', np.float)])}
         
     @property
     def name(self):
@@ -214,7 +271,7 @@ class StandardsGroup(BaseGroup):
     
     def __init__(self, group, **kwargs):
         
-        super().__init__(group, **kwargs) 
+        super().__init__(group, **kwargs)
         
         self._defaults_summary_attrs = {'name': 'Summary',
                                   'max_shape': (500,),
@@ -357,9 +414,23 @@ class MTH5Table():
             for element, key in zip(row, list(self.dtype.names)):
                 if isinstance(element, (np.bytes_)):
                     element = element.decode()
-                line.append('{0:^{1}}'.format(element, length_dict[key]))
+                try:
+                    line.append('{0:^{1}}'.format(element, length_dict[key]))
+                
+                except TypeError as error:
+                    if isinstance(element, h5py.h5r.Reference):
+                        msg = '{0}: Cannot represent h5 reference as a string'
+                        self.logger.debug(msg.format(error))
+                        line.append('{0:^{1}}'.format('<HDF5 object reference>',
+                                                      length_dict[key]))
+                    else:
+                        self.logger.exception(f'{error}')
+                        
             lines.append(' | '.join(line))
         return '\n'.join(lines)
+    
+    def __repr__(self):
+        return self.__str__()
     
     def __eq__(self, other):
         if isinstance(other, MTH5Table): 
@@ -372,7 +443,10 @@ class MTH5Table():
             raise TypeError(msg)
             
     def __ne__(self, other):
-        return not self.__eq__(other)                    
+        return not self.__eq__(other) 
+
+    def __len__(self):
+        return self.array.shape[0]                    
             
     @property
     def dtype(self):
