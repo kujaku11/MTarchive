@@ -315,6 +315,8 @@ class StandardsGroup(BaseGroup):
             
             key_list = np.array([tuple(key_list)], self.summary_table.dtype)
             index = self.summary_table.add_row(key_list)
+            
+        self.logger.debug(f'Added {index} rows to Standards Group')
         
         
         

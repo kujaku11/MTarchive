@@ -290,8 +290,7 @@ class MTH5():
             self.__hdf5_obj.create_group('{0}/{1}'.format(
                 self._default_root_name, group_name))
             m5_grp = getattr(self, '{0}_group'.format(group_name.lower()))
-            m5_grp.initialize_summary_table()
-            m5_grp.write_metadata()
+            m5_grp.initialize_group()
             
         self.logger.info("Initialized MTH5 file {0} in mode {1}".format(
             self.filename, 'w'))
