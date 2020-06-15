@@ -2,7 +2,7 @@
 
 # MTarchive
 
-The goal of MTarchive is to develop a standard format and tools for archiving magnetotelluric (MT) time series data.  
+The goal of MTarchive (*will become mth5py in the future*) is to develop a standard format and tools for archiving magnetotelluric (MT) time series data.  
 
 The preferred format is HDF5 and has been adopted to conform to MT data, something that has been needed in the EM community for some time.  The module mth5 contains reading/writing capabilities and will contain tools for retrieving data in useful ways to work with processing codes.  
 
@@ -12,7 +12,7 @@ The metadata follows the standards proposed by the [IRIS-PASSCAL MT Software wor
 
 ## Modules
 
-* **mth5** --> This will eventually be the main module, but for now resides here.  MTH5 includes reading and writing of HDF5 files formatted specifically for MT data that adheres to the proposed metadata standards.  MTH5 based on h5py and numpy which was chosen because we are dealing mainly with arrays and will hopefully be able to be used in parallel.  
+* **mth5** --> MTH5 includes reading and writing of HDF5 files formatted specifically for MT data that adheres to the proposed metadata standards.  MTH5 based on h5py and numpy which was chosen because we are dealing mainly with arrays and will hopefully be able to be used in parallel.  
 
   
 ## MTH5 Format
