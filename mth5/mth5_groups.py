@@ -38,7 +38,7 @@ class BaseGroup():
         * from_reference?
     """
     
-    def __init__(self, group, **kwargs):
+    def __init__(self, group, group_metadata=None, **kwargs):
         
         if group is not None and isinstance(group, (h5py.Group, h5py.Dataset)):
             self.hdf5_group = weakref.ref(group)()
@@ -83,12 +83,25 @@ class BaseGroup():
         # set summary attributes    
         self.logger.debug("Metadata class for {0} is {1}".format(
                 self._class_name, type(self.metadata)))
+        
+        # if metadata, make sure that its the same class type
+        if group_metadata is not None:
+            if not isinstance(group_metadata, (self.metadata, metadata.Base)):
+                msg = "metadata must be type metadata.{0} not {1}".format(
+                    self._class_name, type(metadata))
+                self.logger.error(msg)
+                raise MTH5Error(msg)
+             
+            # load from dict because of the extra attributes for MTH5
+            self.metadata.from_dict(metadata.to_dict())
+            self.write_metadata()
 
+        # set default columns of summary table.
         self._defaults_summary_attrs = {'name': 'Summary',
                                   'max_shape': (10000, ),
                                   'dtype': np.dtype([('default', np.float)])}
         
-        
+        # if any other keywords 
         for key, value in kwargs.items():
             setattr(self, key, value)
         
@@ -106,7 +119,11 @@ class BaseGroup():
         return self.__str__()
     
     def __eq__(self, other):
-        pass
+        raise MTH5Error('Cannot test equals yet')
+    
+    # Iterate over key, value pairs
+    def __iter__(self):
+        return self.hdf5_group.items().__iter__()
         
     @property
     def _class_name(self):
@@ -115,6 +132,10 @@ class BaseGroup():
     @property
     def summary_table(self):
         return MTH5Table(self.hdf5_group['Summary'])
+    
+    @property
+    def groups_list(self):
+        return list(self.hdf5_group.keys())
     
     def read_metadata(self):
         """
@@ -144,10 +165,10 @@ class BaseGroup():
             self.hdf5_group.attrs.create(key, value)
 
     def read_data(self):
-        pass
+        raise MTH5Error("read_data is not implemented yet")
     
     def write_data(self):
-        pass
+        raise MTH5Error("write_data is not implemented yet")
     
     def initialize_summary_table(self):
         """
@@ -194,21 +215,6 @@ class SurveyGroup(BaseGroup):
     def __init__(self, group, **kwargs):
         
         super().__init__(group, **kwargs)
-        
-    def add_station(self, station):
-        group_name = '{0}/{1}'.format('Stations', station)
-        
-        try:
-            station_group = self.hdf5_group.create_group(group_name)
-            self.logger.debug("Created group {0}".format(station_group))
-        except ValueError:
-            msg = "Group {0} alread exists, returning existing group"
-            self.logger.info(msg.format(group_name))
-            station_group = self.hdf5_group[group_name]
-        
-        station_obj = StationGroup(station_group)
-        station_obj.write_metadata()
-        return station_obj
     
 
 class MasterStationGroup(BaseGroup):
@@ -241,20 +247,6 @@ class MasterStationGroup(BaseGroup):
                                                      ('hdf5_reference', 
                                                       h5py.ref_dtype)])}
         
-    # do we want just names or should we be able to iterate over the actual
-    # group?
-    def __iter__(self):
-        return self.station_list.__iter__()
-        
-    @property
-    def station_list(self):
-        """
-        :return: list of existing stations
-        :rtype: :class:`list`
-
-        """
-        
-        return list(self.hdf5_group.keys())
     
     def add_station(self, station_name, station_metadata=None):
         """
@@ -272,14 +264,16 @@ class MasterStationGroup(BaseGroup):
         try:
             station_group = self.hdf5_group.create_group(station_name)
             self.logger.debug("Created group {0}".format(station_group))
+            station_obj = StationGroup(station_group, 
+                                       metadata=station_metadata)
+            station_obj.write_metadata()
         except ValueError:
-            msg = "Group {0} alread exists, returning existing group"
-            self.logger.info(msg.format(station_name))
-            station_group = self.hdf5_group[station_name]
-        
-        station_obj = StationGroup(station_group)
-        station_obj.write_metadata()
-        
+            msg = (f"Station {station_name} already exists, " +
+                   "returning existing group.")
+            self.logger.info(msg)
+            station_obj = StationGroup(self.hdf5_group[station_name])
+            station_obj.read_metadata()
+
         return station_obj
     
     def get_station(self, station_name):
@@ -306,9 +300,9 @@ class StationGroup(BaseGroup):
     
     """
     
-    def __init__(self, group, **kwargs):
+    def __init__(self, group, station_metadata=None, **kwargs):
         
-        super().__init__(group, **kwargs)
+        super().__init__(group, group_metadata=station_metadata, **kwargs)
         
         self._defaults_summary_attrs = {'name': 'Summary',
                                         'max_shape': (1000,),
@@ -327,6 +321,53 @@ class StationGroup(BaseGroup):
     @name.setter
     def name(self, name):
         self.metadata.archive_id = name
+        
+    def add_run(self, run_name, run_metadata=None):
+        """
+        Add a run
+        
+        :param run_name: DESCRIPTION
+        :type run_name: TYPE
+        :param metadata: DESCRIPTION, defaults to None
+        :type metadata: TYPE, optional
+        :return: DESCRIPTION
+        :rtype: TYPE
+
+        """
+        
+        try:
+            run_group = self.hdf5_group.create_group(run_name)
+            self.logger.debug("Created group {0}".format(run_group))
+            run_obj = RunGroup(run_group, run_metdata=run_metadata)
+            run_obj.write_metadata()
+        
+        except ValueError:
+            msg = (f"run {run_name} already exists, " +
+                   "returning existing group.")
+            self.logger.info(msg)
+            run_obj = RunGroup(self.hdf5_group[run_name])
+            run_obj.read_metadata()
+
+        return run_obj
+    
+    def get_run(self, run_name):
+        """
+        get a run from run name
+        
+        :param run_name: DESCRIPTION
+        :type run_name: TYPE
+        :return: DESCRIPTION
+        :rtype: TYPE
+
+        """
+        try:
+            return RunGroup(self.hdf5_group[run_name])
+        except KeyError:
+            msg = (f'{run_name} does not exist, ' +
+                   'check groups_list for existing names')
+            self.logger.exception(msg)
+            raise MTH5Error(msg)
+    
 
 class ReportsGroup(BaseGroup):
     """
@@ -418,9 +459,9 @@ class RunGroup(BaseGroup):
     holds the run group
     """
    
-    def __init__(self, group, **kwargs):
+    def __init__(self, group, run_metadata=None, **kwargs):
         
-        super().__init__(group, **kwargs)
+        super().__init__(group, group_metadata=run_metadata, **kwargs)
     
 class ChannelGroup(BaseGroup):
     """

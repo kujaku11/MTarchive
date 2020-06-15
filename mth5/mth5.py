@@ -186,7 +186,7 @@ class MTH5():
     @property
     def survey_group(self):
         if self.h5_is_write():
-            return m5groups.MasterSurveyGroup(self.__hdf5_obj['/Survey'])
+            return m5groups.SurveyGroup(self.__hdf5_obj['/Survey'])
         else:
             self.logger.info("File is closed cannot access /Survey")
             return None
