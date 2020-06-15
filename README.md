@@ -14,7 +14,6 @@ The metadata follows the standards proposed by the [IRIS-PASSCAL MT Software wor
 
 * **mth5** --> This will eventually be the main module, but for now resides here.  MTH5 includes reading and writing of HDF5 files formatted specifically for MT data that adheres to the proposed metadata standards.  MTH5 based on h5py and numpy which was chosen because we are dealing mainly with arrays and will hopefully be able to be used in parallel.  
 
-* **usgs_archive** --> includes tools for archiving data on Science Base including xml metadata files, uploading to Science Base, changing JSON files, converting .z3d and NIMS binary files to MTH5 files.
   
 ## MTH5 Format
 * The basic format of MTH5 is illustrated below, where metadata is attached at each level.

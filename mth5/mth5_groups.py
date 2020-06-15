@@ -483,10 +483,11 @@ class RunGroup(BaseGroup):
                                             ('start', 'S32'),
                                             ('end', 'S32'),
                                             ('n_samples', np.int),
-                                            ('measurement_type', 'S12')])}
+                                            ('measurement_type', 'S12'),
+                                            ('units', 'S25')])}
         
     def add_channel(self, channel_name, channel_type, data, channel_dtype='f',
-                    max_shape=(None), chunks=True, channel_metadata=None):
+                    max_shape=(None,), chunks=True, channel_metadata=None):
         """
         add a channel to the run
         
@@ -574,12 +575,14 @@ class ChannelDataset(BaseGroup):
                          self.metadata.time_period.start,
                          self.metadata.time_period.end,
                          self.hdf5_group.size,
-                         self.metadata.type)],
+                         self.metadata.type,
+                         self.metadata.units)],
                         dtype= np.dtype([('component', 'S5'),
                                          ('start', 'S32'),
                                          ('end', 'S32'),
                                          ('n_samples', np.int),
-                                         ('measurement_type', 'S12')]))
+                                         ('measurement_type', 'S12'),
+                                         ('units', 'S25')]))
         
 class ElectricDataset(ChannelDataset):
     """
