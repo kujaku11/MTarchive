@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 
-Containers to hold the various groups Station, Run, Channel
+Containers to hold the various groups Station, channel, Channel
 
 Created on Fri May 29 15:09:48 2020
 
@@ -17,6 +17,7 @@ import logging
 import h5py
 
 from mth5 import metadata
+from mth5.standards import schema
 from mth5.utils.helpers import to_numpy_type
 from mth5.helpers import get_tree
 from mth5.utils.exceptions import MTH5TableError, MTH5Error
@@ -263,7 +264,7 @@ class MasterStationGroup(BaseGroup):
         
         try:
             station_group = self.hdf5_group.create_group(station_name)
-            self.logger.debug("Created group {0}".format(station_group))
+            self.logger.debug("Created group {0}".format(station_group.name))
             station_obj = StationGroup(station_group, 
                                        metadata=station_metadata)
             station_obj.write_metadata()
@@ -297,6 +298,7 @@ class MasterStationGroup(BaseGroup):
 class StationGroup(BaseGroup):
     """
     holds the station group
+
     
     """
     
@@ -313,6 +315,7 @@ class StationGroup(BaseGroup):
                                             ('components', 'S100'),
                                             ('measurement_type', 'S12'),
                                             ('sample_rate', np.float)])}
+        
         
     @property
     def name(self):
@@ -332,14 +335,16 @@ class StationGroup(BaseGroup):
         :type metadata: TYPE, optional
         :return: DESCRIPTION
         :rtype: TYPE
+        
+        need to be able to fill an entry in the summary table.
 
         """
         
         try:
             run_group = self.hdf5_group.create_group(run_name)
-            self.logger.debug("Created group {0}".format(run_group))
+            self.logger.debug("Created group {0}".format(run_group.name))
             run_obj = RunGroup(run_group, run_metdata=run_metadata)
-            run_obj.write_metadata()
+            run_obj.initialize_group()
         
         except ValueError:
             msg = (f"run {run_name} already exists, " +
@@ -407,7 +412,7 @@ class StandardsGroup(BaseGroup):
                                                      ('alias', 'S72'),
                                                      ('example', 'S72')])} 
     
-    def from_dict(self, summary_dict):
+    def summary_table_from_dict(self, summary_dict):
         """
         Fill summary table from a dictionary 
         
@@ -441,8 +446,15 @@ class StandardsGroup(BaseGroup):
         self.logger.debug(f'Added {index} rows to Standards Group')
         
     def initialize_group(self):
-        self
-        
+        """
+        make summary table of standards
+        :return: DESCRIPTION
+        :rtype: TYPE
+
+        """
+        schema_obj = schema.Standards()
+        self.summary_table_from_dict(schema_obj.summarize_standards())
+        self.write_metadata()
         
         
 class FiltersGroup(BaseGroup):
@@ -454,6 +466,7 @@ class FiltersGroup(BaseGroup):
         
         super().__init__(group, **kwargs)
     
+        
 class RunGroup(BaseGroup):
     """
     holds the run group
@@ -462,8 +475,84 @@ class RunGroup(BaseGroup):
     def __init__(self, group, run_metadata=None, **kwargs):
         
         super().__init__(group, group_metadata=run_metadata, **kwargs)
+        
+        self._defaults_summary_attrs = {'name': 'Summary',
+                                        'max_shape': (20,),
+                                        'dtype': np.dtype([
+                                            ('component', 'S5'),
+                                            ('start', 'S32'),
+                                            ('end', 'S32'),
+                                            ('n_samples', np.int),
+                                            ('measurement_type', 'S12')])}
+        
+    def add_channel(self, channel_name, channel_type, data, channel_dtype='f',
+                    max_shape=(None), chunks=True, channel_metadata=None):
+        """
+        add a channel to the run
+        
+        :param name: DESCRIPTION
+        :type name: TYPE
+        :param channel_type: DESCRIPTION
+        :type channel_type: TYPE
+        :raises: MTH5Error if channel type is not correct
+        
+        :param channel_metadata: DESCRIPTION, defaults to None
+        :type channel_metadata: TYPE, optional
+        :return: DESCRIPTION
+        :rtype: TYPE
+        
+
+        """
+        if data is not None:
+            if data.size < 1024:
+                chunks = None
+        try:
+            if data is not None:
+                channel_group = self.hdf5_group.create_dataset(channel_name,
+                                                           data=data,
+                                                           maxshape=max_shape,
+                                                           dtype=data.dtype,
+                                                           chunks=chunks)
+            else:
+                channel_group = self.hdf5_group.create_dataset(channel_name,
+                                                           shape=(1, ),
+                                                           maxshape=max_shape,
+                                                           dtype=channel_dtype,
+                                                           chunks=chunks)
+            
+            self.logger.debug("Created group {0}".format(channel_group.name))
+            if channel_type.lower() in ['magnetic']:
+                channel_obj = MagneticDataset(channel_group,
+                                            channel_metdata=channel_metadata)
+            elif channel_type.lower() in ['electric']:
+                channel_obj = ElectricDataset(channel_group,
+                                            channel_metdata=channel_metadata)
+            elif channel_type.lower() in ['auxiliary']:
+                channel_obj = AuxiliaryDataset(channel_group,
+                                            channel_metdata=channel_metadata)
+            else:
+                msg = ("`channel_type` must be in [ electric | magnetic | " +
+                       "auxiliary ]. Input was {0}".format(channel_type))
+                self.logger.error(msg)
+                raise MTH5Error(msg)
+            channel_obj.write_metadata()
+            self.summary_table.add_row(channel_obj.table_entry)
+        
+        except OSError:
+            msg = (f"channel {channel_name} already exists, " +
+                   "returning existing group.")
+            self.logger.info(msg)
+            if channel_type in ['magnetic']:
+                channel_obj = MagneticDataset(self.hdf5_group[channel_name])
+            elif channel_type in ['electric']:
+                channel_obj = ElectricDataset(self.hdf5_group[channel_name])
+            elif channel_type in ['auxiliary']:
+                channel_obj = AuxiliaryDataset(self.hdf5_group[channel_name])
+            channel_obj.read_metadata()
+            
+        return channel_obj
     
-class ChannelGroup(BaseGroup):
+class ChannelDataset(BaseGroup):
     """
     holds a channel
     """
@@ -472,7 +561,27 @@ class ChannelGroup(BaseGroup):
         
         super().__init__(group, **kwargs)
         
-class ElectricGroup(BaseGroup):
+    @property
+    def _class_name(self):
+        return self.__class__.__name__.split('Dataset')[0]
+    
+    @property
+    def table_entry(self):
+        """
+        """
+        
+        return np.array([(self.metadata.component,
+                         self.metadata.time_period.start,
+                         self.metadata.time_period.end,
+                         self.hdf5_group.size,
+                         self.metadata.type)],
+                        dtype= np.dtype([('component', 'S5'),
+                                         ('start', 'S32'),
+                                         ('end', 'S32'),
+                                         ('n_samples', np.int),
+                                         ('measurement_type', 'S12')]))
+        
+class ElectricDataset(ChannelDataset):
     """
     holds a channel
     """
@@ -481,7 +590,7 @@ class ElectricGroup(BaseGroup):
         
         super().__init__(group, **kwargs)
         
-class MagneticGroup(BaseGroup):
+class MagneticDataset(ChannelDataset):
     """
     holds a channel
     """
@@ -490,7 +599,7 @@ class MagneticGroup(BaseGroup):
         
         super().__init__(group, **kwargs)
         
-class AuxiliaryGroup(BaseGroup):
+class AuxiliaryDataset(ChannelDataset):
     """
     holds a channel
     """

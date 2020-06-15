@@ -1533,7 +1533,7 @@ class Channel(Base):
     """
 
     def __init__(self, **kwargs):
-        self.type = None
+        self.type = 'auxiliary'
         self.units = None
         self.channel_number = None
         self.component = None
@@ -1567,9 +1567,10 @@ class Electric(Channel):
         self.ac = Diagnostic()
         self.dc = Diagnostic()
         self.units_s = None
-        
-        
+
         super(Electric, self).__init__(**kwargs)
+        
+        self.type = 'electric'
         self._attr_dict = ATTR_DICT['electric']
         
 # =============================================================================
@@ -1587,6 +1588,7 @@ class Magnetic(Channel):
 
         super().__init__(**kwargs)
 
+        self.type = 'magnetic'
         self._attr_dict = ATTR_DICT['magnetic']
 
 
