@@ -54,7 +54,7 @@ class MTime():
         if time is not None:
             if isinstance(time, str):
                 self.logger.debug("Input time is a string, will be parsed")
-                self.dt_object.from_str(time)
+                self.from_str(time)
             
             elif isinstance(time, (int, float)):
                 self.logger.debug("Input time is a number, assuming epoch " +

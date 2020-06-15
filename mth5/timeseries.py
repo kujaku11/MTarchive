@@ -22,6 +22,10 @@ from mth5.utils.mttime import MTime
 #==============================================================================
 class MTTS(object):
     """
+    
+    .. note:: Assumes equally spaced samples from the start time.
+    
+    
     MT time series object that will read/write data in different formats
     including hdf5, txt, miniseed.
 
@@ -58,7 +62,7 @@ class MTTS(object):
     lat                  latitude of station in decimal degrees
     lon                  longitude of station in decimal degrees
     n_samples            number of samples in time series
-    sampling_rate        sampling rate in samples/second
+    sample_rate        sample rate in samples/second
     start_time_epoch_sec start time in epoch seconds
     start_time_utc       start time in UTC
     station              station name
@@ -93,7 +97,8 @@ class MTTS(object):
 
     """
 
-    def __init__(self, channel_type, data, channel_metadata, **kwargs):
+    def __init__(self, channel_type, data=None, channel_metadata=None,
+                 **kwargs):
         self.logger = logging.getLogger('{0}.{1}'.format(__name__, 
                                                          self._class_name))
         if channel_type in ['electric']:
@@ -123,6 +128,12 @@ class MTTS(object):
         
         for key in list(kwargs.keys()):
             setattr(self, key, kwargs[key])
+            
+    def __str__(self):
+        return self.ts.__str__()
+    
+    def __repr__(self):
+        return self.ts.__repr__()
 
     ###-------------------------------------------------------------
     ## make sure some attributes have the correct data type
@@ -142,15 +153,16 @@ class MTTS(object):
         column name 'data'
         """
         if isinstance(ts_arr, np.ndarray):
-            dt = self._set_dt_index(self.start_time_utc, 
-                                    self.sampling_rate,
-                                    ts_arr.size)
+            dt = self._make_dt_coordinates(self.start, 
+                                           self.sample_rate,
+                                           ts_arr.size)
             self._ts = xr.DataArray(ts_arr, coords=[('time', dt)])
+            self.update_xarray_metadata()
 
         elif isinstance(ts_arr, pd.core.frame.DataFrame):
             try:
                 dt = self._make_dt_index(self.start_time_utc, 
-                                         self.sampling_rate,
+                                         self.sample_rate,
                                          ts_arr['data'].size)
                 self._ts = xr.DataArray(ts_arr['data'],
                                         coords=[('time', dt)])
@@ -164,14 +176,14 @@ class MTTS(object):
         elif isinstance(ts_arr, xr.DataArray):
             # TODO: need to validate the input xarray
             self._ts = ts_arr
+            meta_dict = dict([(k, v) for k, v in ts_arr.attrs.items()])
+            self.metadata.from_dict({self.metadata.type: meta_dict})
             
         else:
             msg = ("Data type {0} not supported".format(type(ts_arr)) +\
                    ", ts needs to be a numpy.ndarray, pandas DataFrame, " +\
                    "or xarray.DataArray.")
             raise MTTSError()
-
-        self._n_samples = self.ts.data.size
         
     def update_xarray_metadata(self):
         """
@@ -180,8 +192,11 @@ class MTTS(object):
         :rtype: TYPE
 
         """
+        self.metadata.time_period.start = self.start_time_utc
+        self.metadata.time_period.end = self.end_time_utc
+        self.metadata.sample_rate = self.sample_rate
         
-        self._ts.attrs.update(self.metadata.to_dict())
+        self._ts.attrs.update(self.metadata.to_dict()[self.metadata._class_name])
         
 
     #--> number of samples just to make sure there is consistency
@@ -191,9 +206,10 @@ class MTTS(object):
         return int(self.ts.size)
 
     @n_samples.setter
-    def n_samples(self, num_samples):
+    def n_samples(self, n_samples):
         """number of samples (int)"""
-        self.logger.warning('Cannot set the number of samples')
+        self.logger.warning('Cannot set the number of samples, ' +
+                            'Use `MTTS.resample`')
 
     def _check_for_index(self):
         """
@@ -204,10 +220,10 @@ class MTTS(object):
         else:
             return False
 
-    #--> sampling rate
+    #--> sample rate
     @property
-    def sampling_rate(self):
-        """sampling rate in samples/second"""
+    def sample_rate(self):
+        """sample rate in samples/second"""
         if self._check_for_index():
             sr = 1E9/self._ts.coords.indexes['time'][0].freq.nanos
         else:
@@ -218,31 +234,30 @@ class MTTS(object):
                 sr = 0.0
         return np.round(sr, 0)
 
-    @sampling_rate.setter
-    def sampling_rate(self, sampling_rate):
+    @sample_rate.setter
+    def sample_rate(self, sample_rate):
         """
-        sampling rate in samples/second
+        sample rate in samples/second
 
         type float
         """
         self.logger.warning("Cannot set sample rate.  If you want to " +
-                            "change the sampling rate use method `resample`.")
+                            "change the sample rate use method `resample`.")
 
 
     ## set time and set index
     @property
-    def start_time_utc(self):
-        """start time in UTC given in time format"""
+    def start(self):
+        """MTime object"""
         if self._check_for_index():
-            mtime = MTime(self._ts.coords.indexes['time'][0].isoformat())
-            return mtime.iso_str
+            return MTime(self._ts.coords.indexes['time'][0].isoformat())
         else:
             self.logger.info("Data not set yet, pulling start time from " +
                              "metadata.time_period.start")
-            return self.metadata.time_period.start
+            return MTime(self.metadata.time_period.start)
 
-    @start_time_utc.setter
-    def start_time_utc(self, start_time):
+    @start.setter
+    def start(self, start_time):
         """
         start time of time series in UTC given in some format or a datetime
         object.
@@ -255,82 +270,111 @@ class MTTS(object):
         """
 
         if not isinstance(start_time, MTime):
-            start_time = Mtime(start_time)
+            start_time = MTime(start_time)
 
         self.metadata.time_period.start = start_time.iso_str
         if self._check_for_index():
-            if start_time == Mtime(self.ts.coords.indexex[0].isoformat()):
+            if start_time == MTime(self.ts.coords.indexes['time'][0].isoformat()):
                 return
             else:
                 new_dt = self._make_dt_coordinates(start_time,
-                                                   self._sampling_rate)
+                                                   self.sample_rate,
+                                                   self.n_samples)
                 self.ts.coords['time'] = new_dt
-                
 
         # make a time series that the data can be indexed by
         else:
-            raise MTTSError('No Data to set start time for, set data first')
+            self.logger.warning("No data, just updating metadata start")
 
     ## epoch seconds
     @property
+    def start_time_utc(self):
+        """start time in UTC given in time format"""
+        return self.start.iso_str
+    @start_time_utc.setter
+    def start_time_utc(self):
+        self.logger.warning('Cannot set `start_time_utc`. ' + 
+                            'Use >>> MTTS.start = new_time')
+        
+    @property
     def start_time_epoch_sec(self):
         """start time in epoch seconds"""
-        if self._check_for_index():
-            if isinstance(self._ts.index[0], int):
-                return None
-            else:
-                return self.ts.index[0].timestamp()
-        else:
-            return None
+        return self.start.epoch_seconds
 
     @start_time_epoch_sec.setter
-    def start_time_epoch_sec(self, epoch_sec):
+    def start_time_epoch_sec(self):
+        self.logger.warning('Cannot set `start_time_epoch_seconds`. ' + 
+                            'Use >>> MTTS.start = new_time')
+        
+    @property
+    def end(self):
+        """MTime object"""
+        if self._check_for_index():
+            return MTime(self._ts.coords.indexes['time'][-1].isoformat())
+        else:
+            self.logger.info("Data not set yet, pulling end time from " +
+                             "metadata.time_period.end")
+            return MTime(self.metadata.time_period.end)
+        
+    @end.setter
+    def end(self, end_time):
         """
-        start time in epoch seconds
+        start time of time series in UTC given in some format or a datetime
+        object.
 
-        Resets start_time_utc if different
+        Resets epoch seconds if the new value is not equivalent to previous
+        value.
 
-        Resets how ts data frame is indexed.
+        Resets how the ts data frame is indexed, setting the starting time to
+        the new start time.
         """
-        try:
-            epoch_sec = float(epoch_sec)
-        except ValueError:
-            raise MTTSError("Need to input epoch_sec as a float not {0} {1".format(type(epoch_sec), self.fn_ascii))
+        self.logger.warning("Cannot set `end`. If you want a slice, then " +
+                            "use MTTS.ts.sel['time'=slice(start, end)]")
 
-        dt_struct = datetime.datetime.utcfromtimestamp(epoch_sec)
-        # these should be self cosistent
-        try:
-            if self.ts.index[0] != dt_struct:
-                self.start_time_utc = dt_struct
-        except IndexError:
-            print('setting time')
-            self.start_time_utc = dt_struct
+        # if not isinstance(end_time, MTime):
+        #     end_time = MTime(end_time)
+
+        # self.metadata.time_period.end = end_time.iso_str
+        # if self._check_for_index():
+        #     if start_time == MTime(self.ts.coords.indexes['time'][0].isoformat()):
+        #         return
+        #     else:
+        #         new_dt = self._make_dt_coordinates(start_time,
+        #                                            self.sample_rate,
+        #                                            self.n_samples)
+        #         self.ts.coords['time'] = new_dt
+
+        # # make a time series that the data can be indexed by
+        # else:
+        #     self.logger.warning("No data, just updating metadata start")
 
     @property
-    def stop_time_epoch_sec(self):
+    def end_time_epoch_sec(self):
         """
         End time in epoch seconds
         """
-        if self._check_for_index():
-            if isinstance(self._ts.index[-1], int):
-                return None
-            else:
-                return self.ts.index[-1].timestamp()
-        else:
-            return None
+        return self.end.epoch_seconds
+    
+    @end_time_epoch_sec.setter
+    def end_time_epoch_sec(self):
+        self.logger.warning('Cannot set `end_time_epoch_seconds`. ' + 
+                            'Use >>> MTTS.end = new_time')
 
     @property
-    def stop_time_utc(self):
+    def end_time_utc(self):
         """
         End time in UTC
         """
-        if self._check_for_index():
-            if isinstance(self._ts.index[-1], int):
-                return None
-            else:
-                return self._ts.index[-1].isoformat()
+        return self.end.iso_str
+    
+    @end_time_utc.setter
+    def end_time_utc(self):
+        self.logger.warning('Cannot set `end_time_utc`. ' + 
+                            'Use >>> MTTS.end = new_time')
 
-    def _make_dt_coordinates(self, start_time, sampling_rate, n_samples):
+    
+
+    def _make_dt_coordinates(self, start_time, sample_rate, n_samples):
         """
         get the date time index from the data
 
@@ -339,6 +383,11 @@ class MTTS(object):
         """
         if len(self.ts) == 0:
             return
+        
+        if sample_rate in [0, None]:
+            msg = f"Need to input a valid sample rate. Not {sample_rate}"
+            self.logger.error(msg)
+            raise MTTSError(msg)
         
         if start_time is None:
             self.logger.warning('Start time is None, skipping calculating index')
@@ -355,26 +404,41 @@ class MTTS(object):
                 self.logger.error(msg)
                 raise MTTSError(msg)
 
-        dt_freq = '{0:.0f}N'.format(1. / (sampling_rate) * 1E9)
+        dt_freq = '{0:.0f}N'.format(1.0E9 / (sample_rate))
 
-        dt_index = pd.date_range(start=start_time.iso_utc.split('+', 1)[0],
+        dt_index = pd.date_range(start=start_time.iso_str.split('+', 1)[0],
                                  periods=n_samples,
                                  freq=dt_freq)
 
         return dt_index
 
     # decimate data
-    def decimate(self, dec_factor=1):
+    def decimate(self, dec_factor=1, inplace=False):
         """
         decimate the data by using scipy.signal.decimate
 
         :param dec_factor: decimation factor
         :type dec_factor: int
 
-        * refills ts.data with decimated data and replaces sampling_rate
+        * refills ts.data with decimated data and replaces sample_rate
 
         """
-        pass
+        
+        new_dt_freq = '{0:.0f}N'.format(1E9 / (self.sample_rate / dec_factor))
+        
+        new_ts = self.ts.resample(time=new_dt_freq).nearest(tolerance=new_dt_freq)
+        new_ts.attrs['sample_rate'] = self.sample_rate / dec_factor
+        self.metadata.sample_rate = new_ts.attrs['sample_rate']
+        
+        if inplace:
+            self.ts = new_ts
+            
+        else:
+            new_ts.attrs.update(self.metadata.to_dict()[self.metadata._class_name])
+            #return new_ts
+            return MTTS(self.metadata.type, data=new_ts,
+                        metadata=self.metadata)
+        
         # # be sure the decimation factor is an integer
         # dec_factor = int(dec_factor)
 
@@ -393,8 +457,8 @@ class MTTS(object):
         #         decimated_data = signal.decimate(self.ts.data, dec_factor, n=8)
         #     start_time = str(self.start_time_utc)
         #     self.ts = decimated_data
-        #     self.sampling_rate /= float(dec_factor)
-        #     self._set_dt_index(start_time, self.sampling_rate)
+        #     self.sample_rate /= float(dec_factor)
+        #     self._set_dt_index(start_time, self.sample_rate)
 
     def low_pass_filter(self, low_pass_freq=15, cutoff_freq=55):
         """
@@ -412,7 +476,7 @@ class MTTS(object):
         # self.ts = mtfilter.low_pass(self.ts.data,
         #                             low_pass_freq,
         #                             cutoff_freq,
-        #                             self.sampling_rate)
+        #                             self.sample_rate)
         
     # def plot_spectra(self, spectra_type='welch', **kwargs):
     #     """
@@ -434,8 +498,8 @@ class MTTS(object):
     #     s = Spectra()
     #     param_dict = {}
     #     if spectra_type == 'welch':
-    #         param_dict['fs'] = kwargs.pop('sampling_rate',
-    #                                                    self.sampling_rate)
+    #         param_dict['fs'] = kwargs.pop('sample_rate',
+    #                                                    self.sample_rate)
     #         param_dict['nperseg'] = kwargs.pop('nperseg', 2**12)
     #         s.compute_spectra(self.ts.data, spectra_type, **param_dict)
 
