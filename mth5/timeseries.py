@@ -12,6 +12,7 @@
 import numpy as np
 import pandas as pd
 import xarray as xr
+import logging
 
 from mth5 import metadata
 from mth5.utils.mttime import MTime
@@ -92,62 +93,44 @@ class MTTS(object):
 
     """
 
-    def __init__(self, channel_type, **kwargs):
-        
+    def __init__(self, channel_type, data, channel_metadata, **kwargs):
+        self.logger = logging.getLogger('{0}.{1}'.format(__name__, 
+                                                         self._class_name))
         if channel_type in ['electric']:
-
-        self.station = 'mt00'
-        self.channel_number = 1
-        self.component = None
-        self.coordinate_system = 'geomagnetic'
-        self.dipole_length = 0
-        self.azimuth = 0
-        self.units = 'mV'
-        self._lat = 0.0
-        self._lon = 0.0
-        self._elev = 0.0
-        self._n_samples = 0
-        self._sampling_rate = 1
-        self.datum = 'WGS84'
-        self.data_logger = 'Zonge Zen'
-        self.instrument_id = None
-        self.calibration_fn = None
-        self.declination = 0.0
-        self._ts = pd.DataFrame({'data':[0]})
-        self.fn = None
-        self.conversion = None
-        self.gain = None
-        self._end_header_line = 0
-
-        self._date_time_fmt = '%Y-%m-%d %H:%M:%S.%f'
-        self._attr_list = ['station',
-                           'sampling_rate',
-                           'start_time_utc',
-                           'stop_time_utc',
-                           'n_samples',
-                           'component',
-                           'channel_number',
-                           'coordinate_system',
-                           'dipole_length',
-                           'elev',
-                           'azimuth',
-                           'units',
-                           'lat',
-                           'lon',
-                           'datum',
-                           'data_logger',
-                           'instrument_id',
-                           'calibration_fn',
-                           'declination',
-                           'gain',
-                           'conversion']
-
+            self.metadata = metadata.Electric()
+        elif channel_type in ['magnetic']:
+            self.metadata = metadata.Magnetic()
+        elif channel_type in ['auxiliary']:
+            self.metadata = metadata.Channel()
+        else:
+            msg = ('Channel type is undefined, must be [ electric | ' + 
+                   'magnetic | auxiliary ]')
+            self.logger.error(msg)
+            raise MTTSError(msg)
+            
+        if channel_metadata is not None:
+            if not isinstance(channel_metadata, self.metadata):
+                msg = "input metadata must be type {0} not {1}".format(
+                    type(self.metadata), type(channel_metadata))
+                self.logger.error(msg)
+                raise MTTSError(msg)
+            self.metadata = channel_metadata
+            
+        self._ts = xr.DataArray([1], coords=[('time', [1])])
+        self.update_xarray_metadata()
+        if data is not None:
+            self.ts = data
+        
         for key in list(kwargs.keys()):
             setattr(self, key, kwargs[key])
 
     ###-------------------------------------------------------------
     ## make sure some attributes have the correct data type
     # make sure that the time series is a pandas data frame
+    @property
+    def _class_name(self):
+        return self.__class__.__name__
+    
     @property
     def ts(self):
         return self._ts
@@ -159,40 +142,64 @@ class MTTS(object):
         column name 'data'
         """
         if isinstance(ts_arr, np.ndarray):
-            self._ts = pd.DataFrame({'data':ts_arr})
-            self._set_dt_index(self.start_time_utc, self.sampling_rate)
+            dt = self._set_dt_index(self.start_time_utc, 
+                                    self.sampling_rate,
+                                    ts_arr.size)
+            self._ts = xr.DataArray(ts_arr, coords=[('time', dt)])
 
         elif isinstance(ts_arr, pd.core.frame.DataFrame):
             try:
-                ts_arr['data']
-                self._ts = ts_arr
-                self._set_dt_index(self.start_time_utc, self.sampling_rate)
+                dt = self._make_dt_index(self.start_time_utc, 
+                                         self.sampling_rate,
+                                         ts_arr['data'].size)
+                self._ts = xr.DataArray(ts_arr['data'],
+                                        coords=[('time', dt)])
 
             except AttributeError:
-                raise MTTSError('Data frame needs to have a column named "data" '+\
-                                   'where the time series data is stored')
+                msg = ("Data frame needs to have a column named `data` " +\
+                       "where the time series data is stored")
+                self.logger.error(msg)
+                raise MTTSError(msg)
+                
+        elif isinstance(ts_arr, xr.DataArray):
+            # TODO: need to validate the input xarray
+            self._ts = ts_arr
+            
         else:
-            raise MTTSError('Data type {0} not supported'.format(type(ts_arr))+\
-                              ', ts needs to be a numpy.ndarray or pandas DataFrame')
+            msg = ("Data type {0} not supported".format(type(ts_arr)) +\
+                   ", ts needs to be a numpy.ndarray, pandas DataFrame, " +\
+                   "or xarray.DataArray.")
+            raise MTTSError()
 
         self._n_samples = self.ts.data.size
+        
+    def update_xarray_metadata(self):
+        """
+        
+        :return: DESCRIPTION
+        :rtype: TYPE
+
+        """
+        
+        self._ts.attrs.update(self.metadata.to_dict())
+        
 
     #--> number of samples just to make sure there is consistency
     @property
     def n_samples(self):
         """number of samples"""
-        return int(self._n_samples)
+        return int(self.ts.size)
 
     @n_samples.setter
     def n_samples(self, num_samples):
         """number of samples (int)"""
-        self._n_samples = int(num_samples)
+        self.logger.warning('Cannot set the number of samples')
 
     def _check_for_index(self):
         """
         check to see if there is an index in the time series
         """
-        if len(self._ts) > 0:
+        if len(self._ts) > 1:
             return True
         else:
             return False
@@ -202,12 +209,13 @@ class MTTS(object):
     def sampling_rate(self):
         """sampling rate in samples/second"""
         if self._check_for_index():
-            if isinstance(self._ts.index[0], int):
-                sr = self._sampling_rate
-            else:
-                sr = 1E9/self._ts.index[0].freq.nanos
+            sr = 1E9/self._ts.coords.indexes['time'][0].freq.nanos
         else:
-            sr = self._sampling_rate
+            self.logger.info("Data has not been set yet, " +
+                             " sample rate is from metadata")
+            sr = self.metadata.sample_rate
+            if sr is None:
+                sr = 0.0
         return np.round(sr, 0)
 
     @sampling_rate.setter
@@ -217,21 +225,8 @@ class MTTS(object):
 
         type float
         """
-        try:
-            sr = float(sampling_rate)
-        except (ValueError):
-            raise MTTSError("Input sampling rate should be a float not {0}".format(type(sampling_rate)))
-        self._sampling_rate = sr
-        if self._check_for_index():
-            if isinstance(self._ts.index[0], int):
-                return
-            else:
-                if 1E9/self._ts.index[0].freq.nanos == self._sampling_rate:
-                    return
-                else:
-                    if self.start_time_utc is not None:
-                        self._set_dt_index(self.start_time_utc,
-                                           self._sampling_rate)
+        self.logger.warning("Cannot set sample rate.  If you want to " +
+                            "change the sampling rate use method `resample`.")
 
 
     ## set time and set index
@@ -239,10 +234,12 @@ class MTTS(object):
     def start_time_utc(self):
         """start time in UTC given in time format"""
         if self._check_for_index():
-            if isinstance(self._ts.index[0], int):
-                return None
-            else:
-                return self._ts.index[0].isoformat()
+            mtime = MTime(self._ts.coords.indexes['time'][0].isoformat())
+            return mtime.iso_str
+        else:
+            self.logger.info("Data not set yet, pulling start time from " +
+                             "metadata.time_period.start")
+            return self.metadata.time_period.start
 
     @start_time_utc.setter
     def start_time_utc(self, start_time):
@@ -257,19 +254,18 @@ class MTTS(object):
         the new start time.
         """
 
-        if not isinstance(start_time, datetime.datetime):
-            start_time = dateutil.parser.parse(start_time)
+        if not isinstance(start_time, MTime):
+            start_time = Mtime(start_time)
 
+        self.metadata.time_period.start = start_time.iso_str
         if self._check_for_index():
-            if isinstance(self._ts.index[0], int):
-                self._set_dt_index(start_time.isoformat(),
-                                   self._sampling_rate)
+            if start_time == Mtime(self.ts.coords.indexex[0].isoformat()):
+                return
             else:
-                if start_time.isoformat() == self.ts.index[0].isofromat():
-                    return
-                else:
-                    self._set_dt_index(start_time.isoformat(),
-                                       self._sampling_rate)
+                new_dt = self._make_dt_coordinates(start_time,
+                                                   self._sampling_rate)
+                self.ts.coords['time'] = new_dt
+                
 
         # make a time series that the data can be indexed by
         else:
@@ -334,7 +330,7 @@ class MTTS(object):
             else:
                 return self._ts.index[-1].isoformat()
 
-    def _set_dt_index(self, start_time, sampling_rate):
+    def _make_dt_coordinates(self, start_time, sampling_rate, n_samples):
         """
         get the date time index from the data
 
@@ -343,18 +339,29 @@ class MTTS(object):
         """
         if len(self.ts) == 0:
             return
-
+        
         if start_time is None:
-            print('Start time is None, skipping calculating index')
+            self.logger.warning('Start time is None, skipping calculating index')
             return
-        dt_freq = '{0:.0f}N'.format(1./(sampling_rate)*1E9)
+        
+        if not isinstance(start_time, MTime):
+            if isinstance(start_time, (str, int, float)):
+                start_time = MTime(start_time)
+            elif isinstance(start_time, (np.datatime64, np.ndarray)):
+                start_time = MTime(str(start_time))
+            else:
+                msg = "Type {0} is not understood for `start_time`".format(
+                    type(start_time))
+                self.logger.error(msg)
+                raise MTTSError(msg)
 
-        dt_index = pd.date_range(start=start_time,
-                                 periods=self.ts.data.size,
+        dt_freq = '{0:.0f}N'.format(1. / (sampling_rate) * 1E9)
+
+        dt_index = pd.date_range(start=start_time.iso_utc.split('+', 1)[0],
+                                 periods=n_samples,
                                  freq=dt_freq)
 
-        self.ts.index = dt_index
-        print("   * Reset time seies index to start at {0}".format(start_time))
+        return dt_index
 
     # decimate data
     def decimate(self, dec_factor=1):

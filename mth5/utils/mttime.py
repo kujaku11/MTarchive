@@ -50,17 +50,21 @@ class MTime():
 
         self.logger = logging.getLogger('{0}.{1}'.format(
             __name__, self.__class__.__name__))
+        
         if time is not None:
             if isinstance(time, str):
                 self.logger.debug("Input time is a string, will be parsed")
                 self.dt_object.from_str(time)
+            
             elif isinstance(time, (int, float)):
                 self.logger.debug("Input time is a number, assuming epoch " +
                                   "seconds in UTC")
-                self.epoch_sec = time
+                self.epoch_seconds = time
+            
             else:
                 msg = "input time must be a string, float, or int, not {0}"
                 self.logger.error(msg.format(type(time)))
+        
         else:
             self.logger.debug("Initiated with None, dt_object is set to "+
                               "default time 1980-01-01 00:00:00")
