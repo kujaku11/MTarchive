@@ -30,18 +30,25 @@ class BaseGroup():
     """
     generic object that will have functionality for reading/writing groups, 
     including attributes and data.
+    
+    methods:
+        * initialize_group
+        * write_metadata
+        * read_metadata
+        * from_reference?
     """
     
     def __init__(self, group, **kwargs):
         
-        if group is not None:
-            # has to be a public or private attribute otherwise if its __ it
-            # will not propagate
+        if group is not None and isinstance(group, (h5py.Group, h5py.Dataset)):
             self.hdf5_group = weakref.ref(group)()
         
         self.logger = logging.getLogger('{0}.{1}'.format(__name__, 
                                                          self._class_name))
         
+        # set metadata to the appropriate class.  Standards is not a 
+        # metadata.Base object so should be skipped. If the class name is not
+        # defined yet set to Base class.
         self.metadata = metadata.Base()
         if self._class_name not in ['Standards']:
             try:
@@ -49,6 +56,8 @@ class BaseGroup():
             except KeyError:
                 self.metadata = metadata.Base()
             
+        # add 2 attributes that will help with querying 
+        # 1) the metadata class name
         self.metadata.add_base_attribute('mth5_type', 
                                          self._class_name.split('Group')[0],
                                          {'type':str, 
@@ -59,12 +68,22 @@ class BaseGroup():
                                           'options':[],
                                           'alias':[],
                                           'example':'group_name'})
-            
-        self.logger.debug("setting metadata for {0} to {1}".format(
+        
+        # 2) the HDF5 reference that can be used instead of paths
+        self.metadata.add_base_attribute('hdf5_reference', 
+                                         self.hdf5_group.ref,
+                                         {'type': 'h5py_reference', 
+                                          'required':True,
+                                          'style':'free form',
+                                          'description': 'hdf5 internal reference', 
+                                          'units':None,
+                                          'options':[],
+                                          'alias':[],
+                                          'example':'<HDF5 Group Reference>'})
+        # set summary attributes    
+        self.logger.debug("Metadata class for {0} is {1}".format(
                 self._class_name, type(self.metadata)))
-            
-        
-        
+
         self._defaults_summary_attrs = {'name': 'Summary',
                                   'max_shape': (10000, ),
                                   'dtype': np.dtype([('default', np.float)])}
@@ -154,6 +173,17 @@ class BaseGroup():
                 self._defaults_summary_attrs['max_shape'],
                 self._defaults_summary_attrs['dtype']))
         
+    def initialize_group(self):
+        """
+        Initialize group
+        
+        :return: DESCRIPTION
+        :rtype: TYPE
+
+        """
+        self.initialize_summary_table()
+        self.write_metadata()
+        
    
 class SurveyGroup(BaseGroup):
     """
@@ -185,16 +215,16 @@ class MasterStationGroup(BaseGroup):
     """
     holds the station group
     
+    methods:
+        * add_station
+        * from_reference
+        * 
+    
     """
     
     def __init__(self, group, **kwargs):
         
         super().__init__(group, **kwargs)
-        
-        self.metadata = metadata.Base()
-        
-        self._default_group_attr = {'type': self._class_name.split('Group')[0],
-                                    'h5_reference': self.hdf5_group.ref}
         
         self._defaults_summary_attrs = {'name': 'Summary',
                                   'max_shape': (1000,),
@@ -211,13 +241,6 @@ class MasterStationGroup(BaseGroup):
                                                      ('hdf5_reference', 
                                                       h5py.ref_dtype)])}
         
-    @property
-    def name(self):
-        return self.metadata.archive_id
-    
-    @name.setter
-    def name(self, name):
-        self.metadata.archive_id = name
         
 class StationGroup(BaseGroup):
     """
@@ -317,6 +340,9 @@ class StandardsGroup(BaseGroup):
             index = self.summary_table.add_row(key_list)
             
         self.logger.debug(f'Added {index} rows to Standards Group')
+        
+    def initialize_group(self):
+        self
         
         
         

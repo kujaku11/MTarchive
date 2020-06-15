@@ -4,13 +4,19 @@ Created on Fri May 22 16:49:06 2020
 
 @author: jpeacock
 """
+# =============================================================================
+# Imports
+# =============================================================================
+
+import numpy as np
+import json
+import h5py
 
 from collections.abc import MutableMapping, Iterable
 from collections import OrderedDict, defaultdict
 from xml.etree import cElementTree as et
 from xml.dom import minidom
 from operator import itemgetter
-import numpy as np
 
 # code to convert ini_dict to flattened dictionary
 # default seperater '_'
@@ -242,6 +248,12 @@ def to_numpy_type(value):
     is allowed.
     """
 
+    if value is None:
+        return "none"
+    # For now turn references into a generic string
+    if isinstance(value, h5py.h5r.Reference):
+        value = str(value)
+    
     if isinstance(
         value,
         (
@@ -258,14 +270,37 @@ def to_numpy_type(value):
         ),
     ):
         return value
+    
     if isinstance(value, Iterable):
         if np.any([type(x) in [str, bytes, np.str_] for x in value]):
             return np.array(value, dtype="S")
         else:
             return np.array(value)
 
-    if value is None:
-        return "none"
-
     else:
         raise TypeError("Type {0} not understood".format(type(value)))
+        
+# =============================================================================
+# Helper function to be sure everything is encoded properly
+# =============================================================================
+class NumpyEncoder(json.JSONEncoder):
+    """
+    Need to encode numpy ints and floats for json to work
+    """
+    def default(self, obj):
+        if isinstance(obj, (np.int_, np.intc, np.intp, np.int8,
+                            np.int16, np.int32, np.int64, np.uint8,
+                            np.uint16, np.uint32, np.uint64)):
+            return int(obj)
+
+        elif isinstance(obj, (np.float_, np.float16, np.float32, np.float64)):
+            return float(obj)
+
+        elif isinstance(obj, (np.ndarray)):
+            return obj.tolist()
+        
+        # For now turn references into a generic string
+        elif isinstance(obj, h5py.h5r.Reference):
+            return str(obj)
+
+        return json.JSONEncoder.default(self, obj)

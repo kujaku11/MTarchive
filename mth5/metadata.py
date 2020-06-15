@@ -204,6 +204,10 @@ class Base():
 
         if value in [None, 'None', 'none']:
             return None
+        # hack to get around h5py reference types, in the future will need
+        # a more robust test.
+        if v_type == 'h5py_reference':
+            return value
         
         if v_type is None:
             msg = ('standards data type is unknown, if you want to ' +
@@ -577,7 +581,7 @@ class Base():
         """
 
         return json.dumps(self.to_dict(nested=nested),
-                          cls=NumpyEncoder,
+                          cls=helpers.NumpyEncoder,
                           indent=indent)
 
     def from_json(self, json_str):
@@ -1585,23 +1589,4 @@ class Magnetic(Channel):
 
         self._attr_dict = ATTR_DICT['magnetic']
 
-# =============================================================================
-# Helper function to be sure everything is encoded properly
-# =============================================================================
-class NumpyEncoder(json.JSONEncoder):
-    """
-    Need to encode numpy ints and floats for json to work
-    """
-    def default(self, obj):
-        if isinstance(obj, (np.int_, np.intc, np.intp, np.int8,
-                            np.int16, np.int32, np.int64, np.uint8,
-                            np.uint16, np.uint32, np.uint64)):
-            return int(obj)
 
-        elif isinstance(obj, (np.float_, np.float16, np.float32, np.float64)):
-            return float(obj)
-
-        elif isinstance(obj, (np.ndarray)):
-            return obj.tolist()
-
-        return json.JSONEncoder.default(self, obj)

@@ -330,7 +330,7 @@ class MTH5():
         :rtype: TYPE
 
         """
-        
+        # in the future should allow this to return the proper container.
         return self.__hdf5_obj[h5_reference]
     
     def add_station(self, name):

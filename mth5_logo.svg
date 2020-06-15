@@ -16,21 +16,12 @@
    version="1.1"
    id="svg8"
    inkscape:version="0.92.3 (2405546, 2018-03-11)"
-   sodipodi:docname="mth5_logo.svg">
+   sodipodi:docname="mth5_logo.svg"
+   inkscape:export-filename="C:\Users\jpeacock\Documents\GitHub\MTarchive\mth5_logo.png"
+   inkscape:export-xdpi="300"
+   inkscape:export-ydpi="300">
   <defs
      id="defs2">
-    <linearGradient
-       inkscape:collect="always"
-       id="linearGradient1622">
-      <stop
-         style="stop-color:#ffffff;stop-opacity:1"
-         offset="0"
-         id="stop1618" />
-      <stop
-         style="stop-color:#646464;stop-opacity:1"
-         offset="1"
-         id="stop1620" />
-    </linearGradient>
     <linearGradient
        inkscape:collect="always"
        id="linearGradient1383">
@@ -166,17 +157,6 @@
        y1="90.661453"
        x2="99.696579"
        y2="73.02858" />
-    <radialGradient
-       inkscape:collect="always"
-       xlink:href="#linearGradient1622"
-       id="radialGradient1626"
-       cx="106.11681"
-       cy="40.16518"
-       fx="106.11681"
-       fy="40.16518"
-       r="101.77009"
-       gradientTransform="matrix(1.5515086,0.00499201,-8.7236309e-4,0.27112846,-58.107578,29.680167)"
-       gradientUnits="userSpaceOnUse" />
   </defs>
   <sodipodi:namedview
      id="base"
@@ -212,19 +192,14 @@
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
      id="layer1">
-    <rect
-       style="opacity:1;fill:url(#radialGradient1626);fill-opacity:1;stroke:none;stroke-width:0.10583334;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
-       id="rect1616"
-       width="203.54018"
-       height="61.232143"
-       x="4.7284436"
-       y="10.483755" />
     <g
        id="g980-2"
        style="fill:url(#linearGradient1120);fill-opacity:1" />
     <g
        id="g1606"
-       transform="translate(0.37797619,-98.651786)">
+       transform="translate(0.37797619,-98.651786)"
+       inkscape:export-xdpi="300"
+       inkscape:export-ydpi="300">
       <g
          style="fill:#ffffff"
          transform="translate(0.56696429,70.114583)"

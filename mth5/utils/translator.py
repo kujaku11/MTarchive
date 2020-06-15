@@ -123,12 +123,12 @@ orientation_code_dict = {'N': {'min': 0, 'max': 5},
                          '2': {'min': 45, 'max': 85},
                          '3': {'min': 5, 'max': 85}}
 
-release_dict = {'CC 0': 'open',
-                'CC BY': 'partial',
-                'CC BY-SA': 'partial',
-                'CC BY-ND': 'partial',
-                'CC BY-NC-SA': 'partial',
-                'CC BY-NC-NC': 'closed'}
+release_dict = {'CC-0': 'open',
+                'CC-BY': 'partial',
+                'CC-BY-SA': 'partial',
+                'CC-BY-ND': 'partial',
+                'CC-BY-NC-SA': 'partial',
+                'CC-BY-NC-NC': 'closed'}
 
 def get_location_code(channel_obj):
     """

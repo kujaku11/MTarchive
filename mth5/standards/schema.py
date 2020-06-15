@@ -194,6 +194,8 @@ def validate_type(value):
             return 'string'
         elif 'bool' in value.lower():
             return 'boolean'
+        elif 'h5py_reference':
+            return value
 
         else:
             msg = ("'type' must be type [ int | float " +
