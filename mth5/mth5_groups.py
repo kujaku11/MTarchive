@@ -19,7 +19,7 @@ import h5py
 from mth5 import metadata
 from mth5.utils.helpers import to_numpy_type
 from mth5.helpers import get_tree
-from mth5.utils.exceptions import MTH5TableError
+from mth5.utils.exceptions import MTH5TableError, MTH5Error
 
 
 meta_classes = dict(inspect.getmembers(metadata, inspect.isclass))
@@ -241,6 +241,64 @@ class MasterStationGroup(BaseGroup):
                                                      ('hdf5_reference', 
                                                       h5py.ref_dtype)])}
         
+    # do we want just names or should we be able to iterate over the actual
+    # group?
+    def __iter__(self):
+        return self.station_list.__iter__()
+        
+    @property
+    def station_list(self):
+        """
+        :return: list of existing stations
+        :rtype: :class:`list`
+
+        """
+        
+        return list(self.hdf5_group.keys())
+    
+    def add_station(self, station_name, station_metadata=None):
+        """
+        Add a station with metadata if given.
+        
+        :param station_name: DESCRIPTION
+        :type station_name: TYPE
+        :param station_metadata: DESCRIPTION, defaults to None
+        :type station_metadata: TYPE, optional
+        :return: DESCRIPTION
+        :rtype: TYPE
+
+        """
+        
+        try:
+            station_group = self.hdf5_group.create_group(station_name)
+            self.logger.debug("Created group {0}".format(station_group))
+        except ValueError:
+            msg = "Group {0} alread exists, returning existing group"
+            self.logger.info(msg.format(station_name))
+            station_group = self.hdf5_group[station_name]
+        
+        station_obj = StationGroup(station_group)
+        station_obj.write_metadata()
+        
+        return station_obj
+    
+    def get_station(self, station_name):
+        """
+        
+        :param station_name: DESCRIPTION
+        :type station_name: TYPE
+        :return: DESCRIPTION
+        :rtype: TYPE
+
+        """
+        
+        try:
+            return StationGroup(self.hdf5_group[station_name])
+        except KeyError:
+            msg = (f'{station_name} does not exist, ' +
+                   'check station_list for existing names')
+            self.logger.exception(msg)
+            raise MTH5Error(msg)
         
 class StationGroup(BaseGroup):
     """

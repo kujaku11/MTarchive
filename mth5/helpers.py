@@ -65,6 +65,8 @@ def get_tree(parent):
                                          (len(group_name) + 10) * '-'))
         elif isinstance(obj, h5py.Dataset):
             lines.append('{0}--> Dataset: {1}'.format(spacing, group_name))
+            lines.append('{0}{1}'.format(spacing, 
+                                         (len(group_name) + 10) * '-'))
             
 
     #lines.append(parent.name)
