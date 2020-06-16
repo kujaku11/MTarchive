@@ -8,10 +8,10 @@ Created on Fri May 22 16:49:06 2020
 # =============================================================================
 # Imports
 # =============================================================================
-
-import numpy as np
-import json
 import h5py
+import inspect
+import json
+import numpy as np
 
 from collections.abc import MutableMapping, Iterable
 from collections import OrderedDict, defaultdict
@@ -305,3 +305,13 @@ class NumpyEncoder(json.JSONEncoder):
             return str(obj)
 
         return json.JSONEncoder.default(self, obj)
+
+# =============================================================================
+# 
+# =============================================================================
+def inherit_doc_string(cls):
+    for base in inspect.getmro(cls):
+        if base.__doc__ is not None:
+            cls.__doc__ = base.__doc__
+            break
+    return cls

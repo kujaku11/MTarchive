@@ -5,4 +5,4 @@ channels_recorded_magnetic,str,TRUE,name list,none,list of magnetic channels rec
 comments,str,FALSE,free form,none,any comments on the run,none,none,cows chewed cables
 data_type,str,TRUE,controlled vocabulary,none,type of data recoreded for this run,[ RMT | AMT| BBMT | LPMT | ULPMT | other ] ,none,BBMT
 id,str,TRUE,alpha numeric,none,run ID should be station name followed by an alphabet letter for the run,none,none,mt02b
-sampling_rate,float,TRUE,number,samples per second,rate of sampling renureded for this run,none,none,100
+sample_rate,float,TRUE,number,samples per second,rate of sampling renureded for this run,none,none,100

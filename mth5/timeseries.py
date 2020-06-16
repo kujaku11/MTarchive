@@ -386,24 +386,25 @@ class MTTS(object):
             return
         
         if sample_rate in [0, None]:
-            msg = f"Need to input a valid sample rate. Not {sample_rate}"
-            self.logger.error(msg)
-            raise MTTSError(msg)
+            msg = (f"Need to input a valid sample rate. Not {sample_rate}, " +
+                   "returning a time index assuming a sample rate of 1")
+            self.logger.warning(msg)
+            sample_rate = 1
         
         if start_time is None:
-            self.logger.warning('Start time is None, skipping calculating index')
-            return
+            msg = (f"Need to input a valid sample rate. Not {start_time}, " +
+                   "returning a time index with start time of " +
+                   "1980-01-01T00:00:00")
+            self.logger.warning(msg)
+            start_time = '1980-01-01T00:00:00'
+            
+        if n_samples < 1:
+            msg = (f"Need to input a valid n_samples. Not {n_samples}")
+            self.logger.error(msg)
+            raise ValueError(msg)
         
         if not isinstance(start_time, MTime):
-            if isinstance(start_time, (str, int, float)):
-                start_time = MTime(start_time)
-            elif isinstance(start_time, (np.datatime64, np.ndarray)):
-                start_time = MTime(str(start_time))
-            else:
-                msg = "Type {0} is not understood for `start_time`".format(
-                    type(start_time))
-                self.logger.error(msg)
-                raise MTTSError(msg)
+            start_time = MTime(start_time)
 
         dt_freq = '{0:.0f}N'.format(1.0E9 / (sample_rate))
 

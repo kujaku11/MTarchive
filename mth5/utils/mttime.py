@@ -7,6 +7,8 @@ Created on Wed May 13 19:10:46 2020
 
 import datetime
 import logging
+import numpy as np
+
 from dateutil import parser as dtparser
 from dateutil.tz.tz import tzutc
 
@@ -50,6 +52,7 @@ class MTime():
 
         self.logger = logging.getLogger('{0}.{1}'.format(
             __name__, self.__class__.__name__))
+        self.dt_object = self.now()
         
         if time is not None:
             if isinstance(time, str):
@@ -60,7 +63,11 @@ class MTime():
                 self.logger.debug("Input time is a number, assuming epoch " +
                                   "seconds in UTC")
                 self.epoch_seconds = time
-            
+            elif isinstance(time, (np.datetime64)):
+                self.logger.debug("Input time is a np.datetime64 " + 
+                                  "dt_object set to datetime64.tolist().")
+                self.dt_object = self.validate_tzinfo(time.tolist())
+                
             else:
                 msg = "input time must be a string, float, or int, not {0}"
                 self.logger.error(msg.format(type(time)))

@@ -18,7 +18,7 @@ import h5py
 
 from mth5 import metadata
 from mth5.standards import schema
-from mth5.utils.helpers import to_numpy_type
+from mth5.utils.helpers import to_numpy_type, inherit_doc_string
 from mth5.helpers import get_tree
 from mth5.utils.exceptions import MTH5TableError, MTH5Error
 from mth5.timeseries import MTTS
@@ -269,8 +269,9 @@ class MasterStationGroup(BaseGroup):
             station_group = self.hdf5_group.create_group(station_name)
             self.logger.debug("Created group {0}".format(station_group.name))
             station_obj = StationGroup(station_group, 
-                                       metadata=station_metadata)
-            station_obj.write_metadata()
+                                       station_metadata=station_metadata)
+            station_obj.initialize_group()
+        
         except ValueError:
             msg = (f"Station {station_name} already exists, " +
                    "returning existing group.")
@@ -348,6 +349,7 @@ class StationGroup(BaseGroup):
             self.logger.debug("Created group {0}".format(run_group.name))
             run_obj = RunGroup(run_group, run_metdata=run_metadata)
             run_obj.initialize_group()
+            self.summary_table.add_row(run_obj.table_entry)
         
         except ValueError:
             msg = (f"run {run_name} already exists, " +
@@ -490,6 +492,28 @@ class RunGroup(BaseGroup):
                                             ('measurement_type', 'S12'),
                                             ('units', 'S25')])}
         
+    @property
+    def table_entry(self):
+        """
+        Get a run entry
+        
+        :return: DESCRIPTION
+        :rtype: TYPE
+
+        """
+        return np.array([(self.metadata.id,
+                         self.metadata.time_period.start,
+                         self.metadata.time_period.end,
+                         ','.join(self.metadata.channels_recorded_all),
+                         self.metadata.data_type,
+                         self.metadata.sample_rate)],
+                         dtype=np.dtype([('id', 'S5'),
+                                         ('start', 'S32'),
+                                         ('end', 'S32'),
+                                         ('components', 'S100'),
+                                         ('measurement_type', 'S12'),
+                                         ('sample_rate', np.float)]))
+        
     def add_channel(self, channel_name, channel_type, data, channel_dtype='f',
                     max_shape=(None,), chunks=True, channel_metadata=None):
         """
@@ -589,7 +613,20 @@ class RunGroup(BaseGroup):
     
 class ChannelDataset():
     """
-    holds a channel
+    Hold a channel dataset.  This is a simple container for the data to make 
+    sure that the user has the flexibility to turn the channel into an object
+    they want to deal with.  
+    
+    Utilities will be written to create some common objects like:
+        * xarray.DataArray
+        * pandas.DataFrame
+        * zarr
+        * dask.Array
+        
+    The benefit of these other objects is that they can be indexed by time,
+    and they have much more buit-in funcionality.
+     
+    For now all the numpy type slicing can be used on `hdf5_dataset`
     """
     
     def __init__(self, dataset, dataset_metadata=None, **kwargs):
@@ -657,13 +694,19 @@ class ChannelDataset():
             
     def __str__(self):
         lines = ['Channel {0}:'.format(self._class_name)]
-        lines.append('\tdata type: {0}'.format(self.metadata.type))
-        lines.append('\tstart: {0}'.format(self.data.start.iso_str))
-        lines.append('\tend: {0}'.format(self.data.end.iso_str))
-        lines.append('\tsample rate: {0} samples/second'.format(self.data.sample_rate))
-        lines.append('\tsize: {0}'.format(self.data.shape))
-        lines.append('\tdata format: {0}'.format(self.data.dtype))
-        return 
+        lines.append('-' * (len(lines[0]) + 2))
+        info_str = '\t{0:<18}{1}'
+        lines.append(info_str.format('data type:', self.metadata.type))
+        lines.append(info_str.format('data format:', self.hdf5_dataset.dtype))
+        lines.append(info_str.format('data shape:', self.hdf5_dataset.shape))
+        lines.append(info_str.format('start:', self.metadata.time_period.start))
+        lines.append(info_str.format('end:', self.metadata.time_period.end))
+        lines.append(info_str.format('sample rate:', self.metadata.sample_rate))
+        
+        return '\n'.join(lines) 
+    
+    def __repr__(self):
+        return self.__str__()
         
     @property
     def _class_name(self):
@@ -704,7 +747,7 @@ class ChannelDataset():
         return np.array([(self.metadata.component,
                          self.metadata.time_period.start,
                          self.metadata.time_period.end,
-                         self.hdf5_group.size,
+                         self.hdf5_dataset.size,
                          self.metadata.type,
                          self.metadata.units)],
                         dtype= np.dtype([('component', 'S5'),
@@ -714,28 +757,9 @@ class ChannelDataset():
                                          ('measurement_type', 'S12'),
                                          ('units', 'S25')]))
     
-    @property
-    def data(self):
-        """
-        Return data as a timeseries object, 
-        
-        .. todo:: testing
-        
-        :return: DESCRIPTION
-        :rtype: TYPE
 
-        """
-        ts_obj = MTTS(self._class_name.lower(),
-                      channel_metadata=self.metadata,
-                      data=self.hdf5_dataset[()])
-        
-        return ts_obj
-        
-        
+@inherit_doc_string                
 class ElectricDataset(ChannelDataset):
-    """
-    holds a channel
-    """
     
     def __init__(self, group, **kwargs):
         

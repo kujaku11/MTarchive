@@ -1361,13 +1361,15 @@ class Filter(Base):
 
         bool_list = []
         for app_bool in applied_list:
+            if app_bool is None:
+                continue
             if isinstance(app_bool, str):
                 if app_bool.lower() in ['false']:
                     bool_list.append(False)
                 elif app_bool.lower() in ['true']:
                     bool_list.append(True)
                 else:
-                    msg = 'Filter.applied must be [True | False], not {0}'
+                    msg = 'Filter.applied must be [ True | False ], not {0}'
                     self.logger.error(msg.format(app_bool))
                     raise MTSchemaError(msg.format(app_bool))
             elif isinstance(app_bool, bool):
@@ -1466,7 +1468,7 @@ class Station(Base):
         self.location = Location()
         self.time_period = TimePeriod()
 
-        super(Station, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
         self._attr_dict = ATTR_DICT['station']
     
@@ -1509,6 +1511,25 @@ class Run(Base):
             if channel_list is not None:
                 number += len(channel_list)
         return number
+    
+    @property
+    def channels_recorded_all(self):
+        """
+        
+        :return: a list of all channels recorded
+        :rtype: TYPE
+
+        """
+        
+        all_channels = []
+        for recorded in ['electric', 'magnetic', 'auxiliary']:
+            rec_list = getattr(self, f'channels_recorded_{recorded}')
+            if rec_list is None:
+                continue
+            else:
+                all_channels += rec_list
+                
+        return all_channels
 
 # =============================================================================
 # Data logger
