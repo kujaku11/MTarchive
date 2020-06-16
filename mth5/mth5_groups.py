@@ -21,6 +21,7 @@ from mth5.standards import schema
 from mth5.utils.helpers import to_numpy_type
 from mth5.helpers import get_tree
 from mth5.utils.exceptions import MTH5TableError, MTH5Error
+from mth5.timeseries import MTTS
 
 
 meta_classes = dict(inspect.getmembers(metadata, inspect.isclass))
@@ -583,6 +584,24 @@ class ChannelDataset(BaseGroup):
                                          ('n_samples', np.int),
                                          ('measurement_type', 'S12'),
                                          ('units', 'S25')]))
+    
+    @property
+    def data(self):
+        """
+        Return data as a timeseries object, 
+        
+        .. todo:: testing
+        
+        :return: DESCRIPTION
+        :rtype: TYPE
+
+        """
+        ts_obj = MTTS(self._class_name.lower(),
+                      channel_metadata=self.metadata,
+                      data=self.hdf5_group[()])
+        
+        return ts_obj
+        
         
 class ElectricDataset(ChannelDataset):
     """

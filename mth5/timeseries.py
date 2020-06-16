@@ -241,8 +241,10 @@ class MTTS(object):
 
         type float
         """
-        self.logger.warning("Cannot set sample rate.  If you want to " +
-                            "change the sample rate use method `resample`.")
+        self.metadata.sample_rate = sample_rate
+        self.logger.warning("Setting MTTS.metadata.sample_rate. "+
+                            "If you want to change the time series sample" +
+                            " rate use method `resample`.")
 
 
     ## set time and set index
@@ -373,7 +375,6 @@ class MTTS(object):
                             'Use >>> MTTS.end = new_time')
 
     
-
     def _make_dt_coordinates(self, start_time, sample_rate, n_samples):
         """
         get the date time index from the data
@@ -411,9 +412,38 @@ class MTTS(object):
                                  freq=dt_freq)
 
         return dt_index
+    
+    def get_slice(self, start, end):
+        """
+        Get a slice from the time series given a start and end time.
+        
+        Looks for >= start & <= end
+        
+        Uses loc to be exact with milliseconds
+        
+        :param start: DESCRIPTION
+        :type start: TYPE
+        :param end: DESCRIPTION
+        :type end: TYPE
+        :return: DESCRIPTION
+        :rtype: TYPE
 
+        """
+        
+        if not isinstance(start, MTime):
+            start = MTime(start)
+        if not isinstance(end, MTime):
+            end = MTime(end)
+            
+        new_ts = self.ts.loc[(self.ts.indexes['time'] >= start.iso_no_tz) & 
+                             (self.ts.indexes['time'] <= end.iso_no_tz)]
+        new_ts.attrs['time_period.start'] = new_ts.coords.indexes['time'][0].isoformat()
+        new_ts.attrs['time_period.end'] = new_ts.coords.indexes['time'][-1].isoformat()
+
+        return new_ts
+    
     # decimate data
-    def decimate(self, dec_factor=1, inplace=False):
+    def resample(self, dec_factor=1, inplace=False):
         """
         decimate the data by using scipy.signal.decimate
 
@@ -439,26 +469,6 @@ class MTTS(object):
             return MTTS(self.metadata.type, data=new_ts,
                         metadata=self.metadata)
         
-        # # be sure the decimation factor is an integer
-        # dec_factor = int(dec_factor)
-
-        # if dec_factor > 1:
-        #     if dec_factor > 8:
-        #         n_dec = np.log2(dec_factor)/np.log2(8)
-        #         dec_list = [8] * int(n_dec) + [int(2**(3 * n_dec % 1))]
-        #         decimated_data = signal.decimate(self.ts.data, 8, n=8)
-        #         for dec in dec_list[1:]:
-        #             if dec == 0:
-        #                 break
-        #             decimated_data = signal.decimate(decimated_data,
-        #                                              dec,
-        #                                              n=8)
-        #     else:
-        #         decimated_data = signal.decimate(self.ts.data, dec_factor, n=8)
-        #     start_time = str(self.start_time_utc)
-        #     self.ts = decimated_data
-        #     self.sample_rate /= float(dec_factor)
-        #     self._set_dt_index(start_time, self.sample_rate)
 
     def low_pass_filter(self, low_pass_freq=15, cutoff_freq=55):
         """

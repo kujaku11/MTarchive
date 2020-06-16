@@ -158,6 +158,10 @@ class MTime():
     @property
     def iso_str(self):
         return self.dt_object.isoformat()
+    
+    @property
+    def iso_no_tz(self):
+        return self.dt_object.isoformat().split('+', 1)[0]
 
     @property
     def epoch_seconds(self):
