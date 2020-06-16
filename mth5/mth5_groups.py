@@ -235,9 +235,8 @@ class BaseGroup():
    
 class SurveyGroup(BaseGroup):
     """
-    SurveyGroup object that holds general information about the survey.
-    Including Stations, Reports, Filters, Standards and accompanying 
-    metadata. 
+    Utility class to holds general information about the survey and 
+    accompanying metadata for an MT survey.
     
     To access the hdf5 group directly use `SurveyGroup.hdf5_group`.
         
@@ -248,8 +247,8 @@ class SurveyGroup(BaseGroup):
     .. note:: All attributes should be input into the metadata object, that
              way all input will be validated against the metadata standards.
              If you change attributes in metadata object, you should run the
-             `BaseGroup.write_metadata` method.  This is a temporary solution
-             working on an automatic updater if metadata is changed.
+             `SurveyGroup.write_metadata()` method.  This is a temporary
+             solution, working on an automatic updater if metadata is changed.
 
     >>> survey.metadata.existing_attribute = 'update_existing_attribute'
     >>> survey.write_metadata()
@@ -266,8 +265,34 @@ class SurveyGroup(BaseGroup):
     >>> ...                                 'units':None,
     >>> ...                                 'options':[],
     >>> ...                                 'alias':[],
-    >>> ...                                 'example':'new attribute'})
+    >>> ...                                 'example':'new attribute
     
+    .. tip:: If you want ot add stations, reports, etc to the survey this 
+              should be done from the MTH5 object.  This is to avoid 
+              duplication, at least for now.
+    
+    To look at what the structure of ``/Survey`` looks like:
+
+        >>> survey
+        /Survey:
+        ====================
+            |- Group: Filters
+            -----------------
+                --> Dataset: Summary
+            -----------------
+            |- Group: Reports
+            -----------------
+                --> Dataset: Summary
+                -----------------
+            |- Group: Standards
+            -------------------
+                --> Dataset: Summary
+                -----------------
+            |- Group: Stations
+            ------------------
+                --> Dataset: Summary
+                -----------------
+         
     """
     
     def __init__(self, group, **kwargs):
@@ -277,13 +302,128 @@ class SurveyGroup(BaseGroup):
 
 class MasterStationGroup(BaseGroup):
     """
-    holds the station group
+    Utility class to holds information about the stations within a survey and 
+    accompanying metadata.  This class is next level down from Survey for
+    stations ``/Survey/Stations``.  This class provides methods to add and
+    get stations.  A summary table of all existing stations is also provided
+    as a convenience look up table to make searching easier.
+
+    To access MasterStationGroup from an open MTH5 file:
+        
+    >>> from mth5 import mth5
+    >>> mth5_obj = mth5.MTH5()
+    >>> mth5_obj.open_mth5(r"/test.mth5", mode='a')
+    >>> stations = mth5_obj.stations_group
     
-    methods:
-        * add_station
-        * from_reference
-        * 
+    To access the hdf5 group directly use `SurveyGroup.hdf5_group`.
+        
+    >>> stations.hdf5_group.ref
+    <HDF5 Group Reference>
     
+    .. note:: All attributes should be input into the metadata object, that
+             way all input will be validated against the metadata standards.
+             If you change attributes in metadata object, you should run the
+             `SurveyGroup.write_metadata()` method.  This is a temporary
+             solution, working on an automatic updater if metadata is changed.
+
+    >>> stations.metadata.existing_attribute = 'update_existing_attribute'
+    >>> stations.write_metadata()
+    
+    If you want to add a new attribute this should be done using the
+    `metadata.add_base_attribute` method.
+    
+    >>> stations.metadata.add_base_attribute('new_attribute',
+    >>> ...                                'new_attribute_value',
+    >>> ...                                {'type':str, 
+    >>> ...                                 'required':True,
+    >>> ...                                 'style':'free form',
+    >>> ...                                 'description': 'new attribute desc.', 
+    >>> ...                                 'units':None,
+    >>> ...                                 'options':[],
+    >>> ...                                 'alias':[],
+    >>> ...                                 'example':'new attribute
+    
+    To add a station:
+        
+        >>> new_station = stations.add_station('new_station')
+        >>> stations
+        /Survey/Stations:
+        ====================
+            --> Dataset: Summary
+            ......................
+            |- Group: new_station
+            ---------------------
+                --> Dataset: Summary
+                ......................
+                
+    Add a station with metadata:
+        
+        >>> from mth5.metadata import Station
+        >>> station_metadata = Station()
+        >>> station_metadata.archive_id = 'Test_01'
+        >>> station_metadata.time_period.start = '2020-01-01T12:30:00'
+        >>> station_metadata.location.latitude = 40.000
+        >>> station_metadata.location.longitude = -120.000
+        >>> new_station = stations.add_station('Test_01', station_metadata)
+        >>> # to look at the metadata
+        >>> new_station.metadata
+        {
+            "station": {
+                "acquired_by.author": null,
+                "acquired_by.comments": null,
+                "archive_id": "Test_01",
+                ...
+                }
+        }
+            
+        
+    .. seealso:: `mth5.metadata` for details on how to add metadata from  
+                 various files and python objects.
+                
+    To remove a station:
+        
+        >>> stations.remove_station('new_station')
+        >>> stations
+        /Survey/Stations:
+        ====================
+            --> Dataset: Summary
+            ......................       
+
+    .. note:: Deleting a station is not as simple as del(station).  In HDF5 
+              this does not free up memory, it simply removes the reference
+              to that station.  The common way to get around this is to
+              copy what you want into a new file, or overwrite the station.
+              
+    To get a station:
+        
+        >>> existing_station = stations.get_station('existing_station_name')
+        >>> existing_station
+        /Survey/Stations/existing_station_name:
+        =======================================
+            --> Dataset: Summary
+            ......................
+            |- Group: run_01
+            ----------------
+                --> Dataset: Summary
+                ......................
+                --> Dataset: Ex
+                ......................
+                --> Dataset: Ey
+                ......................
+                --> Dataset: Hx
+                ......................
+                --> Dataset: Hy
+                ......................
+                --> Dataset: Hz
+                ......................
+
+    A summary table is provided to make searching easier.  The table 
+    summarized all stations within a survey. To see what names are in the 
+    summary table
+        
+        >>> stations.summary_table.dtype.names
+        ('id', 'start', 'end', 'components', 'measurement_type', 'sample_rate')
+
     """
     
     def __init__(self, group, **kwargs):
@@ -347,6 +487,28 @@ class MasterStationGroup(BaseGroup):
         
         try:
             return StationGroup(self.hdf5_group[station_name])
+        except KeyError:
+            msg = (f'{station_name} does not exist, ' +
+                   'check station_list for existing names')
+            self.logger.exception(msg)
+            raise MTH5Error(msg)
+            
+    def remove_station(self, station_name):
+        """
+        
+        :param station_name: DESCRIPTION
+        :type station_name: TYPE
+        :return: DESCRIPTION
+        :rtype: TYPE
+
+        """
+        
+        try:
+            del self.hdf5_group[station_name]
+            self.logger.info("Deleting a station does not reduce the HDF5" +
+                             "file size it simply remove the reference. If " +
+                             "file size reduction is your goal, simply copy" +
+                             " what you want into another file.")
         except KeyError:
             msg = (f'{station_name} does not exist, ' +
                    'check station_list for existing names')
