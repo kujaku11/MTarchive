@@ -30,14 +30,37 @@ meta_classes = dict(inspect.getmembers(metadata, inspect.isclass))
 # =============================================================================
 class BaseGroup():
     """
-    generic object that will have functionality for reading/writing groups, 
-    including attributes and data.
+    Generic object that will have functionality for reading/writing groups, 
+    including attributes. To access the hdf5 group directly use the
+    `BaseGroup.hdf5_group` property.
+        
+    >>> base = BaseGroup(hdf5_group)
+    >>> base.hdf5_group.ref
+    <HDF5 Group Reference>
     
-    methods:
-        * initialize_group
-        * write_metadata
-        * read_metadata
-        * from_reference?
+    .. note:: All attributes should be input into the metadata object, that
+             way all input will be validated against the metadata standards.
+             If you change attributes in metadata object, you should run the
+             `BaseGroup.write_metadata` method.  This is a temporary solution
+             working on an automatic updater if metadata is changed.
+
+    >>> base.metadata.existing_attribute = 'update_existing_attribute'
+    >>> base.write_metadata()
+    
+    If you want to add a new attribute this should be done using the
+    `metadata.add_base_attribute` method.
+    
+    >>> base.metadata.add_base_attribute('new_attribute',
+    >>> ...                              'new_attribute_value',
+    >>> ...                              {'type':str, 
+    >>> ...                               'required':True,
+    >>> ...                               'style':'free form',
+    >>> ...                               'description': 'new attribute desc.', 
+    >>> ...                               'units':None,
+    >>> ...                               'options':[],
+    >>> ...                               'alias':[],
+    >>> ...                               'example':'new attribute'})
+    
     """
     
     def __init__(self, group, group_metadata=None, **kwargs):
@@ -212,7 +235,38 @@ class BaseGroup():
    
 class SurveyGroup(BaseGroup):
     """
-    holds the survey group
+    SurveyGroup object that holds general information about the survey.
+    Including Stations, Reports, Filters, Standards and accompanying 
+    metadata. 
+    
+    To access the hdf5 group directly use `SurveyGroup.hdf5_group`.
+        
+    >>> survey = SurveyGroup(hdf5_group)
+    >>> survey.hdf5_group.ref
+    <HDF5 Group Reference>
+    
+    .. note:: All attributes should be input into the metadata object, that
+             way all input will be validated against the metadata standards.
+             If you change attributes in metadata object, you should run the
+             `BaseGroup.write_metadata` method.  This is a temporary solution
+             working on an automatic updater if metadata is changed.
+
+    >>> survey.metadata.existing_attribute = 'update_existing_attribute'
+    >>> survey.write_metadata()
+    
+    If you want to add a new attribute this should be done using the
+    `metadata.add_base_attribute` method.
+    
+    >>> survey.metadata.add_base_attribute('new_attribute',
+    >>> ...                                'new_attribute_value',
+    >>> ...                                {'type':str, 
+    >>> ...                                 'required':True,
+    >>> ...                                 'style':'free form',
+    >>> ...                                 'description': 'new attribute desc.', 
+    >>> ...                                 'units':None,
+    >>> ...                                 'options':[],
+    >>> ...                                 'alias':[],
+    >>> ...                                 'example':'new attribute'})
     
     """
     

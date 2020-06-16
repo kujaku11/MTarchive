@@ -1486,7 +1486,7 @@ class Run(Base):
 
     def __init__(self, **kwargs):
         self.id = None
-        self.sampling_rate = None
+        self.sample_rate = None
         self.channels_recorded_auxiliary = None
         self.channels_recorded_electric = None
         self.channels_recorded_magnetic = None
@@ -1497,7 +1497,7 @@ class Run(Base):
         self.time_period = TimePeriod()
         self.data_logger = DataLogger()
         self.metadata_by = Person()
-        super(Run, self).__init__()
+        super().__init__()
 
         self._attr_dict = ATTR_DICT['run']
 
@@ -1569,7 +1569,7 @@ class Channel(Base):
         self.translated_tilt = None
         self.sensor = Instrument()
 
-        super(Channel, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self._attr_dict = ATTR_DICT['channel']      
 
 # =============================================================================
@@ -1589,7 +1589,7 @@ class Electric(Channel):
         self.dc = Diagnostic()
         self.units_s = None
 
-        super(Electric, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         
         self.type = 'electric'
         self._attr_dict = ATTR_DICT['electric']
