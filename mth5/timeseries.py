@@ -114,7 +114,7 @@ class MTTS(object):
             raise MTTSError(msg)
             
         if channel_metadata is not None:
-            if not isinstance(channel_metadata, self.metadata):
+            if not isinstance(channel_metadata, type(self.metadata)):
                 msg = "input metadata must be type {0} not {1}".format(
                     type(self.metadata), type(channel_metadata))
                 self.logger.error(msg)

@@ -90,12 +90,14 @@ class BaseGroup():
         if group_metadata is not None:
             if not isinstance(group_metadata, (self.metadata, metadata.Base)):
                 msg = "metadata must be type metadata.{0} not {1}".format(
-                    self._class_name, type(metadata))
+                    self._class_name, type(group_metadata))
                 self.logger.error(msg)
                 raise MTH5Error(msg)
              
             # load from dict because of the extra attributes for MTH5
-            self.metadata.from_dict(metadata.to_dict())
+            self.metadata.from_dict(group_metadata.to_dict())
+             
+            # write out metadata to make sure that its in the file.
             self.write_metadata()
 
         # set default columns of summary table.
@@ -453,6 +455,7 @@ class StandardsGroup(BaseGroup):
         :rtype: TYPE
 
         """
+        self.initialize_summary_table()
         schema_obj = schema.Standards()
         self.summary_table_from_dict(schema_obj.summarize_standards())
         self.write_metadata()
@@ -554,18 +557,144 @@ class RunGroup(BaseGroup):
             
         return channel_obj
     
-class ChannelDataset(BaseGroup):
+    def get_channel(self, channel_name):
+        """
+        
+        get channel
+        
+        :param channel_name: DESCRIPTION
+        :type channel_name: TYPE
+        :return: DESCRIPTION
+        :rtype: TYPE
+
+        """
+        
+        try:
+            ch_dataset = self.hdf5_group[channel_name]
+            if ch_dataset.attrs['mth5_type'].lower() in ['electric']:
+                return ElectricDataset(ch_dataset)
+            elif ch_dataset.attrs['mth5_type'].lower() in ['magnetic']:
+                return MagneticDataset(ch_dataset)
+            elif ch_dataset.attrs['mth5_type'].lower() in ['auxiliary']:
+                return AuxiliaryDataset(ch_dataset)
+            else:
+                return ChannelDataset(ch_dataset)
+            
+        except KeyError:
+            msg = (f'{channel_name} does not exist, ' +
+                   'check groups_list for existing names')
+            self.logger.exception(msg)
+            raise MTH5Error(msg)
+        
+    
+class ChannelDataset():
     """
     holds a channel
     """
     
-    def __init__(self, group, **kwargs):
+    def __init__(self, dataset, dataset_metadata=None, **kwargs):
         
-        super().__init__(group, **kwargs)
+        if dataset is not None and isinstance(dataset, (h5py.Dataset)):
+            self.hdf5_dataset = weakref.ref(dataset)()
+        
+        self.logger = logging.getLogger('{0}.{1}'.format(__name__, 
+                                                         self._class_name))
+        
+        # set metadata to the appropriate class.  Standards is not a 
+        # metadata.Base object so should be skipped. If the class name is not
+        # defined yet set to Base class.
+        self.metadata = metadata.Base()
+        try:
+            self.metadata = meta_classes[self._class_name]()
+        except KeyError:
+            self.metadata = metadata.Base()
+            
+        # add 2 attributes that will help with querying 
+        # 1) the metadata class name
+        self.metadata.add_base_attribute('mth5_type', 
+                                         self._class_name.split('Group')[0],
+                                         {'type':str, 
+                                          'required':True,
+                                          'style':'free form',
+                                          'description': 'type of group', 
+                                          'units':None,
+                                          'options':[],
+                                          'alias':[],
+                                          'example':'group_name'})
+        
+        # 2) the HDF5 reference that can be used instead of paths
+        self.metadata.add_base_attribute('hdf5_reference', 
+                                         self.hdf5_dataset.ref,
+                                         {'type': 'h5py_reference', 
+                                          'required':True,
+                                          'style':'free form',
+                                          'description': 'hdf5 internal reference', 
+                                          'units':None,
+                                          'options':[],
+                                          'alias':[],
+                                          'example':'<HDF5 Group Reference>'})
+        # set summary attributes    
+        self.logger.debug("Metadata class for {0} is {1}".format(
+                self._class_name, type(self.metadata)))
+        
+        # if metadata, make sure that its the same class type
+        if dataset_metadata is not None:
+            if not isinstance(dataset_metadata, (self.metadata, metadata.Base)):
+                msg = "metadata must be type metadata.{0} not {1}".format(
+                    self._class_name, type(dataset_metadata))
+                self.logger.error(msg)
+                raise MTH5Error(msg)
+             
+            # load from dict because of the extra attributes for MTH5
+            self.metadata.from_dict(dataset_metadata.to_dict())
+             
+            # write out metadata to make sure that its in the file.
+            self.write_metadata()
+        
+        # if any other keywords 
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+            
+    def __str__(self):
+        lines = ['Channel {0}:'.format(self._class_name)]
+        lines.append('\tdata type: {0}'.format(self.metadata.type))
+        lines.append('\tstart: {0}'.format(self.data.start.iso_str))
+        lines.append('\tend: {0}'.format(self.data.end.iso_str))
+        lines.append('\tsample rate: {0} samples/second'.format(self.data.sample_rate))
+        lines.append('\tsize: {0}'.format(self.data.shape))
+        lines.append('\tdata format: {0}'.format(self.data.dtype))
+        return 
         
     @property
     def _class_name(self):
         return self.__class__.__name__.split('Dataset')[0]
+    
+    def read_metadata(self):
+        """
+        read metadata
+        
+        :return: DESCRIPTION
+        :rtype: TYPE
+
+        """
+        meta_dict = dict([(key, value) for key, value in 
+                          self.hdf5_dataset.attrs.items()])
+        
+        self.metadata.from_dict({self._class_name: meta_dict})
+               
+    def write_metadata(self):
+        """
+        Write metadata from a dictionary
+
+        :return: DESCRIPTION
+        :rtype: TYPE
+
+        """
+        meta_dict = self.metadata.to_dict()[self.metadata._class_name.lower()]
+        for key, value in meta_dict.items():
+            value = to_numpy_type(value)
+            self.logger.debug('wrote metadata {0} = {1}'.format(key, value))
+            self.hdf5_dataset.attrs.create(key, value)
     
     @property
     def table_entry(self):
@@ -598,7 +727,7 @@ class ChannelDataset(BaseGroup):
         """
         ts_obj = MTTS(self._class_name.lower(),
                       channel_metadata=self.metadata,
-                      data=self.hdf5_group[()])
+                      data=self.hdf5_dataset[()])
         
         return ts_obj
         
