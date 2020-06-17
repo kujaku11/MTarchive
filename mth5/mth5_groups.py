@@ -207,7 +207,7 @@ class BaseGroup():
         
         summary_table = self.hdf5_group.create_dataset(
             self._defaults_summary_attrs['name'], 
-            (1, ),
+            (0, ),
             maxshape=self._defaults_summary_attrs['max_shape'],
             dtype=self._defaults_summary_attrs['dtype'])
         
@@ -382,12 +382,12 @@ class MasterStationGroup(BaseGroup):
                 
     To remove a station:
         
-        >>> stations.remove_station('new_station')
-        >>> stations
-        /Survey/Stations:
-        ====================
-            --> Dataset: Summary
-            ......................       
+    >>> stations.remove_station('new_station')
+    >>> stations
+    /Survey/Stations:
+    ====================
+        --> Dataset: Summary
+        ......................       
 
     .. note:: Deleting a station is not as simple as del(station).  In HDF5 
               this does not free up memory, it simply removes the reference
@@ -396,34 +396,51 @@ class MasterStationGroup(BaseGroup):
               
     To get a station:
         
-        >>> existing_station = stations.get_station('existing_station_name')
-        >>> existing_station
-        /Survey/Stations/existing_station_name:
-        =======================================
+    >>> existing_station = stations.get_station('existing_station_name')
+    >>> existing_station
+    /Survey/Stations/existing_station_name:
+    =======================================
+        --> Dataset: Summary
+        ......................
+        |- Group: run_01
+        ----------------
             --> Dataset: Summary
             ......................
-            |- Group: run_01
-            ----------------
-                --> Dataset: Summary
-                ......................
-                --> Dataset: Ex
-                ......................
-                --> Dataset: Ey
-                ......................
-                --> Dataset: Hx
-                ......................
-                --> Dataset: Hy
-                ......................
-                --> Dataset: Hz
-                ......................
+            --> Dataset: Ex
+            ......................
+            --> Dataset: Ey
+            ......................
+            --> Dataset: Hx
+            ......................
+            --> Dataset: Hy
+            ......................
+            --> Dataset: Hz
+            ......................
 
     A summary table is provided to make searching easier.  The table 
     summarized all stations within a survey. To see what names are in the 
-    summary table
+    summary table:
         
-        >>> stations.summary_table.dtype.names
-        ('id', 'start', 'end', 'components', 'measurement_type', 'sample_rate')
-
+    >>> stations.summary_table.dtype.descr
+    [('id', ('|S5', {'h5py_encoding': 'ascii'})),
+     ('start', ('|S32', {'h5py_encoding': 'ascii'})),
+     ('end', ('|S32', {'h5py_encoding': 'ascii'})),
+     ('components', ('|S100', {'h5py_encoding': 'ascii'})),
+     ('measurement_type', ('|S12', {'h5py_encoding': 'ascii'})),
+     ('sample_rate', '<f8')]
+        
+    
+    .. note:: When a station is added an entry is added to the summary table,
+              where the information is pulled from the metadata.
+              
+    >>> stations.summary_table
+    index |   id    |            start             |             end         
+     | components | measurement_type | sample_rate
+     -------------------------------------------------------------------------
+     --------------------------------------------------
+     0   |  Test_01   |  1980-01-01T00:00:00+00:00 |  1980-01-01T00:00:00+00:00
+     |  Ex,Ey,Hx,Hy,Hz   |  BBMT   | 100
+     
     """
     
     def __init__(self, group, **kwargs):
