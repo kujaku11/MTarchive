@@ -585,20 +585,31 @@ class MasterStationGroup(BaseGroup):
         
 class StationGroup(BaseGroup):
     """
-    Utility class to holds information about a single station and 
-    accompanying metadata.  This class is next level down from Stations for
-    stations ``/Survey/Stations/station_name``.  This class provides methods
-    to add and get runs.  A summary table of all existing runs in the station
-    is also provided as a convenience look up table to make searching easier.
+    StationGroup is a utility class to hold information about a single station
+    and accompanying metadata.  This class is the next level down from 
+    Stations --> ``/Survey/Stations/station_name``.  
+    
+    This class provides methods to add and get runs.  A summary table of all
+    existing runs in the station is also provided as a convenience look up 
+    table to make searching easier.
+    
+    :param group: HDF5 group for a station, should have a path 
+                  ``/Survey/Stations/station_name``
+    :type group: :class:`h5py.Group`
+    :param station_metadata: metadata container, defaults to None
+    :type station_metadata: :class:`mth5.metadata.Station`, optional
 
-    To access StationGroup from an open MTH5 file:
+    Usage
+    --------
+    
+    :Access StationGroup from an open MTH5 file:
         
     >>> from mth5 import mth5
     >>> mth5_obj = mth5.MTH5()
     >>> mth5_obj.open_mth5(r"/test.mth5", mode='a')
     >>> station = mth5_obj.stations_group.get_station('MT001')
     
-    To check what runs exist
+    :Check what runs exist:
         
     >>> station.group_list
     ['MT001a', 'MT001b', 'MT001c', 'MT001d']
@@ -637,8 +648,8 @@ class StationGroup(BaseGroup):
     >>> new_run
     /Survey/Stations/Test_01:
     =========================
-        |- Group: Run_01
-        ----------------
+        |- Group: MT001e
+        -----------------
             --> Dataset: Summary
             ......................
         --> Dataset: Summary
@@ -668,7 +679,7 @@ class StationGroup(BaseGroup):
     .. seealso:: `mth5.metadata` for details on how to add metadata from  
                  various files and python objects.
                 
-    :To remove a run:
+    :Remove a run:
         
     >>> station.remove_run('new_run')
     >>> station
@@ -682,7 +693,7 @@ class StationGroup(BaseGroup):
               to that station.  The common way to get around this is to
               copy what you want into a new file, or overwrite the station.
               
-    To get a run:
+    :Get a run:
         
     >>> existing_run = stations.get_station('existing_run')
     >>> existing_run
@@ -701,6 +712,9 @@ class StationGroup(BaseGroup):
         --> Dataset: Hz
         ......................
 
+    Summary Table
+    ---------------
+   
     A summary table is provided to make searching easier.  The table 
     summarized all stations within a survey. To see what names are in the 
     summary table:
@@ -715,17 +729,14 @@ class StationGroup(BaseGroup):
      ('hdf5_reference', ('|O', {'ref': h5py.h5r.Reference}))]
         
     
-    .. note:: When a station is added an entry is added to the summary table,
+    .. note:: When a run is added an entry is added to the summary table,
               where the information is pulled from the metadata.
               
-    >>> stations.summary_table
-    index |   id    |            start             |             end         
-     | components | measurement_type | sample_rate
-     -------------------------------------------------------------------------
-     --------------------------------------------------
-     0   |  Test_01   |  1980-01-01T00:00:00+00:00 |  1980-01-01T00:00:00+00:00
-     |  Ex,Ey,Hx,Hy,Hz   |  BBMT   | 100
-
+    >>> new_run.summary_table
+    index | component | start | end | n_samples | measurement_type | units |
+    hdf5_reference
+    --------------------------------------------------------------------------
+    -------------
     
     """
     
@@ -737,7 +748,7 @@ class StationGroup(BaseGroup):
         self._defaults_summary_attrs = {'name': 'Summary',
                                         'max_shape': (1000,),
                                         'dtype': np.dtype([
-                                            ('id', 'S5'),
+                                            ('id', 'S20'),
                                             ('start', 'S32'),
                                             ('end', 'S32'),
                                             ('components', 'S100'),
@@ -755,18 +766,48 @@ class StationGroup(BaseGroup):
     def name(self, name):
         self.metadata.archive_id = name
         
+    def make_run_name(self):
+        """
+        Make a run name that will be the next alphabet letter extracted from
+        the run list.  Expects that all runs are labled as archive_id{a-z}.
+        
+        :return: metadata.archive_id + next letter
+        :rtype: string
+        
+        >>> station.metadata.archive_id = 'MT001'
+        >>> station.make_run_name()
+        'MT001a'
+
+        """
+        if self.name is None:
+            msg = "archive_id is not set, cannot make a run name"
+            self.logger.error(msg)
+            raise MTH5Error(msg)
+            
+        run_list = sorted([group[-1:] for group in self.groups_list
+                    if self.name in group])
+        
+        if len(run_list) == 0:
+            next_letter = 'a'
+        else:
+            next_letter = chr(ord(run_list[-1]) + 1)
+        
+        return '{0}{1}'.format(self.name, next_letter)
+        
     def add_run(self, run_name, run_metadata=None):
         """
-        Add a run
+        Add a run to a station.  
         
-        :param run_name: DESCRIPTION
-        :type run_name: TYPE
-        :param metadata: DESCRIPTION, defaults to None
-        :type metadata: TYPE, optional
-        :return: DESCRIPTION
-        :rtype: TYPE
+        :param run_name: run name, should be archive_id{a-z}
+        :type run_name: string
+        :param metadata: metadata container, defaults to None
+        :type metadata: :class:`mth5.metadata.Station`, optional
         
         need to be able to fill an entry in the summary table.
+        
+        .. todo:: auto fill run name if none is given.
+        
+        .. todo:: add ability to add a run with data.
 
         """
         
@@ -775,6 +816,8 @@ class StationGroup(BaseGroup):
             self.logger.debug("Created group {0}".format(run_group.name))
             run_obj = RunGroup(run_group, run_metdata=run_metadata)
             run_obj.initialize_group()
+            if run_obj.metadata.id is None:
+                run_obj.metadata.id = run_name
             self.summary_table.add_row(run_obj.table_entry)
         
         except ValueError:
@@ -790,10 +833,12 @@ class StationGroup(BaseGroup):
         """
         get a run from run name
         
-        :param run_name: DESCRIPTION
-        :type run_name: TYPE
-        :return: DESCRIPTION
-        :rtype: TYPE
+        :param run_name: existing run name
+        :type run_name: string
+        :return: Run object
+        :rtype: :class:`mth5.mth5_groups.RunGroup`
+        
+        >>> existing_run = station.get_run('MT001')
 
         """
         try:
@@ -807,7 +852,7 @@ class StationGroup(BaseGroup):
 
 class ReportsGroup(BaseGroup):
     """
-    holds the reports group
+    Not sure how to handle this yet
     
     """
     
@@ -842,7 +887,19 @@ class ReportsGroup(BaseGroup):
         
 class StandardsGroup(BaseGroup):
     """
-    holds the standards group
+    The StandardsGroup is a convenience group that stores the metadata 
+    standards that were used to make the current file.  This is to help a 
+    user understand the metadata directly from the file and not have to look
+    up documentation that might not be updated.  
+    
+    The metadata standards are stored in the summary table
+    ``/Survey/Standards/Summary``
+    
+    >>> standards = mth5_obj.standards_group
+    >>> standards.summary_table
+    index | attribute | type | required | style | units | description |  
+    options  |  alias |  example
+    --------------------------------------------------------------------------
     
     """
     
@@ -861,6 +918,34 @@ class StandardsGroup(BaseGroup):
                                                      ('options', 'S150'),
                                                      ('alias', 'S72'),
                                                      ('example', 'S72')])} 
+        
+    def get_attribute_information(self, attribute_name):
+        """
+        get information about an attribute
+        
+        The attribute name should be in the summary table.
+    
+        :param attribute_name: DESCRIPTION
+        :type attribute_name: TYPE
+        :return: DESCRIPTION
+        :rtype: TYPE
+
+        """
+        find = self.summary_table.locate('attribute', attribute_name)
+        if len(find) == 0:
+            msg = f"Could not find {attribute_name} in standards."
+            self.logger.error(msg)
+            raise MTH5TableError(msg)
+            
+        meta_item = self.summary_table.array[find]
+        lines = ['', attribute_name, '-' * (len(attribute_name) + 4)]
+        for name, value  in zip(meta_item.dtype.names[1:],
+                                meta_item.item()[1:]):
+            if isinstance(value, (bytes, np.bytes_)):
+                value = value.decode()
+            lines.append('\t{0:<14}: {1}'.format(name, value))
+        
+        print('\n'.join(lines))                                     
     
     def summary_table_from_dict(self, summary_dict):
         """
@@ -931,7 +1016,7 @@ class RunGroup(BaseGroup):
         self._defaults_summary_attrs = {'name': 'Summary',
                                         'max_shape': (20,),
                                         'dtype': np.dtype([
-                                            ('component', 'S5'),
+                                            ('component', 'S20'),
                                             ('start', 'S32'),
                                             ('end', 'S32'),
                                             ('n_samples', np.int),
@@ -955,7 +1040,7 @@ class RunGroup(BaseGroup):
                          ','.join(self.metadata.channels_recorded_all),
                          self.metadata.data_type,
                          self.metadata.sample_rate)],
-                         dtype=np.dtype([('id', 'S5'),
+                         dtype=np.dtype([('id', 'S20'),
                                          ('start', 'S32'),
                                          ('end', 'S32'),
                                          ('components', 'S100'),
@@ -1262,12 +1347,23 @@ class MTH5Table():
         :rtype: string
 
         """
+        # if the array is empty
+        if self.array.size == 0:
+            length_dict = dict([(key, len(str(key))) 
+                                 for key in list(self.dtype.names)])
+            lines = [' | '.join(['index']+['{0:^{1}}'.format(name, 
+                                                             length_dict[name]) 
+                                  for name in list(self.dtype.names)])]
+            lines.append('-' * len(lines[0]))
+            return '\n'.join(lines)
+
         length_dict = dict([(key, max([len(str(b)) for b in self.array[key]]))
-                            for key in list(self.dtype.names)])
+                                for key in list(self.dtype.names)])
         lines = [' | '.join(['index']+['{0:^{1}}'.format(name, 
                                                          length_dict[name]) 
-                             for name in list(self.dtype.names)])]
+                                       for name in list(self.dtype.names)])]
         lines.append('-' * len(lines[0]))
+
         for ii, row in enumerate(self.array):
             line = ['{0:^5}'.format(ii)]
             for element, key in zip(row, list(self.dtype.names)):
