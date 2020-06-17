@@ -1345,7 +1345,8 @@ class Filter(Base):
     
     @applied.setter
     def applied(self, applied):
-        if applied is None:
+        if applied in [None, 'none', 'None', 'NONE', 'null']:
+            self._applied = False
             return 
         
         if isinstance(applied, str):

@@ -295,6 +295,175 @@ class SurveyGroup(BaseGroup):
     def __init__(self, group, **kwargs):
         
         super().__init__(group, **kwargs)
+
+class ReportsGroup(BaseGroup):
+    """
+    Not sure how to handle this yet
+    
+    """
+    
+    def __init__(self, group, **kwargs):
+        
+        super().__init__(group, **kwargs)
+        
+        # summary of reports
+        self._defaults_summary_attrs = {'name': 'Summary',
+                                  'max_shape': (1000,),
+                                  'dtype': np.dtype([('name', 'S5'),
+                                                     ('type', 'S32'),
+                                                     ('summary', 'S200'),
+                                                     ('hdf5_reference', 
+                                                      h5py.ref_dtype)])}
+        
+    def add_report(self, report_name, report_metadata=None, report_data=None):
+        """
+        
+        :param report_name: DESCRIPTION
+        :type report_name: TYPE
+        :param report_metadata: DESCRIPTION, defaults to None
+        :type report_metadata: TYPE, optional
+        :param report_data: DESCRIPTION, defaults to None
+        :type report_data: TYPE, optional
+        :return: DESCRIPTION
+        :rtype: TYPE
+
+        """
+        self.logger.error('Not Implemented yet')
+        
+        
+class StandardsGroup(BaseGroup):
+    """
+    The StandardsGroup is a convenience group that stores the metadata 
+    standards that were used to make the current file.  This is to help a 
+    user understand the metadata directly from the file and not have to look
+    up documentation that might not be updated.  
+    
+    The metadata standards are stored in the summary table
+    ``/Survey/Standards/Summary``
+    
+    >>> standards = mth5_obj.standards_group
+    >>> standards.summary_table
+    index | attribute | type | required | style | units | description |  
+    options  |  alias |  example
+    --------------------------------------------------------------------------
+    
+    """
+    
+    def __init__(self, group, **kwargs):
+        
+        super().__init__(group, **kwargs)
+        
+        self._defaults_summary_attrs = {'name': 'Summary',
+                                  'max_shape': (500,),
+                                  'dtype': np.dtype([('attribute', 'S72'),
+                                                     ('type', 'S15'),
+                                                     ('required', np.bool_),
+                                                     ('style', 'S72'),
+                                                     ('units', 'S32'),
+                                                     ('description', 'S300'),
+                                                     ('options', 'S150'),
+                                                     ('alias', 'S72'),
+                                                     ('example', 'S72')])} 
+        
+    def get_attribute_information(self, attribute_name):
+        """
+        get information about an attribute
+        
+        The attribute name should be in the summary table.
+    
+        :param attribute_name: attribute name 
+        :type attribute_name: string
+        :return: prints a description of the attribute
+        :raises: MTH5TableError if attribute is not found
+
+        >>> standars = mth5_obj.standards_group
+        >>> standards.get_attribute_information('survey.release_license')
+        survey.release_license
+        --------------------------
+        	type          : string
+        	required      : True
+        	style         : controlled vocabulary
+        	units         : 
+        	description   : How the data can be used. The options are based on
+                         Creative Commons licenses. For details visit
+                         https://creativecommons.org/licenses/
+        	options       : CC-0,CC-BY,CC-BY-SA,CC-BY-ND,CC-BY-NC-SA,CC-BY-NC-ND
+        	alias         : 
+        	example       : CC-0
+            
+        """
+        find = self.summary_table.locate('attribute', attribute_name)
+        if len(find) == 0:
+            msg = f"Could not find {attribute_name} in standards."
+            self.logger.error(msg)
+            raise MTH5TableError(msg)
+            
+        meta_item = self.summary_table.array[find]
+        lines = ['', attribute_name, '-' * (len(attribute_name) + 4)]
+        for name, value  in zip(meta_item.dtype.names[1:],
+                                meta_item.item()[1:]):
+            if isinstance(value, (bytes, np.bytes_)):
+                value = value.decode()
+            lines.append('\t{0:<14} {1}'.format(name + ':', value))
+        
+        print('\n'.join(lines))                                     
+    
+    def summary_table_from_dict(self, summary_dict):
+        """
+        Fill summary table from a dictionary that summarizes the metadata
+        for the entire survey.
+        
+        :param summary_dict: Flattened dictionary of all metadata standards
+                             within the survey.
+        :type summary_dict: dictionary
+
+        """
+        
+        for key, v_dict in summary_dict.items():
+            key_list = [key]
+            for dkey in self.summary_table.dtype.names[1:]:
+                value = v_dict[dkey]
+                
+                if isinstance(value, list):
+                    if len(value) == 0:
+                        value = ''
+                        
+                    else:
+                        value = ','.join(['{0}'.format(ii) for ii in 
+                                                  value])
+                if value is None:
+                    value = ''
+                    
+                key_list.append(value)
+            
+            key_list = np.array([tuple(key_list)], self.summary_table.dtype)
+            index = self.summary_table.add_row(key_list)
+            
+        self.logger.debug(f'Added {index} rows to Standards Group')
+        
+    def initialize_group(self):
+        """
+        Initialize the group by making a summary table that summarizes 
+        the metadata standards used to describe the data.
+        
+        Also, write generic metadata information.
+
+        """
+        self.initialize_summary_table()
+        schema_obj = schema.Standards()
+        self.summary_table_from_dict(schema_obj.summarize_standards())
+        
+        self.write_metadata()
+        
+        
+class FiltersGroup(BaseGroup):
+    """
+    Not implemented yet
+    """
+    
+    def __init__(self, group, **kwargs):
+        
+        super().__init__(group, **kwargs)
     
 
 class MasterStationGroup(BaseGroup):
@@ -720,24 +889,22 @@ class StationGroup(BaseGroup):
     summary table:
         
     >>> new_run.summary_table.dtype.descr
-    [('component', ('|S5', {'h5py_encoding': 'ascii'})),
+    [('id', ('|S20', {'h5py_encoding': 'ascii'})),
      ('start', ('|S32', {'h5py_encoding': 'ascii'})),
      ('end', ('|S32', {'h5py_encoding': 'ascii'})),
-     ('n_samples', '<i4'),
+     ('components', ('|S100', {'h5py_encoding': 'ascii'})),
      ('measurement_type', ('|S12', {'h5py_encoding': 'ascii'})),
-     ('units', ('|S25', {'h5py_encoding': 'ascii'})),
+     ('sample_rate', '<f8'),
      ('hdf5_reference', ('|O', {'ref': h5py.h5r.Reference}))]
-        
-    
+          
     .. note:: When a run is added an entry is added to the summary table,
               where the information is pulled from the metadata.
               
-    >>> new_run.summary_table
-    index | component | start | end | n_samples | measurement_type | units |
+    >>> station.summary_table
+    index | id | start | end | components | measurement_type | sample_rate |
     hdf5_reference
     --------------------------------------------------------------------------
     -------------
-    
     """
     
     def __init__(self, group, station_metadata=None, **kwargs):
@@ -850,162 +1017,168 @@ class StationGroup(BaseGroup):
             raise MTH5Error(msg)
     
 
-class ReportsGroup(BaseGroup):
-    """
-    Not sure how to handle this yet
-    
-    """
-    
-    def __init__(self, group, **kwargs):
-        
-        super().__init__(group, **kwargs)
-        
-        # summary of reports
-        self._defaults_summary_attrs = {'name': 'Summary',
-                                  'max_shape': (1000,),
-                                  'dtype': np.dtype([('name', 'S5'),
-                                                     ('type', 'S32'),
-                                                     ('summary', 'S200'),
-                                                     ('hdf5_reference', 
-                                                      h5py.ref_dtype)])}
-        
-    def add_report(self, report_name, report_metadata=None, report_data=None):
-        """
-        
-        :param report_name: DESCRIPTION
-        :type report_name: TYPE
-        :param report_metadata: DESCRIPTION, defaults to None
-        :type report_metadata: TYPE, optional
-        :param report_data: DESCRIPTION, defaults to None
-        :type report_data: TYPE, optional
-        :return: DESCRIPTION
-        :rtype: TYPE
 
-        """
-        self.logger.error('Not Implemented yet')
-        
-        
-class StandardsGroup(BaseGroup):
-    """
-    The StandardsGroup is a convenience group that stores the metadata 
-    standards that were used to make the current file.  This is to help a 
-    user understand the metadata directly from the file and not have to look
-    up documentation that might not be updated.  
-    
-    The metadata standards are stored in the summary table
-    ``/Survey/Standards/Summary``
-    
-    >>> standards = mth5_obj.standards_group
-    >>> standards.summary_table
-    index | attribute | type | required | style | units | description |  
-    options  |  alias |  example
-    --------------------------------------------------------------------------
-    
-    """
-    
-    def __init__(self, group, **kwargs):
-        
-        super().__init__(group, **kwargs)
-        
-        self._defaults_summary_attrs = {'name': 'Summary',
-                                  'max_shape': (500,),
-                                  'dtype': np.dtype([('attribute', 'S72'),
-                                                     ('type', 'S15'),
-                                                     ('required', np.bool_),
-                                                     ('style', 'S72'),
-                                                     ('units', 'S32'),
-                                                     ('description', 'S300'),
-                                                     ('options', 'S150'),
-                                                     ('alias', 'S72'),
-                                                     ('example', 'S72')])} 
-        
-    def get_attribute_information(self, attribute_name):
-        """
-        get information about an attribute
-        
-        The attribute name should be in the summary table.
-    
-        :param attribute_name: DESCRIPTION
-        :type attribute_name: TYPE
-        :return: DESCRIPTION
-        :rtype: TYPE
-
-        """
-        find = self.summary_table.locate('attribute', attribute_name)
-        if len(find) == 0:
-            msg = f"Could not find {attribute_name} in standards."
-            self.logger.error(msg)
-            raise MTH5TableError(msg)
-            
-        meta_item = self.summary_table.array[find]
-        lines = ['', attribute_name, '-' * (len(attribute_name) + 4)]
-        for name, value  in zip(meta_item.dtype.names[1:],
-                                meta_item.item()[1:]):
-            if isinstance(value, (bytes, np.bytes_)):
-                value = value.decode()
-            lines.append('\t{0:<14}: {1}'.format(name, value))
-        
-        print('\n'.join(lines))                                     
-    
-    def summary_table_from_dict(self, summary_dict):
-        """
-        Fill summary table from a dictionary 
-        
-        :param summary_dict: DESCRIPTION
-        :type summary_dict: TYPE
-        :return: DESCRIPTION
-        :rtype: TYPE
-
-        """
-        
-        for key, v_dict in summary_dict.items():
-            key_list = [key]
-            for dkey in self.summary_table.dtype.names[1:]:
-                value = v_dict[dkey]
-                
-                if isinstance(value, list):
-                    if len(value) == 0:
-                        value = ''
-                        
-                    else:
-                        value = ','.join(['{0}'.format(ii) for ii in 
-                                                  value])
-                if value is None:
-                    value = ''
-                    
-                key_list.append(value)
-            
-            key_list = np.array([tuple(key_list)], self.summary_table.dtype)
-            index = self.summary_table.add_row(key_list)
-            
-        self.logger.debug(f'Added {index} rows to Standards Group')
-        
-    def initialize_group(self):
-        """
-        make summary table of standards
-        :return: DESCRIPTION
-        :rtype: TYPE
-
-        """
-        self.initialize_summary_table()
-        schema_obj = schema.Standards()
-        self.summary_table_from_dict(schema_obj.summarize_standards())
-        self.write_metadata()
-        
-        
-class FiltersGroup(BaseGroup):
-    """
-    holds calibration group
-    """
-    
-    def __init__(self, group, **kwargs):
-        
-        super().__init__(group, **kwargs)
     
         
 class RunGroup(BaseGroup):
     """
-    holds the run group
+    RunGroup is a utility class to hold information about a single run
+    and accompanying metadata.  This class is the next level down from 
+    Stations --> ``/Survey/Stations/station/station{a-z}``.  
+    
+    This class provides methods to add and get channels.  A summary table of
+    all existing channels in the run is also provided as a convenience look up 
+    table to make searching easier.
+    
+    :param group: HDF5 group for a station, should have a path 
+                  ``/Survey/Stations/station_name/run_name``
+    :type group: :class:`h5py.Group`
+    :param station_metadata: metadata container, defaults to None
+    :type station_metadata: :class:`mth5.metadata.Station`, optional
+
+    Usage
+    --------
+    
+    :Access RunGroup from an open MTH5 file:
+        
+    >>> from mth5 import mth5
+    >>> mth5_obj = mth5.MTH5()
+    >>> mth5_obj.open_mth5(r"/test.mth5", mode='a')
+    >>> run = mth5_obj.stations_group.get_station('MT001').get_run('MT001a')
+    
+    :Check what channels exist:
+        
+    >>> station.group_list
+    ['Ex', 'Ey', 'Hx', 'Hy']
+    
+    To access the hdf5 group directly use `RunGroup.hdf5_group`
+        
+    >>> station.hdf5_group.ref
+    <HDF5 Group Reference>
+    
+    .. note:: All attributes should be input into the metadata object, that
+             way all input will be validated against the metadata standards.
+             If you change attributes in metadata object, you should run the
+             `SurveyGroup.write_metadata()` method.  This is a temporary
+             solution, working on an automatic updater if metadata is changed.
+
+    >>> run.metadata.existing_attribute = 'update_existing_attribute'
+    >>> run.write_metadata()
+    
+    If you want to add a new attribute this should be done using the
+    `metadata.add_base_attribute` method.
+    
+    >>> station.metadata.add_base_attribute('new_attribute',
+    >>> ...                                 'new_attribute_value',
+    >>> ...                                 {'type':str, 
+    >>> ...                                  'required':True,
+    >>> ...                                  'style':'free form',
+    >>> ...                                  'description': 'new attribute desc.', 
+    >>> ...                                  'units':None,
+    >>> ...                                  'options':[],
+    >>> ...                                  'alias':[],
+    >>> ...                                  'example':'new attribute
+    
+    :Add a channel:
+        
+    >>> new_channel = run.add_channel('Ex', 'electric',
+    >>> ...                            data=numpy.random.rand(4096))
+    >>> new_run
+    /Survey/Stations/MT001/MT001a:
+    =======================================
+        --> Dataset: Summary
+        ......................
+        --> Dataset: Ex
+        ......................
+        --> Dataset: Ey
+        ......................
+        --> Dataset: Hx
+        ......................
+        --> Dataset: Hy
+        ......................
+
+                
+    :Add a channel with metadata:
+        
+    >>> from mth5.metadata import Electric
+    >>> ex_metadata = Electric()
+    >>> ex_metadata.time_period.start = '2020-01-01T12:30:00'
+    >>> ex_metadata.time_period.end = '2020-01-03T16:30:00'
+    >>> new_ex = run.add_channel('Ex', 'electric', 
+    >>> ...                       channel_metadata=ex_metadata)
+    >>> # to look at the metadata
+    >>> new_ex.metadata
+    {
+         "electric": {
+            "ac.end": 1.2,
+            "ac.start": 2.3,
+            ...
+            }
+    }
+            
+        
+    .. seealso:: `mth5.metadata` for details on how to add metadata from  
+                 various files and python objects.
+                
+    :Remove a channel:
+        
+    >>> run.remove_channel('Ex')
+    >>> station
+    /Survey/Stations/MT001/MT001a:
+    =======================================
+        --> Dataset: Summary
+        ......................
+        --> Dataset: Ey
+        ......................
+        --> Dataset: Hx
+        ......................
+        --> Dataset: Hy
+        ......................       
+
+    .. note:: Deleting a station is not as simple as del(station).  In HDF5 
+              this does not free up memory, it simply removes the reference
+              to that station.  The common way to get around this is to
+              copy what you want into a new file, or overwrite the station.
+              
+    :Get a channel:
+        
+    >>> existing_ex = stations.get_channel('Ex')
+    >>> existing_ex
+    Channel Electric:
+    -------------------
+    	data type:        Ex
+    	data type:        electric
+    	data format:      float32
+    	data shape:       (4096,)
+    	start:            1980-01-01T00:00:00+00:00
+    	end:              1980-01-01T00:32:+08:00
+    	sample rate:      8
+
+    Summary Table
+    ---------------
+   
+    A summary table is provided to make searching easier.  The table 
+    summarized all stations within a survey. To see what names are in the 
+    summary table:
+        
+    >>> run.summary_table.dtype.descr
+    [('component', ('|S5', {'h5py_encoding': 'ascii'})),
+     ('start', ('|S32', {'h5py_encoding': 'ascii'})),
+     ('end', ('|S32', {'h5py_encoding': 'ascii'})),
+     ('n_samples', '<i4'),
+     ('measurement_type', ('|S12', {'h5py_encoding': 'ascii'})),
+     ('units', ('|S25', {'h5py_encoding': 'ascii'})),
+     ('hdf5_reference', ('|O', {'ref': h5py.h5r.Reference}))]
+        
+    
+    .. note:: When a run is added an entry is added to the summary table,
+              where the information is pulled from the metadata.
+              
+    >>> new_run.summary_table
+    index | component | start | end | n_samples | measurement_type | units |
+    hdf5_reference
+    --------------------------------------------------------------------------
+    -------------
     """
    
     def __init__(self, group, run_metadata=None, **kwargs):
@@ -1028,10 +1201,17 @@ class RunGroup(BaseGroup):
     @property
     def table_entry(self):
         """
-        Get a run entry
+        Get a run table entry
         
-        :return: DESCRIPTION
-        :rtype: TYPE
+        :return: a properly formatted run table entry
+        :rtype: :class:`numpy.ndarray` with dtype:
+            dtype([('id', 'S20'),
+                   ('start', 'S32'),
+                   ('end', 'S32'),
+                   ('components', 'S100'),
+                   ('measurement_type', 'S12'),
+                   ('sample_rate', np.float),
+                   ('hdf5_reference', h5py.ref_dtype)])    
 
         """
         return np.array([(self.metadata.id,
@@ -1039,29 +1219,47 @@ class RunGroup(BaseGroup):
                          self.metadata.time_period.end,
                          ','.join(self.metadata.channels_recorded_all),
                          self.metadata.data_type,
-                         self.metadata.sample_rate)],
+                         self.metadata.sample_rate,
+                         self.hdf5_group.ref)],
                          dtype=np.dtype([('id', 'S20'),
                                          ('start', 'S32'),
                                          ('end', 'S32'),
                                          ('components', 'S100'),
                                          ('measurement_type', 'S12'),
-                                         ('sample_rate', np.float)]))
+                                         ('sample_rate', np.float),
+                                         ('hdf5_reference', h5py.ref_dtype)]))
         
     def add_channel(self, channel_name, channel_type, data, channel_dtype='f',
                     max_shape=(None,), chunks=True, channel_metadata=None):
         """
         add a channel to the run
         
-        :param name: DESCRIPTION
-        :type name: TYPE
-        :param channel_type: DESCRIPTION
-        :type channel_type: TYPE
+        :param name: name of the channel
+        :type name: string
+        :param channel_type: [ electric | magnetic | auxiliary ]
+        :type channel_type: string
         :raises: MTH5Error if channel type is not correct
         
-        :param channel_metadata: DESCRIPTION, defaults to None
-        :type channel_metadata: TYPE, optional
-        :return: DESCRIPTION
-        :rtype: TYPE
+        :param channel_metadata: metadata container, defaults to None
+        :type channel_metadata: [ :class:`mth5.metadata.Electric` |
+                                 :class:`mth5.metadata.Magnetic` |
+                                 :class:`mth5.metadata.Auxiliary` ], optional
+        :return: Channel container
+        :rtype: [ :class:`mth5.mth5_groups.ElectricDatset` |
+                 :class:`mth5.mth5_groups.MagneticDatset` |
+                 :class:`mth5.mth5_groups.AuxiliaryDatset` ]
+        
+        >>> new_channel = run.add_channel('Ex', 'electric', None)
+        >>> new_channel
+        Channel Electric:
+        -------------------
+        		component:        None
+            	data type:        electric
+            	data format:      float32
+            	data shape:       (1,)
+            	start:            1980-01-01T00:00:00+00:00
+            	end:              1980-01-01T00:00:00+00:00
+            	sample rate:      None
         
 
         """
@@ -1229,6 +1427,7 @@ class ChannelDataset():
         lines = ['Channel {0}:'.format(self._class_name)]
         lines.append('-' * (len(lines[0]) + 2))
         info_str = '\t{0:<18}{1}'
+        lines.append(info_str.format('component:', self.metadata.component))
         lines.append(info_str.format('data type:', self.metadata.type))
         lines.append(info_str.format('data format:', self.hdf5_dataset.dtype))
         lines.append(info_str.format('data shape:', self.hdf5_dataset.shape))
@@ -1282,13 +1481,15 @@ class ChannelDataset():
                          self.metadata.time_period.end,
                          self.hdf5_dataset.size,
                          self.metadata.type,
-                         self.metadata.units)],
+                         self.metadata.units,
+                         self.hdf5_dataset.ref)],
                         dtype= np.dtype([('component', 'S5'),
                                          ('start', 'S32'),
                                          ('end', 'S32'),
                                          ('n_samples', np.int),
                                          ('measurement_type', 'S12'),
-                                         ('units', 'S25')]))
+                                         ('units', 'S25')
+                                         ('hdf5_reference', h5py.ref_dtype)]))
     
 
 @inherit_doc_string                
