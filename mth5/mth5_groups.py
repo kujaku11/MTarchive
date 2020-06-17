@@ -61,6 +61,9 @@ class BaseGroup():
     >>> ...                               'alias':[],
     >>> ...                               'example':'new attribute'})
     
+    Includes intializing functions that makes a summary table and writes 
+    metadata.
+    
     """
     
     def __init__(self, group, group_metadata=None, **kwargs):
@@ -166,10 +169,7 @@ class BaseGroup():
     
     def read_metadata(self):
         """
-        read metadata
-        
-        :return: DESCRIPTION
-        :rtype: TYPE
+        read metadata from the HDF5 group into metadata object
 
         """
         meta_dict = dict([(key, value) for key, value in 
@@ -179,10 +179,7 @@ class BaseGroup():
                
     def write_metadata(self):
         """
-        Write metadata from a dictionary
-
-        :return: DESCRIPTION
-        :rtype: TYPE
+        Write HDF5 metadata from metadata object.
 
         """
         meta_dict = self.metadata.to_dict()[self.metadata._class_name.lower()]
@@ -199,9 +196,12 @@ class BaseGroup():
     
     def initialize_summary_table(self):
         """
-        Initialize summary table based on default values
-        :return: DESCRIPTION
-        :rtype: TYPE
+        Initialize summary table as a dataset based on default values to 
+        
+        ``/Group/Summary``
+        
+        The initial size is 0, but is extentable to
+        `self._defaults_summary_attrs[max_shape]`
 
         """
         
@@ -223,10 +223,7 @@ class BaseGroup():
         
     def initialize_group(self):
         """
-        Initialize group
-        
-        :return: DESCRIPTION
-        :rtype: TYPE
+        Initialize group by making a summary table and writing metadata
 
         """
         self.initialize_summary_table()
@@ -315,6 +312,11 @@ class MasterStationGroup(BaseGroup):
     >>> mth5_obj.open_mth5(r"/test.mth5", mode='a')
     >>> stations = mth5_obj.stations_group
     
+    To check what stations exist
+        
+    >>> stations.group_list
+    ['Summary', 'MT001', 'MT002', 'MT003']
+    
     To access the hdf5 group directly use `SurveyGroup.hdf5_group`.
         
     >>> stations.hdf5_group.ref
@@ -360,7 +362,7 @@ class MasterStationGroup(BaseGroup):
         
         >>> from mth5.metadata import Station
         >>> station_metadata = Station()
-        >>> station_metadata.archive_id = 'Test_01'
+        >>> station_metadata.archive_id = 'MT004'
         >>> station_metadata.time_period.start = '2020-01-01T12:30:00'
         >>> station_metadata.location.latitude = 40.000
         >>> station_metadata.location.longitude = -120.000
@@ -371,7 +373,7 @@ class MasterStationGroup(BaseGroup):
             "station": {
                 "acquired_by.author": null,
                 "acquired_by.comments": null,
-                "archive_id": "Test_01",
+                "archive_id": "MT004",
                 ...
                 }
         }
@@ -521,16 +523,17 @@ class MasterStationGroup(BaseGroup):
         :rtype: :class:`mth5.mth5_groups.StationGroup`
         :raises: MTH5Error if the station name is not found.
         
-        :Example: ::
+        :Example:
             
-            >>> from mth5 import mth5
-            >>> mth5_obj = mth5.MTH5()
-            >>> mth5_obj.open_mth5(r"/test.mth5", mode='a')
-            >>> # one option
-            >>> stations = mth5_obj.stations_group
-            >>> existing_station = stations.get_station('MT001')
-            >>> # another option
-            >>> existing_staiton = mth5_obj.stations_group.get_station('MT001')
+        >>> from mth5 import mth5
+        >>> mth5_obj = mth5.MTH5()
+        >>> mth5_obj.open_mth5(r"/test.mth5", mode='a')
+        >>> # one option
+        >>> stations = mth5_obj.stations_group
+        >>> existing_station = stations.get_station('MT001')
+        >>> # another option
+        >>> existing_staiton = mth5_obj.stations_group.get_station('MT001')
+        MTH5Error: MT001 does not exist, check station_list for existing names
 
         """
         
