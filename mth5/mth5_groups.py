@@ -465,14 +465,33 @@ class MasterStationGroup(BaseGroup):
     
     def add_station(self, station_name, station_metadata=None):
         """
-        Add a station with metadata if given.
+        Add a station with metadata if given with the path: 
+            ``/Survey/Stations/station_name``
+            
+        If the station already exists, will return that station and nothing
+        is added.  
         
-        :param station_name: DESCRIPTION
-        :type station_name: TYPE
-        :param station_metadata: DESCRIPTION, defaults to None
-        :type station_metadata: TYPE, optional
-        :return: DESCRIPTION
-        :rtype: TYPE
+        :param station_name: Name of the station, should be the same as
+                             metadata.archive_id 
+        :type station_name: string
+        :param station_metadata: Station metadata container, defaults to None
+        :type station_metadata: :class:`mth5.metadata.Station`, optional
+        :return: A convenience class for the added station
+        :rtype: :class:`mth5_groups.StationGroup`
+        
+        :Example: ::
+            
+            >>> from mth5 import mth5
+            >>> mth5_obj = mth5.MTH5()
+            >>> mth5_obj.open_mth5(r"/test.mth5", mode='a')
+            >>> # one option
+            >>> stations = mth5_obj.stations_group
+            >>> new_station = stations.add_station('MT001')
+            >>> # another option 
+            >>> new_staiton = mth5_obj.stations_group.add_station('MT001')
+        
+        .. todo:: allow dictionaries, json string, xml elements as metadata
+                  input.
 
         """
         
@@ -494,11 +513,24 @@ class MasterStationGroup(BaseGroup):
     
     def get_station(self, station_name):
         """
+        Get a station with the same name as station_name
         
-        :param station_name: DESCRIPTION
-        :type station_name: TYPE
-        :return: DESCRIPTION
-        :rtype: TYPE
+        :param station_name: existing station name
+        :type station_name: string
+        :return: convenience station class
+        :rtype: :class:`mth5.mth5_groups.StationGroup`
+        :raises: MTH5Error if the station name is not found.
+        
+        :Example: ::
+            
+            >>> from mth5 import mth5
+            >>> mth5_obj = mth5.MTH5()
+            >>> mth5_obj.open_mth5(r"/test.mth5", mode='a')
+            >>> # one option
+            >>> stations = mth5_obj.stations_group
+            >>> existing_station = stations.get_station('MT001')
+            >>> # another option
+            >>> existing_staiton = mth5_obj.stations_group.get_station('MT001')
 
         """
         
@@ -512,11 +544,26 @@ class MasterStationGroup(BaseGroup):
             
     def remove_station(self, station_name):
         """
+        Remove a station from the file.
         
-        :param station_name: DESCRIPTION
-        :type station_name: TYPE
-        :return: DESCRIPTION
-        :rtype: TYPE
+        .. note:: Deleting a station is not as simple as del(station).  In HDF5 
+              this does not free up memory, it simply removes the reference
+              to that station.  The common way to get around this is to
+              copy what you want into a new file, or overwrite the station.
+              
+        :param station_name: existing station name
+        :type station_name: string
+        
+        :Example: ::
+            
+            >>> from mth5 import mth5
+            >>> mth5_obj = mth5.MTH5()
+            >>> mth5_obj.open_mth5(r"/test.mth5", mode='a')
+            >>> # one option
+            >>> stations = mth5_obj.stations_group
+            >>> stations.remove_station('MT001')
+            >>> # another option
+            >>> mth5_obj.stations_group.remove_station('MT001')
 
         """
         
