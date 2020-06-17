@@ -449,6 +449,7 @@ class MasterStationGroup(BaseGroup):
         
         super().__init__(group, **kwargs)
         
+        # summary of stations
         self._defaults_summary_attrs = {'name': 'Summary',
                                   'max_shape': (1000,),
                                   'dtype': np.dtype([('archive_id', 'S5'),
@@ -593,6 +594,7 @@ class StationGroup(BaseGroup):
         
         super().__init__(group, group_metadata=station_metadata, **kwargs)
         
+        # summary of runs
         self._defaults_summary_attrs = {'name': 'Summary',
                                         'max_shape': (1000,),
                                         'dtype': np.dtype([
@@ -601,7 +603,9 @@ class StationGroup(BaseGroup):
                                             ('end', 'S32'),
                                             ('components', 'S100'),
                                             ('measurement_type', 'S12'),
-                                            ('sample_rate', np.float)])}
+                                            ('sample_rate', np.float),
+                                            ('hdf5_reference', 
+                                             h5py.ref_dtype)])}
         
         
     @property
