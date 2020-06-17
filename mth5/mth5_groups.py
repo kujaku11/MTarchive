@@ -585,7 +585,146 @@ class MasterStationGroup(BaseGroup):
         
 class StationGroup(BaseGroup):
     """
-    holds the station group
+    Utility class to holds information about a single station and 
+    accompanying metadata.  This class is next level down from Stations for
+    stations ``/Survey/Stations/station_name``.  This class provides methods
+    to add and get runs.  A summary table of all existing runs in the station
+    is also provided as a convenience look up table to make searching easier.
+
+    To access StationGroup from an open MTH5 file:
+        
+    >>> from mth5 import mth5
+    >>> mth5_obj = mth5.MTH5()
+    >>> mth5_obj.open_mth5(r"/test.mth5", mode='a')
+    >>> station = mth5_obj.stations_group.get_station('MT001')
+    
+    To check what runs exist
+        
+    >>> station.group_list
+    ['MT001a', 'MT001b', 'MT001c', 'MT001d']
+    
+    To access the hdf5 group directly use `StationGroup.hdf5_group`.
+        
+    >>> station.hdf5_group.ref
+    <HDF5 Group Reference>
+    
+    .. note:: All attributes should be input into the metadata object, that
+             way all input will be validated against the metadata standards.
+             If you change attributes in metadata object, you should run the
+             `SurveyGroup.write_metadata()` method.  This is a temporary
+             solution, working on an automatic updater if metadata is changed.
+
+    >>> station.metadata.existing_attribute = 'update_existing_attribute'
+    >>> station.write_metadata()
+    
+    If you want to add a new attribute this should be done using the
+    `metadata.add_base_attribute` method.
+    
+    >>> station.metadata.add_base_attribute('new_attribute',
+    >>> ...                                 'new_attribute_value',
+    >>> ...                                 {'type':str, 
+    >>> ...                                  'required':True,
+    >>> ...                                  'style':'free form',
+    >>> ...                                  'description': 'new attribute desc.', 
+    >>> ...                                  'units':None,
+    >>> ...                                  'options':[],
+    >>> ...                                  'alias':[],
+    >>> ...                                  'example':'new attribute
+    
+    :To add a run:
+        
+    >>> new_run = stations.add_run('MT001e')
+    >>> new_run
+    /Survey/Stations/Test_01:
+    =========================
+        |- Group: Run_01
+        ----------------
+            --> Dataset: Summary
+            ......................
+        --> Dataset: Summary
+        ......................
+                
+    :Add a run with metadata:
+        
+    >>> from mth5.metadata import Run
+    >>> run_metadata = Run()
+    >>> run_metadata.time_period.start = '2020-01-01T12:30:00'
+    >>> run_metadata.time_period.end = '2020-01-03T16:30:00'
+    >>> run_metadata.location.latitude = 40.000
+    >>> run_metadata.location.longitude = -120.000
+    >>> new_run = runs.add_run('Test_01', run_metadata)
+    >>> # to look at the metadata
+    >>> new_run.metadata
+    {
+        "run": {
+            "acquired_by.author": "new_user",
+            "acquired_by.comments": "First time",
+            "channels_recorded_auxiliary": ['T'],
+            ...
+            }
+    }
+            
+        
+    .. seealso:: `mth5.metadata` for details on how to add metadata from  
+                 various files and python objects.
+                
+    :To remove a run:
+        
+    >>> station.remove_run('new_run')
+    >>> station
+    /Survey/Stations/Test_01:
+    =========================
+        --> Dataset: Summary
+        ......................       
+
+    .. note:: Deleting a station is not as simple as del(station).  In HDF5 
+              this does not free up memory, it simply removes the reference
+              to that station.  The common way to get around this is to
+              copy what you want into a new file, or overwrite the station.
+              
+    To get a run:
+        
+    >>> existing_run = stations.get_station('existing_run')
+    >>> existing_run
+    /Survey/Stations/MT001/MT001a:
+    =======================================
+        --> Dataset: Summary
+        ......................
+        --> Dataset: Ex
+        ......................
+        --> Dataset: Ey
+        ......................
+        --> Dataset: Hx
+        ......................
+        --> Dataset: Hy
+        ......................
+        --> Dataset: Hz
+        ......................
+
+    A summary table is provided to make searching easier.  The table 
+    summarized all stations within a survey. To see what names are in the 
+    summary table:
+        
+    >>> new_run.summary_table.dtype.descr
+    [('component', ('|S5', {'h5py_encoding': 'ascii'})),
+     ('start', ('|S32', {'h5py_encoding': 'ascii'})),
+     ('end', ('|S32', {'h5py_encoding': 'ascii'})),
+     ('n_samples', '<i4'),
+     ('measurement_type', ('|S12', {'h5py_encoding': 'ascii'})),
+     ('units', ('|S25', {'h5py_encoding': 'ascii'})),
+     ('hdf5_reference', ('|O', {'ref': h5py.h5r.Reference}))]
+        
+    
+    .. note:: When a station is added an entry is added to the summary table,
+              where the information is pulled from the metadata.
+              
+    >>> stations.summary_table
+    index |   id    |            start             |             end         
+     | components | measurement_type | sample_rate
+     -------------------------------------------------------------------------
+     --------------------------------------------------
+     0   |  Test_01   |  1980-01-01T00:00:00+00:00 |  1980-01-01T00:00:00+00:00
+     |  Ex,Ey,Hx,Hy,Hz   |  BBMT   | 100
 
     
     """
@@ -676,11 +815,30 @@ class ReportsGroup(BaseGroup):
         
         super().__init__(group, **kwargs)
         
+        # summary of reports
         self._defaults_summary_attrs = {'name': 'Summary',
                                   'max_shape': (1000,),
                                   'dtype': np.dtype([('name', 'S5'),
                                                      ('type', 'S32'),
-                                                     ('summary', 'S200')])}
+                                                     ('summary', 'S200'),
+                                                     ('hdf5_reference', 
+                                                      h5py.ref_dtype)])}
+        
+    def add_report(self, report_name, report_metadata=None, report_data=None):
+        """
+        
+        :param report_name: DESCRIPTION
+        :type report_name: TYPE
+        :param report_metadata: DESCRIPTION, defaults to None
+        :type report_metadata: TYPE, optional
+        :param report_data: DESCRIPTION, defaults to None
+        :type report_data: TYPE, optional
+        :return: DESCRIPTION
+        :rtype: TYPE
+
+        """
+        self.logger.error('Not Implemented yet')
+        
         
 class StandardsGroup(BaseGroup):
     """
@@ -769,6 +927,7 @@ class RunGroup(BaseGroup):
         
         super().__init__(group, group_metadata=run_metadata, **kwargs)
         
+        # summary of channels in run
         self._defaults_summary_attrs = {'name': 'Summary',
                                         'max_shape': (20,),
                                         'dtype': np.dtype([
@@ -777,7 +936,9 @@ class RunGroup(BaseGroup):
                                             ('end', 'S32'),
                                             ('n_samples', np.int),
                                             ('measurement_type', 'S12'),
-                                            ('units', 'S25')])}
+                                            ('units', 'S25'),
+                                            ('hdf5_reference', 
+                                             h5py.ref_dtype)])}
         
     @property
     def table_entry(self):
