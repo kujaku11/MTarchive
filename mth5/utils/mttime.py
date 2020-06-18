@@ -67,6 +67,11 @@ class MTime():
                 self.logger.debug("Input time is a np.datetime64 " + 
                                   "dt_object set to datetime64.tolist().")
                 self.dt_object = self.validate_tzinfo(time.tolist())
+            
+            elif isinstance(time, (datetime.datetime)):
+                self.logger.debug("Input time is a np.datetime64 " + 
+                                  "dt_object set to datetime64.tolist().")
+                self.dt_object = self.validate_tzinfo(time)
                 
             else:
                 msg = "input time must be a string, float, or int, not {0}"
@@ -161,6 +166,55 @@ class MTime():
                     other, type(other)))
             self.logger.error(msg)
             raise MTTimeError(msg)
+            
+    def __add__(self, other):
+        """
+        add time only using datetime.timedelta, otherwise it does not make 
+        sense to at 2 times together.  
+        
+        """
+        if not isinstance(other, datetime.timedelta):
+            msg = ("Adding times does not make sense, must use " +
+                   "datetime.timedelta to add time. \n" +
+                   "\t>>> add_time = datetime.timedelta(seconds=10) \n" +
+                   "\t>>> mtime_obj + add_time")
+            self.logger.error(msg)
+            raise MTTimeError(msg)
+        
+        return MTime(self.dt_object + other)
+    
+    def __sub__(self, other):
+        """
+        Get the time difference between to times in seconds.
+        
+        :param other: other time value
+        :type other: [ str | float | int | datetime.datetime | np.datetime64 ]
+        :return: time difference in seconds
+        :rtype: float
+
+        """
+        
+        if isinstance(other, type(self)):
+            other_seconds = other.epoch_seconds
+        elif isinstance(other, (str)):
+            other_dt = self.validate_tzinfo(dtparser.parse(other))
+            other_seconds = other_dt.timestamp()
+        elif isinstance(other, (float, int)):
+            other_seconds = float(other)
+        elif isinstance(other, (np.datetime64)):
+            other_seconds = other.astype(np.float)
+        elif isinstance(other, (datetime.datetime)):
+            other_seconds = other.timestamp()
+            
+        else:
+            msg = ('Cannot compare {0} of type {1} with MTime Object'.format(
+                    other, type(other)))
+            self.logger.error(msg)
+            raise MTTimeError(msg)
+        
+        return other_seconds - self.epoch_seconds
+        
+        return self.time_difference(other)
 
     @property
     def iso_str(self):

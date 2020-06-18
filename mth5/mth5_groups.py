@@ -21,9 +21,8 @@ from mth5.standards import schema
 from mth5.utils.helpers import to_numpy_type, inherit_doc_string
 from mth5.helpers import get_tree
 from mth5.utils.exceptions import MTH5TableError, MTH5Error
-from mth5.timeseries import MTTS
 
-
+# make a dictionary of available metadata classes
 meta_classes = dict(inspect.getmembers(metadata, inspect.isclass))
 # =============================================================================
 # 
@@ -374,7 +373,7 @@ class StandardsGroup(BaseGroup):
         :param attribute_name: attribute name 
         :type attribute_name: string
         :return: prints a description of the attribute
-        :raises: MTH5TableError if attribute is not found
+        :raises MTH5TableError:  if attribute is not found
 
         >>> standars = mth5_obj.standards_group
         >>> standards.get_attribute_information('survey.release_license')
@@ -691,7 +690,7 @@ class MasterStationGroup(BaseGroup):
         :type station_name: string
         :return: convenience station class
         :rtype: :class:`mth5.mth5_groups.StationGroup`
-        :raises: MTH5Error if the station name is not found.
+        :raises MTH5Error:  if the station name is not found.
         
         :Example:
             
@@ -1238,7 +1237,7 @@ class RunGroup(BaseGroup):
         :type name: string
         :param channel_type: [ electric | magnetic | auxiliary ]
         :type channel_type: string
-        :raises: MTH5Error if channel type is not correct
+        :raises MTH5Error: If channel type is not correct
         
         :param channel_metadata: metadata container, defaults to None
         :type channel_metadata: [ :class:`mth5.metadata.Electric` |
@@ -1315,12 +1314,37 @@ class RunGroup(BaseGroup):
     def get_channel(self, channel_name):
         """
         
-        get channel
+        Get a channel from an existing name.  Returns the appropriate 
+        container.
         
-        :param channel_name: DESCRIPTION
-        :type channel_name: TYPE
-        :return: DESCRIPTION
-        :rtype: TYPE
+        :param channel_name: name of the channel
+        :type channel_name: string
+        :return: Channel container
+        :rtype: [ :class:`mth5.mth5_groups.ElectricDatset` |
+                  :class:`mth5.mth5_groups.MagneticDatset` |
+                  :class:`mth5.mth5_groups.AuxiliaryDatset` ]
+        :raises MTH5Error:  If no channel is found
+        
+        :Example:
+            
+        >>> existing_channel = run.get_channel('Ex')
+        MTH5Error: Ex does not exist, check groups_list for existing names'
+        
+        >>> run.group_list
+        ['Ey', 'Hx', 'Hz']
+        
+        >>> existing_channel = run.get_channel('Ey')
+        >>> existing_channel
+        Channel Electric:
+        -------------------
+        		component:        Ey
+            	data type:        electric
+            	data format:      float32
+            	data shape:       (4096,)
+            	start:            1980-01-01T00:00:00+00:00
+            	end:              1980-01-01T00:00:01+00:00
+            	sample rate:      4096
+        
 
         """
         
@@ -1344,9 +1368,20 @@ class RunGroup(BaseGroup):
     
 class ChannelDataset():
     """
-    Hold a channel dataset.  This is a simple container for the data to make 
+    Holds a channel dataset.  This is a simple container for the data to make 
     sure that the user has the flexibility to turn the channel into an object
-    they want to deal with.  
+    they want to deal with.
+    
+    For now all the numpy type slicing can be used on `hdf5_dataset`
+    
+    :param dataset: dataset object for the channel
+    :type dataset: :class:`h5py.Dataset`
+    :param dataset_metadata: metadata container, defaults to None
+    :type dataset_metadata: [ :class:`mth5.metadata.Electric` |
+                              :class:`mth5.metadata.Magnetic` |
+                              :class:`mth5.metadata.Auxiliary` ], optional
+    :raises MTH5Error: If the dataset is not of the correct type
+    
     
     Utilities will be written to create some common objects like:
         * xarray.DataArray
@@ -1356,8 +1391,31 @@ class ChannelDataset():
         
     The benefit of these other objects is that they can be indexed by time,
     and they have much more buit-in funcionality.
+    
+    Usage
+    ---------
+    
+    :Get a channel: 
+        
+    >> from mth5 import mth5
+    >>> mth5_obj = mth5.MTH5()
+    >>> mth5_obj.open_mth5(r"/test.mth5", mode='a')
+    >>> run = mth5_obj.stations_group.get_station('MT001').get_run('MT001a')
+    >>> channel = run.get_channel('Ex')
+    >>> channel
+    Channel Electric:
+    -------------------
+    		component:        Ey
+        	data type:        electric
+        	data format:      float32
+        	data shape:       (4096,)
+        	start:            1980-01-01T00:00:00+00:00
+        	end:              1980-01-01T00:00:01+00:00
+        	sample rate:      4096
+            
+    :Get a window
      
-    For now all the numpy type slicing can be used on `hdf5_dataset`
+    
     """
     
     def __init__(self, dataset, dataset_metadata=None, **kwargs):
@@ -1446,10 +1504,8 @@ class ChannelDataset():
     
     def read_metadata(self):
         """
-        read metadata
-        
-        :return: DESCRIPTION
-        :rtype: TYPE
+        Read metadata from the HDF5 file into the metadata container, that 
+        way it can be validated.
 
         """
         meta_dict = dict([(key, value) for key, value in 
@@ -1459,10 +1515,8 @@ class ChannelDataset():
                
     def write_metadata(self):
         """
-        Write metadata from a dictionary
-
-        :return: DESCRIPTION
-        :rtype: TYPE
+        Write metadata from the metadata container to the HDF5 attrs 
+        dictionary.  
 
         """
         meta_dict = self.metadata.to_dict()[self.metadata._class_name.lower()]
@@ -1474,6 +1528,7 @@ class ChannelDataset():
     @property
     def table_entry(self):
         """
+        Creat a table entry to put into the run summary table.
         """
         
         return np.array([(self.metadata.component,
@@ -1498,20 +1553,16 @@ class ElectricDataset(ChannelDataset):
     def __init__(self, group, **kwargs):
         
         super().__init__(group, **kwargs)
-        
+
+@inherit_doc_string          
 class MagneticDataset(ChannelDataset):
-    """
-    holds a channel
-    """
-    
+
     def __init__(self, group, **kwargs):
         
         super().__init__(group, **kwargs)
         
+@inherit_doc_string  
 class AuxiliaryDataset(ChannelDataset):
-    """
-    holds a channel
-    """
     
     def __init__(self, group, **kwargs):
         
