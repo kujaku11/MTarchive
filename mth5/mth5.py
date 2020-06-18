@@ -19,17 +19,9 @@ Created on Sun Dec  9 20:50:41 2018
 # =============================================================================
 # Imports
 # =============================================================================
-import os
-import datetime
-import time
-import json
-import dateutil
 import logging
-import weakref
 
 import h5py
-import pandas as pd
-import numpy as np
 
 from pathlib import Path
 from platform import platform
@@ -37,13 +29,13 @@ from platform import platform
 from mth5.utils.exceptions import MTH5Error
 from mth5 import __version__
 from mth5.utils.mttime import get_now_utc
-from mth5 import mth5_groups as m5groups 
+from mth5 import mth5_groups as m5groups
 from mth5.helpers import get_tree, close_open_files
 
 # =============================================================================
 # MT HDF5 file
 # =============================================================================
-class MTH5():
+class MTH5:
     """
     MT HDF5 file
 
@@ -143,58 +135,59 @@ class MTH5():
 
     def __init__(self, filename=None):
         self.__hdf5_obj = None
-        
+
         self.__filename = filename
         if self.__filename:
             if not isinstance(self.__filename, Path):
                 self.__filename = Path(self.__filename)
 
         self._class_name = self.__class__.__name__
-        self.logger = logging.getLogger('{0}.{1}'.format(__name__, 
-                                                         self._class_name))
-        
-        self._default_root_name = 'Survey'
-        self._default_subgroup_names =['Stations', 'Reports', 'Filters',
-                                       'Standards']
-        
-        self._file_attrs = {'file.type': 'MTH5',
-                            'file.access.platform': platform(),
-                            'file.access.time': get_now_utc(),
-                            'MTH5.version': __version__,
-                            'MTH5.software': 'pymth5'}
-        
-        
+        self.logger = logging.getLogger("{0}.{1}".format(__name__, self._class_name))
+
+        self._default_root_name = "Survey"
+        self._default_subgroup_names = ["Stations", "Reports", "Filters", "Standards"]
+
+        self._file_attrs = {
+            "file.type": "MTH5",
+            "file.access.platform": platform(),
+            "file.access.time": get_now_utc(),
+            "MTH5.version": __version__,
+            "MTH5.software": "pymth5",
+        }
+
     def __str__(self):
         if self.h5_is_write():
             return get_tree(self.__hdf5_obj)
         else:
-            return 'HDF5 file is closed and cannot be accessed.'
-        
+            return "HDF5 file is closed and cannot be accessed."
+
     def __repr__(self):
         return self.__str__()
-    
+
     @property
     def filename(self):
         if self.h5_is_write():
             return Path(self.__hdf5_obj.filename)
         else:
-            msg = ('MTH5 file is not open or has not been created yet. ' +
-                   'Returning default name')
+            msg = (
+                "MTH5 file is not open or has not been created yet. "
+                + "Returning default name"
+            )
             self.logger.warning(msg)
             return self.__filename
 
     @property
     def survey_group(self):
         if self.h5_is_write():
-            return m5groups.SurveyGroup(self.__hdf5_obj['/Survey'])
+            return m5groups.SurveyGroup(self.__hdf5_obj["/Survey"])
         else:
             self.logger.info("File is closed cannot access /Survey")
             return None
-        
+
     @property
     def reports_group(self):
         if self.h5_is_write():
-            return m5groups.ReportsGroup(self.__hdf5_obj['/Survey/Reports'])
+            return m5groups.ReportsGroup(self.__hdf5_obj["/Survey/Reports"])
         else:
             self.logger.info("File is closed cannot access /Reports")
             return None
@@ -202,29 +195,28 @@ class MTH5():
     @property
     def filters_group(self):
         if self.h5_is_write():
-            return m5groups.FiltersGroup(self.__hdf5_obj['/Survey/Filters'])
+            return m5groups.FiltersGroup(self.__hdf5_obj["/Survey/Filters"])
         else:
             self.logger.info("File is closed cannot access /Filters")
-            return None        
+            return None
 
     @property
     def standards_group(self):
         if self.h5_is_write():
-            return m5groups.StandardsGroup(
-                self.__hdf5_obj['/Survey/Standards'])
+            return m5groups.StandardsGroup(self.__hdf5_obj["/Survey/Standards"])
         else:
             self.logger.info("File is closed cannot access /Standards")
-            return None 
+            return None
 
     @property
     def stations_group(self):
         if self.h5_is_write():
-            return m5groups.MasterStationGroup(self.__hdf5_obj['/Survey/Stations'])
+            return m5groups.MasterStationGroup(self.__hdf5_obj["/Survey/Stations"])
         else:
             self.logger.info("File is closed cannot access /Stations")
             return None
 
-    def open_mth5(self, filename, mode='a'):
+    def open_mth5(self, filename, mode="a"):
         """
         open an mth5 file
         
@@ -242,18 +234,21 @@ class MTH5():
         self.__filename = filename
         if not isinstance(self.__filename, Path):
             self.__filename = Path(filename)
-            
+
         if self.__filename.exists():
-            if mode in ['w']:
-                self.logger.warning("{0} will be overwritten in 'w' mode".format(
-                    self.__filename.name))
+            if mode in ["w"]:
+                self.logger.warning(
+                    "{0} will be overwritten in 'w' mode".format(self.__filename.name)
+                )
                 try:
                     self.initialize_file(self.__filename)
                 except OSError as error:
-                    msg = ('{0}. Need to close any references to {1} first. ' +
-                           'Then reopen the file in the preferred mode')
+                    msg = (
+                        "{0}. Need to close any references to {1} first. "
+                        + "Then reopen the file in the preferred mode"
+                    )
                     self.logger.exception(msg.format(error, self.__filename))
-            elif mode in ['a', 'r', 'r+', 'w-', 'x']:
+            elif mode in ["a", "r", "r+", "w-", "x"]:
                 self.__hdf5_obj = h5py.File(self.__filename, mode=mode)
 
             else:
@@ -261,7 +256,7 @@ class MTH5():
                 self.logger.error(msg)
                 raise MTH5Error(msg)
         else:
-            if mode in ['a', 'w', 'w-', 'x']:
+            if mode in ["a", "w", "w-", "x"]:
                 self.initialize_file(self.__filename)
             else:
                 msg = "Cannot open new file in mode {0} ".format(mode)
@@ -276,50 +271,52 @@ class MTH5():
         :rtype: m5groups.SurveyGroup
 
         """
-        
-        self.__hdf5_obj = h5py.File(self.__filename, 'w')
-        
+
+        self.__hdf5_obj = h5py.File(self.__filename, "w")
+
         # write general metadata
         self.__hdf5_obj.attrs.update(self._file_attrs)
-        
+
         survey_group = self.__hdf5_obj.create_group(self._default_root_name)
         survey_obj = m5groups.SurveyGroup(survey_group)
         survey_obj.write_metadata()
-        
+
         for group_name in self._default_subgroup_names:
-            self.__hdf5_obj.create_group('{0}/{1}'.format(
-                self._default_root_name, group_name))
-            m5_grp = getattr(self, '{0}_group'.format(group_name.lower()))
+            self.__hdf5_obj.create_group(
+                "{0}/{1}".format(self._default_root_name, group_name)
+            )
+            m5_grp = getattr(self, "{0}_group".format(group_name.lower()))
             m5_grp.initialize_group()
-            
-        self.logger.info("Initialized MTH5 file {0} in mode {1}".format(
-            self.filename, 'w'))
-        
-        return survey_obj        
+
+        self.logger.info(
+            "Initialized MTH5 file {0} in mode {1}".format(self.filename, "w")
+        )
+
+        return survey_obj
 
     def close_mth5(self):
         """
         close mth5 file to make sure everything is flushed to the file
         """
         fn = str(self.filename)
-        self.__hdf5_obj.flush()       
+        self.__hdf5_obj.flush()
         self.__hdf5_obj.close()
         self.logger.info("Flushed and closed {0}".format(fn))
-        
+
     def h5_is_write(self):
         """
         check to see if the hdf5 file is open and writeable
         """
         if isinstance(self.__hdf5_obj, h5py.File):
             try:
-                if 'w' in self.__hdf5_obj.mode or '+' in self.__hdf5_obj.mode:
+                if "w" in self.__hdf5_obj.mode or "+" in self.__hdf5_obj.mode:
                     return True
-                elif self.__hdf5_obj.mode == 'r':
+                elif self.__hdf5_obj.mode == "r":
                     return False
             except ValueError:
                 return False
         return False
-    
+
     def from_reference(self, h5_reference):
         """
         Get an HDF5 group, dataset, etc from a reference
@@ -332,41 +329,210 @@ class MTH5():
         """
         # in the future should allow this to return the proper container.
         return self.__hdf5_obj[h5_reference]
-    
-    def add_station(self, name):
+
+    def add_station(self, name, station_metadata=None):
         """
-        Add a station and returns the group container.  The station name
-        needs to be the same as the archive_id name.  A 5 character 
-        alphanumeric string.
+        Convenience function to add a station using 
+        ``mth5.stations_group.add_station``
         
-        :param station: DESCRIPTION
-        :type station: TYPE
-        :return: DESCRIPTION
-        :rtype: TYPE
+        
+        Add a station with metadata if given with the path: 
+            ``/Survey/Stations/station_name``
+            
+        If the station already exists, will return that station and nothing
+        is added.  
+        
+        :param station_name: Name of the station, should be the same as
+                             metadata.archive_id 
+        :type station_name: string
+        :param station_metadata: Station metadata container, defaults to None
+        :type station_metadata: :class:`mth5.metadata.Station`, optional
+        :return: A convenience class for the added station
+        :rtype: :class:`mth5_groups.StationGroup`
+        
+        :Example: ::
+            
+            >>> from mth5 import mth5
+            >>> mth5_obj = mth5.MTH5()
+            >>> mth5_obj.open_mth5(r"/test.mth5", mode='a')
+            >>> # one option
+            >>> stations = mth5_obj.stations_group
+            >>> new_station = stations.add_station('MT001')
+            >>> # another option 
+            >>> new_staiton = mth5_obj.stations_group.add_station('MT001')
 
         """
+
+        return self.stations_group.add_station(name, station_metadat=station_metadata)
+
+    def get_station(self, station_name):
+        """
+        Get a station with the same name as station_name
         
-        try:
-            station_group = self.stations_group.create_group(name)
-            self.logger.debug("Created group {0}".format(station_group.name))
-        except ValueError:
-            msg = "Group {0} alread exists, returning existing group"
-            self.logger.info(msg.format(name))
-            station_group = self.station_group[name]
+        :param station_name: existing station name
+        :type station_name: string
+        :return: convenience station class
+        :rtype: :class:`mth5.mth5_groups.StationGroup`
+        :raises MTH5Error:  if the station name is not found.
         
-        return m5groups.StationGroup(station_group)
-        
-        
+        :Example:
+            
+        >>> from mth5 import mth5
+        >>> mth5_obj = mth5.MTH5()
+        >>> mth5_obj.open_mth5(r"/test.mth5", mode='a')
+        >>> # one option
+        >>> stations = mth5_obj.stations_group
+        >>> existing_station = stations.get_station('MT001')
+        >>> # another option
+        >>> existing_staiton = mth5_obj.stations_group.get_station('MT001')
+        MTH5Error: MT001 does not exist, check station_list for existing names
+
+        """
+
+        return self.stations_group.get_station(station_name)
     
-    def add_run(self, station, run):
+    def remove_station(self, station_name):
         """
-        add a run to the given station
+        Remove a station from the file.
+        
+        .. note:: Deleting a station is not as simple as del(station).  In HDF5 
+              this does not free up memory, it simply removes the reference
+              to that station.  The common way to get around this is to
+              copy what you want into a new file, or overwrite the station.
+              
+        :param station_name: existing station name
+        :type station_name: string
+        
+        :Example: ::
+            
+            >>> from mth5 import mth5
+            >>> mth5_obj = mth5.MTH5()
+            >>> mth5_obj.open_mth5(r"/test.mth5", mode='a')
+            >>> # one option
+            >>> stations = mth5_obj.stations_group
+            >>> stations.remove_station('MT001')
+            >>> # another option
+            >>> mth5_obj.stations_group.remove_station('MT001')
         """
-        pass
+        
+        self.stations_group.remove_station(station_name)
+
+
+    def add_run(self, station_name, run_name, run_metadata=None):
+        """
+        Add a run to a station.  
+        
+        :param run_name: run name, should be archive_id{a-z}
+        :type run_name: string
+        :param metadata: metadata container, defaults to None
+        :type metadata: :class:`mth5.metadata.Station`, optional
+        
+        need to be able to fill an entry in the summary table.
+        
+        .. todo:: auto fill run name if none is given.
+        
+        .. todo:: add ability to add a run with data.
+
+        """
+
+        return self.stations_group.get_station(station_name).add_run(
+            run_name, run_metadata=run_metadata
+        )
+
+    def get_run(self, station_name, run_name):
+        """
+        get a run from run name for a given station
+        
+        :param station_name: existing station name
+        :type station_name: string
+        :param run_name: existing run name
+        :type run_name: string
+        :return: Run object
+        :rtype: :class:`mth5.mth5_groups.RunGroup`
+        
+        >>> existing_run = station.get_run('MT001')
+        """
+
+        return self.stations_group.get_station(station_name).get_run(run_name)
     
-    def add_channel(self, station, run, channel):
+    def remove_run(self, station_name, run_name):
         """
-        add a channel to the given station/run
-        """
-        pass
+        Remove a run from the station.
+        
+        .. note:: Deleting a run is not as simple as del(run).  In HDF5 
+              this does not free up memory, it simply removes the reference
+              to that station.  The common way to get around this is to
+              copy what you want into a new file, or overwrite the run.
+              
+        :param station_name: existing station name
+        :type station_name: string
+        
+        :Example: ::
+            
+            >>> from mth5 import mth5
+            >>> mth5_obj = mth5.MTH5()
+            >>> mth5_obj.open_mth5(r"/test.mth5", mode='a')
+            >>> # one option
+            >>> stations = mth5_obj.stations_group
+            >>> stations.remove_station('MT001')
+            >>> # another option
+            >>> mth5_obj.stations_group.remove_station('MT001')
+
+        """ 
+
+        return self.stations_group.get_station(station_name).remove_run(run_name)
     
+    
+    def add_channel(
+        self,
+        station_name,
+        run_name,
+        channel_name,
+        channel_type,
+        data,
+        channel_metadata=None,
+    ):
+        """
+        add a channel to a given run for a given station
+        
+        :param station_name: existing station name
+        :type station_name: string
+        :param run_name: existing run name
+        :type run_name: string
+        :param channel_name: name of the channel
+        :type channel_name: string
+        :param channel_type: [ electric | magnetic | auxiliary ]
+        :type channel_type: string
+        :raises MTH5Error: If channel type is not correct
+        
+        :param channel_metadata: metadata container, defaults to None
+        :type channel_metadata: [ :class:`mth5.metadata.Electric` |
+                                 :class:`mth5.metadata.Magnetic` |
+                                 :class:`mth5.metadata.Auxiliary` ], optional
+        :return: Channel container
+        :rtype: [ :class:`mth5.mth5_groups.ElectricDatset` |
+                 :class:`mth5.mth5_groups.MagneticDatset` |
+                 :class:`mth5.mth5_groups.AuxiliaryDatset` ]
+        
+        >>> new_channel = run.add_channel('Ex', 'electric', None)
+        >>> new_channel
+        Channel Electric:
+        -------------------
+        		component:        None
+            	data type:        electric
+            	data format:      float32
+            	data shape:       (1,)
+            	start:            1980-01-01T00:00:00+00:00
+            	end:              1980-01-01T00:00:00+00:00
+            	sample rate:      None
+        
+
+        """
+
+        return (
+            self.stations_group.get_station(station_name)
+            .get_run(run_name)
+            .add_channel(
+                channel_name, channel_type, data, channel_metadata=channel_metadata
+            )
+        )

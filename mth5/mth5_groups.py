@@ -1015,6 +1015,42 @@ class StationGroup(BaseGroup):
             self.logger.exception(msg)
             raise MTH5Error(msg)
     
+    def remove_run(self, run_name):
+        """
+        Remove a run from the station.
+        
+        .. note:: Deleting a station is not as simple as del(station).  In HDF5 
+              this does not free up memory, it simply removes the reference
+              to that station.  The common way to get around this is to
+              copy what you want into a new file, or overwrite the station.
+              
+        :param station_name: existing station name
+        :type station_name: string
+        
+        :Example: ::
+            
+            >>> from mth5 import mth5
+            >>> mth5_obj = mth5.MTH5()
+            >>> mth5_obj.open_mth5(r"/test.mth5", mode='a')
+            >>> # one option
+            >>> stations = mth5_obj.stations_group
+            >>> stations.remove_station('MT001')
+            >>> # another option
+            >>> mth5_obj.stations_group.remove_station('MT001')
+
+        """
+        
+        try:
+            del self.hdf5_group[run_name]
+            self.logger.info("Deleting a run does not reduce the HDF5" +
+                             "file size it simply remove the reference. If " +
+                             "file size reduction is your goal, simply copy" +
+                             " what you want into another file.")
+        except KeyError:
+            msg = (f'{run_name} does not exist, ' +
+                   'check station_list for existing names')
+            self.logger.exception(msg)
+            raise MTH5Error(msg) 
 
 
     
@@ -1233,8 +1269,8 @@ class RunGroup(BaseGroup):
         """
         add a channel to the run
         
-        :param name: name of the channel
-        :type name: string
+        :param channel_name: name of the channel
+        :type channel_name: string
         :param channel_type: [ electric | magnetic | auxiliary ]
         :type channel_type: string
         :raises MTH5Error: If channel type is not correct
@@ -1545,6 +1581,23 @@ class ChannelDataset():
                                          ('measurement_type', 'S12'),
                                          ('units', 'S25')
                                          ('hdf5_reference', h5py.ref_dtype)]))
+    
+    def time_slice(self, start_time, end_time):
+        """
+        Get a time slice from the channel
+        
+        
+        :param start_time: DESCRIPTION
+        :type start_time: TYPE
+        :param end_time: DESCRIPTION
+        :type end_time: TYPE
+        :return: DESCRIPTION
+        :rtype: TYPE
+
+        """
+        
+        pass
+    
     
 
 @inherit_doc_string                
