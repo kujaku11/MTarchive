@@ -8,7 +8,7 @@ This module deals with reading and writing MTH5 files, which are HDF5 files
 developed for magnetotelluric (MT) data.  The code is based on h5py and
 attributes use JSON encoding.
 
-.. note:: Currently the convenience methods support read only.  
+.. note:: Currently the convenience methods support read only.
           Working on developing the write convenience methods.
 
 Created on Sun Dec  9 20:50:41 2018
@@ -21,10 +21,10 @@ Created on Sun Dec  9 20:50:41 2018
 # =============================================================================
 import logging
 
-import h5py
-
 from pathlib import Path
 from platform import platform
+
+import h5py
 
 from mth5.utils.exceptions import MTH5Error
 from mth5 import __version__
@@ -79,19 +79,19 @@ class MTH5:
     ============================ ==============================================
 
     * Example: Load MTH5 File
-    
+
     >>> import mth5.mth5 as mth5
     >>> data = mth5.MTH5.open_mth5(r"/home/mtdata/mt01.mth5")
 
     * Example: Update metadata from cfg file
-    
+
     >>> data = mth5.MTH5()
     >>> # read in configuration file to update attributes
     >>> data.update_metadata_from_cfg(r"/home/survey_mth5.cfg")
     >>> data.write_metadata()
-    
+
     * Example: Add schedule to MTH5 File
-    
+
     >>> schedule_obj = mth5.Schedule()
     >>> # make schedule object from a pandas dataframe
     >>> import pandas as pd
@@ -101,7 +101,7 @@ class MTH5:
     ...                                             end='2018-01-01T02:00:00',
     ...                                             freq='{0:.0f}N'.format(1./256.*1E9)))
     >>> data.schedule_01 = schedule_obj.from_dataframe(sdf, 'schedule_01')
-        
+
     * Example: Add calibration from structured numpy array
 
     >>> import numpy as np
@@ -117,19 +117,19 @@ class MTH5:
     >>> cal.calibration_person.name = 'tester name'
     >>> cal.calibration_person.organization = 'tester company'
     >>> data.calibrations.calibration_hx = data.add_calibration(cal, 'hx')
-    
+
     * Example: Update data
-    
+
     >>> data.schedule_01.ex[0:10] = np.nan
     >>> data.calibration_hx[...] = np.logspace(-4, 4, 20)
-    
+
     .. note:: if replacing an entire array with a new one you need to use [...]
-              otherwise the data will not be updated.  
-              
-    .. warning:: You can only replace entire arrays with arrays of the same 
-                 size.  Otherwise you need to delete the existing data and 
-                 make a new dataset.  
-                 
+              otherwise the data will not be updated.
+
+    .. warning:: You can only replace entire arrays with arrays of the same
+                 size.  Otherwise you need to delete the existing data and
+                 make a new dataset.
+
     .. seealso:: https://www.hdfgroup.org/ and h5py()
     """
 
@@ -158,78 +158,78 @@ class MTH5:
     def __str__(self):
         if self.h5_is_write():
             return get_tree(self.__hdf5_obj)
-        else:
-            return "HDF5 file is closed and cannot be accessed."
+
+        return "HDF5 file is closed and cannot be accessed."
 
     def __repr__(self):
         return self.__str__()
 
     @property
     def filename(self):
+        """ file name of the hdf5 file"""
         if self.h5_is_write():
             return Path(self.__hdf5_obj.filename)
-        else:
-            msg = (
-                "MTH5 file is not open or has not been created yet. "
-                + "Returning default name"
-            )
-            self.logger.warning(msg)
-            return self.__filename
+        msg = (
+            "MTH5 file is not open or has not been created yet. "
+            + "Returning default name"
+        )
+        self.logger.warning(msg)
+        return self.__filename
 
     @property
     def survey_group(self):
+        """ Convenience property for /Survey group"""
         if self.h5_is_write():
             return m5groups.SurveyGroup(self.__hdf5_obj["/Survey"])
-        else:
-            self.logger.info("File is closed cannot access /Survey")
-            return None
+        self.logger.info("File is closed cannot access /Survey")
+        return None
 
     @property
     def reports_group(self):
+        """ Convenience property for /Survey/Reports group"""
         if self.h5_is_write():
             return m5groups.ReportsGroup(self.__hdf5_obj["/Survey/Reports"])
-        else:
-            self.logger.info("File is closed cannot access /Reports")
-            return None
+        self.logger.info("File is closed cannot access /Reports")
+        return None
 
     @property
     def filters_group(self):
+        """ Convenience property for /Survey/Filters group"""
         if self.h5_is_write():
             return m5groups.FiltersGroup(self.__hdf5_obj["/Survey/Filters"])
-        else:
-            self.logger.info("File is closed cannot access /Filters")
-            return None
+        self.logger.info("File is closed cannot access /Filters")
+        return None
 
     @property
     def standards_group(self):
+        """ Convenience property for /Survey/Standards group"""
         if self.h5_is_write():
             return m5groups.StandardsGroup(self.__hdf5_obj["/Survey/Standards"])
-        else:
-            self.logger.info("File is closed cannot access /Standards")
-            return None
+        self.logger.info("File is closed cannot access /Standards")
+        return None
 
     @property
     def stations_group(self):
+        """ Convenience property for /Survey/Stations group"""
         if self.h5_is_write():
             return m5groups.MasterStationGroup(self.__hdf5_obj["/Survey/Stations"])
-        else:
-            self.logger.info("File is closed cannot access /Stations")
-            return None
+        self.logger.info("File is closed cannot access /Stations")
+        return None
 
     def open_mth5(self, filename, mode="a"):
         """
         open an mth5 file
-        
-        :return: Survey Group 
+
+        :return: Survey Group
         :type: m5groups.SurveyGroup
-        
+
         :Example: ::
-            
+
             >>> from mth5 import mth5
             >>> mth5_object = mth5.MTH5()
             >>> survey_object = mth5_object.open_mth5('Test.mth5', 'w')
-            
-        
+
+
         """
         self.__filename = filename
         if not isinstance(self.__filename, Path):
@@ -241,7 +241,7 @@ class MTH5:
                     "{0} will be overwritten in 'w' mode".format(self.__filename.name)
                 )
                 try:
-                    self.initialize_file(self.__filename)
+                    self.initialize_file()
                 except OSError as error:
                     msg = (
                         "{0}. Need to close any references to {1} first. "
@@ -257,16 +257,16 @@ class MTH5:
                 raise MTH5Error(msg)
         else:
             if mode in ["a", "w", "w-", "x"]:
-                self.initialize_file(self.__filename)
+                self.initialize_file()
             else:
                 msg = "Cannot open new file in mode {0} ".format(mode)
                 self.logger.error(msg)
                 raise MTH5Error(msg)
 
-    def initialize_file(self, filename):
+    def initialize_file(self):
         """
         Initialize the default groups for the file
-        
+
         :return: Survey Group
         :rtype: m5groups.SurveyGroup
 
@@ -298,10 +298,10 @@ class MTH5:
         """
         close mth5 file to make sure everything is flushed to the file
         """
-        fn = str(self.filename)
+
         self.__hdf5_obj.flush()
         self.__hdf5_obj.close()
-        self.logger.info("Flushed and closed {0}".format(fn))
+        self.logger.info("Flushed and closed {0}".format(str(self.filename)))
 
     def h5_is_write(self):
         """
@@ -311,8 +311,7 @@ class MTH5:
             try:
                 if "w" in self.__hdf5_obj.mode or "+" in self.__hdf5_obj.mode:
                     return True
-                elif self.__hdf5_obj.mode == "r":
-                    return False
+                return False
             except ValueError:
                 return False
         return False
@@ -320,7 +319,7 @@ class MTH5:
     def from_reference(self, h5_reference):
         """
         Get an HDF5 group, dataset, etc from a reference
-        
+
         :param h5_reference: DESCRIPTION
         :type h5_reference: TYPE
         :return: DESCRIPTION
@@ -332,106 +331,99 @@ class MTH5:
 
     def add_station(self, name, station_metadata=None):
         """
-        Convenience function to add a station using 
+        Convenience function to add a station using
         ``mth5.stations_group.add_station``
-        
-        
-        Add a station with metadata if given with the path: 
+
+
+        Add a station with metadata if given with the path:
             ``/Survey/Stations/station_name``
-            
+
         If the station already exists, will return that station and nothing
-        is added.  
-        
+        is added.
+
         :param station_name: Name of the station, should be the same as
-                             metadata.archive_id 
+                             metadata.archive_id
         :type station_name: string
         :param station_metadata: Station metadata container, defaults to None
         :type station_metadata: :class:`mth5.metadata.Station`, optional
         :return: A convenience class for the added station
         :rtype: :class:`mth5_groups.StationGroup`
-        
-        :Example: ::
-            
-            >>> from mth5 import mth5
-            >>> mth5_obj = mth5.MTH5()
-            >>> mth5_obj.open_mth5(r"/test.mth5", mode='a')
-            >>> # one option
-            >>> stations = mth5_obj.stations_group
-            >>> new_station = stations.add_station('MT001')
-            >>> # another option 
-            >>> new_staiton = mth5_obj.stations_group.add_station('MT001')
+
+        :Example:
+
+        >>> new_staiton = mth5_obj.add_station('MT001')
 
         """
 
-        return self.stations_group.add_station(name, station_metadat=station_metadata)
+        return self.stations_group.add_station(name,
+                                               station_metadata=station_metadata)
 
     def get_station(self, station_name):
         """
+        Convenience function to get a station using
+        ``mth5.stations_group.get_station``
+
         Get a station with the same name as station_name
-        
+
         :param station_name: existing station name
         :type station_name: string
         :return: convenience station class
         :rtype: :class:`mth5.mth5_groups.StationGroup`
         :raises MTH5Error:  if the station name is not found.
-        
+
         :Example:
-            
-        >>> from mth5 import mth5
-        >>> mth5_obj = mth5.MTH5()
-        >>> mth5_obj.open_mth5(r"/test.mth5", mode='a')
-        >>> # one option
-        >>> stations = mth5_obj.stations_group
-        >>> existing_station = stations.get_station('MT001')
-        >>> # another option
-        >>> existing_staiton = mth5_obj.stations_group.get_station('MT001')
+
+        >>> existing_staiton = mth5_obj.get_station('MT001')
         MTH5Error: MT001 does not exist, check station_list for existing names
 
         """
 
         return self.stations_group.get_station(station_name)
-    
+
     def remove_station(self, station_name):
         """
+        Convenience function to remove a station using
+        ``mth5.stations_group.remove_station``
+
         Remove a station from the file.
-        
-        .. note:: Deleting a station is not as simple as del(station).  In HDF5 
+
+        .. note:: Deleting a station is not as simple as del(station).  In HDF5
               this does not free up memory, it simply removes the reference
               to that station.  The common way to get around this is to
               copy what you want into a new file, or overwrite the station.
-              
+
         :param station_name: existing station name
         :type station_name: string
-        
-        :Example: ::
-            
-            >>> from mth5 import mth5
-            >>> mth5_obj = mth5.MTH5()
-            >>> mth5_obj.open_mth5(r"/test.mth5", mode='a')
-            >>> # one option
-            >>> stations = mth5_obj.stations_group
-            >>> stations.remove_station('MT001')
-            >>> # another option
-            >>> mth5_obj.stations_group.remove_station('MT001')
-        """
-        
-        self.stations_group.remove_station(station_name)
 
+        :Example: ::
+
+            >>> mth5_obj.remove_station('MT001')
+
+        """
+
+        self.stations_group.remove_station(station_name)
 
     def add_run(self, station_name, run_name, run_metadata=None):
         """
-        Add a run to a station.  
-        
+        Convenience function to add a run using
+        ``mth5.stations_group.get_station(station_name).add_run()``
+
+        Add a run to a given station.
+
         :param run_name: run name, should be archive_id{a-z}
         :type run_name: string
         :param metadata: metadata container, defaults to None
         :type metadata: :class:`mth5.metadata.Station`, optional
-        
-        need to be able to fill an entry in the summary table.
-        
+
+        :example:
+
+        >>> new_run = mth5_obj.add_run('MT001', 'MT001a')
+
+
         .. todo:: auto fill run name if none is given.
-        
+
         .. todo:: add ability to add a run with data.
+
 
         """
 
@@ -441,60 +433,59 @@ class MTH5:
 
     def get_run(self, station_name, run_name):
         """
+        Convenience function to get a run using
+        ``mth5.stations_group.get_station(station_name).get_run()``
+
         get a run from run name for a given station
-        
+
         :param station_name: existing station name
         :type station_name: string
         :param run_name: existing run name
         :type run_name: string
         :return: Run object
         :rtype: :class:`mth5.mth5_groups.RunGroup`
-        
-        >>> existing_run = station.get_run('MT001')
+
+        :Example:
+
+        >>> existing_run = mth5_obj.get_run('MT001', 'MT001a')
+
         """
 
         return self.stations_group.get_station(station_name).get_run(run_name)
-    
+
     def remove_run(self, station_name, run_name):
         """
+        Convenience function to add a run using
+        ``mth5.stations_group.get_station(station_name).remove_run()``
+
         Remove a run from the station.
-        
-        .. note:: Deleting a run is not as simple as del(run).  In HDF5 
+
+        .. note:: Deleting a run is not as simple as del(run).  In HDF5
               this does not free up memory, it simply removes the reference
               to that station.  The common way to get around this is to
               copy what you want into a new file, or overwrite the run.
-              
+
         :param station_name: existing station name
         :type station_name: string
-        
-        :Example: ::
-            
-            >>> from mth5 import mth5
-            >>> mth5_obj = mth5.MTH5()
-            >>> mth5_obj.open_mth5(r"/test.mth5", mode='a')
-            >>> # one option
-            >>> stations = mth5_obj.stations_group
-            >>> stations.remove_station('MT001')
-            >>> # another option
-            >>> mth5_obj.stations_group.remove_station('MT001')
+        :param run_name: existing run name
+        :type run_name: string
 
-        """ 
+        :Example:
+
+        >>> mth5_obj.remove_station('MT001', 'MT001a')
+
+        """
 
         return self.stations_group.get_station(station_name).remove_run(run_name)
-    
-    
-    def add_channel(
-        self,
-        station_name,
-        run_name,
-        channel_name,
-        channel_type,
-        data,
-        channel_metadata=None,
-    ):
+
+    def add_channel(self, station_name, run_name, channel_name, channel_type,
+                    data, channel_metadata=None):
         """
+        Convenience function to add a channel using
+        ``mth5.stations_group.get_station().get_run().add_channel()``
+
         add a channel to a given run for a given station
-        
+
         :param station_name: existing station name
         :type station_name: string
         :param run_name: existing run name
@@ -504,7 +495,7 @@ class MTH5:
         :param channel_type: [ electric | magnetic | auxiliary ]
         :type channel_type: string
         :raises MTH5Error: If channel type is not correct
-        
+
         :param channel_metadata: metadata container, defaults to None
         :type channel_metadata: [ :class:`mth5.metadata.Electric` |
                                  :class:`mth5.metadata.Magnetic` |
@@ -513,8 +504,9 @@ class MTH5:
         :rtype: [ :class:`mth5.mth5_groups.ElectricDatset` |
                  :class:`mth5.mth5_groups.MagneticDatset` |
                  :class:`mth5.mth5_groups.AuxiliaryDatset` ]
-        
-        >>> new_channel = run.add_channel('Ex', 'electric', None)
+
+        >>> new_channel = mth5_obj.add_channel('MT001', 'MT001a''Ex',
+        >>> ...                                'electric', None)
         >>> new_channel
         Channel Electric:
         -------------------
@@ -525,7 +517,7 @@ class MTH5:
             	start:            1980-01-01T00:00:00+00:00
             	end:              1980-01-01T00:00:00+00:00
             	sample rate:      None
-        
+
 
         """
 
@@ -536,13 +528,15 @@ class MTH5:
                 channel_name, channel_type, data, channel_metadata=channel_metadata
             )
         )
-    
+
     def get_channel(self, station_name, run_name, channel_name):
         """
-        
-        Get a channel from an existing name.  Returns the appropriate 
+        Convenience function to get a channel using
+        ``mth5.stations_group.get_station().get_run().get_channel()``
+
+        Get a channel from an existing name.  Returns the appropriate
         container.
-        
+
         :param station_name: existing station name
         :type station_name: string
         :param run_name: existing run name
@@ -554,11 +548,11 @@ class MTH5:
                   :class:`mth5.mth5_groups.MagneticDatset` |
                   :class:`mth5.mth5_groups.AuxiliaryDatset` ]
         :raises MTH5Error:  If no channel is found
-        
+
         :Example:
-            
+
         >>> existing_channel = mth5_obj.get_channel(station_name,
-        >>> ...                                     run_name, 
+        >>> ...                                     run_name,
         >>> ...                                     channel_name)
         >>> existing_channel
         Channel Electric:
@@ -570,39 +564,42 @@ class MTH5:
             	start:            1980-01-01T00:00:00+00:00
             	end:              1980-01-01T00:00:01+00:00
             	sample rate:      4096
-        
-        """ 
+
+        """
 
         return (
             self.stations_group.get_station(station_name)
             .get_run(run_name)
-            .add_channel(channel_name)
-            )
-    
+            .get_channel(channel_name)
+        )
+
     def remove_channel(self, station_name, run_name, channel_name):
         """
+        Convenience function to remove a channel using
+        ``mth5.stations_group.get_station().get_run().remove_channel()``
+
         Remove a channel from a given run and station.
-        
-        .. note:: Deleting a channel is not as simple as del(channel).  In HDF5 
+
+        .. note:: Deleting a channel is not as simple as del(channel).  In HDF5
               this does not free up memory, it simply removes the reference
               to that channel.  The common way to get around this is to
               copy what you want into a new file, or overwrite the channel.
-        
+
         :param station_name: existing station name
         :type station_name: string
         :param run_name: existing run name
         :type run_name: string
         :param channel_name: existing station name
         :type channel_name: string
-        
+
         :Example: ::
-            
+
         >>> mth5_obj.remove_channel('MT001', 'MT001a', 'Ex')
 
         """
-        
+
         return (
             self.stations_group.get_station(station_name)
             .get_run(run_name)
             .remove_channel(channel_name)
-            )
+        )
