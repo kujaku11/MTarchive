@@ -1051,8 +1051,6 @@ class StationGroup(BaseGroup):
                    'check station_list for existing names')
             self.logger.exception(msg)
             raise MTH5Error(msg) 
-
-
     
         
 class RunGroup(BaseGroup):
@@ -1400,7 +1398,40 @@ class RunGroup(BaseGroup):
                    'check groups_list for existing names')
             self.logger.exception(msg)
             raise MTH5Error(msg)
+            
+    def remove_channel(self, channel_name):
+        """
+        Remove a run from the station.
         
+        .. note:: Deleting a channel is not as simple as del(channel).  In HDF5 
+              this does not free up memory, it simply removes the reference
+              to that channel.  The common way to get around this is to
+              copy what you want into a new file, or overwrite the channel.
+              
+        :param station_name: existing station name
+        :type station_name: string
+        
+        :Example: ::
+            
+        >>> from mth5 import mth5
+        >>> mth5_obj = mth5.MTH5()
+        >>> mth5_obj.open_mth5(r"/test.mth5", mode='a')
+        >>> run = mth5_obj.stations_group.get_station('MT001').get_run('MT001a')
+        >>> run.remove_channel('Ex')
+
+        """
+        
+        try:
+            del self.hdf5_group[channel_name]
+            self.logger.info("Deleting a channel does not reduce the HDF5" +
+                             "file size it simply remove the reference. If " +
+                             "file size reduction is your goal, simply copy" +
+                             " what you want into another file.")
+        except KeyError:
+            msg = (f'{channel_name} does not exist, ' +
+                   'check group_list for existing names')
+            self.logger.exception(msg)
+            raise MTH5Error(msg)   
     
 class ChannelDataset():
     """

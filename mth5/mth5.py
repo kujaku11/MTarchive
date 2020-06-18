@@ -536,3 +536,73 @@ class MTH5:
                 channel_name, channel_type, data, channel_metadata=channel_metadata
             )
         )
+    
+    def get_channel(self, station_name, run_name, channel_name):
+        """
+        
+        Get a channel from an existing name.  Returns the appropriate 
+        container.
+        
+        :param station_name: existing station name
+        :type station_name: string
+        :param run_name: existing run name
+        :type run_name: string
+        :param channel_name: name of the channel
+        :type channel_name: string
+        :return: Channel container
+        :rtype: [ :class:`mth5.mth5_groups.ElectricDatset` |
+                  :class:`mth5.mth5_groups.MagneticDatset` |
+                  :class:`mth5.mth5_groups.AuxiliaryDatset` ]
+        :raises MTH5Error:  If no channel is found
+        
+        :Example:
+            
+        >>> existing_channel = mth5_obj.get_channel(station_name,
+        >>> ...                                     run_name, 
+        >>> ...                                     channel_name)
+        >>> existing_channel
+        Channel Electric:
+        -------------------
+        		component:        Ex
+            	data type:        electric
+            	data format:      float32
+            	data shape:       (4096,)
+            	start:            1980-01-01T00:00:00+00:00
+            	end:              1980-01-01T00:00:01+00:00
+            	sample rate:      4096
+        
+        """ 
+
+        return (
+            self.stations_group.get_station(station_name)
+            .get_run(run_name)
+            .add_channel(channel_name)
+            )
+    
+    def remove_channel(self, station_name, run_name, channel_name):
+        """
+        Remove a channel from a given run and station.
+        
+        .. note:: Deleting a channel is not as simple as del(channel).  In HDF5 
+              this does not free up memory, it simply removes the reference
+              to that channel.  The common way to get around this is to
+              copy what you want into a new file, or overwrite the channel.
+        
+        :param station_name: existing station name
+        :type station_name: string
+        :param run_name: existing run name
+        :type run_name: string
+        :param channel_name: existing station name
+        :type channel_name: string
+        
+        :Example: ::
+            
+        >>> mth5_obj.remove_channel('MT001', 'MT001a', 'Ex')
+
+        """
+        
+        return (
+            self.stations_group.get_station(station_name)
+            .get_run(run_name)
+            .remove_channel(channel_name)
+            )
