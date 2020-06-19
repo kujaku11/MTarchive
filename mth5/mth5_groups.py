@@ -1296,9 +1296,12 @@ class RunGroup(BaseGroup):
         
 
         """
+        
         if data is not None:
             if data.size < 1024:
                 chunks = None
+                
+        
         try:
             if data is not None:
                 channel_group = self.hdf5_group.create_dataset(channel_name,
@@ -1328,6 +1331,8 @@ class RunGroup(BaseGroup):
                        "auxiliary ]. Input was {0}".format(channel_type))
                 self.logger.error(msg)
                 raise MTH5Error(msg)
+            if channel_obj.metadata.component is None:
+                channel_obj.metadata.component = channel_name
             channel_obj.write_metadata()
             self.summary_table.add_row(channel_obj.table_entry)
         
@@ -1418,11 +1423,16 @@ class RunGroup(BaseGroup):
         >>> mth5_obj.open_mth5(r"/test.mth5", mode='a')
         >>> run = mth5_obj.stations_group.get_station('MT001').get_run('MT001a')
         >>> run.remove_channel('Ex')
+        
+        .. todo:: Need to remove summary table entry as well.
 
         """
         
         try:
+            component = self.hdf5_group[channel_name].attrs['component']
             del self.hdf5_group[channel_name]
+            self.summary_table.remove_row(self.summary_table.locate('component', 
+                                                                    component))
             self.logger.info("Deleting a channel does not reduce the HDF5" +
                              "file size it simply remove the reference. If " +
                              "file size reduction is your goal, simply copy" +
@@ -1568,6 +1578,7 @@ class ChannelDataset():
     @property
     def _class_name(self):
         return self.__class__.__name__.split('Dataset')[0]
+
     
     def read_metadata(self):
         """
@@ -1598,7 +1609,8 @@ class ChannelDataset():
         Creat a table entry to put into the run summary table.
         """
         
-        return np.array([(self.metadata.component,
+        return np.array([(
+                         self.metadata.component,
                          self.metadata.time_period.start,
                          self.metadata.time_period.end,
                          self.hdf5_dataset.size,
@@ -1667,8 +1679,10 @@ class MTH5Table():
         self.logger = logging.getLogger('{0}.{1}'.format(
             __name__, self.__class__.__name__))
         
+        self.hdf5_reference = None
         if isinstance(hdf5_dataset, h5py.Dataset):
             self.array = weakref.ref(hdf5_dataset)()
+            self.hdf5_reference = hdf5_dataset.ref
         else:
             msg = "Input must be a h5py.Dataset not {0}".format(
                 type(hdf5_dataset))
@@ -1864,3 +1878,33 @@ class MTH5Table():
         
         return index
         
+    def remove_row(self, index):
+        """
+        Remove a row
+        
+        .. note:: that there is not index value within the array, so the 
+                  indexing is on the fly.  A user should use the HDF5 
+                  reference instead of index number that is the safest and
+                  most robust method.
+                  
+        :param index: DESCRIPTION
+        :type index: TYPE
+        :return: DESCRIPTION
+        :rtype: TYPE
+        
+        This isn't as easy as just deleteing an element.
+        Need to delete the element from the weakly referenced array and then
+        set the summary table dataset to the new array.  
+        
+        So set to a null array for now until a more clever option is found.
+
+        """
+        null_array = np.empty((1,), dtype=self.dtype)
+        try:
+            return self.add_row(null_array, index=index)
+            
+        except IndexError as error:
+            msg = 'Could not find index {0} in shape {1}'.format(index, 
+                                                                 self.shape())
+            self.logger.exception(msg)
+            raise IndexError(f'{error}\n{msg}')

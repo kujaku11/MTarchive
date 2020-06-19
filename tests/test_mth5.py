@@ -12,6 +12,7 @@ Created on Thu Jun 18 16:54:19 2020
 
 import unittest
 from pathlib import Path
+import numpy as np
 
 from mth5 import mth5
 from mth5.standards import schema
@@ -93,12 +94,17 @@ class TestMTH5(unittest.TestCase):
         self.assertIn('Ex', new_run.groups_list)
         self.assertIsInstance(new_channel, mth5.m5groups.ElectricDataset)
         
+        self.assertIn('Ex', 
+                      (new_run.summary_table.array['component']
+                       .astype(np.unicode_).tolist()))
+        
+        
     def test_remove_channel(self):
         new_station = self.mth5_obj.add_station('MT001')
         new_run = new_station.add_run('MT001a')
         new_channel = new_run.add_channel('Ex', 'electric', None)
         new_run.remove_channel('Ex')
-        self.assertNotIn('Ex', new_channel.groups_list)
+        self.assertNotIn('Ex', new_run.groups_list)
         
     def test_get_channel_fail(self):
         new_station = self.mth5_obj.add_station('MT001')
