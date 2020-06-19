@@ -145,14 +145,15 @@ class MTH5:
         self.logger = logging.getLogger("{0}.{1}".format(__name__, self._class_name))
 
         self._default_root_name = "Survey"
-        self._default_subgroup_names = ["Stations", "Reports", "Filters", "Standards"]
+        self._default_subgroup_names = ["Stations", "Reports", "Filters",
+                                        "Standards"]
 
         self._file_attrs = {
             "file.type": "MTH5",
             "file.access.platform": platform(),
             "file.access.time": get_now_utc(),
             "MTH5.version": __version__,
-            "MTH5.software": "pymth5",
+            "MTH5.software": "mth5",
         }
 
     def __str__(self):
