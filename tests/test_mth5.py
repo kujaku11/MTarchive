@@ -70,9 +70,22 @@ class TestMTH5(unittest.TestCase):
     def test_get_station_fail(self):
         self.assertRaises(MTH5Error, self.mth5_obj.get_station, 'MT002')
         
+    def test_add_run(self):
+        new_station = self.mth5_obj.add_station('MT001')
+        new_run = new_station.add_run('MT001a')
+        self.assertIn('MT001a', new_station.groups_list)
+        self.assertIsInstance(new_run, mth5.m5groups.RunGroup)
         
+    def test_remove_run(self):
+        new_station = self.mth5_obj.add_station('MT001')
+        new_station.add_run('MT001a')
+        self.mth5_obj.remove_run('MT001a')
+        self.assertNotIn('MT001a', new_station.groups_list)
         
-        
+    def test_get_run_fail(self):
+        self.assertRaises(MTH5Error, self.mth5_obj.get_run, 
+                          ('MT001', 'MT002a'))
+
     def tearDown(self):
         self.mth5_obj.close_mth5()
     
