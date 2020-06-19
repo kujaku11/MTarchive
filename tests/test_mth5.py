@@ -79,12 +79,32 @@ class TestMTH5(unittest.TestCase):
     def test_remove_run(self):
         new_station = self.mth5_obj.add_station('MT001')
         new_station.add_run('MT001a')
-        self.mth5_obj.remove_run('MT001a')
+        new_station.remove_run('MT001a')
         self.assertNotIn('MT001a', new_station.groups_list)
         
     def test_get_run_fail(self):
         self.assertRaises(MTH5Error, self.mth5_obj.get_run, 
-                          ('MT001', 'MT002a'))
+                          'MT001', 'MT002a')
+        
+    def test_add_channel(self):
+        new_station = self.mth5_obj.add_station('MT001')
+        new_run = new_station.add_run('MT001a')
+        new_channel = new_run.add_channel('Ex', 'electric', None)
+        self.assertIn('Ex', new_run.groups_list)
+        self.assertIsInstance(new_channel, mth5.m5groups.ElectricDataset)
+        
+    def test_remove_channel(self):
+        new_station = self.mth5_obj.add_station('MT001')
+        new_run = new_station.add_run('MT001a')
+        new_channel = new_run.add_channel('Ex', 'electric', None)
+        new_run.remove_channel('Ex')
+        self.assertNotIn('Ex', new_channel.groups_list)
+        
+    def test_get_channel_fail(self):
+        new_station = self.mth5_obj.add_station('MT001')
+        new_station.add_run('MT001a')
+        self.assertRaises(MTH5Error, self.mth5_obj.get_channel, 
+                          'MT001', 'MT001a', 'Ey')
 
     def tearDown(self):
         self.mth5_obj.close_mth5()

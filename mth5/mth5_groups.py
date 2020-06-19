@@ -1605,12 +1605,12 @@ class ChannelDataset():
                          self.metadata.type,
                          self.metadata.units,
                          self.hdf5_dataset.ref)],
-                        dtype= np.dtype([('component', 'S5'),
+                        dtype= np.dtype([('component', 'S20'),
                                          ('start', 'S32'),
                                          ('end', 'S32'),
                                          ('n_samples', np.int),
                                          ('measurement_type', 'S12'),
-                                         ('units', 'S25')
+                                         ('units', 'S25'),
                                          ('hdf5_reference', h5py.ref_dtype)]))
     
     def time_slice(self, start_time, end_time):
