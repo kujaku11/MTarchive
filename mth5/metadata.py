@@ -1297,7 +1297,7 @@ class Software(Base):
 # =============================================================================
 # filter
 # =============================================================================
-class Filter(Base):
+class Filtered(Base):
     """
     container for filters
     
@@ -1312,7 +1312,7 @@ class Filter(Base):
         self._applied = None
         super().__init__()
 
-        self._attr_dict = ATTR_DICT['filter']
+        self._attr_dict = ATTR_DICT['filtered']
         
     @property
     def name(self):
@@ -1412,6 +1412,25 @@ class Filter(Base):
                         return False
         else:
             return False
+        
+class Filter(Base):
+    """
+    Container for metadata that describes a filter
+
+              
+    """
+
+    def __init__(self, **kwargs):
+        self.name = None
+        self.type = None
+        self.units_in = None
+        self.units_out = None
+        self.calibration_date = MTime()
+        self.operation = None
+        
+        super().__init__()
+
+        self._attr_dict = ATTR_DICT['filter']    
 
 
 # ==============================================================================

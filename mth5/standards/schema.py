@@ -194,7 +194,7 @@ def validate_type(value):
             return 'string'
         elif 'bool' in value.lower():
             return 'boolean'
-        elif 'h5py_reference':
+        elif 'h5py_reference' in value.lower():
             return value
 
         else:
@@ -753,7 +753,13 @@ class Standards():
         return from_csv(get_level_fn('time_period'))
 
     @property
+    def filtered_dict(self):
+        """This one is for the channel metadata to define applied or not"""
+        return from_csv(get_level_fn('filtered'))
+    
+    @property
     def filter_dict(self):
+        """This one is for the actual filter metadata"""
         return from_csv(get_level_fn('filter'))
 
     @property
@@ -836,7 +842,7 @@ class Standards():
     def channel_dict(self):
         channel_dict = from_csv(get_level_fn('channel'))
         channel_dict.add_dict(self.data_quality_dict.copy(), 'data_quality')
-        channel_dict.add_dict(self.filter_dict.copy(), 'filter')
+        channel_dict.add_dict(self.filtered_dict.copy(), 'filter')
         channel_dict.add_dict(self.time_period_dict.copy(), 'time_period')
         channel_dict.add_dict(self.instrument_dict.copy(), 'sensor')
         for key, v_dict in self.location_dict.items():
@@ -853,7 +859,7 @@ class Standards():
         electric_dict = from_csv(get_level_fn('electric'))
         electric_dict.add_dict(from_csv(get_level_fn('channel')))
         electric_dict.add_dict(self.data_quality_dict.copy(), 'data_quality')
-        electric_dict.add_dict(self.filter_dict.copy(), 'filter')
+        electric_dict.add_dict(self.filtered_dict.copy(), 'filter')
         electric_dict.add_dict(self.electrode_dict.copy(), 'positive')
         electric_dict.add_dict(self.electrode_dict.copy(), 'negative')
         electric_dict.add_dict(self.time_period_dict.copy(), 'time_period')

@@ -17,7 +17,6 @@ Created on Tue Apr 28 18:08:40 2020
 
 import unittest
 import json
-import numpy as np
 import pandas as pd
 from collections import OrderedDict
 from operator import itemgetter
@@ -330,7 +329,7 @@ class TestRun(unittest.TestCase):
                            'provenance.log': None,
                            'metadata_by.author': 'MT guru',
                            'metadata_by.comments': 'lazy',
-                           'sampling_rate': 256.0,
+                           'sample_rate': 256.0,
                            'time_period.end': '1980-01-01T00:00:00+00:00',
                            'time_period.start': '1980-01-01T00:00:00+00:00'}}
             
