@@ -1425,12 +1425,20 @@ class Filter(Base):
         self.type = None
         self.units_in = None
         self.units_out = None
-        self.calibration_date = MTime()
+        self._calibration_dt = MTime()
         self.operation = None
         
         super().__init__()
 
-        self._attr_dict = ATTR_DICT['filter']    
+        self._attr_dict = ATTR_DICT['filter']  
+        
+    @property
+    def calibration_date(self):
+        return self._calibration_dt.date
+    
+    @calibration_date.setter
+    def calibration_date(self, value):
+        self._calibration_dt.from_str(value)
 
 
 # ==============================================================================
