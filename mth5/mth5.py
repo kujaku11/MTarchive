@@ -300,11 +300,12 @@ class MTH5:
         close mth5 file to make sure everything is flushed to the file
         """
         
-        self.__hdf5_obj.flush()
+        
         try:
+            self.__hdf5_obj.flush()
             self.__hdf5_obj.close()
             self.logger.info("Flushed and closed {0}".format(str(self.filename)))
-        except:
+        except AttributeError:
             close_open_files()
 
     def h5_is_write(self):
