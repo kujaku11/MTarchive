@@ -202,7 +202,7 @@ class Base():
         
         """
 
-        if value in [None, 'None', 'none']:
+        if value in [None, 'None', 'none', 'unknown']:
             return None
         # hack to get around h5py reference types, in the future will need
         # a more robust test.
@@ -257,10 +257,10 @@ class Base():
                         raise MTSchemaError(msg.format(value, 
                                                        v_type, type(value)))
                 elif v_type is bool:
-                    if value.lower() in ['false']:
+                    if value.lower() in ['false', '0']:
                         self.logger.debug(info.format(value, False))
                         return False
-                    elif value.lower() in ['true']:
+                    elif value.lower() in ['true', '1']:
                         self.logger.debug(info.format(value, True))
                         return True
                     else:
@@ -273,7 +273,7 @@ class Base():
                 elif v_type is str:
                     return value
             
-            elif isinstance(value, int):
+            elif isinstance(value, (int, np.int_)):
                 if v_type is float:
                     self.logger.debug(info.format(type(value), v_type))
                     return float(value)
@@ -281,13 +281,14 @@ class Base():
                     self.logger.debug(info.format(type(value), v_type))
                     return '{0:.0f}'.format(value)
             
-            elif isinstance(value, float):
+            elif isinstance(value, (float, np.float_)):
                 if v_type is int:
                     self.logger.debug(info.format(type(value), v_type))
                     return int(value)
                 elif v_type is str:
                     self.logger.debug(info.format(type(value), v_type))
                     return '{0}'.format(value)
+            
             elif isinstance(value, list):
                 if v_type is str:
                     value = ['{0}'.format(v) for v in value]
@@ -743,7 +744,7 @@ class Location(Base):
         :param latitude: latitude in decimal degrees or other format
         :type latitude: float or string
         """
-        if latitude in [None, 'None', 'none']:
+        if latitude in [None, 'None', 'none', 'unknown']:
             self.logger.info('Latitude is None, setting to 0')
             return 0.0
         try:
@@ -774,7 +775,7 @@ class Location(Base):
         :param latitude: longitude in decimal degrees or other format
         :type latitude: float or string
         """
-        if longitude in [None, 'None', 'none']:
+        if longitude in [None, 'None', 'none', 'unknown']:
             self.logger.info('Longitude is None, setting to 0')
             return 0.0
         try:
@@ -1263,7 +1264,7 @@ class Orientation(Base):
     how channels are oriented
     """
     def __init__(self, **kwargs):
-        self.reference_frame = None
+        self.reference_frame = 'geographic'
         self.method = None
         
         super(Orientation, self).__init__(**kwargs) 
@@ -1345,7 +1346,7 @@ class Filtered(Base):
     
     @applied.setter
     def applied(self, applied):
-        if applied in [None, 'none', 'None', 'NONE', 'null']:
+        if applied in [None, 'none', 'None', 'NONE', 'null', 0, '0']:
             self._applied = [False]
             return 
         
@@ -1365,9 +1366,9 @@ class Filtered(Base):
             if app_bool is None:
                 continue
             if isinstance(app_bool, str):
-                if app_bool.lower() in ['false']:
+                if app_bool.lower() in ['false', '0']:
                     bool_list.append(False)
-                elif app_bool.lower() in ['true']:
+                elif app_bool.lower() in ['true', '1']:
                     bool_list.append(True)
                 else:
                     msg = 'Filter.applied must be [ True | False ], not {0}'
@@ -1590,7 +1591,7 @@ class Channel(Base):
         self.measurement_azimuth = 0.0
         self.measurement_tilt = 0.0
         self.data_quality = DataQuality()
-        self.filter = Filter()
+        self.filter = Filtered()
         self.location = Location()
         self.time_period = TimePeriod()
         self.translated_azimuth = None
