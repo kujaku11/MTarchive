@@ -124,7 +124,8 @@ class BaseGroup():
 
             # write out metadata to make sure that its in the file.
             self.write_metadata()
-
+        else:
+            self.read_metadata()
         # set default columns of summary table.
         self._defaults_summary_attrs = {'name': 'Summary',
                                   'max_shape': (10000, ),
