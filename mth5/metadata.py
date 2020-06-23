@@ -204,7 +204,7 @@ class Base():
         
         # return if the value is None, this may need to change in the future
         # if an empty list or something else should be returned
-        if not isinstance(value, Iterable):
+        if not isinstance(value, (list, tuple, np.ndarray)):
             if value in [None, 'None', 'none', 'unknown']:
                 return None
         # hack to get around h5py reference types, in the future will need
