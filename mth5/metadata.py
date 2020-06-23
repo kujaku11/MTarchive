@@ -50,7 +50,7 @@ import pandas as pd
 import numpy as np
 import logging
 
-from collections import OrderedDict
+from collections import OrderedDict, Iterable
 from operator import itemgetter
 
 from mth5.standards.schema import (Standards, validate_attribute,
@@ -201,14 +201,18 @@ class Base():
         validate type from standards
         
         """
-
-        if value in [None, 'None', 'none', 'unknown']:
-            return None
+        
+        # return if the value is None, this may need to change in the future
+        # if an empty list or something else should be returned
+        if not isinstance(value, Iterable):
+            if value in [None, 'None', 'none', 'unknown']:
+                return None
         # hack to get around h5py reference types, in the future will need
         # a more robust test.
         if v_type == 'h5py_reference':
             return value
         
+        # return value if the value type is not defined. 
         if v_type is None:
             msg = ('standards data type is unknown, if you want to ' +
                    'propogate this attribute using to_dict, to_json or ' +
@@ -220,6 +224,7 @@ class Base():
             self.logger.info(msg)
             return value
         
+        # if not a python type but a string organize into a dictionary
         if not isinstance(v_type, type) and isinstance(v_type, str):
             type_dict = {'string': str,
                          'integer': int,
@@ -229,6 +234,7 @@ class Base():
         else:
             msg = 'v_type must be a string or type not {0}'.format(v_type)
 
+        # check style for a list
         if isinstance(value, v_type):
             if style:
                 if v_type is str and 'list' in style:
@@ -236,9 +242,11 @@ class Base():
                     value = [ss.strip() for ss in value]
             return value
 
+        # if value is not of v_type
         else:
             msg = 'value={0} must be {1} not {2}'
             info = 'converting {0} to {1}'
+            # if the value is a string, convert to appropriate type
             if isinstance(value, str):
                 if v_type is int:
                     try:
@@ -273,6 +281,7 @@ class Base():
                 elif v_type is str:
                     return value
             
+            # if a number convert to appropriate type
             elif isinstance(value, (int, np.int_)):
                 if v_type is float:
                     self.logger.debug(info.format(type(value), v_type))
@@ -281,6 +290,7 @@ class Base():
                     self.logger.debug(info.format(type(value), v_type))
                     return '{0:.0f}'.format(value)
             
+            # if a number convert to appropriate type
             elif isinstance(value, (float, np.float_)):
                 if v_type is int:
                     self.logger.debug(info.format(type(value), v_type))
@@ -289,9 +299,12 @@ class Base():
                     self.logger.debug(info.format(type(value), v_type))
                     return '{0}'.format(value)
             
-            elif isinstance(value, list):
+            # if a list convert to appropriate entries to given type
+            elif isinstance(value, Iterable):
                 if v_type is str:
-                    value = ['{0}'.format(v) for v in value]
+                    if isinstance(value, np.ndarray):
+                        value = value.astype(np.unicode_)
+                    value = [f"{v}" for v in value]
                 elif v_type is int:
                     value = [int(float(v)) for v in value]
                 elif v_type is float:
