@@ -71,6 +71,7 @@ channel_translator = deepcopy(base_translator)
 channel_translator.update({'azimuth': 'measurement_azimuth',
                            'calibration_units': 'units',
                            'calibration_units_description': None,
+                           'comments': 'comments',
                            'clock_drift_in_seconds_per_sample': None,
                            'data_logger': 'run.special',
                            'description': None,
@@ -538,11 +539,27 @@ def mt_channel_to_inventory_channel(channel_obj, run_obj, namespace):
         
         elif inv_key == 'sensor':
             if is_electric:
-                sensor = inventory.Equipment()
-                sensor.manufacturer = channel_obj.positive.manufacturer
-                sensor.type = channel_obj.positive.type
-                sensor.model = channel_obj.positive.model
-                inv_channel.sensor = sensor
+                for direction in ['positive', 'negative']:
+                    desc = ', '.join([f'{direction} electrode',
+                                      'latitude: {0}'.format(
+                                          channel_obj.get_attr_from_name(
+                                                   f'{direction}.latitude')),
+                                       'longitude: {0}'.format(
+                                          channel_obj.get_attr_from_name(
+                                                   f'{direction}.longitude')),
+                                        'elevation: {0}'.format(
+                                          channel_obj.get_attr_from_name(
+                                                   f'{direction}.elevation'))])
+                    sensor = inventory.Equipment()
+                    sensor.manufacturer = channel_obj.get_attr_from_name(
+                        f'{direction}.manufacturer')
+                    sensor.type = channel_obj.get_attr_from_name(
+                        f'{direction}.type')
+                    sensor.model = channel_obj.get_attr_from_name(
+                        f'{direction}.model')
+                    sensor.description = desc
+                    
+                    inv_channel.equipments.append(sensor)
             else:
                 sensor = inventory.Equipment()
                 sensor.manufacturer = channel_obj.sensor.manufacturer
@@ -553,6 +570,7 @@ def mt_channel_to_inventory_channel(channel_obj, run_obj, namespace):
         elif inv_key == 'comments':
             comment = inventory.Comment(channel_obj.comments, id=0)
             inv_channel.comments.append(comment)
+            used_list.append('comments')
         
         # obspy only allows angles (0, 360)
         elif inv_key in ['azimuth']:
@@ -568,12 +586,20 @@ def mt_channel_to_inventory_channel(channel_obj, run_obj, namespace):
                     channel_obj.get_attr_from_name(mth5_key))
             
     inv_channel.extra = AttribDict()
-    inv_channel.extra.MT = AttribDict({'namespace': namespace,
-                                       'value':AttribDict()})
+    inv_channel.extra.Magnetotellurics = AttribDict({'namespace': namespace,
+                                                     'value': AttribDict()})
+    inv_channel.extra.Magnetotellurics.attrib = {
+        'type': channel_obj.type, 
+        'component': channel_obj.component, 
+        'channel_number': str(channel_obj.channel_number)}
+    used_list += ['type', 'component', 'channel_number']
+    # inv_channel.extra.Magnetotellurics.value = 
     
     for mt_key in channel_obj.get_attribute_list():
+        if 'positive' in mt_key or 'negative' in mt_key or 'sensor' in mt_key:
+            continue
         if not mt_key in used_list:
-            add_custom_element(inv_channel.extra.MT.value, mt_key, 
+            add_custom_element(inv_channel.extra.Magnetotellurics.value, mt_key, 
                                channel_obj.get_attr_from_name(mt_key),
                                units=channel_obj._attr_dict[mt_key]['units'],
                                namespace=namespace)
