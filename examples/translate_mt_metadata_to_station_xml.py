@@ -33,7 +33,7 @@ from pathlib import Path
 from xml.etree import ElementTree as et
 
 from mth5 import metadata
-from mth5.utils import translator
+from mth5.utils import stationxml_translator
 
 # =============================================================================
 # Inputs: xml file names for each level
