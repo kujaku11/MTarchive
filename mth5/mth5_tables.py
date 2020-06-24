@@ -19,10 +19,10 @@ class MTH5(object):
     """
     container for MT data in HDF5 format
     """
-    
+
     def __init__(self, **kwargs):
         self.mth5_fn = None
-        
+
     def open_mth5_file(self, mth5_fn):
         """
         
@@ -37,18 +37,18 @@ class MTH5(object):
         None.
 
         """
-        
+
         if Path(mth5_fn).exists():
             self.mth5_fn = mth5_fn
-            self.mth5 = tables.open_file(mth5_fn, mode='r+')
+            self.mth5 = tables.open_file(mth5_fn, mode="r+")
         else:
-            msg = 'File {0} does not exist \n'.format(mth5_fn)
-            msg += 'Use open_mth5_file to make new file.'
+            msg = "File {0} does not exist \n".format(mth5_fn)
+            msg += "Use open_mth5_file to make new file."
             raise MTH5Error(msg)
-            
-        print('INFO: Opened {0}'.format(mth5_fn))
-        
-    def new_mth5_file(self, mth5_fn, title='MTH5 File'):
+
+        print("INFO: Opened {0}".format(mth5_fn))
+
+    def new_mth5_file(self, mth5_fn, title="MTH5 File"):
         """
         Make new MTH5 file
 
@@ -63,32 +63,32 @@ class MTH5(object):
 
         """
         self.mth5_fn = mth5_fn
-        self.mth5 = tables.open_file(mth5_fn, mode='w', title=title)
-        
+        self.mth5 = tables.open_file(mth5_fn, mode="w", title=title)
+
     def _is_write(self):
         """
         check to see if the hdf5 file is open and writeable
         """
         if isinstance(self.mth5, tables.file.File):
             try:
-                if 'w' in self.mth5.mode or '+' in self.mth5.mode:
+                if "w" in self.mth5.mode or "+" in self.mth5.mode:
                     return True
-                elif self.mth5.mode == 'r':
+                elif self.mth5.mode == "r":
                     return False
             except ValueError:
                 return False
         return False
-        
+
     def close_mth5_file(self):
         """
         Close file
         
         """
-        self.mth5.flush()        
+        self.mth5.flush()
         self.mth5.close()
-        
-        print('INFO: Closed {0}'.format(self.mth5_fn))
-        
+
+        print("INFO: Closed {0}".format(self.mth5_fn))
+
     def _initiate_file_structure(self):
         """
         build the general file structure
@@ -105,8 +105,5 @@ class MTH5(object):
             * Sources/Sources_table
             * Reports/Reports_table
         """
-        
+
         pass
-        
-        
-    

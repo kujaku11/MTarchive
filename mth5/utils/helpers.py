@@ -254,7 +254,7 @@ def to_numpy_type(value):
     # For now turn references into a generic string
     if isinstance(value, h5py.h5r.Reference):
         value = str(value)
-    
+
     if isinstance(
         value,
         (
@@ -271,7 +271,7 @@ def to_numpy_type(value):
         ),
     ):
         return value
-    
+
     if isinstance(value, Iterable):
         if np.any([type(x) in [str, bytes, np.str_] for x in value]):
             return np.array(value, dtype="S")
@@ -280,7 +280,8 @@ def to_numpy_type(value):
 
     else:
         raise TypeError("Type {0} not understood".format(type(value)))
-        
+
+
 # =============================================================================
 # Helper function to be sure everything is encoded properly
 # =============================================================================
@@ -288,10 +289,24 @@ class NumpyEncoder(json.JSONEncoder):
     """
     Need to encode numpy ints and floats for json to work
     """
+
     def default(self, obj):
-        if isinstance(obj, (np.int_, np.intc, np.intp, np.int8,
-                            np.int16, np.int32, np.int64, np.uint8,
-                            np.uint16, np.uint32, np.uint64)):
+        if isinstance(
+            obj,
+            (
+                np.int_,
+                np.intc,
+                np.intp,
+                np.int8,
+                np.int16,
+                np.int32,
+                np.int64,
+                np.uint8,
+                np.uint16,
+                np.uint32,
+                np.uint64,
+            ),
+        ):
             return int(obj)
 
         elif isinstance(obj, (np.float_, np.float16, np.float32, np.float64)):
@@ -299,15 +314,16 @@ class NumpyEncoder(json.JSONEncoder):
 
         elif isinstance(obj, (np.ndarray)):
             return obj.tolist()
-        
+
         # For now turn references into a generic string
         elif isinstance(obj, h5py.h5r.Reference):
             return str(obj)
 
         return json.JSONEncoder.default(self, obj)
 
+
 # =============================================================================
-# 
+#
 # =============================================================================
 def inherit_doc_string(cls):
     for base in inspect.getmro(cls):

@@ -13,10 +13,11 @@ from dateutil import parser as dtparser
 from dateutil.tz.tz import tzutc
 
 from mth5.utils.exceptions import MTTimeError
-#==============================================================================
+
+# ==============================================================================
 # convenience date-time container
-#==============================================================================
-class MTime():
+# ==============================================================================
+class MTime:
     """
     Date and Time container based on datetime and dateutil.parsers
 
@@ -50,37 +51,45 @@ class MTime():
 
     def __init__(self, time=None):
 
-        self.logger = logging.getLogger('{0}.{1}'.format(
-            __name__, self.__class__.__name__))
+        self.logger = logging.getLogger(
+            "{0}.{1}".format(__name__, self.__class__.__name__)
+        )
         self.dt_object = self.now()
-        
+
         if time is not None:
             if isinstance(time, str):
                 self.logger.debug("Input time is a string, will be parsed")
                 self.from_str(time)
-            
+
             elif isinstance(time, (int, float)):
-                self.logger.debug("Input time is a number, assuming epoch " +
-                                  "seconds in UTC")
+                self.logger.debug(
+                    "Input time is a number, assuming epoch " + "seconds in UTC"
+                )
                 self.epoch_seconds = time
             elif isinstance(time, (np.datetime64)):
-                self.logger.debug("Input time is a np.datetime64 " + 
-                                  "dt_object set to datetime64.tolist().")
+                self.logger.debug(
+                    "Input time is a np.datetime64 "
+                    + "dt_object set to datetime64.tolist()."
+                )
                 self.dt_object = self.validate_tzinfo(time.tolist())
-            
+
             elif isinstance(time, (datetime.datetime)):
-                self.logger.debug("Input time is a np.datetime64 " + 
-                                  "dt_object set to datetime64.tolist().")
+                self.logger.debug(
+                    "Input time is a np.datetime64 "
+                    + "dt_object set to datetime64.tolist()."
+                )
                 self.dt_object = self.validate_tzinfo(time)
-                
+
             else:
                 msg = "input time must be a string, float, or int, not {0}"
                 self.logger.error(msg.format(type(time)))
-        
+
         else:
-            self.logger.debug("Initiated with None, dt_object is set to "+
-                              "default time 1980-01-01 00:00:00")
-            self.from_str('1980-01-01 00:00:00')
+            self.logger.debug(
+                "Initiated with None, dt_object is set to "
+                + "default time 1980-01-01 00:00:00"
+            )
+            self.from_str("1980-01-01 00:00:00")
 
     def __str__(self):
         return self.iso_str
@@ -101,8 +110,9 @@ class MTime():
         elif isinstance(other, (int, float)):
             return bool(self.epoch_seconds == float(other))
         else:
-            msg = ('Cannot compare {0} of type {1} with MTime Object'.format(
-                other, type(other)))
+            msg = "Cannot compare {0} of type {1} with MTime Object".format(
+                other, type(other)
+            )
             self.logger.error(msg)
             raise MTTimeError(msg)
 
@@ -123,8 +133,9 @@ class MTime():
             return bool(self.epoch_seconds < float(other))
 
         else:
-            msg = ('Cannot compare {0} of type {1} with MTime Object'.format(
-                other, type(other)))
+            msg = "Cannot compare {0} of type {1} with MTime Object".format(
+                other, type(other)
+            )
             self.logger.error(msg)
             raise MTTimeError(msg)
 
@@ -141,8 +152,9 @@ class MTime():
         elif isinstance(other, (int, float)):
             return bool(self.epoch_seconds <= float(other))
         else:
-            msg = ('Cannot compare {0} of type {1} with MTime Object'.format(
-                    other, type(other)))
+            msg = "Cannot compare {0} of type {1} with MTime Object".format(
+                other, type(other)
+            )
             self.logger.error(msg)
             raise MTTimeError(msg)
 
@@ -162,11 +174,12 @@ class MTime():
         elif isinstance(other, (int, float)):
             return bool(self.epoch_seconds >= float(other))
         else:
-            msg = ('Cannot compare {0} of type {1} with MTime Object'.format(
-                    other, type(other)))
+            msg = "Cannot compare {0} of type {1} with MTime Object".format(
+                other, type(other)
+            )
             self.logger.error(msg)
             raise MTTimeError(msg)
-            
+
     def __add__(self, other):
         """
         add time only using datetime.timedelta, otherwise it does not make 
@@ -174,15 +187,17 @@ class MTime():
         
         """
         if not isinstance(other, datetime.timedelta):
-            msg = ("Adding times does not make sense, must use " +
-                   "datetime.timedelta to add time. \n" +
-                   "\t>>> add_time = datetime.timedelta(seconds=10) \n" +
-                   "\t>>> mtime_obj + add_time")
+            msg = (
+                "Adding times does not make sense, must use "
+                + "datetime.timedelta to add time. \n"
+                + "\t>>> add_time = datetime.timedelta(seconds=10) \n"
+                + "\t>>> mtime_obj + add_time"
+            )
             self.logger.error(msg)
             raise MTTimeError(msg)
-        
+
         return MTime(self.dt_object + other)
-    
+
     def __sub__(self, other):
         """
         Get the time difference between to times in seconds.
@@ -193,7 +208,7 @@ class MTime():
         :rtype: float
 
         """
-        
+
         if isinstance(other, type(self)):
             other_seconds = other.epoch_seconds
         elif isinstance(other, (str)):
@@ -205,24 +220,25 @@ class MTime():
             other_seconds = other.astype(np.float)
         elif isinstance(other, (datetime.datetime)):
             other_seconds = other.timestamp()
-            
+
         else:
-            msg = ('Cannot compare {0} of type {1} with MTime Object'.format(
-                    other, type(other)))
+            msg = "Cannot compare {0} of type {1} with MTime Object".format(
+                other, type(other)
+            )
             self.logger.error(msg)
             raise MTTimeError(msg)
-        
+
         return other_seconds - self.epoch_seconds
-        
+
         return self.time_difference(other)
 
     @property
     def iso_str(self):
         return self.dt_object.isoformat()
-    
+
     @property
     def iso_no_tz(self):
-        return self.dt_object.isoformat().split('+', 1)[0]
+        return self.dt_object.isoformat().split("+", 1)[0]
 
     @property
     def epoch_seconds(self):
@@ -230,8 +246,9 @@ class MTime():
 
     @epoch_seconds.setter
     def epoch_seconds(self, seconds):
-        self.logger.debug("reading time from epoch seconds, assuming UTC " +
-                          "time zone")
+        self.logger.debug(
+            "reading time from epoch seconds, assuming UTC " + "time zone"
+        )
         dt = datetime.datetime.utcfromtimestamp(seconds)
         dt = dt.replace(tzinfo=datetime.timezone.utc)
         self.dt_object = dt
@@ -240,9 +257,11 @@ class MTime():
         try:
             self.dt_object = self.validate_tzinfo(dtparser.parse(dt_str))
         except dtparser.ParserError as error:
-            msg = ('{0}'.format(error) +
-                   'Input must be a valid datetime string, see ' +
-                   'https://docs.python.org/3.8/library/datetime.html')
+            msg = (
+                "{0}".format(error)
+                + "Input must be a valid datetime string, see "
+                + "https://docs.python.org/3.8/library/datetime.html"
+            )
             self.logger.error(msg)
             raise MTTimeError(msg)
 
@@ -261,7 +280,7 @@ class MTime():
             return dt_object.replace(tzinfo=datetime.timezone.utc)
 
         elif dt_object.tzinfo != datetime.timezone.utc:
-            raise ValueError('Time zone must be UTC')
+            raise ValueError("Time zone must be UTC")
 
     @property
     def date(self):
@@ -333,6 +352,7 @@ class MTime():
         """
         self.dt_object = self.validate_tzinfo(datetime.datetime.utcnow())
 
+
 def get_now_utc():
     """
     Get the current time in UTC format
@@ -340,7 +360,7 @@ def get_now_utc():
     :rtype: string
     
     """
-    
+
     m_obj = MTime()
     m_obj.now()
     return m_obj.iso_str

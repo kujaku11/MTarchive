@@ -14,11 +14,12 @@ from obspy.core.util import AttribDict
 from obspy.core import inventory
 from mth5 import metadata
 
+
 def to_inventory_channel(mt_channel):
     """
     convert an MT channel to a Obspy inventory.Channel
     
     :param mt_channel: An mt metadata.Channel object
     """
-    
-    pass        
+
+    pass

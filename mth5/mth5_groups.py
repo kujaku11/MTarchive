@@ -719,9 +719,9 @@ class MasterStationGroup(BaseGroup):
         try:
             station_group = self.hdf5_group.create_group(station_name)
             self.logger.debug("Created group {0}".format(station_group.name))
-            station_obj = StationGroup(station_group, 
-                                       station_metadata=station_metadata,
-                                       **self.dataset_options)
+            station_obj = StationGroup(
+                station_group, station_metadata=station_metadata, **self.dataset_options
+            )
             station_obj.initialize_group()
 
         except ValueError:
@@ -759,8 +759,7 @@ class MasterStationGroup(BaseGroup):
         """
 
         try:
-            return StationGroup(self.hdf5_group[station_name],
-                                **self.dataset_options)
+            return StationGroup(self.hdf5_group[station_name], **self.dataset_options)
         except KeyError:
             msg = (
                 f"{station_name} does not exist, "
@@ -1077,8 +1076,9 @@ class StationGroup(BaseGroup):
         try:
             run_group = self.hdf5_group.create_group(run_name)
             self.logger.debug("Created group {0}".format(run_group.name))
-            run_obj = RunGroup(run_group, run_metdata=run_metadata, 
-                               **self.dataset_options)
+            run_obj = RunGroup(
+                run_group, run_metdata=run_metadata, **self.dataset_options
+            )
             run_obj.initialize_group()
             if run_obj.metadata.id is None:
                 run_obj.metadata.id = run_name
@@ -1105,8 +1105,7 @@ class StationGroup(BaseGroup):
 
         """
         try:
-            return RunGroup(self.hdf5_group[run_name], 
-                            **self.dataset_options)
+            return RunGroup(self.hdf5_group[run_name], **self.dataset_options)
         except KeyError:
             msg = (
                 f"{run_name} does not exist, " + "check groups_list for existing names"
