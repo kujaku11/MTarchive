@@ -39,7 +39,10 @@ network_translator.update({'description': 'summary',
                            'end_date':'time_period.end',
                            'restricted_status': 'release_license',
                            'operators': 'special',
-                           'code': 'archive_network'})
+                           'code': 'archive_network',
+                           'alternate_code': 'project',
+                           'identifiers': ['citation_dataset.doi',
+                                           'citation_journal.doi']})
 
 station_translator = deepcopy(base_translator)
 station_translator.update({'alternate_code': None,
@@ -128,7 +131,8 @@ release_dict = {'CC-0': 'open',
                 'CC-BY-SA': 'partial',
                 'CC-BY-ND': 'partial',
                 'CC-BY-NC-SA': 'partial',
-                'CC-BY-NC-NC': 'closed'}
+                'CC-BY-NC-NC': 'closed',
+                None: 'open'}
 
 def get_location_code(channel_obj):
     """
@@ -241,7 +245,7 @@ def make_channel_code(channel_obj):
 
 
 def add_custom_element(obj, custom_name, custom_value, units=None, 
-                       namespace='MT'):
+                       attribs=None, namespace='MT'):
     """
     Add a custom MT element to Obspy Inventory object
     
@@ -288,6 +292,7 @@ def add_custom_element(obj, custom_name, custom_value, units=None,
                            custom_name, 
                            custom_value, 
                            units=units, 
+                           attribs=attribs,
                            namespace=namespace)
     else:
         obj[custom_name] = AttribDict({'namespace':namespace})
@@ -295,11 +300,16 @@ def add_custom_element(obj, custom_name, custom_value, units=None,
         if units:
             assert isinstance(units, str), 'Units must be a string'
             obj[custom_name].attrib = {'units': units.upper()}
+        if attribs:
+            if not isinstance(obj[custom_name].attrib, dict):
+                obj[custom_name].attrib = {}
+            for key, value in attribs.items():
+                obj[custom_name].attrib[key] = value
 
 # =============================================================================
 # Translate between metadata and inventory: Survey --> Network
 # ============================================================================= 
-def mt_survey_to_inventory_network(survey_obj):
+def mt_survey_to_inventory_network(survey_obj, namespace='MT'):
     """
     Translate MT survey metadata to inventory Network in StationXML
     
@@ -316,7 +326,9 @@ def mt_survey_to_inventory_network(survey_obj):
     
     used_list = ['northwest_corner.latitude', 'northwest_corner.longitude',
                  'southeast_corner.latitude', 'southeast_corner.longitude',
-                 'time_period.start_date', 'time_period.end_date']
+                 'time_period.start_date', 'time_period.end_date', 
+                 'archive_id', 'country', 'datum', 'geographic_name',
+                 'name']
     for inv_key, mth5_key in network_translator.items():
         if mth5_key is None:
             msg = "cannot currently map mth5.survey to network.{0}".format(
@@ -336,11 +348,17 @@ def mt_survey_to_inventory_network(survey_obj):
             
         
         elif inv_key == 'comments':
-            comment = inventory.Comment(survey_obj.comments, id=0)
-            network_obj.comments.append(comment)
+            if survey_obj.comments is not None:
+                comment = inventory.Comment(survey_obj.comments, id=0)
+                network_obj.comments.append(comment)
         elif inv_key == 'restricted_status':
             network_obj.restricted_status = \
                 release_dict[survey_obj.release_license]
+        elif inv_key == 'identifiers':
+            for s_key in mth5_key:
+                doi = survey_obj.get_attr_from_name(s_key)
+                network_obj.identifiers.append(f'doi: {doi}')
+                used_list.append(s_key)
             
         else:
             setattr(network_obj, inv_key,
@@ -349,21 +367,22 @@ def mt_survey_to_inventory_network(survey_obj):
      
     # add any extra metadata that does not fit with StationXML schema
     network_obj.extra = AttribDict()
-    network_obj.extra.MT = AttribDict({'namespace':'MT',
-                                       'value':AttribDict()})
+    # network_obj.extra.MT = AttribDict({'namespace': namespace,
+    #                                    'value':AttribDict()})
     
     for mt_key in survey_obj.get_attribute_list():
         if not mt_key in used_list:
-            add_custom_element(network_obj.extra.MT.value, mt_key, 
+            add_custom_element(network_obj.extra, mt_key, 
                                survey_obj.get_attr_from_name(mt_key),
-                               units=survey_obj._attr_dict[mt_key]['units'])
+                               units=survey_obj._attr_dict[mt_key]['units'],
+                               namespace=namespace)
 
     return network_obj
 
 # =============================================================================
 # Translate between metadata and inventory: Station 
 # =============================================================================      
-def mt_station_to_inventory_station(station_obj):
+def mt_station_to_inventory_station(station_obj, namespace='MT'):
     """
     Translate MT station metadata to inventory station
     
@@ -383,7 +402,7 @@ def mt_station_to_inventory_station(station_obj):
     
     used_list = ['channels_recorded', 'time_period.start', 'time_period.end',
                  'location.latitude', 'location.longitude', 
-                 'location.elevation', 'archive_id']
+                 'location.elevation', 'archive_id', 'channel_layout']
     for inv_key, mth5_key in station_translator.items():
         if mth5_key is None:
             msg = "cannot currently map mth5.station to inventory.station.{0}".format(
@@ -391,41 +410,79 @@ def mt_station_to_inventory_station(station_obj):
             logger.debug(msg)
             continue
         if inv_key == 'operators':
-            operator = inventory.Operator(
-                agency=[station_obj.acquired_by.organization])
-            person = inventory.Person(names=[station_obj.acquired_by.author])
-            operator.contacts = [person]
-            inv_station.operators = [operator]
-            used_list.append('acquired_by.author')
-            used_list.append('acquired_by.organization')
+            if station_obj.acquired_by.author is not None:
+                operator = inventory.Operator(
+                    agency=[station_obj.acquired_by.organization])
+                person = inventory.Person(names=[station_obj.acquired_by.author])
+                operator.contacts = [person]
+                inv_station.operators = [operator]
+                used_list.append('acquired_by.author')
+                used_list.append('acquired_by.organization')
         elif inv_key == 'site':
             inv_station.site.description = station_obj.geographic_name
             inv_station.site.name = station_obj.id
             used_list.append('geographic_name')
             used_list.append('id')
         elif inv_key == 'comments':
-            comment = inventory.Comment(station_obj.comments, id=0)
-            inv_station.comments.append(comment)
+            if station_obj.comments is not None:
+                comment = inventory.Comment(station_obj.comments, id=0)
+                inv_station.comments.append(comment)
         else:
             setattr(inv_station, inv_key,
                     station_obj.get_attr_from_name(mth5_key))
             
-    inv_station.extra = AttribDict()
-    inv_station.extra.MT = AttribDict({'namespace':'MT',
-                                       'value':AttribDict()})
+    inv_station.extra = AttribDict({})
+    
+    # make declination entry
+    dec_attrs = {'model': station_obj.location.declination.model,
+                 'comment': station_obj.location.declination.comments,
+                 'units': 'degrees'}
+    inv_station.extra.declination = AttribDict({'namespace': namespace,
+                                                'value': station_obj.location.declination.value,
+                                                'attrib': dec_attrs})
+    used_list += ['location.declination.model',
+                  'location.declination.value',
+                  'location.declination.comments']
+    
+    # make data type entry in comments
+    inv_station.comments.append(inventory.Comment(station_obj.data_type,
+                                                  subject='MT data type'))
+    used_list.append('data_type')
+    
+    # make submitter entry in comments
+    submitter = ', '.join(['creation: {0}'.format(station_obj.provenance.creation_time), 
+                           'software: {0}'.format(station_obj.provenance.software.name),
+                           'version: {0}'.format(station_obj.provenance.software.version)])
+    
+    inv_station.comments.append(inventory.Comment(submitter,
+                                subject='metadata creation', 
+                                authors=[inventory.Person(names=[station_obj.provenance.submitter.author],
+                                                          emails=[station_obj.provenance.submitter.email],
+                                                          agencies=[station_obj.provenance.submitter.organization])]))
+
+    # make a orientation comment
+    orientation = ', '.join(['method: {0}'.format(station_obj.orientation.method),
+                              'reference_frame: {0}'.format(station_obj.orientation.reference_frame)])
+    
+    inv_station.comments.append(inventory.Comment(orientation,
+                                                  subject='station orientation'))
+    used_list += ['orientation.method', 'orientation.reference_frame']
     
     for mt_key in station_obj.get_attribute_list():
+        if 'provenance' in mt_key:
+            continue
         if not mt_key in used_list:
-            add_custom_element(inv_station.extra.MT.value, mt_key, 
+            add_custom_element(inv_station.extra, mt_key, 
                                station_obj.get_attr_from_name(mt_key),
-                               units=station_obj._attr_dict[mt_key]['units'])
+                               units=station_obj._attr_dict[mt_key]['units'],
+                               namespace=namespace)
             
     return inv_station
 
 # =============================================================================
 # Translate between metadata and inventory: Channel
 # =============================================================================
-def mt_channel_to_inventory_channel(channel_obj, run_obj):
+def mt_channel_to_inventory_channel(channel_obj, run_obj, namespace):
     """
     
     Translate MT channel metadata to inventory channel
@@ -511,14 +568,15 @@ def mt_channel_to_inventory_channel(channel_obj, run_obj):
                     channel_obj.get_attr_from_name(mth5_key))
             
     inv_channel.extra = AttribDict()
-    inv_channel.extra.MT = AttribDict({'namespace':'MT',
+    inv_channel.extra.MT = AttribDict({'namespace': namespace,
                                        'value':AttribDict()})
     
     for mt_key in channel_obj.get_attribute_list():
         if not mt_key in used_list:
             add_custom_element(inv_channel.extra.MT.value, mt_key, 
                                channel_obj.get_attr_from_name(mt_key),
-                               units=channel_obj._attr_dict[mt_key]['units'])
+                               units=channel_obj._attr_dict[mt_key]['units'],
+                               namespace=namespace)
             
     return inv_channel
             
@@ -578,6 +636,14 @@ class MTToStationXML():
         
         self.logger = logging.getLogger('{0}.{1}'.format(__name__, 
                                                      self.__class__.__name__))
+        
+        self.mt_namespace = r'http://emiw.org/xmlns/mt/1.0'
+        self.namespace_map = {
+            'xsi': r"http://www.w3.org/2001/XMLSchema-instance",
+            "schemaLocation": 
+                "http://www.fdsn.org/xml/station/fdsn-station-1.1.xsd", 
+            'mt': self.mt_namespace}
+        
         if inventory_object is not None: 
             if not isinstance(inventory_object, inventory.Inventory):
                 msg = 'Input must be obspy.Inventory object not type {0}'
@@ -642,7 +708,8 @@ class MTToStationXML():
         :type mt_survey_obj: :class:`~mth5.metadata.Survey`
 
         """
-        network_obj = mt_survey_to_inventory_network(mt_survey_obj)
+        network_obj = mt_survey_to_inventory_network(mt_survey_obj, 
+                                                     namespace=self.mt_namespace)
         
         if network_obj.code in self.inventory_obj.networks:
             msg = 'Network {0} is alread in current inventory'.format(
@@ -674,7 +741,8 @@ class MTToStationXML():
             
         network_index = self.find_network_index(network_code)
             
-        station_obj = mt_station_to_inventory_station(mt_station_obj)
+        station_obj = mt_station_to_inventory_station(mt_station_obj,
+                                                      namespace=self.mt_namespace)
         
         # locate the network in the list
         self.inventory_obj.networks[network_index].stations.append(station_obj)
@@ -715,7 +783,8 @@ class MTToStationXML():
         station_index = self.find_station_index(station, network_code)
             
         channel_obj = mt_channel_to_inventory_channel(mt_channel,
-                                                      mt_run)
+                                                      mt_run,
+                                                      namespace=self.mt_namespace)
             
         self.inventory_obj.networks[network_index].stations[station_index].channels.append(channel_obj)
         
@@ -743,7 +812,8 @@ class MTToStationXML():
         
         self.inventory_obj.write(station_xml_fn.as_posix(),
                                  format='stationxml',
-                                 validate=True)
+                                 validate=True,
+                                 nsmap=self.namespace_map)
         self.logger.info('Wrote StationXML to {0}'.format(station_xml_fn))
         
         return station_xml_fn

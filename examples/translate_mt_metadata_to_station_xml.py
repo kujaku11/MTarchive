@@ -39,14 +39,14 @@ from mth5.utils import translator
 # Inputs: xml file names for each level
 # =============================================================================
 # directory where xml files reside
-xml_path = Path(r"C:\Users\jpeacock\Downloads\test")
+xml_path = Path(r"c:\Users\jpeacock\Documents\mt_format_examples\mth5")
 
 # filenames for each level
 fn_mt_survey_xml = r"survey.xml"
 fn_mt_station_xml = r"FL001.xml"
 fn_mt_run_xml = r"FL001.a.xml"
-fn_mt_electric_xml = r"FL001.a.electric.1.xml"
-fn_mt_magnetic_xml = r"FL001.a.magnetic.1.xml"
+fn_mt_electric_xml = r"FL001.a.electric.Ex.xml"
+fn_mt_magnetic_xml = r"FL001.a.magnetic.Hx.xml"
 
 # =============================================================================
 # Translate from MT to StationXML
@@ -79,4 +79,4 @@ mt_magnetic.from_xml(et.parse(xml_path.joinpath(fn_mt_magnetic_xml)).getroot())
 mt2xml.add_channel(mt_magnetic, mt_run, mt_station.archive_id)
 
 # write StationXML file
-mt2xml.to_stationxml(xml_path.joinpath('florida_test_stationXML.xml'))
+mt2xml.to_stationxml(xml_path.joinpath('florida_test_stationXML_02.xml'))
