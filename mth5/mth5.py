@@ -135,6 +135,10 @@ class MTH5:
 
     def __init__(self, filename=None):
         self.__hdf5_obj = None
+        self.compression = 'gzip'
+        self.compression_opts = 3
+        self.shuffle = True
+        self.fletcher32 = True
 
         self.__filename = filename
         if self.__filename:
@@ -164,6 +168,13 @@ class MTH5:
 
     def __repr__(self):
         return self.__str__()
+    
+    @property
+    def dataset_options(self):
+        return {'compression': self.compression,
+                'compression_opts': self.compression_opts,
+                'shuffle': self.shuffle,
+                'fletcher32': self.fletcher32}
 
     @property
     def filename(self):
@@ -181,7 +192,8 @@ class MTH5:
     def survey_group(self):
         """ Convenience property for /Survey group"""
         if self.h5_is_write():
-            return m5groups.SurveyGroup(self.__hdf5_obj["/Survey"])
+            return m5groups.SurveyGroup(self.__hdf5_obj["/Survey"],
+                                        **self.dataset_options)
         self.logger.info("File is closed cannot access /Survey")
         return None
 
@@ -189,7 +201,8 @@ class MTH5:
     def reports_group(self):
         """ Convenience property for /Survey/Reports group"""
         if self.h5_is_write():
-            return m5groups.ReportsGroup(self.__hdf5_obj["/Survey/Reports"])
+            return m5groups.ReportsGroup(self.__hdf5_obj["/Survey/Reports"],
+                                         **self.dataset_options)
         self.logger.info("File is closed cannot access /Reports")
         return None
 
@@ -197,7 +210,8 @@ class MTH5:
     def filters_group(self):
         """ Convenience property for /Survey/Filters group"""
         if self.h5_is_write():
-            return m5groups.FiltersGroup(self.__hdf5_obj["/Survey/Filters"])
+            return m5groups.FiltersGroup(self.__hdf5_obj["/Survey/Filters"],
+                                         **self.dataset_options)
         self.logger.info("File is closed cannot access /Filters")
         return None
 
@@ -205,7 +219,8 @@ class MTH5:
     def standards_group(self):
         """ Convenience property for /Survey/Standards group"""
         if self.h5_is_write():
-            return m5groups.StandardsGroup(self.__hdf5_obj["/Survey/Standards"])
+            return m5groups.StandardsGroup(self.__hdf5_obj["/Survey/Standards"],
+                                           **self.dataset_options)
         self.logger.info("File is closed cannot access /Standards")
         return None
 
@@ -213,7 +228,8 @@ class MTH5:
     def stations_group(self):
         """ Convenience property for /Survey/Stations group"""
         if self.h5_is_write():
-            return m5groups.MasterStationGroup(self.__hdf5_obj["/Survey/Stations"])
+            return m5groups.MasterStationGroup(self.__hdf5_obj["/Survey/Stations"],
+                                               **self.dataset_options)
         self.logger.info("File is closed cannot access /Stations")
         return None
 
@@ -531,7 +547,7 @@ class MTH5:
             .get_run(run_name)
             .add_channel(
                 channel_name, channel_type, data, channel_metadata=channel_metadata
-            )
+            **self.dataset_options)
         )
 
     def get_channel(self, station_name, run_name, channel_name):

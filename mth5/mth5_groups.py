@@ -27,7 +27,7 @@ meta_classes = dict(inspect.getmembers(metadata, inspect.isclass))
 # =============================================================================
 #
 # =============================================================================
-class BaseGroup():
+class BaseGroup:
     """
     Generic object that will have functionality for reading/writing groups,
     including attributes. To access the hdf5 group directly use the
@@ -66,18 +66,21 @@ class BaseGroup():
     """
 
     def __init__(self, group, group_metadata=None, **kwargs):
+        self.compression = "gzip"
+        self.compression_opts = 3
+        self.shuffle = True
+        self.fletcher32 = True
 
         if group is not None and isinstance(group, (h5py.Group, h5py.Dataset)):
             self.hdf5_group = weakref.ref(group)()
 
-        self.logger = logging.getLogger('{0}.{1}'.format(__name__,
-                                                         self._class_name))
+        self.logger = logging.getLogger("{0}.{1}".format(__name__, self._class_name))
 
         # set metadata to the appropriate class.  Standards is not a
         # metadata.Base object so should be skipped. If the class name is not
         # defined yet set to Base class.
         self.metadata = metadata.Base()
-        if self._class_name not in ['Standards']:
+        if self._class_name not in ["Standards"]:
             try:
                 self.metadata = meta_classes[self._class_name]()
             except KeyError:
@@ -85,37 +88,49 @@ class BaseGroup():
 
         # add 2 attributes that will help with querying
         # 1) the metadata class name
-        self.metadata.add_base_attribute('mth5_type',
-                                         self._class_name.split('Group')[0],
-                                         {'type':str,
-                                          'required':True,
-                                          'style':'free form',
-                                          'description': 'type of group',
-                                          'units':None,
-                                          'options':[],
-                                          'alias':[],
-                                          'example':'group_name'})
+        self.metadata.add_base_attribute(
+            "mth5_type",
+            self._class_name.split("Group")[0],
+            {
+                "type": str,
+                "required": True,
+                "style": "free form",
+                "description": "type of group",
+                "units": None,
+                "options": [],
+                "alias": [],
+                "example": "group_name",
+            },
+        )
 
         # 2) the HDF5 reference that can be used instead of paths
-        self.metadata.add_base_attribute('hdf5_reference',
-                                         self.hdf5_group.ref,
-                                         {'type': 'h5py_reference',
-                                          'required':True,
-                                          'style':'free form',
-                                          'description': 'hdf5 internal reference',
-                                          'units':None,
-                                          'options':[],
-                                          'alias':[],
-                                          'example':'<HDF5 Group Reference>'})
+        self.metadata.add_base_attribute(
+            "hdf5_reference",
+            self.hdf5_group.ref,
+            {
+                "type": "h5py_reference",
+                "required": True,
+                "style": "free form",
+                "description": "hdf5 internal reference",
+                "units": None,
+                "options": [],
+                "alias": [],
+                "example": "<HDF5 Group Reference>",
+            },
+        )
         # set summary attributes
-        self.logger.debug("Metadata class for {0} is {1}".format(
-                self._class_name, type(self.metadata)))
+        self.logger.debug(
+            "Metadata class for {0} is {1}".format(
+                self._class_name, type(self.metadata)
+            )
+        )
 
         # if metadata, make sure that its the same class type
         if group_metadata is not None:
             if not isinstance(group_metadata, (self.metadata, metadata.Base)):
                 msg = "metadata must be type metadata.{0} not {1}".format(
-                    self._class_name, type(group_metadata))
+                    self._class_name, type(group_metadata)
+                )
                 self.logger.error(msg)
                 raise MTH5Error(msg)
 
@@ -127,9 +142,11 @@ class BaseGroup():
         else:
             self.read_metadata()
         # set default columns of summary table.
-        self._defaults_summary_attrs = {'name': 'Summary',
-                                  'max_shape': (10000, ),
-                                  'dtype': np.dtype([('default', np.float)])}
+        self._defaults_summary_attrs = {
+            "name": "Summary",
+            "max_shape": (10000,),
+            "dtype": np.dtype([("default", np.float)]),
+        }
 
         # if any other keywords
         for key, value in kwargs.items():
@@ -141,7 +158,7 @@ class BaseGroup():
 
             return get_tree(self.hdf5_group)
         except ValueError:
-            msg = 'MTH5 file is closed and cannot be accessed.'
+            msg = "MTH5 file is closed and cannot be accessed."
             self.logger.warning(msg)
             return msg
 
@@ -149,7 +166,7 @@ class BaseGroup():
         return self.__str__()
 
     def __eq__(self, other):
-        raise MTH5Error('Cannot test equals yet')
+        raise MTH5Error("Cannot test equals yet")
 
     # Iterate over key, value pairs
     def __iter__(self):
@@ -157,23 +174,31 @@ class BaseGroup():
 
     @property
     def _class_name(self):
-        return self.__class__.__name__.split('Group')[0]
+        return self.__class__.__name__.split("Group")[0]
 
     @property
     def summary_table(self):
-        return MTH5Table(self.hdf5_group['Summary'])
+        return MTH5Table(self.hdf5_group["Summary"])
 
     @property
     def groups_list(self):
         return list(self.hdf5_group.keys())
+
+    @property
+    def dataset_options(self):
+        return {
+            "compression": self.compression,
+            "compression_opts": self.compression_opts,
+            "shuffle": self.shuffle,
+            "fletcher32": self.fletcher32,
+        }
 
     def read_metadata(self):
         """
         read metadata from the HDF5 group into metadata object
 
         """
-        meta_dict = dict([(key, value) for key, value in
-                          self.hdf5_group.attrs.items()])
+        meta_dict = dict([(key, value) for key, value in self.hdf5_group.attrs.items()])
 
         self.metadata.from_dict({self._class_name: meta_dict})
 
@@ -185,7 +210,7 @@ class BaseGroup():
         meta_dict = self.metadata.to_dict()[self.metadata._class_name.lower()]
         for key, value in meta_dict.items():
             value = to_numpy_type(value)
-            self.logger.debug('wrote metadata {0} = {1}'.format(key, value))
+            self.logger.debug("wrote metadata {0} = {1}".format(key, value))
             self.hdf5_group.attrs.create(key, value)
 
     def read_data(self):
@@ -206,20 +231,32 @@ class BaseGroup():
         """
 
         summary_table = self.hdf5_group.create_dataset(
-            self._defaults_summary_attrs['name'],
-            (0, ),
-            maxshape=self._defaults_summary_attrs['max_shape'],
-            dtype=self._defaults_summary_attrs['dtype'])
+            self._defaults_summary_attrs["name"],
+            (0,),
+            maxshape=self._defaults_summary_attrs["max_shape"],
+            dtype=self._defaults_summary_attrs["dtype"],
+            **self.dataset_options,
+        )
 
-        summary_table.attrs.update({'type': 'summary table',
-                                    'last_updated': 'date_time',
-                                    'reference': summary_table.ref})
+        summary_table.attrs.update(
+            {
+                "type": "summary table",
+                "last_updated": "date_time",
+                "reference": summary_table.ref,
+            }
+        )
 
         self.logger.debug(
             "Created {0} table with max_shape = {1}, dtype={2}".format(
-                self._defaults_summary_attrs['name'],
-                self._defaults_summary_attrs['max_shape'],
-                self._defaults_summary_attrs['dtype']))
+                self._defaults_summary_attrs["name"],
+                self._defaults_summary_attrs["max_shape"],
+                self._defaults_summary_attrs["dtype"],
+            )
+        )
+        self.logger.debug(
+            "used options: "
+            + "; ".join([f"{k} = {v}" for k, v in self.dataset_options.items()])
+        )
 
     def initialize_group(self):
         """
@@ -296,6 +333,7 @@ class SurveyGroup(BaseGroup):
 
         super().__init__(group, **kwargs)
 
+
 class ReportsGroup(BaseGroup):
     """
     Not sure how to handle this yet
@@ -307,13 +345,18 @@ class ReportsGroup(BaseGroup):
         super().__init__(group, **kwargs)
 
         # summary of reports
-        self._defaults_summary_attrs = {'name': 'Summary',
-                                  'max_shape': (1000,),
-                                  'dtype': np.dtype([('name', 'S5'),
-                                                     ('type', 'S32'),
-                                                     ('summary', 'S200'),
-                                                     ('hdf5_reference',
-                                                      h5py.ref_dtype)])}
+        self._defaults_summary_attrs = {
+            "name": "Summary",
+            "max_shape": (1000,),
+            "dtype": np.dtype(
+                [
+                    ("name", "S5"),
+                    ("type", "S32"),
+                    ("summary", "S200"),
+                    ("hdf5_reference", h5py.ref_dtype),
+                ]
+            ),
+        }
 
     def add_report(self, report_name, report_metadata=None, report_data=None):
         """
@@ -328,7 +371,7 @@ class ReportsGroup(BaseGroup):
         :rtype: TYPE
 
         """
-        self.logger.error('Not Implemented yet')
+        self.logger.error("Not Implemented yet")
 
 
 class StandardsGroup(BaseGroup):
@@ -353,17 +396,23 @@ class StandardsGroup(BaseGroup):
 
         super().__init__(group, **kwargs)
 
-        self._defaults_summary_attrs = {'name': 'Summary',
-                                  'max_shape': (500,),
-                                  'dtype': np.dtype([('attribute', 'S72'),
-                                                     ('type', 'S15'),
-                                                     ('required', np.bool_),
-                                                     ('style', 'S72'),
-                                                     ('units', 'S32'),
-                                                     ('description', 'S300'),
-                                                     ('options', 'S150'),
-                                                     ('alias', 'S72'),
-                                                     ('example', 'S72')])}
+        self._defaults_summary_attrs = {
+            "name": "Summary",
+            "max_shape": (500,),
+            "dtype": np.dtype(
+                [
+                    ("attribute", "S72"),
+                    ("type", "S15"),
+                    ("required", np.bool_),
+                    ("style", "S72"),
+                    ("units", "S32"),
+                    ("description", "S300"),
+                    ("options", "S150"),
+                    ("alias", "S72"),
+                    ("example", "S72"),
+                ]
+            ),
+        }
 
     def get_attribute_information(self, attribute_name):
         """
@@ -392,21 +441,20 @@ class StandardsGroup(BaseGroup):
         	example       : CC-0
 
         """
-        find = self.summary_table.locate('attribute', attribute_name)
+        find = self.summary_table.locate("attribute", attribute_name)
         if len(find) == 0:
             msg = f"Could not find {attribute_name} in standards."
             self.logger.error(msg)
             raise MTH5TableError(msg)
 
         meta_item = self.summary_table.array[find]
-        lines = ['', attribute_name, '-' * (len(attribute_name) + 4)]
-        for name, value  in zip(meta_item.dtype.names[1:],
-                                meta_item.item()[1:]):
+        lines = ["", attribute_name, "-" * (len(attribute_name) + 4)]
+        for name, value in zip(meta_item.dtype.names[1:], meta_item.item()[1:]):
             if isinstance(value, (bytes, np.bytes_)):
                 value = value.decode()
-            lines.append('\t{0:<14} {1}'.format(name + ':', value))
+            lines.append("\t{0:<14} {1}".format(name + ":", value))
 
-        print('\n'.join(lines))
+        print("\n".join(lines))
 
     def summary_table_from_dict(self, summary_dict):
         """
@@ -426,20 +474,19 @@ class StandardsGroup(BaseGroup):
 
                 if isinstance(value, list):
                     if len(value) == 0:
-                        value = ''
+                        value = ""
 
                     else:
-                        value = ','.join(['{0}'.format(ii) for ii in
-                                                  value])
+                        value = ",".join(["{0}".format(ii) for ii in value])
                 if value is None:
-                    value = ''
+                    value = ""
 
                 key_list.append(value)
 
             key_list = np.array([tuple(key_list)], self.summary_table.dtype)
             index = self.summary_table.add_row(key_list)
 
-        self.logger.debug(f'Added {index} rows to Standards Group')
+        self.logger.debug(f"Added {index} rows to Standards Group")
 
     def initialize_group(self):
         """
@@ -619,23 +666,23 @@ class MasterStationGroup(BaseGroup):
         super().__init__(group, **kwargs)
 
         # summary of stations
-        self._defaults_summary_attrs = {'name': 'Summary',
-                                  'max_shape': (1000,),
-                                  'dtype': np.dtype([('archive_id', 'S5'),
-                                                     ('start', 'S32'),
-                                                     ('end', 'S32'),
-                                                     ('components', 'S100'),
-                                                     ('measurement_type',
-                                                      'S12'),
-                                                     ('location.latitude',
-                                                      np.float),
-                                                     ('location.longitude',
-                                                      np.float),
-                                                     ('location.elevation',
-                                                      np.float),
-                                                     ('hdf5_reference',
-                                                      h5py.ref_dtype)])}
-
+        self._defaults_summary_attrs = {
+            "name": "Summary",
+            "max_shape": (1000,),
+            "dtype": np.dtype(
+                [
+                    ("archive_id", "S5"),
+                    ("start", "S32"),
+                    ("end", "S32"),
+                    ("components", "S100"),
+                    ("measurement_type", "S12"),
+                    ("location.latitude", np.float),
+                    ("location.longitude", np.float),
+                    ("location.elevation", np.float),
+                    ("hdf5_reference", h5py.ref_dtype),
+                ]
+            ),
+        }
 
     def add_station(self, station_name, station_metadata=None):
         """
@@ -672,13 +719,15 @@ class MasterStationGroup(BaseGroup):
         try:
             station_group = self.hdf5_group.create_group(station_name)
             self.logger.debug("Created group {0}".format(station_group.name))
-            station_obj = StationGroup(station_group,
-                                       station_metadata=station_metadata)
+            station_obj = StationGroup(station_group, 
+                                       station_metadata=station_metadata,
+                                       **self.dataset_options)
             station_obj.initialize_group()
 
         except ValueError:
-            msg = (f"Station {station_name} already exists, " +
-                   "returning existing group.")
+            msg = (
+                f"Station {station_name} already exists, " + "returning existing group."
+            )
             self.logger.info(msg)
             station_obj = StationGroup(self.hdf5_group[station_name])
             station_obj.read_metadata()
@@ -710,10 +759,13 @@ class MasterStationGroup(BaseGroup):
         """
 
         try:
-            return StationGroup(self.hdf5_group[station_name])
+            return StationGroup(self.hdf5_group[station_name],
+                                **self.dataset_options)
         except KeyError:
-            msg = (f'{station_name} does not exist, ' +
-                   'check station_list for existing names')
+            msg = (
+                f"{station_name} does not exist, "
+                + "check station_list for existing names"
+            )
             self.logger.exception(msg)
             raise MTH5Error(msg)
 
@@ -744,15 +796,20 @@ class MasterStationGroup(BaseGroup):
 
         try:
             del self.hdf5_group[station_name]
-            self.logger.info("Deleting a station does not reduce the HDF5" +
-                             "file size it simply remove the reference. If " +
-                             "file size reduction is your goal, simply copy" +
-                             " what you want into another file.")
+            self.logger.info(
+                "Deleting a station does not reduce the HDF5"
+                + "file size it simply remove the reference. If "
+                + "file size reduction is your goal, simply copy"
+                + " what you want into another file."
+            )
         except KeyError:
-            msg = (f'{station_name} does not exist, ' +
-                   'check station_list for existing names')
+            msg = (
+                f"{station_name} does not exist, "
+                + "check station_list for existing names"
+            )
             self.logger.exception(msg)
             raise MTH5Error(msg)
+
 
 class StationGroup(BaseGroup):
     """
@@ -914,18 +971,21 @@ class StationGroup(BaseGroup):
         super().__init__(group, group_metadata=station_metadata, **kwargs)
 
         # summary of runs
-        self._defaults_summary_attrs = {'name': 'Summary',
-                                        'max_shape': (1000,),
-                                        'dtype': np.dtype([
-                                            ('id', 'S20'),
-                                            ('start', 'S32'),
-                                            ('end', 'S32'),
-                                            ('components', 'S100'),
-                                            ('measurement_type', 'S12'),
-                                            ('sample_rate', np.float),
-                                            ('hdf5_reference',
-                                             h5py.ref_dtype)])}
-
+        self._defaults_summary_attrs = {
+            "name": "Summary",
+            "max_shape": (1000,),
+            "dtype": np.dtype(
+                [
+                    ("id", "S20"),
+                    ("start", "S32"),
+                    ("end", "S32"),
+                    ("components", "S100"),
+                    ("measurement_type", "S12"),
+                    ("sample_rate", np.float),
+                    ("hdf5_reference", h5py.ref_dtype),
+                ]
+            ),
+        }
 
     @property
     def name(self):
@@ -939,25 +999,34 @@ class StationGroup(BaseGroup):
     def table_entry(self):
         """ make table entry """
 
-        return np.array([(self.metadata.archive_id,
-                          self.metadata.time_period.start,
-                          self.metadata.time_period.end,
-                          ','.join(self.metadata.channels_recorded),
-                          self.metadata.data_type,
-                          self.metadata.location.latitude,
-                          self.metadata.location.longitude,
-                          self.metadata.location.elevation,
-                          self.hdf5_group.ref)],
-                          dtype=np.dtype([('archive_id', 'S5'),
-                                          ('start', 'S32'),
-                                          ('end', 'S32'),
-                                          ('components', 'S100'),
-                                          ('measurement_type', 'S12'),
-                                          ('location.latitude', np.float),
-                                          ('location.longitude', np.float),
-                                          ('location.elevation', np.float),
-                                          ('hdf5_reference', h5py.ref_dtype)]))
-
+        return np.array(
+            [
+                (
+                    self.metadata.archive_id,
+                    self.metadata.time_period.start,
+                    self.metadata.time_period.end,
+                    ",".join(self.metadata.channels_recorded),
+                    self.metadata.data_type,
+                    self.metadata.location.latitude,
+                    self.metadata.location.longitude,
+                    self.metadata.location.elevation,
+                    self.hdf5_group.ref,
+                )
+            ],
+            dtype=np.dtype(
+                [
+                    ("archive_id", "S5"),
+                    ("start", "S32"),
+                    ("end", "S32"),
+                    ("components", "S100"),
+                    ("measurement_type", "S12"),
+                    ("location.latitude", np.float),
+                    ("location.longitude", np.float),
+                    ("location.elevation", np.float),
+                    ("hdf5_reference", h5py.ref_dtype),
+                ]
+            ),
+        )
 
     def make_run_name(self):
         """
@@ -977,15 +1046,16 @@ class StationGroup(BaseGroup):
             self.logger.error(msg)
             raise MTH5Error(msg)
 
-        run_list = sorted([group[-1:] for group in self.groups_list
-                    if self.name in group])
+        run_list = sorted(
+            [group[-1:] for group in self.groups_list if self.name in group]
+        )
 
         if len(run_list) == 0:
-            next_letter = 'a'
+            next_letter = "a"
         else:
             next_letter = chr(ord(run_list[-1]) + 1)
 
-        return '{0}{1}'.format(self.name, next_letter)
+        return "{0}{1}".format(self.name, next_letter)
 
     def add_run(self, run_name, run_metadata=None):
         """
@@ -1007,15 +1077,15 @@ class StationGroup(BaseGroup):
         try:
             run_group = self.hdf5_group.create_group(run_name)
             self.logger.debug("Created group {0}".format(run_group.name))
-            run_obj = RunGroup(run_group, run_metdata=run_metadata)
+            run_obj = RunGroup(run_group, run_metdata=run_metadata, 
+                               **self.dataset_options)
             run_obj.initialize_group()
             if run_obj.metadata.id is None:
                 run_obj.metadata.id = run_name
             self.summary_table.add_row(run_obj.table_entry)
 
         except ValueError:
-            msg = (f"run {run_name} already exists, " +
-                   "returning existing group.")
+            msg = f"run {run_name} already exists, " + "returning existing group."
             self.logger.info(msg)
             run_obj = RunGroup(self.hdf5_group[run_name])
             run_obj.read_metadata()
@@ -1035,10 +1105,12 @@ class StationGroup(BaseGroup):
 
         """
         try:
-            return RunGroup(self.hdf5_group[run_name])
+            return RunGroup(self.hdf5_group[run_name], 
+                            **self.dataset_options)
         except KeyError:
-            msg = (f'{run_name} does not exist, ' +
-                   'check groups_list for existing names')
+            msg = (
+                f"{run_name} does not exist, " + "check groups_list for existing names"
+            )
             self.logger.exception(msg)
             raise MTH5Error(msg)
 
@@ -1069,13 +1141,16 @@ class StationGroup(BaseGroup):
 
         try:
             del self.hdf5_group[run_name]
-            self.logger.info("Deleting a run does not reduce the HDF5" +
-                             "file size it simply remove the reference. If " +
-                             "file size reduction is your goal, simply copy" +
-                             " what you want into another file.")
+            self.logger.info(
+                "Deleting a run does not reduce the HDF5"
+                + "file size it simply remove the reference. If "
+                + "file size reduction is your goal, simply copy"
+                + " what you want into another file."
+            )
         except KeyError:
-            msg = (f'{run_name} does not exist, ' +
-                   'check station_list for existing names')
+            msg = (
+                f"{run_name} does not exist, " + "check station_list for existing names"
+            )
             self.logger.exception(msg)
             raise MTH5Error(msg)
 
@@ -1246,17 +1321,21 @@ class RunGroup(BaseGroup):
         super().__init__(group, group_metadata=run_metadata, **kwargs)
 
         # summary of channels in run
-        self._defaults_summary_attrs = {'name': 'Summary',
-                                        'max_shape': (20,),
-                                        'dtype': np.dtype([
-                                            ('component', 'S20'),
-                                            ('start', 'S32'),
-                                            ('end', 'S32'),
-                                            ('n_samples', np.int),
-                                            ('measurement_type', 'S12'),
-                                            ('units', 'S25'),
-                                            ('hdf5_reference',
-                                             h5py.ref_dtype)])}
+        self._defaults_summary_attrs = {
+            "name": "Summary",
+            "max_shape": (20,),
+            "dtype": np.dtype(
+                [
+                    ("component", "S20"),
+                    ("start", "S32"),
+                    ("end", "S32"),
+                    ("n_samples", np.int),
+                    ("measurement_type", "S12"),
+                    ("units", "S25"),
+                    ("hdf5_reference", h5py.ref_dtype),
+                ]
+            ),
+        }
 
     @property
     def table_entry(self):
@@ -1274,23 +1353,42 @@ class RunGroup(BaseGroup):
                    ('hdf5_reference', h5py.ref_dtype)])
 
         """
-        return np.array([(self.metadata.id,
-                         self.metadata.time_period.start,
-                         self.metadata.time_period.end,
-                         ','.join(self.metadata.channels_recorded_all),
-                         self.metadata.data_type,
-                         self.metadata.sample_rate,
-                         self.hdf5_group.ref)],
-                         dtype=np.dtype([('id', 'S20'),
-                                         ('start', 'S32'),
-                                         ('end', 'S32'),
-                                         ('components', 'S100'),
-                                         ('measurement_type', 'S12'),
-                                         ('sample_rate', np.float),
-                                         ('hdf5_reference', h5py.ref_dtype)]))
+        return np.array(
+            [
+                (
+                    self.metadata.id,
+                    self.metadata.time_period.start,
+                    self.metadata.time_period.end,
+                    ",".join(self.metadata.channels_recorded_all),
+                    self.metadata.data_type,
+                    self.metadata.sample_rate,
+                    self.hdf5_group.ref,
+                )
+            ],
+            dtype=np.dtype(
+                [
+                    ("id", "S20"),
+                    ("start", "S32"),
+                    ("end", "S32"),
+                    ("components", "S100"),
+                    ("measurement_type", "S12"),
+                    ("sample_rate", np.float),
+                    ("hdf5_reference", h5py.ref_dtype),
+                ]
+            ),
+        )
 
-    def add_channel(self, channel_name, channel_type, data, channel_dtype='f',
-                    max_shape=(None,), chunks=True, channel_metadata=None):
+    def add_channel(
+        self,
+        channel_name,
+        channel_type,
+        data,
+        channel_dtype="f",
+        max_shape=(None,),
+        chunks=True,
+        channel_metadata=None,
+        **kwargs,
+    ):
         """
         add a channel to the run
 
@@ -1323,39 +1421,51 @@ class RunGroup(BaseGroup):
 
 
         """
+        for key, value in kwargs:
+            setattr(self, key, value)
 
         if data is not None:
             if data.size < 1024:
                 chunks = None
 
-
         try:
             if data is not None:
-                channel_group = self.hdf5_group.create_dataset(channel_name,
-                                                           data=data,
-                                                           maxshape=max_shape,
-                                                           dtype=data.dtype,
-                                                           chunks=chunks)
+                channel_group = self.hdf5_group.create_dataset(
+                    channel_name,
+                    data=data,
+                    maxshape=max_shape,
+                    dtype=data.dtype,
+                    chunks=chunks,
+                    **self.dataset_options,
+                )
             else:
-                channel_group = self.hdf5_group.create_dataset(channel_name,
-                                                           shape=(1, ),
-                                                           maxshape=max_shape,
-                                                           dtype=channel_dtype,
-                                                           chunks=chunks)
+                channel_group = self.hdf5_group.create_dataset(
+                    channel_name,
+                    shape=(1,),
+                    maxshape=max_shape,
+                    dtype=channel_dtype,
+                    chunks=chunks,
+                    **self.dataset_options,
+                )
 
             self.logger.debug("Created group {0}".format(channel_group.name))
-            if channel_type.lower() in ['magnetic']:
-                channel_obj = MagneticDataset(channel_group,
-                                            channel_metdata=channel_metadata)
-            elif channel_type.lower() in ['electric']:
-                channel_obj = ElectricDataset(channel_group,
-                                            channel_metdata=channel_metadata)
-            elif channel_type.lower() in ['auxiliary']:
-                channel_obj = AuxiliaryDataset(channel_group,
-                                            channel_metdata=channel_metadata)
+            if channel_type.lower() in ["magnetic"]:
+                channel_obj = MagneticDataset(
+                    channel_group, channel_metdata=channel_metadata
+                )
+            elif channel_type.lower() in ["electric"]:
+                channel_obj = ElectricDataset(
+                    channel_group, channel_metdata=channel_metadata
+                )
+            elif channel_type.lower() in ["auxiliary"]:
+                channel_obj = AuxiliaryDataset(
+                    channel_group, channel_metdata=channel_metadata
+                )
             else:
-                msg = ("`channel_type` must be in [ electric | magnetic | " +
-                       "auxiliary ]. Input was {0}".format(channel_type))
+                msg = (
+                    "`channel_type` must be in [ electric | magnetic | "
+                    + "auxiliary ]. Input was {0}".format(channel_type)
+                )
                 self.logger.error(msg)
                 raise MTH5Error(msg)
             if channel_obj.metadata.component is None:
@@ -1364,14 +1474,15 @@ class RunGroup(BaseGroup):
             self.summary_table.add_row(channel_obj.table_entry)
 
         except OSError:
-            msg = (f"channel {channel_name} already exists, " +
-                   "returning existing group.")
+            msg = (
+                f"channel {channel_name} already exists, " + "returning existing group."
+            )
             self.logger.info(msg)
-            if channel_type in ['magnetic']:
+            if channel_type in ["magnetic"]:
                 channel_obj = MagneticDataset(self.hdf5_group[channel_name])
-            elif channel_type in ['electric']:
+            elif channel_type in ["electric"]:
                 channel_obj = ElectricDataset(self.hdf5_group[channel_name])
-            elif channel_type in ['auxiliary']:
+            elif channel_type in ["auxiliary"]:
                 channel_obj = AuxiliaryDataset(self.hdf5_group[channel_name])
             channel_obj.read_metadata()
 
@@ -1416,18 +1527,20 @@ class RunGroup(BaseGroup):
 
         try:
             ch_dataset = self.hdf5_group[channel_name]
-            if ch_dataset.attrs['mth5_type'].lower() in ['electric']:
+            if ch_dataset.attrs["mth5_type"].lower() in ["electric"]:
                 return ElectricDataset(ch_dataset)
-            elif ch_dataset.attrs['mth5_type'].lower() in ['magnetic']:
+            elif ch_dataset.attrs["mth5_type"].lower() in ["magnetic"]:
                 return MagneticDataset(ch_dataset)
-            elif ch_dataset.attrs['mth5_type'].lower() in ['auxiliary']:
+            elif ch_dataset.attrs["mth5_type"].lower() in ["auxiliary"]:
                 return AuxiliaryDataset(ch_dataset)
             else:
                 return ChannelDataset(ch_dataset)
 
         except KeyError:
-            msg = (f'{channel_name} does not exist, ' +
-                   'check groups_list for existing names')
+            msg = (
+                f"{channel_name} does not exist, "
+                + "check groups_list for existing names"
+            )
             self.logger.exception(msg)
             raise MTH5Error(msg)
 
@@ -1456,21 +1569,27 @@ class RunGroup(BaseGroup):
         """
 
         try:
-            component = self.hdf5_group[channel_name].attrs['component']
+            component = self.hdf5_group[channel_name].attrs["component"]
             del self.hdf5_group[channel_name]
-            self.summary_table.remove_row(self.summary_table.locate('component',
-                                                                    component))
-            self.logger.info("Deleting a channel does not reduce the HDF5" +
-                             "file size it simply remove the reference. If " +
-                             "file size reduction is your goal, simply copy" +
-                             " what you want into another file.")
+            self.summary_table.remove_row(
+                self.summary_table.locate("component", component)
+            )
+            self.logger.info(
+                "Deleting a channel does not reduce the HDF5"
+                + "file size it simply remove the reference. If "
+                + "file size reduction is your goal, simply copy"
+                + " what you want into another file."
+            )
         except KeyError:
-            msg = (f'{channel_name} does not exist, ' +
-                   'check group_list for existing names')
+            msg = (
+                f"{channel_name} does not exist, "
+                + "check group_list for existing names"
+            )
             self.logger.exception(msg)
             raise MTH5Error(msg)
 
-class ChannelDataset():
+
+class ChannelDataset:
     """
     Holds a channel dataset.  This is a simple container for the data to make
     sure that the user has the flexibility to turn the channel into an object
@@ -1527,8 +1646,7 @@ class ChannelDataset():
         if dataset is not None and isinstance(dataset, (h5py.Dataset)):
             self.hdf5_dataset = weakref.ref(dataset)()
 
-        self.logger = logging.getLogger('{0}.{1}'.format(__name__,
-                                                         self._class_name))
+        self.logger = logging.getLogger("{0}.{1}".format(__name__, self._class_name))
 
         # set metadata to the appropriate class.  Standards is not a
         # metadata.Base object so should be skipped. If the class name is not
@@ -1541,37 +1659,49 @@ class ChannelDataset():
 
         # add 2 attributes that will help with querying
         # 1) the metadata class name
-        self.metadata.add_base_attribute('mth5_type',
-                                         self._class_name.split('Group')[0],
-                                         {'type':str,
-                                          'required':True,
-                                          'style':'free form',
-                                          'description': 'type of group',
-                                          'units':None,
-                                          'options':[],
-                                          'alias':[],
-                                          'example':'group_name'})
+        self.metadata.add_base_attribute(
+            "mth5_type",
+            self._class_name.split("Group")[0],
+            {
+                "type": str,
+                "required": True,
+                "style": "free form",
+                "description": "type of group",
+                "units": None,
+                "options": [],
+                "alias": [],
+                "example": "group_name",
+            },
+        )
 
         # 2) the HDF5 reference that can be used instead of paths
-        self.metadata.add_base_attribute('hdf5_reference',
-                                         self.hdf5_dataset.ref,
-                                         {'type': 'h5py_reference',
-                                          'required':True,
-                                          'style':'free form',
-                                          'description': 'hdf5 internal reference',
-                                          'units':None,
-                                          'options':[],
-                                          'alias':[],
-                                          'example':'<HDF5 Group Reference>'})
+        self.metadata.add_base_attribute(
+            "hdf5_reference",
+            self.hdf5_dataset.ref,
+            {
+                "type": "h5py_reference",
+                "required": True,
+                "style": "free form",
+                "description": "hdf5 internal reference",
+                "units": None,
+                "options": [],
+                "alias": [],
+                "example": "<HDF5 Group Reference>",
+            },
+        )
         # set summary attributes
-        self.logger.debug("Metadata class for {0} is {1}".format(
-                self._class_name, type(self.metadata)))
+        self.logger.debug(
+            "Metadata class for {0} is {1}".format(
+                self._class_name, type(self.metadata)
+            )
+        )
 
         # if metadata, make sure that its the same class type
         if dataset_metadata is not None:
             if not isinstance(dataset_metadata, (self.metadata, metadata.Base)):
                 msg = "metadata must be type metadata.{0} not {1}".format(
-                    self._class_name, type(dataset_metadata))
+                    self._class_name, type(dataset_metadata)
+                )
                 self.logger.error(msg)
                 raise MTH5Error(msg)
 
@@ -1586,26 +1716,25 @@ class ChannelDataset():
             setattr(self, key, value)
 
     def __str__(self):
-        lines = ['Channel {0}:'.format(self._class_name)]
-        lines.append('-' * (len(lines[0]) + 2))
-        info_str = '\t{0:<18}{1}'
-        lines.append(info_str.format('component:', self.metadata.component))
-        lines.append(info_str.format('data type:', self.metadata.type))
-        lines.append(info_str.format('data format:', self.hdf5_dataset.dtype))
-        lines.append(info_str.format('data shape:', self.hdf5_dataset.shape))
-        lines.append(info_str.format('start:', self.metadata.time_period.start))
-        lines.append(info_str.format('end:', self.metadata.time_period.end))
-        lines.append(info_str.format('sample rate:', self.metadata.sample_rate))
+        lines = ["Channel {0}:".format(self._class_name)]
+        lines.append("-" * (len(lines[0]) + 2))
+        info_str = "\t{0:<18}{1}"
+        lines.append(info_str.format("component:", self.metadata.component))
+        lines.append(info_str.format("data type:", self.metadata.type))
+        lines.append(info_str.format("data format:", self.hdf5_dataset.dtype))
+        lines.append(info_str.format("data shape:", self.hdf5_dataset.shape))
+        lines.append(info_str.format("start:", self.metadata.time_period.start))
+        lines.append(info_str.format("end:", self.metadata.time_period.end))
+        lines.append(info_str.format("sample rate:", self.metadata.sample_rate))
 
-        return '\n'.join(lines)
+        return "\n".join(lines)
 
     def __repr__(self):
         return self.__str__()
 
     @property
     def _class_name(self):
-        return self.__class__.__name__.split('Dataset')[0]
-
+        return self.__class__.__name__.split("Dataset")[0]
 
     def read_metadata(self):
         """
@@ -1613,8 +1742,9 @@ class ChannelDataset():
         way it can be validated.
 
         """
-        meta_dict = dict([(key, value) for key, value in
-                          self.hdf5_dataset.attrs.items()])
+        meta_dict = dict(
+            [(key, value) for key, value in self.hdf5_dataset.attrs.items()]
+        )
 
         self.metadata.from_dict({self._class_name: meta_dict})
 
@@ -1627,7 +1757,7 @@ class ChannelDataset():
         meta_dict = self.metadata.to_dict()[self.metadata._class_name.lower()]
         for key, value in meta_dict.items():
             value = to_numpy_type(value)
-            self.logger.debug('wrote metadata {0} = {1}'.format(key, value))
+            self.logger.debug("wrote metadata {0} = {1}".format(key, value))
             self.hdf5_dataset.attrs.create(key, value)
 
     @property
@@ -1636,21 +1766,30 @@ class ChannelDataset():
         Creat a table entry to put into the run summary table.
         """
 
-        return np.array([(
-                         self.metadata.component,
-                         self.metadata.time_period.start,
-                         self.metadata.time_period.end,
-                         self.hdf5_dataset.size,
-                         self.metadata.type,
-                         self.metadata.units,
-                         self.hdf5_dataset.ref)],
-                        dtype= np.dtype([('component', 'S20'),
-                                         ('start', 'S32'),
-                                         ('end', 'S32'),
-                                         ('n_samples', np.int),
-                                         ('measurement_type', 'S12'),
-                                         ('units', 'S25'),
-                                         ('hdf5_reference', h5py.ref_dtype)]))
+        return np.array(
+            [
+                (
+                    self.metadata.component,
+                    self.metadata.time_period.start,
+                    self.metadata.time_period.end,
+                    self.hdf5_dataset.size,
+                    self.metadata.type,
+                    self.metadata.units,
+                    self.hdf5_dataset.ref,
+                )
+            ],
+            dtype=np.dtype(
+                [
+                    ("component", "S20"),
+                    ("start", "S32"),
+                    ("end", "S32"),
+                    ("n_samples", np.int),
+                    ("measurement_type", "S12"),
+                    ("units", "S25"),
+                    ("hdf5_reference", h5py.ref_dtype),
+                ]
+            ),
+        )
 
     def time_slice(self, start_time, end_time):
         """
@@ -1669,29 +1808,28 @@ class ChannelDataset():
         pass
 
 
-
 @inherit_doc_string
 class ElectricDataset(ChannelDataset):
-
     def __init__(self, group, **kwargs):
 
         super().__init__(group, **kwargs)
+
 
 @inherit_doc_string
 class MagneticDataset(ChannelDataset):
-
     def __init__(self, group, **kwargs):
 
         super().__init__(group, **kwargs)
+
 
 @inherit_doc_string
 class AuxiliaryDataset(ChannelDataset):
-
     def __init__(self, group, **kwargs):
 
         super().__init__(group, **kwargs)
 
-class MTH5Table():
+
+class MTH5Table:
     """
     Use the underlying NumPy basics, there are simple actions in this table,
     if a user wants to use something more sophisticated for querying they
@@ -1703,16 +1841,16 @@ class MTH5Table():
     """
 
     def __init__(self, hdf5_dataset):
-        self.logger = logging.getLogger('{0}.{1}'.format(
-            __name__, self.__class__.__name__))
+        self.logger = logging.getLogger(
+            "{0}.{1}".format(__name__, self.__class__.__name__)
+        )
 
         self.hdf5_reference = None
         if isinstance(hdf5_dataset, h5py.Dataset):
             self.array = weakref.ref(hdf5_dataset)()
             self.hdf5_reference = hdf5_dataset.ref
         else:
-            msg = "Input must be a h5py.Dataset not {0}".format(
-                type(hdf5_dataset))
+            msg = "Input must be a h5py.Dataset not {0}".format(type(hdf5_dataset))
             self.logger.error(msg)
             raise MTH5TableError(msg)
 
@@ -1726,40 +1864,58 @@ class MTH5Table():
         """
         # if the array is empty
         if self.array.size == 0:
-            length_dict = dict([(key, len(str(key)))
-                                 for key in list(self.dtype.names)])
-            lines = [' | '.join(['index']+['{0:^{1}}'.format(name,
-                                                             length_dict[name])
-                                  for name in list(self.dtype.names)])]
-            lines.append('-' * len(lines[0]))
-            return '\n'.join(lines)
+            length_dict = dict([(key, len(str(key))) for key in list(self.dtype.names)])
+            lines = [
+                " | ".join(
+                    ["index"]
+                    + [
+                        "{0:^{1}}".format(name, length_dict[name])
+                        for name in list(self.dtype.names)
+                    ]
+                )
+            ]
+            lines.append("-" * len(lines[0]))
+            return "\n".join(lines)
 
-        length_dict = dict([(key, max([len(str(b)) for b in self.array[key]]))
-                                for key in list(self.dtype.names)])
-        lines = [' | '.join(['index']+['{0:^{1}}'.format(name,
-                                                         length_dict[name])
-                                       for name in list(self.dtype.names)])]
-        lines.append('-' * len(lines[0]))
+        length_dict = dict(
+            [
+                (key, max([len(str(b)) for b in self.array[key]]))
+                for key in list(self.dtype.names)
+            ]
+        )
+        lines = [
+            " | ".join(
+                ["index"]
+                + [
+                    "{0:^{1}}".format(name, length_dict[name])
+                    for name in list(self.dtype.names)
+                ]
+            )
+        ]
+        lines.append("-" * len(lines[0]))
 
         for ii, row in enumerate(self.array):
-            line = ['{0:^5}'.format(ii)]
+            line = ["{0:^5}".format(ii)]
             for element, key in zip(row, list(self.dtype.names)):
                 if isinstance(element, (np.bytes_)):
                     element = element.decode()
                 try:
-                    line.append('{0:^{1}}'.format(element, length_dict[key]))
+                    line.append("{0:^{1}}".format(element, length_dict[key]))
 
                 except TypeError as error:
                     if isinstance(element, h5py.h5r.Reference):
-                        msg = '{0}: Cannot represent h5 reference as a string'
+                        msg = "{0}: Cannot represent h5 reference as a string"
                         self.logger.debug(msg.format(error))
-                        line.append('{0:^{1}}'.format('<HDF5 object reference>',
-                                                      length_dict[key]))
+                        line.append(
+                            "{0:^{1}}".format(
+                                "<HDF5 object reference>", length_dict[key]
+                            )
+                        )
                     else:
-                        self.logger.exception(f'{error}')
+                        self.logger.exception(f"{error}")
 
-            lines.append(' | '.join(line))
-        return '\n'.join(lines)
+            lines.append(" | ".join(line))
+        return "\n".join(lines)
 
     def __repr__(self):
         return self.__str__()
@@ -1785,7 +1941,7 @@ class MTH5Table():
         try:
             return self.array.dtype
         except AttributeError as error:
-            msg = '{0}, dataframe is not initiated yet'.format(error)
+            msg = "{0}, dataframe is not initiated yet".format(error)
             self.logger.warning(msg)
             return None
 
@@ -1807,7 +1963,7 @@ class MTH5Table():
     def nrows(self):
         return self.array.shape[0]
 
-    def locate(self, column, value, test='eq'):
+    def locate(self, column, value, test="eq"):
         """
 
         locate index where column is equal to value
@@ -1834,33 +1990,35 @@ class MTH5Table():
             value = np.bytes_(value)
 
         # use numpy datetime for testing against time.
-        if column in ['start', 'end', 'start_date', 'end_date']:
+        if column in ["start", "end", "start_date", "end_date"]:
             test_array = self.array[column].astype(np.datetime64)
             value = np.datetime64(value)
         else:
             test_array = self.array[column]
 
-        if test == 'eq':
+        if test == "eq":
             index_values = np.where(test_array == value)[0]
-        elif test == 'lt':
+        elif test == "lt":
             index_values = np.where(test_array < value)[0]
-        elif test == 'le':
+        elif test == "le":
             index_values = np.where(test_array <= value)[0]
-        elif test == 'gt':
+        elif test == "gt":
             index_values = np.where(test_array > value)[0]
-        elif test == 'ge':
+        elif test == "ge":
             index_values = np.where(test_array >= value)[0]
-        elif test == 'be':
+        elif test == "be":
             if not isinstance(value, (list, tuple, np.ndarray)):
-                msg = ("If testing for between value must be an iterable of" +
-                      " length 2.")
+                msg = (
+                    "If testing for between value must be an iterable of" + " length 2."
+                )
                 self.logger.error(msg)
                 raise ValueError(msg)
 
-            index_values = np.where((test_array > value[0]) &
-                                    (test_array < value[1]))[0]
+            index_values = np.where((test_array > value[0]) & (test_array < value[1]))[
+                0
+            ]
         else:
-            raise ValueError('Test {0} not understood'.format(test))
+            raise ValueError("Test {0} not understood".format(test))
 
         return index_values
 
@@ -1884,12 +2042,12 @@ class MTH5Table():
         """
 
         if not isinstance(row, (np.ndarray)):
-            msg = ("Input must be an numpy.ndarray" +
-                   "not {0}".format(type(row)))
+            msg = "Input must be an numpy.ndarray" + "not {0}".format(type(row))
         if isinstance(row, np.ndarray):
             if not self.check_dtypes(row.dtype):
-                msg = '{0}\nInput dtypes:\n{1}\n\nTable dtypes:\n{2}'.format(
-                    'Data types are not equal:', row.dtype, self.dtype)
+                msg = "{0}\nInput dtypes:\n{1}\n\nTable dtypes:\n{2}".format(
+                    "Data types are not equal:", row.dtype, self.dtype
+                )
                 self.logger.error(msg)
                 raise ValueError(msg)
 
@@ -1900,8 +2058,7 @@ class MTH5Table():
 
         # add the row
         self.array[index] = row
-        self.logger.debug('Added row as index {0} with values {1}'.format(
-            index, row))
+        self.logger.debug("Added row as index {0} with values {1}".format(index, row))
 
         return index
 
@@ -1931,7 +2088,6 @@ class MTH5Table():
             return self.add_row(null_array, index=index)
 
         except IndexError as error:
-            msg = 'Could not find index {0} in shape {1}'.format(index,
-                                                                 self.shape())
+            msg = "Could not find index {0} in shape {1}".format(index, self.shape())
             self.logger.exception(msg)
-            raise IndexError(f'{error}\n{msg}')
+            raise IndexError(f"{error}\n{msg}")

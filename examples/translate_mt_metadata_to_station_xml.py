@@ -52,7 +52,7 @@ fn_mt_magnetic_xml = r"FL001.a.magnetic.Hx.xml"
 # Translate from MT to StationXML
 # =============================================================================
 # Initialize the MT to StationXML object
-mt2xml = translator.MTToStationXML()
+mt2xml = stationxml_translator.MTToStationXML()
 
 # add network
 mt_survey = metadata.Survey()
