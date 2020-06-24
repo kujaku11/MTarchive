@@ -517,6 +517,10 @@ def mt_channel_to_inventory_channel(channel_obj, run_obj, namespace):
                                         channel_obj.location.longitude,
                                         channel_obj.location.elevation,
                                         channel_obj.location.elevation)
+        
+    inv_channel.start_date = run_obj.time_period.start
+    inv_channel.end_date = run_obj.time_period.end
+    print(inv_channel.start_date)
     
     used_list = ['channels_recorded', 'time_period.start', 'time_period.end',
                  'sample_rate', 'location.latitude', 'location.longitude', 
@@ -565,6 +569,7 @@ def mt_channel_to_inventory_channel(channel_obj, run_obj, namespace):
                 sensor.manufacturer = channel_obj.sensor.manufacturer
                 sensor.type = channel_obj.sensor.type
                 sensor.model = channel_obj.sensor.model
+                sensor.serial_number = channel_obj.sensor.id
                 inv_channel.sensor = sensor
         
         elif inv_key == 'comments':
