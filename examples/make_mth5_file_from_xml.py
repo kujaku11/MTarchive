@@ -121,7 +121,7 @@ def add_station(station, directory):
 # =============================================================================
 # initialize mth5 object
 mth5_obj = mth5.MTH5()
-mth5_obj.open_mth5(dir_path.joinpath('example.mth5'), mode='a')
+mth5_obj.open_mth5(dir_path.joinpath('example_02.mth5'), mode='a')
 
 ### add survey information
 survey_element = read_xml(dir_path.joinpath('survey.xml'))

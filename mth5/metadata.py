@@ -50,7 +50,8 @@ import pandas as pd
 import numpy as np
 import logging
 
-from collections import OrderedDict, Iterable
+from collections import OrderedDict
+from collections.abc import Iterable
 from operator import itemgetter
 
 from mth5.standards.schema import Standards, validate_attribute, validate_type
@@ -761,13 +762,13 @@ class Location(Base):
         :type latitude: float or string
         """
         if latitude in [None, "None", "none", "unknown"]:
-            self.logger.info("Latitude is None, setting to 0")
+            self.logger.debug("Latitude is None, setting to 0")
             return 0.0
         try:
             lat_value = float(latitude)
 
         except TypeError:
-            self.logger.info("Could not convert {0} setting to 0".format(latitude))
+            self.logger.debug("Could not convert {0} setting to 0".format(latitude))
             return 0.0
 
         except ValueError:
@@ -793,13 +794,13 @@ class Location(Base):
         :type latitude: float or string
         """
         if longitude in [None, "None", "none", "unknown"]:
-            self.logger.info("Longitude is None, setting to 0")
+            self.logger.debug("Longitude is None, setting to 0")
             return 0.0
         try:
             lon_value = float(longitude)
 
         except TypeError:
-            self.logger.info("Could not convert {0} setting to 0".format(longitude))
+            self.logger.debug("Could not convert {0} setting to 0".format(longitude))
             return 0.0
 
         except ValueError:
@@ -828,7 +829,7 @@ class Location(Base):
             elev_value = float(elevation)
         except (ValueError, TypeError):
             msg = "Could not convert {0} to a number setting to 0".format(elevation)
-            self.logger.info(msg)
+            self.logger.debug(msg)
             elev_value = 0.0
 
         return elev_value
@@ -1364,10 +1365,13 @@ class Filtered(Base):
             self._name = [ss.strip().lower() for ss in names.split(",")]
         elif isinstance(names, list):
             self._name = [ss.strip().lower() for ss in names]
+        elif isinstance(names, np.ndarray):
+            names = names.astype(np.unicode_)
+            self._name = [ss.strip().lower() for ss in names]
         else:
-            msg = "names must be a string or list of strings not {0}"
-            self.logger.error(msg.format(names))
-            raise MTSchemaError(msg.format(names))
+            msg = "names must be a string or list of strings not {0}, type {1}"
+            self.logger.error(msg.format(names, type(names)))
+            raise MTSchemaError(msg.format(names, type(names)))
 
         check = self._check_consistency()
         if not check:
@@ -1509,7 +1513,7 @@ class Survey(Base):
         self.northwest_corner = Location()
         self.project = None
         self.project_lead = Person()
-        self.release_license = None
+        self.release_license = 'CC-0'
         self.southeast_corner = Location()
         self.summary = None
         self.time_period = TimePeriod()

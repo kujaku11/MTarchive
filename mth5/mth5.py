@@ -139,6 +139,7 @@ class MTH5:
         self.compression_opts = 3
         self.shuffle = True
         self.fletcher32 = True
+        self.data_level = 1
 
         self.__filename = filename
         if self.__filename:
@@ -157,6 +158,7 @@ class MTH5:
             "file.access.time": get_now_utc(),
             "MTH5.version": __version__,
             "MTH5.software": "mth5",
+            "data_level": self.data_level
         }
 
     def __str__(self):
@@ -238,6 +240,12 @@ class MTH5:
             )
         self.logger.info("File is closed cannot access /Stations")
         return None
+    
+    @property
+    def station_list(self):
+        """list of existing stations names"""
+        return self.stations_group.group_list
+    
 
     def open_mth5(self, filename, mode="a"):
         """
