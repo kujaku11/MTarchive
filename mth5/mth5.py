@@ -4,16 +4,19 @@
 MTH5
 ==================
 
-This module deals with reading and writing MTH5 files, which are HDF5 files
+MTH5 deals with reading and writing an MTH5 file, which are HDF5 files
 developed for magnetotelluric (MT) data.  The code is based on h5py and
-attributes use JSON encoding.
-
-.. note:: Currently the convenience methods support read only.
-          Working on developing the write convenience methods.
+therefor numpy.  This is the simplest and we are not really dealing with
+large tables of data to warant using pytables.
 
 Created on Sun Dec  9 20:50:41 2018
 
-@author: J. Peacock
+:copyright:
+    Jared Peacock (jpeacock@usgs.gov)
+    
+:license: 
+    MIT
+
 """
 
 # =============================================================================
@@ -29,52 +32,87 @@ import h5py
 from mth5.utils.exceptions import MTH5Error
 from mth5 import __version__
 from mth5.utils.mttime import get_now_utc
-from mth5 import mth5_groups as m5groups
-from mth5.helpers import get_tree, close_open_files
+from mth5 import groups as groups
+from mth5 import helpers
 
 # =============================================================================
 # MT HDF5 file
 # =============================================================================
 class MTH5:
     """
-    MT HDF5 file
+    MTH5 is the main container for the HDF5 file format developed for MT data
+    
+    It uses the metadata standards developled by the
+    `IRIS PASSCAL software group 
+    <https://www.iris.edu/hq/about_iris/governance/mt_soft>`_
+    and defined in the
+    `metadata documentation 
+    <https://github.com/kujaku11/MTarchive/blob/tables/docs/mt_metadata_guide.pdf>`_.
+    
+    MTH5 is built with h5py and therefore numpy.  The structure follows the
+    different levels of MT data collection:
+        - Survey
+            - Reports
+            - Standards
+            - Filters
+            - Station
+                - Run
+                    - Channel
+            
+    
+    All timeseries data are stored as individual channels with the appropriate
+    metadata defined for the given channel, i.e. electric, magnetic, auxiliary.
+    
+    Each level is represented as a mth5 group class object which has methods
+    to add, remove, and get a group from the level below.  Each group has a 
+    metadata attribute that is the approprate metadata class object.  For 
+    instance the SurveyGroup has an attribute metadata that is a 
+    :class:`mth5.metadata.Survey` object.  Metadata is stored in the HDF5 group 
+    attributes as (key, value) pairs.
+    
+    Each level has a summary array of the contents of the levels below to 
+    hopefully make searching easier. 
+    
+    :param filename: name of the to be or existing file
+    :type filename: string o :class:`pathlib.Path`
+    :param compression:
+    :param compression_opts:
+    :param shuffle:
+    :param fletcher32:
+    :param=data_level:
 
-    Class object to deal with reading and writing an MTH5 file.
-
+    MTH5 has many convenience property attributes
+    
     ======================= ===================================================
     Attribute               Description
     ======================= ===================================================
-    copyright               Copyright object containing information on
-                            copyright information
-    field_notes             FieldNotes object containing information on how
-                            the data was collected
-    mth5_fn                 full path to MTH5 file
-    mth5_obj                HDF5 object from h5py
-    provenance              Provenance object containing information on when
-                            and by whom the data was collected
-    site                    Site object containing information about the
-                            location of the station
-    software                Software object containing information on the
-                            software used to make the file
-    schedule_##             Schedule object where ## is the number of the
-                            schedule if a MTH5 file was read in
-    calibration_##          Calibration object where ## is the component of
-                            the calibration
+    dataset_options         Describes the compression and storage options for 
+                            datasets.
+    filters_group           :class:`mth5.group.FilterGroup` object representing
+                            the HDF5 group /Survey/Filters
+    standards_group         :class:`mth5.group.StandardsGroup` object 
+                            representing the HDF5 group /Survey/Standards.  
+                            Defines the metadata standards used for this file
+                            that is summarized in summary_table.
+    stations_group          :class:`mth5.group.MasterStationrGroup` object
+                            representing the HDF5 group /Survey/Stations. 
+                            `stations_group` has the ability to add/remove/get
+                            stations, and has a `summary_table` that summarizes
+                            all stations.
+    station_list            list of all station in the file.
+    survey_group           :class:`mth5.group.SurveyGroup` object representing
+                            the HDF5 group /Survey is  the root group.  Does
+                            not have any realy power currently.  
     ======================= ===================================================
 
-    .. seealso:: mth5.Copyright, mth5.FieldNotes, mth5.Provenance, mth5.Site
-                 mth5.Software, mth5.Schedule, mth5.Calibration, h5py
+    .. seealso:: :class:`mth5.groups`
+    
 
     ============================ ==============================================
     Method                       Description
     ============================ ==============================================
     open_mth5                    load in a MTH5 file
     close_mth5                   flushes any changes and closes MTH5 file
-    add_schedule                 add a schedule data set
-    add_calibration              add instrument calibration to /root/calibrations
-    write_metadata               write root metadata
-    update_metadata_from_cfg     update metadata attributes from a cfg file
-    update_metadata_from_series  update metadata attributes from pandas series
     h5_is_write                  check if MTH5 file is open and writeable
     ============================ ==============================================
 
@@ -133,15 +171,18 @@ class MTH5:
     .. seealso:: https://www.hdfgroup.org/ and h5py()
     """
 
-    def __init__(self, filename=None):
+    def __init__(self, filename=None, compression='gzip', compression_opts=3,
+                 shuffle=True, fletcher32=True, data_level=1):
+        
+        # make these private so the user can accidentally change anything.
         self.__hdf5_obj = None
-        self.compression = "gzip"
-        self.compression_opts = 3
-        self.shuffle = True
-        self.fletcher32 = True
-        self.data_level = 1
-
+        self.__compression, self.__compression_opts = helpers.validate_compression(
+            compression, compression_opts)
+        self.__shuffle = True
+        self.__fletcher32 = True
+        self.__data_level = 1
         self.__filename = filename
+        
         if self.__filename:
             if not isinstance(self.__filename, Path):
                 self.__filename = Path(self.__filename)
@@ -158,12 +199,13 @@ class MTH5:
             "file.access.time": get_now_utc(),
             "MTH5.version": __version__,
             "MTH5.software": "mth5",
-            "data_level": self.data_level
+            "data_level": self.__data_level
         }
+        
 
     def __str__(self):
         if self.h5_is_write():
-            return get_tree(self.__hdf5_obj)
+            return helpers.get_tree(self.__hdf5_obj)
 
         return "HDF5 file is closed and cannot be accessed."
 
@@ -173,10 +215,10 @@ class MTH5:
     @property
     def dataset_options(self):
         return {
-            "compression": self.compression,
-            "compression_opts": self.compression_opts,
-            "shuffle": self.shuffle,
-            "fletcher32": self.fletcher32,
+            "compression": self.__compression,
+            "compression_opts": self.__compression_opts,
+            "shuffle": self.__shuffle,
+            "fletcher32": self.__fletcher32,
         }
 
     @property
@@ -195,7 +237,7 @@ class MTH5:
     def survey_group(self):
         """ Convenience property for /Survey group"""
         if self.h5_is_write():
-            return m5groups.SurveyGroup(
+            return groups.SurveyGroup(
                 self.__hdf5_obj["/Survey"], **self.dataset_options
             )
         self.logger.info("File is closed cannot access /Survey")
@@ -205,7 +247,7 @@ class MTH5:
     def reports_group(self):
         """ Convenience property for /Survey/Reports group"""
         if self.h5_is_write():
-            return m5groups.ReportsGroup(
+            return groups.ReportsGroup(
                 self.__hdf5_obj["/Survey/Reports"], **self.dataset_options
             )
         self.logger.info("File is closed cannot access /Reports")
@@ -215,7 +257,7 @@ class MTH5:
     def filters_group(self):
         """ Convenience property for /Survey/Filters group"""
         if self.h5_is_write():
-            return m5groups.FiltersGroup(
+            return groups.FiltersGroup(
                 self.__hdf5_obj["/Survey/Filters"], **self.dataset_options
             )
         self.logger.info("File is closed cannot access /Filters")
@@ -225,7 +267,7 @@ class MTH5:
     def standards_group(self):
         """ Convenience property for /Survey/Standards group"""
         if self.h5_is_write():
-            return m5groups.StandardsGroup(
+            return groups.StandardsGroup(
                 self.__hdf5_obj["/Survey/Standards"], **self.dataset_options
             )
         self.logger.info("File is closed cannot access /Standards")
@@ -235,7 +277,7 @@ class MTH5:
     def stations_group(self):
         """ Convenience property for /Survey/Stations group"""
         if self.h5_is_write():
-            return m5groups.MasterStationGroup(
+            return groups.MasterStationGroup(
                 self.__hdf5_obj["/Survey/Stations"], **self.dataset_options
             )
         self.logger.info("File is closed cannot access /Stations")
@@ -252,7 +294,7 @@ class MTH5:
         open an mth5 file
 
         :return: Survey Group
-        :type: m5groups.SurveyGroup
+        :type: groups.SurveyGroup
 
         :Example: ::
 
@@ -299,7 +341,7 @@ class MTH5:
         Initialize the default groups for the file
 
         :return: Survey Group
-        :rtype: m5groups.SurveyGroup
+        :rtype: groups.SurveyGroup
 
         """
 
@@ -309,7 +351,7 @@ class MTH5:
         self.__hdf5_obj.attrs.update(self._file_attrs)
 
         survey_group = self.__hdf5_obj.create_group(self._default_root_name)
-        survey_obj = m5groups.SurveyGroup(survey_group)
+        survey_obj = groups.SurveyGroup(survey_group)
         survey_obj.write_metadata()
 
         for group_name in self._default_subgroup_names:
@@ -335,7 +377,7 @@ class MTH5:
             self.__hdf5_obj.close()
             self.logger.info("Flushed and closed {0}".format(str(self.filename)))
         except AttributeError:
-            close_open_files()
+            helpers.close_open_files()
 
     def h5_is_write(self):
         """
