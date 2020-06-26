@@ -5,14 +5,14 @@ Basics
 
 .. hint:: MTH5 is comprehensively logged, therefore if any problems arise you can always check the mth5_debug.log and the mth5_error.log, which will be written to your current working directory.
 
-Each MTH5 file will have default groups. A 'group' is is 
-basically like a folder that can contain other groups or
-datasets.  These are:
-	* Survey    --> The master or root group of the HDF5 file
-	* Filters   --> Holds all filters and filter information
-	* Reports   --> Holds any reports relevant to the survey
-	* Standards --> A summary of metadata standards used  
-	* Stations  --> Holds all the stations an subsequent data
+Each MTH5 file has default groups. A 'group' is basically like a folder that can contain other groups or datasets.  These are:
+	* **Survey**    --> The master or root group of the HDF5 file
+	* **Filters**   --> Holds all filters and filter information
+	* **Reports**   --> Holds any reports relevant to the survey
+	* **Standards** --> A summary of metadata standards used  
+	* **Stations**  --> Holds all the stations an subsequent data
+	
+Each group also has a summary table to make it easier to search and access different parts of the file. Each entry in the table will have an HDF5 reference that can be directly used to get the appropriate group or dataset without using the path.  
 	
 To open a new *.mth5* file::
 
@@ -31,9 +31,12 @@ To open an exiting *.mth5* file::
 
 To close a file::
 
->>> mth5_obj.close_mth5()
-2020-06-26T15:01:05 - mth5.mth5.MTH5.close_mth5 - INFO - Flushed and 
-closed example_02.mth5
+	>>> mth5_obj.close_mth5()
+	2020-06-26T15:01:05 - mth5.mth5.MTH5.close_mth5 - INFO - Flushed and 
+	closed example_02.mth5
+	
+.. note:: Once a MTH5 file is closed any data contained within cannot be accessed.  All groups are weakly referenced, therefore once the file closes the group can no longer access the HDF5 group and you will get a message like
+	>>> 2020-06-26T15:21:47 - mth5.groups.Station.__str__ - WARNING - MTH5 file is closed and cannot be accessed. MTH5 file is closed and cannot be accessed.
 
 A MTH5 object is represented by the file structure and
 can be displayed at anytime from the command line.
