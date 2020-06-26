@@ -1,20 +1,19 @@
-.. MTpy documentation master index file, created by
-   sphinx-quickstart
+.. MTH5 documentation master file, created by
+   sphinx-quickstart on Fri Jun 26 11:21:30 2020.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to MTH5's documentation!
+Welcome to MTH5mth5.metadata.s documentation!
 ================================
-
-Contents:
 
 .. toctree::
    :maxdepth: 2
-
-**mth5**
-==================
-.. automodule:: mth5.mth5
-	:members:
+   :caption: Getting Started
+   
+	modules
+	mth5
+	mth5.standards
+	mth5.utils
 
 
 Indices and tables
@@ -23,4 +22,3 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-

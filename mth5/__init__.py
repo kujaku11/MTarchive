@@ -1,4 +1,12 @@
 # package file
+"""
+
+Submodules
+===============
+
+	.. autosummary::
+    :toctree: _autosummary
+"""
 
 import logging
 import yaml

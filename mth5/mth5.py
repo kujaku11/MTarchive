@@ -385,11 +385,11 @@ class MTH5:
         :return: Survey Group
         :type: groups.SurveyGroup
 
-        :Example: ::
+        :Example: 
 
-            >>> from mth5 import mth5
-            >>> mth5_object = mth5.MTH5()
-            >>> survey_object = mth5_object.open_mth5('Test.mth5', 'w')
+        >>> from mth5 import mth5
+        >>> mth5_object = mth5.MTH5()
+        >>> survey_object = mth5_object.open_mth5('Test.mth5', 'w')
 
 
         """
@@ -559,9 +559,9 @@ class MTH5:
         :param station_name: existing station name
         :type station_name: string
 
-        :Example: ::
+        :Example: 
 
-            >>> mth5_obj.remove_station('MT001')
+        >>> mth5_obj.remove_station('MT001')
 
         """
 
@@ -675,7 +675,9 @@ class MTH5:
         :rtype: [ :class:`mth5.mth5_groups.ElectricDatset` |
                  :class:`mth5.mth5_groups.MagneticDatset` |
                  :class:`mth5.mth5_groups.AuxiliaryDatset` ]
-
+        
+        :Example:
+        
         >>> new_channel = mth5_obj.add_channel('MT001', 'MT001a''Ex',
         >>> ...                                'electric', None)
         >>> new_channel
@@ -766,7 +768,7 @@ class MTH5:
         :param channel_name: existing station name
         :type channel_name: string
 
-        :Example: ::
+        :Example:
 
         >>> mth5_obj.remove_channel('MT001', 'MT001a', 'Ex')
 

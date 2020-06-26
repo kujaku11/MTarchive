@@ -5,15 +5,17 @@ metadata
 ==================
 
 This module deals with metadata as defined by the MT metadata standards.
+`metadata documentation 
+<https://github.com/kujaku11/MTarchive/blob/tables/docs/mt_metadata_guide.pdf>`_.
 
 There are multiple containers for each type of metadata, named appropriately.
 
 Each container will be able to read and write:
     * dictionary
     * json
-    * xml?
+    * xml
     * csv?
-    * pandas
+    * pandas.Series
     * anything else?
 
 Because a lot of the name words in the metadata are split by '.' there are some
@@ -37,8 +39,11 @@ self._attr_dict = {'nameword':{'type': str, 'required': True, 'style': 'name'}}
 
 Created on Sun Apr 24 20:50:41 2020
 
-@author: J. Peacock
-@email: jpeacock@usgs.gov
+:copyright:
+    Jared Peacock (jpeacock@usgs.gov)
+    
+:license: 
+    MIT
 
 
 """
@@ -426,11 +431,11 @@ class Base:
         :return: attribute value
         :rtype: type is defined by the attribute name
 
-        :Example: ::
+        :Example:
 
-            >>> b = Base(**{'category.test_attr':10})
-            >>> b.get_attr_from_name('category.test_attr')
-            10
+        >>> b = Base(**{'category.test_attr':10})
+        >>> b.get_attr_from_name('category.test_attr')
+        10
 
         """
         name = self._validate_name(name)
@@ -458,12 +463,12 @@ class Base:
         :param value: attribute value
         :type value: type is defined by the attribute name
 
-        :Example: ::
+        :Example: 
 
-            >>> b = Base(**{'category.test_attr':10})
-            >>> b.set_attr_from_name('category.test_attr', '10')
-            >>> print(b.category.test_attr)
-            '10'
+        >>> b = Base(**{'category.test_attr':10})
+        >>> b.set_attr_from_name('category.test_attr', '10')
+        >>> print(b.category.test_attr)
+        '10'
         """
         if "." in name:
             try:
@@ -507,21 +512,18 @@ class Base:
                       'other' means other options available but not yet defined.
         * example --> an example of the attribute
         
-        :return: DESCRIPTION
-        :rtype: TYPE
-        
-        :Example: ::
+        :Example:
             
-            >>> extra = {'type': str,
-            >>> ...      'style': 'controlled vocabulary',
-            >>> ...      'required': False,
-            >>> ...      'units': celsius,
-            >>> ...      'description': 'local temperature',
-            >>> ...      'alias': ['temp'],
-            >>> ...      'options': [ 'ambient', 'air', 'other'],
-            >>> ...      'example': 'ambient'}
-            >>> r = Run()
-            >>> r.add_base_attribute('temperature', 'ambient', extra)
+        >>> extra = {'type': str,
+        >>> ...      'style': 'controlled vocabulary',
+        >>> ...      'required': False,
+        >>> ...      'units': celsius,
+        >>> ...      'description': 'local temperature',
+        >>> ...      'alias': ['temp'],
+        >>> ...      'options': [ 'ambient', 'air', 'other'],
+        >>> ...      'example': 'ambient'}
+        >>> r = Run()
+        >>> r.add_base_attribute('temperature', 'ambient', extra)
 
         """
         name = self._validate_name(name)
@@ -957,7 +959,7 @@ class Instrument(Base):
         self.manufacturer = None
         self.type = None
         self.model = None
-        super(Instrument, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
         self._attr_dict = ATTR_DICT["instrument"]
 
@@ -975,7 +977,7 @@ class Rating(Base):
         self.method = None
         self.value = None
 
-        super(Rating, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self._attr_dict = ATTR_DICT["rating"]
 
 
@@ -1006,7 +1008,7 @@ class DataQuality(Base):
         self.rating = Rating()
         self.warnings = None
 
-        super(DataQuality, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
         self._attr_dict = ATTR_DICT["data_quality"]
 
@@ -1042,7 +1044,7 @@ class Citation(Base):
         self.volume = None
         self.doi = None
         self.year = None
-        super(Citation, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
         self._attr_dict = ATTR_DICT["citation"]
 
@@ -1093,7 +1095,7 @@ class Copyright(Base):
         )
         self.release_status = None
         self.additional_info = None
-        super(Copyright, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
         self._attr_dict = ATTR_DICT["copyright"]
 
@@ -1130,7 +1132,7 @@ class Provenance(Base):
         self.submitter = Person()
         self.software = Software()
         self.log = None
-        super(Provenance, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
         self._attr_dict = ATTR_DICT["provenance"]
 
@@ -1172,7 +1174,7 @@ class Person(Base):
         self.author = None
         self.organization = None
         # self.url = None
-        super(Person, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
         self._attr_dict = ATTR_DICT["person"]
 
@@ -1189,7 +1191,7 @@ class Diagnostic(Base):
         self.units = None
         self.start = None
         self.end = None
-        super(Diagnostic, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
         self._attr_dict = ATTR_DICT["diagnostic"]
 
@@ -1207,7 +1209,7 @@ class Battery(Base):
         self.type = None
         self.id = None
         self.voltage = Diagnostic()
-        super(Battery, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
         self._attr_dict = ATTR_DICT["battery"]
 
@@ -1222,7 +1224,7 @@ class Electrode(Location, Instrument):
 
     def __init__(self, **kwargs):
 
-        super(Electrode, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
         self._attr_dict = ATTR_DICT["instrument"]
 
@@ -1243,7 +1245,7 @@ class TimingSystem(Base):
         self.uncertainty = None
         self.uncertainty_units = None
         self.comments = None
-        super(TimingSystem, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
         self._attr_dict = ATTR_DICT["timing_system"]
 
@@ -1680,7 +1682,7 @@ class Electric(Channel):
 # =============================================================================
 class Magnetic(Channel):
     """
-
+    magnetic channel
     """
 
     def __init__(self, **kwargs):
