@@ -62,7 +62,7 @@ class MTTS(object):
     lat                  latitude of station in decimal degrees
     lon                  longitude of station in decimal degrees
     n_samples            number of samples in time series
-    sample_rate        sample rate in samples/second
+    sample_rate          sample rate in samples/second
     start_time_epoch_sec start time in epoch seconds
     start_time_utc       start time in UTC
     station              station name
@@ -81,18 +81,18 @@ class MTTS(object):
     ======================= ===============================================
 
 
-    :Example: ::
+    :Example: 
 
-        >>> import mtpy.core.ts as ts
-        >>> import numpy as np
-        >>> MTTS = ts.MTTS()
-        >>> MTTS.ts = np.random.randn(1024)
-        >>> MTTS.station = 'test'
-        >>> MTTS.lon = 30.00
-        >>> MTTS.lat = -122.00
-        >>> MTTS.component = 'HX'
-        >>> MTTS.units = 'counts'
-        >>> MTTS.write_hdf5(r"/home/test.h5")
+    >>> import mtpy.core.ts as ts
+    >>> import numpy as np
+    >>> MTTS = ts.MTTS()
+    >>> MTTS.ts = np.random.randn(1024)
+    >>> MTTS.station = 'test'
+    >>> MTTS.lon = 30.00
+    >>> MTTS.lat = -122.00
+    >>> MTTS.component = 'HX'
+    >>> MTTS.units = 'counts'
+    >>> MTTS.write_hdf5(r"/home/test.h5")
 
 
     """

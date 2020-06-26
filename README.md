@@ -1,4 +1,4 @@
-![MTH5 Logo](https://github.com/kujaku11/MTarchive/blob/tables/mth5_logo.png)
+![MTH5 Logo](https://github.com/kujaku11/MTarchive/blob/tables/docs/images/mth5_logo.png)
 
 # MTarchive
 
@@ -18,4 +18,4 @@ The metadata follows the standards proposed by the [IRIS-PASSCAL MT Software wor
 ## MTH5 Format
 * The basic format of MTH5 is illustrated below, where metadata is attached at each level.
 
-![MTH5 Format](https://github.com/kujaku11/MTarchive/blob/tables/docs/example_mt_file_structure.png)
+![MTH5 Format](https://github.com/kujaku11/MTarchive/blob/tables/docs/images/example_mt_file_structure.png)

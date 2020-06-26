@@ -3,17 +3,27 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to MTH5mth5.metadata.s documentation!
+Welcome to MTH5 documentation!
 ================================
+.. image:: mth5_logo.png
+	:align: center
+	
+.. toctree:: 
+	:maxdepth: 1
+	:caption: Overview
+
+	source/README
+	source/basics
+	source/stations
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Getting Started
-   
-	modules
-	mth5
-	mth5.standards
-	mth5.utils
+    :maxdepth: 2
+    :caption: Packages
+
+    source/modules
+    source/mth5
+    source/mth5.standards
+    source/mth5.utils
 
 
 Indices and tables

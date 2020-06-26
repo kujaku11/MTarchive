@@ -826,8 +826,7 @@ class StationGroup(BaseGroup):
     :param station_metadata: metadata container, defaults to None
     :type station_metadata: :class:`mth5.metadata.Station`, optional
 
-    Usage
-    --------
+    :Usage:
 
     :Access StationGroup from an open MTH5 file:
 
@@ -939,8 +938,7 @@ class StationGroup(BaseGroup):
         --> Dataset: Hz
         ......................
 
-    Summary Table
-    ---------------
+    :Summary Table:
 
     A summary table is provided to make searching easier.  The table
     summarized all stations within a survey. To see what names are in the
@@ -1170,9 +1168,6 @@ class RunGroup(BaseGroup):
     :param station_metadata: metadata container, defaults to None
     :type station_metadata: :class:`mth5.metadata.Station`, optional
 
-    Usage
-    --------
-
     :Access RunGroup from an open MTH5 file:
 
     >>> from mth5 import mth5
@@ -1288,8 +1283,8 @@ class RunGroup(BaseGroup):
     	end:              1980-01-01T00:32:+08:00
     	sample rate:      8
 
-    Summary Table
-    ---------------
+
+    :Summary Table:
 
     A summary table is provided to make searching easier.  The table
     summarized all stations within a survey. To see what names are in the
@@ -1614,9 +1609,6 @@ class ChannelDataset:
     The benefit of these other objects is that they can be indexed by time,
     and they have much more buit-in funcionality.
 
-    Usage
-    ---------
-
     :Get a channel:
 
     >> from mth5 import mth5
@@ -1635,7 +1627,9 @@ class ChannelDataset:
         	end:              1980-01-01T00:00:01+00:00
         	sample rate:      4096
 
-    :Get a window
+    :Get a window:
+        
+    
 
 
     """
