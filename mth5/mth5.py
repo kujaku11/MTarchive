@@ -70,18 +70,50 @@ class MTH5:
     :class:`mth5.metadata.Survey` object.  Metadata is stored in the HDF5 group 
     attributes as (key, value) pairs.
     
+    All groups are represented by their structure tree and can be shown
+    at any time from the command line.
+    
     Each level has a summary array of the contents of the levels below to 
     hopefully make searching easier. 
     
     :param filename: name of the to be or existing file
-    :type filename: string o :class:`pathlib.Path`
-    :param compression:
-    :param compression_opts:
-    :param shuffle:
-    :param fletcher32:
-    :param=data_level:
+    :type filename: string or :class:`pathlib.Path`
+    :param compression: compression type.  Supported lossless compressions are
+                        * 'lzf' - Available with every installation of h5py 
+                                 (C source code also available). Low to 
+                                 moderate compression, very fast. No options.
+                        * 'gzip' - Available with every installation of HDF5,
+                                  so it’s best where portability is required. 
+                                  Good compression, moderate speed. 
+                                  compression_opts sets the compression level 
+                                  and may be an integer from 0 to 9, 
+                                  default is 3.
+                        * 'szip' - Patent-encumbered filter used in the NASA
+                                   community. Not available with all 
+                                   installations of HDF5 due to legal reasons.
+                                   Consult the HDF5 docs for filter options.
+    :param compression_opts: compression options, see above
+    :type compression_opts: string or int depending on compression type
+    :param shuffle: Block-oriented compressors like GZIP or LZF work better
+                    when presented with runs of similar values. Enabling the 
+                    shuffle filter rearranges the bytes in the chunk and may
+                    improve compression ratio. No significant speed penalty,
+                    lossless.
+    :type shuffle: boolean
+    :param fletcher32: Adds a checksum to each chunk to detect data corruption.
+                       Attempts to read corrupted chunks will fail with an 
+                       error. No significant speed penalty. Obviously 
+                       shouldn’t be used with lossy compression filters.
+    :type fletcher32: boolean
+    :param data_level: level the data are stored following levels defined by
+       `NASA ESDS <https://earthdata.nasa.gov/collaborate/open-data-services-and-software/data-information-policy/data-levels>`_
+         * 0 - Raw data 
+         * 1 - Raw data with response information and full metadata
+         * 2 - Derived product, raw data has been manipulated 
+    :type data_level: integer, defaults to 1                
 
-    MTH5 has many convenience property attributes
+    
+    :Convenience Property Attributes:
     
     ======================= ===================================================
     Attribute               Description
@@ -100,64 +132,121 @@ class MTH5:
                             stations, and has a `summary_table` that summarizes
                             all stations.
     station_list            list of all station in the file.
-    survey_group           :class:`mth5.group.SurveyGroup` object representing
+    survey_group            :class:`mth5.group.SurveyGroup` object representing
                             the HDF5 group /Survey is  the root group.  Does
                             not have any realy power currently.  
     ======================= ===================================================
 
     .. seealso:: :class:`mth5.groups`
     
-
+    :Methods:
+        
     ============================ ==============================================
     Method                       Description
     ============================ ==============================================
     open_mth5                    load in a MTH5 file
     close_mth5                   flushes any changes and closes MTH5 file
     h5_is_write                  check if MTH5 file is open and writeable
+    from_reference               open an group or dataset from a given HDF5 
+                                 reference
+    add_station                  add a station to /Survey/Stations
+    get_station                  get an existing station from /Survey/Stations
+    remove_station               remove an existing station from /Survey/Stations
+    add_run                      add a run to an existing station
+    get_run                      get an existing run from an existing station
+    remove_run                   remove an existing run from existing station 
+    add_channel                  add a channel to an existing run
+    get_channel                  get a channel from an existing run
+    remove_channel               remove a channel from an existing run
     ============================ ==============================================
 
-    * Example: Load MTH5 File
+    :Usage:
 
-    >>> import mth5.mth5 as mth5
-    >>> data = mth5.MTH5.open_mth5(r"/home/mtdata/mt01.mth5")
+    * Open a new file and show initialized file
+    
+    >>> from mth5 import mth5
+    >>> mth5_obj = mth5.MTH5()
+    >>> # Have a look at the dataset options
+    >>> mth5.dataset_options
+    {'compression': 'gzip',
+     'compression_opts': 3,
+     'shuffle': True,
+     'fletcher32': True}
+    >>> mth5_obj.open_mth5(r"/home/mtdata/mt01.mth5", 'w')
+    >>> mth5_obj
+    /:
+    ====================
+        |- Group: Survey
+        ----------------
+            |- Group: Filters
+            -----------------
+                --> Dataset: Summary
+                ......................
+            |- Group: Reports
+            -----------------
+                --> Dataset: Summary
+                ......................
+            |- Group: Standards
+            -------------------
+                --> Dataset: Summary
+                ......................
+            |- Group: Stations
+            ------------------
+                --> Dataset: Summary
+                ......................
 
-    * Example: Update metadata from cfg file
-
-    >>> data = mth5.MTH5()
-    >>> # read in configuration file to update attributes
-    >>> data.update_metadata_from_cfg(r"/home/survey_mth5.cfg")
-    >>> data.write_metadata()
-
-    * Example: Add schedule to MTH5 File
-
-    >>> schedule_obj = mth5.Schedule()
-    >>> # make schedule object from a pandas dataframe
-    >>> import pandas as pd
-    >>> sdf = df = pd.DataFrame(np.random.random((256*3600+1, 5)),
-    ...                         columns=['ex', 'ey', 'hx', 'hy', 'hz'],
-    ...                         index=pd.date_range(start='2018-01-01T01:00:00',
-    ...                                             end='2018-01-01T02:00:00',
-    ...                                             freq='{0:.0f}N'.format(1./256.*1E9)))
-    >>> data.schedule_01 = schedule_obj.from_dataframe(sdf, 'schedule_01')
-
-    * Example: Add calibration from structured numpy array
-
-    >>> import numpy as np
-    >>> cal = mth5.Calibration()
-    >>> cal_dtype = [(name, np.float) for name in ['frequency', 'real', 'imaginary']]
-    >>> cal.from_numpy_array(np.zeros(20), dtype=cal_dtype)
-    >>> cal.frequency = np.logspace(-3, 3, 20)
-    >>> cal.real = np.random.random(20)
-    >>> cal.imaginary = np.random.random(20)
-    >>> cal.name = 'hx'
-    >>> cal.instrument_id = 2284
-    >>> cal.calibration_date = '2018-01-01'
-    >>> cal.calibration_person.name = 'tester name'
-    >>> cal.calibration_person.organization = 'tester company'
-    >>> data.calibrations.calibration_hx = data.add_calibration(cal, 'hx')
-
-    * Example: Update data
-
+    
+    * Add metadata for survey from a dictionary
+    
+    >>> survey_dict = {'survey':{'acquired_by': 'me', 'archive_id': 'MTCND'}}
+    >>> survey = mth5_obj.survey_group
+    >>> survey.metadata.from_dict(survey_dict)
+    >>> survey.metadata
+    {
+    "survey": {
+        "acquired_by.author": "me",
+        "acquired_by.comments": null,
+        "archive_id": "MTCND"
+        ...}
+    }
+    
+    * Add a station from the convenience function
+    
+    >>> station = mth5_obj.add_station('MT001')
+    >>> mth5_obj
+    /:
+    ====================
+        |- Group: Survey
+        ----------------
+            |- Group: Filters
+            -----------------
+                --> Dataset: Summary
+                ......................
+            |- Group: Reports
+            -----------------
+                --> Dataset: Summary
+                ......................
+            |- Group: Standards
+            -------------------
+                --> Dataset: Summary
+                ......................
+            |- Group: Stations
+            ------------------
+                |- Group: MT001
+                ---------------
+                    --> Dataset: Summary
+                    ......................
+                --> Dataset: Summary
+                ......................
+    >>> station
+    /Survey/Stations/MT001:
+    ====================
+        --> Dataset: Summary
+        ......................
+    
+    
+    
+    
     >>> data.schedule_01.ex[0:10] = np.nan
     >>> data.calibration_hx[...] = np.logspace(-4, 4, 20)
 
@@ -314,7 +403,7 @@ class MTH5:
                     "{0} will be overwritten in 'w' mode".format(self.__filename.name)
                 )
                 try:
-                    self.initialize_file()
+                    self._initialize_file()
                 except OSError as error:
                     msg = (
                         "{0}. Need to close any references to {1} first. "
@@ -330,13 +419,13 @@ class MTH5:
                 raise MTH5Error(msg)
         else:
             if mode in ["a", "w", "w-", "x"]:
-                self.initialize_file()
+                self._initialize_file()
             else:
                 msg = "Cannot open new file in mode {0} ".format(mode)
                 self.logger.error(msg)
                 raise MTH5Error(msg)
 
-    def initialize_file(self):
+    def _initialize_file(self):
         """
         Initialize the default groups for the file
 
