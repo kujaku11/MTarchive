@@ -21,7 +21,6 @@ Welcome to MTH5 documentation!
     :maxdepth: 2
     :caption: Packages
 
-    source/modules
     source/mth5
     source/mth5.standards
     source/mth5.utils

@@ -24,7 +24,11 @@ The steps can be:
        
 Created on Thu Jun 11 12:51:18 2020
 
-@author: jpeacock
+:copyright:
+    Jared Peacock (jpeacock@usgs.gov)
+    
+:license: 
+    MIT
 """
 # =============================================================================
 # Imports

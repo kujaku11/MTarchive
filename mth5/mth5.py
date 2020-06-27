@@ -113,53 +113,6 @@ class MTH5:
     :type data_level: integer, defaults to 1                
 
     
-    :Convenience Property Attributes:
-    
-    ======================= ===================================================
-    Attribute               Description
-    ======================= ===================================================
-    dataset_options         Describes the compression and storage options for 
-                            datasets.
-    filters_group           :class:`mth5.group.FilterGroup` object representing
-                            the HDF5 group /Survey/Filters
-    standards_group         :class:`mth5.group.StandardsGroup` object 
-                            representing the HDF5 group /Survey/Standards.  
-                            Defines the metadata standards used for this file
-                            that is summarized in summary_table.
-    stations_group          :class:`mth5.group.MasterStationrGroup` object
-                            representing the HDF5 group /Survey/Stations. 
-                            `stations_group` has the ability to add/remove/get
-                            stations, and has a `summary_table` that summarizes
-                            all stations.
-    station_list            list of all station in the file.
-    survey_group            :class:`mth5.group.SurveyGroup` object representing
-                            the HDF5 group /Survey is  the root group.  Does
-                            not have any realy power currently.  
-    ======================= ===================================================
-
-    .. seealso:: :class:`mth5.groups`
-    
-    :Methods:
-        
-    ============================ ==============================================
-    Method                       Description
-    ============================ ==============================================
-    open_mth5                    load in a MTH5 file
-    close_mth5                   flushes any changes and closes MTH5 file
-    h5_is_write                  check if MTH5 file is open and writeable
-    from_reference               open an group or dataset from a given HDF5 
-                                 reference
-    add_station                  add a station to /Survey/Stations
-    get_station                  get an existing station from /Survey/Stations
-    remove_station               remove an existing station from /Survey/Stations
-    add_run                      add a run to an existing station
-    get_run                      get an existing run from an existing station
-    remove_run                   remove an existing run from existing station 
-    add_channel                  add a channel to an existing run
-    get_channel                  get a channel from an existing run
-    remove_channel               remove a channel from an existing run
-    ============================ ==============================================
-
     :Usage:
 
     * Open a new file and show initialized file
@@ -243,10 +196,7 @@ class MTH5:
     ====================
         --> Dataset: Summary
         ......................
-    
-    
-    
-    
+
     >>> data.schedule_01.ex[0:10] = np.nan
     >>> data.calibration_hx[...] = np.logspace(-4, 4, 20)
 
@@ -257,7 +207,8 @@ class MTH5:
                  size.  Otherwise you need to delete the existing data and
                  make a new dataset.
 
-    .. seealso:: https://www.hdfgroup.org/ and h5py()
+    .. seealso:: https://www.hdfgroup.org/ and https://www.h5py.org/
+    
     """
 
     def __init__(self, filename=None, compression='gzip', compression_opts=3,
@@ -303,6 +254,7 @@ class MTH5:
 
     @property
     def dataset_options(self):
+        """ summary of dataset options"""
         return {
             "compression": self.__compression,
             "compression_opts": self.__compression_opts,

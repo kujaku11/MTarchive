@@ -64,4 +64,52 @@ units                Units of the channel data
 hdf5_reference       HDF5 internal reference
 ==================== ==================================================
 
+Metadata
+^^^^^^^^^^^^^^^
+
+Metadata is accessed through the `metadata` property, which is a :class:`mth5.metadata.Run` object.
+
+.. code-block:: python
+
+	>>> type(new_run)
+	mth5.metadata.Run
+	>>> new_run.metadata
+	{
+		"run": {
+			"acquired_by.author": "BB",
+			"acquired_by.comments": "it's cold in florida",
+			"channels_recorded_auxiliary": null,
+			"channels_recorded_electric": null,
+			"channels_recorded_magnetic": null,
+			"comments": null,
+			"data_logger.firmware.author": "Barry Narod",
+			"data_logger.firmware.name": null,
+			"data_logger.firmware.version": null,
+			"data_logger.id": "1305-1",
+			"data_logger.manufacturer": "Barry Narod",
+			"data_logger.model": "NIMS",
+			"data_logger.power_source.comments": "voltage measurements not recorded",
+			"data_logger.power_source.id": null,
+			"data_logger.power_source.type": "battery",
+			"data_logger.power_source.voltage.end": null,
+			"data_logger.power_source.voltage.start": null,
+			"data_logger.timing_system.comments": null,
+			"data_logger.timing_system.drift": 0.0,
+			"data_logger.timing_system.type": "GPS",
+			"data_logger.timing_system.uncertainty": 1.0,
+			"data_logger.type": null,
+			"data_type": "BB, LP",
+			"hdf5_reference": "<HDF5 object reference>",
+			"id": "MT003a",
+			"metadata_by.author": "Anna Kelbert; Paul Bedrosian",
+			"metadata_by.comments": "Paul Bedrosian: Ey, electrode dug up",
+			"mth5_type": "Run",
+			"provenance.comments": null,
+			"provenance.log": null,
+			"sample_rate": 8.0,
+			"time_period.end": "2015-01-19T14:54:54+00:00",
+			"time_period.start": "2015-01-08T19:49:15+00:00"
+		}
+	}
+
 .. seealso:: :class:`mth5.groups.RunGroup` and :class:`mth5.metadata.Run` for more information.

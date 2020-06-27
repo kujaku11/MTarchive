@@ -5,7 +5,11 @@ Containers to hold the various groups Station, channel, Channel
 
 Created on Fri May 29 15:09:48 2020
 
-@author: jpeacock
+:copyright:
+    Jared Peacock (jpeacock@usgs.gov)
+    
+:license: 
+    MIT
 """
 # =============================================================================
 # Imports

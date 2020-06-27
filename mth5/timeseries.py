@@ -3,7 +3,11 @@
 .. module:: timeseries
    :synopsis: Deal with MT time series
 
-.. moduleauthor:: Jared Peacock <jpeacock@usgs.gov>
+:copyright:
+    Jared Peacock (jpeacock@usgs.gov)
+    
+:license: 
+    MIT
 """
 
 # ==============================================================================

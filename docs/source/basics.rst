@@ -100,6 +100,10 @@ Metadata can be input either manually by setting the appropriate attribute::
 >>> existing_station = mth5_obj.get_station('MT001')
 >>> existing_station.metadata.archive_id = 'MT010'
 
+.. hint:: Currently, if you change any `metadata` attribute you will need to mannual update the attribute in the HDF5 group: :: 
+
+	>>> existing_station.write_metadata() 
+
 Dictionary Input/Output
 """""""""""""""""""""""""
 
