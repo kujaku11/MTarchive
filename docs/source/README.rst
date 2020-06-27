@@ -3,7 +3,7 @@
    :align: center
 
 
-The goal of 8*MTH5** is to develop a standard format and tools for archiving 
+The goal of **MTH5** is to develop a standard format and tools for archiving 
 magnetotelluric (MT) time series data.
 
 The preferred format is HDF5 and has been adopted to conform to MT data,
@@ -17,8 +17,8 @@ group <https://www.iris.edu/hq/about_iris/governance/mt_soft>`__ and
 documented in `MT Metadata
 Standards <https://github.com/kujaku11/MTarchive/blob/tables/docs/mt_metadata_guide.pdf>`__.
 
-**Note: This is a work in progress. Feel free to comment or send me a
-message at jpeacock@usgs.gov on the data format.**
+.. note:: This is a work in progress. Feel free to comment or send me a
+message at jpeacock@usgs.gov on the data format.
 
 MTH5 Format
 -----------

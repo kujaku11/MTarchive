@@ -15,6 +15,7 @@ Welcome to MTH5 documentation!
 	source/README
 	source/basics
 	source/stations
+	source/runs
 
 .. toctree::
     :maxdepth: 2

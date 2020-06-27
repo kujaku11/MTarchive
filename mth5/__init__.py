@@ -1,11 +1,5 @@
 # package file
 """
-
-Submodules
-===============
-
-	.. autosummary::
-    :toctree: _autosummary
 	
 """
 
