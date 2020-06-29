@@ -15,16 +15,21 @@ Created on Fri May 29 15:09:48 2020
 # Imports
 # =============================================================================
 import inspect
-import numpy as np
-import weakref
 import logging
+import weakref
+
 import h5py
+import numpy as np
+import pandas as pd
+import xarray as xr
+
 
 from mth5 import metadata
 from mth5.standards import schema
 from mth5.utils.helpers import to_numpy_type, inherit_doc_string
 from mth5.helpers import get_tree
 from mth5.utils.exceptions import MTH5TableError, MTH5Error
+from mth5.utils.mttime import MTime
 
 # make a dictionary of available metadata classes
 meta_classes = dict(inspect.getmembers(metadata, inspect.isclass))
@@ -1526,13 +1531,16 @@ class RunGroup(BaseGroup):
         try:
             ch_dataset = self.hdf5_group[channel_name]
             if ch_dataset.attrs["mth5_type"].lower() in ["electric"]:
-                return ElectricDataset(ch_dataset)
+                channel = ElectricDataset(ch_dataset)
             elif ch_dataset.attrs["mth5_type"].lower() in ["magnetic"]:
-                return MagneticDataset(ch_dataset)
+                channel = MagneticDataset(ch_dataset)
             elif ch_dataset.attrs["mth5_type"].lower() in ["auxiliary"]:
-                return AuxiliaryDataset(ch_dataset)
+                channel = AuxiliaryDataset(ch_dataset)
             else:
-                return ChannelDataset(ch_dataset)
+                channel = ChannelDataset(ch_dataset)
+            
+            channel.read_metadata()
+            return channel
 
         except KeyError:
             msg = (
@@ -1587,7 +1595,7 @@ class RunGroup(BaseGroup):
             raise MTH5Error(msg)
 
 
-class ChannelDataset:
+class ChannelDataset():
     """
     Holds a channel dataset.  This is a simple container for the data to make
     sure that the user has the flexibility to turn the channel into an object
@@ -1788,9 +1796,14 @@ class ChannelDataset:
             ),
         )
 
-    def time_slice(self, start_time, end_time):
+    def time_slice(self, start_time, end_time, return_type='xarray'):
         """
-        Get a time slice from the channel
+        Get a time slice from the channel and return the appropriate type
+        
+            * numpy array with metadata
+            * pandas.Dataframe with metadata
+            * xarray.DataFrame with metadata, 'default'
+            * dask.DataFrame with metadata
 
 
         :param start_time: DESCRIPTION
@@ -1801,10 +1814,61 @@ class ChannelDataset:
         :rtype: TYPE
 
         """
+        if not isinstance(start_time, MTime):
+            start_time = MTime(start_time)
+        if not isinstance(end_time, MTime):
+            end_time = MTime(end_time)
+            
+        
+        start_index = self._get_index_from_time(start_time)
+        end_index = self._get_index_from_time(end_time)
+        
+        dt_freq = "{0:.0f}N".format(1.0e9 / (self.metadata.sample_rate))
 
-        pass
+        dt_index = pd.date_range(
+            start=start_time.iso_str.split("+", 1)[0], 
+            end=end_time.iso_str.split("+", 1)[0],
+            freq=dt_freq,
+            closed=None,
+        )
+        
+        data = None
+        metadata = None
+        if return_type == 'xarray':
+            # need the +1 to be inclusive of the last point
+            data = xr.DataArray(self.hdf5_dataset[start_index:end_index + 1],
+                                coords=[('time', dt_index)])
+            data.attrs.update(self.metadata.to_dict()[self.metadata._class_name])
+            data.attrs['time_period.start'] = start_time.iso_str
+            data.attrs['time_period.end'] = end_time.iso_str
+            
+        elif return_type == 'pandas':
+            data = pd.DataFrame({'data': self.hdf5_dataset[start_index:end_index + 1]},
+                                index=dt_index)
+            data.attrs.update(self.metadata.to_dict()[self.metadata._class_name])
+            data.attrs['time_period.start'] = start_time.iso_str
+            data.attrs['time_period.end'] = end_time.iso_str
+            
+        return data, metadata
+    
+    def _get_index_from_time(self, given_time):
+        """
+        get the appropriate index for a given time.  
+        
+        :param given_time: DESCRIPTION
+        :type given_time: TYPE
+        :return: DESCRIPTION
+        :rtype: TYPE
 
+        """
 
+        if not isinstance(given_time, MTime):
+            given_time = MTime(given_time)
+            
+        index = (given_time - self.metadata.time_period.start) * self.metadata.sample_rate
+
+        return int(round(index))
+    
 @inherit_doc_string
 class ElectricDataset(ChannelDataset):
     def __init__(self, group, **kwargs):

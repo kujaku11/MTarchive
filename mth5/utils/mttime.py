@@ -228,9 +228,7 @@ class MTime:
             self.logger.error(msg)
             raise MTTimeError(msg)
 
-        return other_seconds - self.epoch_seconds
-
-        return self.time_difference(other)
+        return self.epoch_seconds - other_seconds
 
     @property
     def iso_str(self):
