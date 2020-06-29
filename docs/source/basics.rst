@@ -1,5 +1,9 @@
+
+
 Basics
 ----------
+
+.. contents::  :local:
 
 **MTH5** is written to make read/writing an *.mth5* file easier.
 
@@ -18,7 +22,7 @@ Each group also has a summary table to make it easier to search and access diffe
 
 Opening and Closing Files
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-	
+
 To open a new *.mth5* file::
 
 >>> from mth5 import mth5
@@ -40,8 +44,9 @@ To close a file::
 	2020-06-26T15:01:05 - mth5.mth5.MTH5.close_mth5 - INFO - Flushed and 
 	closed example_02.mth5
 	
-.. note:: Once a MTH5 file is closed any data contained within cannot be accessed.  All groups are weakly referenced, therefore once the file closes the group can no longer access the HDF5 group and you will get a message like
-	>>> 2020-06-26T15:21:47 - mth5.groups.Station.__str__ - WARNING - MTH5 file is closed and cannot be accessed. MTH5 file is closed and cannot be accessed.
+.. note:: Once a MTH5 file is closed any data contained within cannot be accessed.  All groups are weakly referenced, therefore once the file closes the group can no longer access the HDF5 group and you will get a similar message as below.  This is to remove any lingering references to the HDF5 file which will be important for parallel computing.
+
+>>> 2020-06-26T15:21:47 - mth5.groups.Station.__str__ - WARNING - MTH5 file is closed and cannot be accessed. MTH5 file is closed and cannot be accessed.
 
 A MTH5 object is represented by the file structure and
 can be displayed at anytime from the command line.
@@ -100,9 +105,44 @@ Metadata can be input either manually by setting the appropriate attribute::
 >>> existing_station = mth5_obj.get_station('MT001')
 >>> existing_station.metadata.archive_id = 'MT010'
 
-.. hint:: Currently, if you change any `metadata` attribute you will need to mannual update the attribute in the HDF5 group: :: 
+.. hint:: Currently, if you change any `metadata` attribute you will need to mannually update the attribute in the HDF5 group: :: 
 
 	>>> existing_station.write_metadata() 
+	
+Metadata Help
+"""""""""""""""""
+
+To get help with any metadata attribute you can use::
+
+.. code-block:: python
+
+	>>> existing_station.metadata.attribute_information('archive_id')
+	archive_id:
+		alias: []
+		description: station name that is archived {a-z;A-Z;0-9}
+		example: MT201
+		options: []
+		required: True
+		style: alpha numeric
+		type: string
+		units: None
+	
+If no argument is given information for all metadata attributes will be printed.
+
+Creating New Attributes
+"""""""""""""""""""""""""
+
+If you want to add new standard attributes to the metadata you can do this through :function:`mth5.metadata.Base.add_base_attribute method`
+
+>>> extra = {'type': str,
+...          'style': 'controlled vocabulary',
+...          'required': False,
+...          'units': 'celsius',
+...          'description': 'local temperature',
+...          'alias': ['temp'],
+...          'options': [ 'ambient', 'air', 'other'],
+...          'example': 'ambient'}
+>>> existing_station.metadata.add_base_attribute('temperature', 'ambient', extra)
 
 Dictionary Input/Output
 """""""""""""""""""""""""

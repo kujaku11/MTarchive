@@ -1,12 +1,22 @@
 Stations
 ------------------------
 
-Stations are the top level for an MT sounding and are contained with in the :class:`mth5.groups.StationGroup` object.
+.. contents:: :local:
 
-There are 2 ways to add/remove/get stations.  
+Stations are the top level for an MT sounding.  There are 2 station containers :class:`mth5.groups.MasterStationsGroup` and :class:`mth5.groups.StationGroup`.  
+
+Master Stations Group
+^^^^^^^^^^^^^^^^^^^^^^^
+
+:class:`mth5.groups.MasterStationsGroup` is an umbrella container that holds a collection of :class:`mth5.groups.StationGroup` objects and contains a summary table that summarizes all stations within the survey.   Use :class:`mth5.groups.MasterStationsGroup` to add/get/remove stations. 
+
+No metadata currently accompanies :class:`mth5.groups.MasterStationsGroup`. There will soon be a list of :class:`mth5.groups.StationGroup` objects for all stations.   
+
+
+There are 2 ways to add/remove/get stations.  Add/get will return a :class:`mth5.groups.StationGroup`.  If adding a station that has the same name as an existing station the :class:`mth5.groups.StationGroup` returned will be of the existing station and no station will be added.  Change the name or update the existing staiton.  If getting a station that does not exist a :class:`mth5.utils.exceptions.MTH5Error` will be raised. 
 
 1) Using `stations_group`
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""""""""""
 
 The first way to add/get/remove stations is from the :attribute:`mth5.MTH5.stations_group` which is a :class:`mth5.groups.MasterStationsGroup` object.
 
@@ -57,7 +67,7 @@ To remove an existing station::
 	['Summary', 'MT001']
 
 2) Using Covnenience methods
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+"""""""""""""""""""""""""""""""
 
 The second way to add/remove/get stations is from the convenience functions in :class:`mth5.MTH5`.  These use the same methods as the :class:`mth5.groups.MasterStationsGroup` but can be accessed directly.
 
@@ -103,9 +113,7 @@ To remove an existing station::
 	>>> mth5_obj.remove_station('MT002')
 	
 Summary Table
-^^^^^^^^^^^^^^^^^^^^^^^
-
-The station summary table in :class:`mth5.groups.MasterStationsGroup` summarizes all stations within the survey.
+""""""""""""""""""
 
 ==================== ==================================================
 Column               Description
@@ -120,6 +128,14 @@ location.longitude   Station longitude (decimal degrees)
 location.elevation   Station elevation (meters)
 hdf5_reference       Internal HDF5 reference
 ==================== ==================================================
+	
+Station Group
+^^^^^^^^^^^^^^^^^
+
+A single station is contained within a :class:`mth5.groups.StationGroup` object, which has the appropriate metadata for a single station.  :class:`mth5.groups.StationGroup` contains all the runs for that station.    
+	
+Summary Table
+""""""""""""""""""
 
 The summary table in :class:`mth5.groups.StationGroup` summarizes all runs for that station.
 
@@ -136,7 +152,7 @@ hdf5_reference       Internal HDF5 reference
 ==================== ==================================================
 
 Metadata
-^^^^^^^^^^^^^^^^^
+"""""""""""""""
 
 Metadata is accessed through the `metadata` property, which is a :class:`mth5.metadata.Station` object. 
 

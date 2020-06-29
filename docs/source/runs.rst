@@ -1,7 +1,9 @@
 Runs
 --------------
 
-A run is a collection of channels that recorded at similar start and end times at the same sample rate for a given station.  A run is contained within a :class:`mth5.groups.RunGroup` object.  A run is the next level down from a station.  A station can contain many runs.
+.. contents:: :local:
+
+A run is a collection of channels that recorded at similar start and end times at the same sample rate for a given station.  A run is contained within a :class:`mth5.groups.RunGroup` object.  A run is the next level down from a station.  
 
 The main way to add/remove/get a run object is through a :class:`mth5.groups.StationGroup` object
 
