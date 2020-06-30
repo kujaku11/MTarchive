@@ -1797,24 +1797,62 @@ class ChannelDataset():
         )
 
     def time_slice(self, start_time, end_time=None, n_samples=None, 
-                   return_type='xarray'):
+                   return_type='mtts'):
         """
         Get a time slice from the channel and return the appropriate type
         
             * numpy array with metadata
             * pandas.Dataframe with metadata
             * xarray.DataFrame with metadata, 'default'
-            * dask.DataFrame with metadata
+            * :class:`mth5.timeseries.MTTS` 'default'
+            * dask.DataFrame with metadata 'not yet'
 
-
-        :param start_time: DESCRIPTION
-        :type start_time: TYPE
-        :param end_time: DESCRIPTION
-        :type end_time: TYPE
-        :return: DESCRIPTION
-        :rtype: TYPE
-
+        :param start_time: start time of the slice
+        :type start_time: string or :class:`mth5.utils.mttime.MTime`
+        :param end_time: end time of the slice
+        :type end_time: string or :class:`mth5.utils.mttime.MTime`, optional
+        :param n_samples: number of samples to read in
+        :type n_samples: integer, optional
+        :return: the correct container for the time series.
+        :rtype: [ :class:`xarray.DataArray` | :class:`pandas.DataFrame` |
+                 :class:`mth5.timeseries.MTTS` | :class:`numpy.ndarray` ]
+        :raises: ValueError if both end_time and n_samples are None or given.
+        
+        :Example with number of samples:
+            
+        >>> ex = mth5_obj.get_channel('FL001', 'FL001a', 'Ex')
+        >>> ex_slice = ex.time_slice("2015-01-08T19:49:15", n_samples=4096)
+        >>> ex_slice
+        <xarray.DataArray (time: 4096)>
+        array([0.93115046, 0.14233688, 0.87917119, ..., 0.26073634, 0.7137319 ,
+               0.88154395])
+        Coordinates:
+          * time     (time) datetime64[ns] 2015-01-08T19:49:15 ... 2015-01-08T19:57:46.875000
+        Attributes:
+            ac.end:                      None
+            ac.start:                    None
+            ...
+            
+        >>> type(ex_slice)
+        mth5.timeseries.MTTS
+        
+        # plot the time series
+        >>> ex_slice.ts.plot()
+        
+        :Example with start and end time:
+            
+        >>> ex_slice = ex.time_slice("2015-01-08T19:49:15",
+        ...                          end_time="2015-01-09T19:49:15")
+        
+        :Raises Example:
+        
+        >>> ex_slice = ex.time_slice("2015-01-08T19:49:15",
+        ...                          end_time="2015-01-09T19:49:15",
+        ...                          n_samples=4096)
+        ValueError: Must input either end_time or n_samples, not both.
+        
         """
+        
         if not isinstance(start_time, MTime):
             start_time = MTime(start_time)
         
