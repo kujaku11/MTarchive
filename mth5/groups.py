@@ -23,13 +23,13 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
-
 from mth5 import metadata
 from mth5.standards import schema
 from mth5.utils.helpers import to_numpy_type, inherit_doc_string
 from mth5.helpers import get_tree
 from mth5.utils.exceptions import MTH5TableError, MTH5Error
 from mth5.utils.mttime import MTime
+from mth5.timeseries import MTTS
 
 # make a dictionary of available metadata classes
 meta_classes = dict(inspect.getmembers(metadata, inspect.isclass))
@@ -1796,7 +1796,8 @@ class ChannelDataset():
             ),
         )
 
-    def time_slice(self, start_time, end_time, return_type='xarray'):
+    def time_slice(self, start_time, end_time=None, n_samples=None, 
+                   return_type='xarray'):
         """
         Get a time slice from the channel and return the appropriate type
         
@@ -1816,40 +1817,86 @@ class ChannelDataset():
         """
         if not isinstance(start_time, MTime):
             start_time = MTime(start_time)
-        if not isinstance(end_time, MTime):
-            end_time = MTime(end_time)
-            
         
-        start_index = self._get_index_from_time(start_time)
-        end_index = self._get_index_from_time(end_time)
+        if end_time is not None:
+            if not isinstance(end_time, MTime):
+                end_time = MTime(end_time)
+        
+        if n_samples is not None:
+            n_samples = int(n_samples)
+            
+        if n_samples is None and end_time is None:
+            msg = ("Must input either end_time or n_samples.")
+            self.logger.error(msg)
+            raise ValueError(msg)
+        
+        if n_samples is not None and end_time is not None:
+            msg = ("Must input either end_time or n_samples, not both.")
+            self.logger.error(msg)
+            raise ValueError(msg)
+        
+        # if end time is given
+        if end_time is not None and n_samples is None:   
+            start_index = self._get_index_from_time(start_time)
+            end_index = self._get_index_from_time(end_time)
+            npts = int(end_index - start_index)
+
+        # if n_samples are given
+        elif end_time is None and n_samples is not None:
+            start_index = self._get_index_from_time(start_time)
+            end_index = start_index + n_samples
+            npts = n_samples
+            
+        if npts > self.hdf5_dataset.size: 
+            msg = ("Requested slice is larger than data.  " +
+                   f"Slice length = {npts}, data length = {self.hdf5_dataset.shape}" +
+                   " Check start and end times.")
+            self.logger.error(msg)
+            raise ValueError(msg)
+        
+        # create a regional reference that can be used, need +1 to be inclusive
+        regional_ref = self.hdf5_dataset.regionref[start_index:end_index + 1]
         
         dt_freq = "{0:.0f}N".format(1.0e9 / (self.metadata.sample_rate))
 
         dt_index = pd.date_range(
             start=start_time.iso_str.split("+", 1)[0], 
-            end=end_time.iso_str.split("+", 1)[0],
+            periods=npts,
             freq=dt_freq,
             closed=None,
         )
         
+        self.logger.info(f'Slicing from {dt_index[0]} (index={start_index}) to' +
+                          f'{dt_index[-1]} (index={end_index})')
+        
+        self.logger.info('Slice start={0}, stop={1}, step={2}'.format(
+            dt_index[0], dt_index[-1], dt_freq))
+        
+        meta_dict = self.metadata.to_dict()[self.metadata._class_name]
+        meta_dict['time_period.start'] = dt_index[0].isoformat()
+        meta_dict['time_period.end'] = dt_index[-1].isoformat()
+        
         data = None
-        metadata = None
         if return_type == 'xarray':
             # need the +1 to be inclusive of the last point
-            data = xr.DataArray(self.hdf5_dataset[start_index:end_index + 1],
+            data = xr.DataArray(self.hdf5_dataset[regional_ref],
                                 coords=[('time', dt_index)])
-            data.attrs.update(self.metadata.to_dict()[self.metadata._class_name])
-            data.attrs['time_period.start'] = start_time.iso_str
-            data.attrs['time_period.end'] = end_time.iso_str
+            data.attrs.update(meta_dict)
             
         elif return_type == 'pandas':
-            data = pd.DataFrame({'data': self.hdf5_dataset[start_index:end_index + 1]},
+            data = pd.DataFrame({'data': self.hdf5_dataset[regional_ref]},
                                 index=dt_index)
-            data.attrs.update(self.metadata.to_dict()[self.metadata._class_name])
-            data.attrs['time_period.start'] = start_time.iso_str
-            data.attrs['time_period.end'] = end_time.iso_str
+            data.attrs.update(meta_dict)
             
-        return data, metadata
+        elif return_type == 'numpy':
+            data = self.hdf5_dataset[regional_ref]
+            
+        elif return_type == 'mtts':
+            data = MTTS(self.metadata.type, 
+                        data=self.hdf5_dataset[regional_ref],
+                        channel_metadata={self.metadata.type: meta_dict})
+              
+        return data
     
     def _get_index_from_time(self, given_time):
         """
