@@ -211,18 +211,26 @@ class MTH5:
     
     """
 
-    def __init__(self, filename=None, compression='gzip', compression_opts=3,
-                 shuffle=True, fletcher32=True, data_level=1):
-        
+    def __init__(
+        self,
+        filename=None,
+        compression="gzip",
+        compression_opts=3,
+        shuffle=True,
+        fletcher32=True,
+        data_level=1,
+    ):
+
         # make these private so the user can accidentally change anything.
         self.__hdf5_obj = None
         self.__compression, self.__compression_opts = helpers.validate_compression(
-            compression, compression_opts)
+            compression, compression_opts
+        )
         self.__shuffle = True
         self.__fletcher32 = True
         self.__data_level = 1
         self.__filename = filename
-        
+
         if self.__filename:
             if not isinstance(self.__filename, Path):
                 self.__filename = Path(self.__filename)
@@ -239,9 +247,8 @@ class MTH5:
             "file.access.time": get_now_utc(),
             "MTH5.version": __version__,
             "MTH5.software": "mth5",
-            "data_level": self.__data_level
+            "data_level": self.__data_level,
         }
-        
 
     def __str__(self):
         if self.h5_is_write():
@@ -323,12 +330,11 @@ class MTH5:
             )
         self.logger.info("File is closed cannot access /Stations")
         return None
-    
+
     @property
     def station_list(self):
         """list of existing stations names"""
         return self.stations_group.group_list
-    
 
     def open_mth5(self, filename, mode="a"):
         """

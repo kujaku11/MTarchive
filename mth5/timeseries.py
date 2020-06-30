@@ -103,7 +103,7 @@ class MTTS(object):
 
     def __init__(self, channel_type, data=None, channel_metadata=None, **kwargs):
         self.logger = logging.getLogger("{0}.{1}".format(__name__, self._class_name))
-        
+
         # get correct metadata class
         if channel_type in ["electric"]:
             self.metadata = metadata.Electric()
@@ -122,12 +122,13 @@ class MTTS(object):
         if channel_metadata is not None:
             if isinstance(channel_metadata, type(self.metadata)):
                 self.metadata.from_dict(channel_metadata.to_dict())
-                self.logger.debug('Loading from metadata class {0}'.format(
-                    type(self.metadata)))
+                self.logger.debug(
+                    "Loading from metadata class {0}".format(type(self.metadata))
+                )
             elif isinstance(channel_metadata, dict):
                 self.metadata.from_dict(channel_metadata)
-                self.logger.debug('Loading from metadata dict')
-                                 
+                self.logger.debug("Loading from metadata dict")
+
             else:
                 msg = "input metadata must be type {0} or dict, not {1}".format(
                     type(self.metadata), type(channel_metadata)

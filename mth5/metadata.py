@@ -1515,7 +1515,7 @@ class Survey(Base):
         self.northwest_corner = Location()
         self.project = None
         self.project_lead = Person()
-        self.release_license = 'CC-0'
+        self.release_license = "CC-0"
         self.southeast_corner = Location()
         self.summary = None
         self.time_period = TimePeriod()

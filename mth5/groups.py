@@ -7,8 +7,8 @@ Created on Fri May 29 15:09:48 2020
 
 :copyright:
     Jared Peacock (jpeacock@usgs.gov)
-    
-:license: 
+
+:license:
     MIT
 """
 # =============================================================================
@@ -207,9 +207,8 @@ class BaseGroup:
         read metadata from the HDF5 group into metadata object
 
         """
-        meta_dict = dict([(key, value) for key, value in self.hdf5_group.attrs.items()])
 
-        self.metadata.from_dict({self._class_name: meta_dict})
+        self.metadata.from_dict({self._class_name: self.hdf5_group.attrs})
 
     def write_metadata(self):
         """
@@ -1424,7 +1423,7 @@ class RunGroup(BaseGroup):
 
 
         """
-        for key, value in kwargs:
+        for key, value in kwargs.items():
             setattr(self, key, value)
 
         if data is not None:
@@ -1538,7 +1537,7 @@ class RunGroup(BaseGroup):
                 channel = AuxiliaryDataset(ch_dataset)
             else:
                 channel = ChannelDataset(ch_dataset)
-            
+
             channel.read_metadata()
             return channel
 
@@ -1595,7 +1594,7 @@ class RunGroup(BaseGroup):
             raise MTH5Error(msg)
 
 
-class ChannelDataset():
+class ChannelDataset:
     """
     Holds a channel dataset.  This is a simple container for the data to make
     sure that the user has the flexibility to turn the channel into an object
@@ -1640,8 +1639,8 @@ class ChannelDataset():
         	sample rate:      4096
 
     :Get a window:
-        
-    
+
+
 
 
     """
@@ -1721,18 +1720,20 @@ class ChannelDataset():
             setattr(self, key, value)
 
     def __str__(self):
-        lines = ["Channel {0}:".format(self._class_name)]
-        lines.append("-" * (len(lines[0]) + 2))
-        info_str = "\t{0:<18}{1}"
-        lines.append(info_str.format("component:", self.metadata.component))
-        lines.append(info_str.format("data type:", self.metadata.type))
-        lines.append(info_str.format("data format:", self.hdf5_dataset.dtype))
-        lines.append(info_str.format("data shape:", self.hdf5_dataset.shape))
-        lines.append(info_str.format("start:", self.metadata.time_period.start))
-        lines.append(info_str.format("end:", self.metadata.time_period.end))
-        lines.append(info_str.format("sample rate:", self.metadata.sample_rate))
-
-        return "\n".join(lines)
+        try:
+            lines = ["Channel {0}:".format(self._class_name)]
+            lines.append("-" * (len(lines[0]) + 2))
+            info_str = "\t{0:<18}{1}"
+            lines.append(info_str.format("component:", self.metadata.component))
+            lines.append(info_str.format("data type:", self.metadata.type))
+            lines.append(info_str.format("data format:", self.hdf5_dataset.dtype))
+            lines.append(info_str.format("data shape:", self.hdf5_dataset.shape))
+            lines.append(info_str.format("start:", self.metadata.time_period.start))
+            lines.append(info_str.format("end:", self.metadata.time_period.end))
+            lines.append(info_str.format("sample rate:", self.metadata.sample_rate))
+            return "\n".join(lines)
+        except ValueError:
+            return "MTH5 file is closed and cannot be accessed."
 
     def __repr__(self):
         return self.__str__()
@@ -1747,11 +1748,8 @@ class ChannelDataset():
         way it can be validated.
 
         """
-        meta_dict = dict(
-            [(key, value) for key, value in self.hdf5_dataset.attrs.items()]
-        )
-
-        self.metadata.from_dict({self._class_name: meta_dict})
+        
+        self.metadata.from_dict({self._class_name: self.hdf5_dataset.attrs})
 
     def write_metadata(self):
         """
@@ -1797,10 +1795,10 @@ class ChannelDataset():
         )
 
     def time_slice(self, start_time, end_time=None, n_samples=None, 
-                   return_type='mtts'):
+                   return_type="mtts"):
         """
         Get a time slice from the channel and return the appropriate type
-        
+
             * numpy array with metadata
             * pandas.Dataframe with metadata
             * xarray.DataFrame with metadata, 'default'
@@ -1817,9 +1815,9 @@ class ChannelDataset():
         :rtype: [ :class:`xarray.DataArray` | :class:`pandas.DataFrame` |
                  :class:`mth5.timeseries.MTTS` | :class:`numpy.ndarray` ]
         :raises: ValueError if both end_time and n_samples are None or given.
-        
+
         :Example with number of samples:
-            
+
         >>> ex = mth5_obj.get_channel('FL001', 'FL001a', 'Ex')
         >>> ex_slice = ex.time_slice("2015-01-08T19:49:15", n_samples=4096)
         >>> ex_slice
@@ -1832,49 +1830,49 @@ class ChannelDataset():
             ac.end:                      None
             ac.start:                    None
             ...
-            
+
         >>> type(ex_slice)
         mth5.timeseries.MTTS
-        
+
         # plot the time series
         >>> ex_slice.ts.plot()
-        
+
         :Example with start and end time:
-            
+
         >>> ex_slice = ex.time_slice("2015-01-08T19:49:15",
         ...                          end_time="2015-01-09T19:49:15")
-        
+
         :Raises Example:
-        
+
         >>> ex_slice = ex.time_slice("2015-01-08T19:49:15",
         ...                          end_time="2015-01-09T19:49:15",
         ...                          n_samples=4096)
         ValueError: Must input either end_time or n_samples, not both.
-        
+
         """
-        
+
         if not isinstance(start_time, MTime):
             start_time = MTime(start_time)
-        
+
         if end_time is not None:
             if not isinstance(end_time, MTime):
                 end_time = MTime(end_time)
-        
+
         if n_samples is not None:
             n_samples = int(n_samples)
-            
+
         if n_samples is None and end_time is None:
-            msg = ("Must input either end_time or n_samples.")
+            msg = "Must input either end_time or n_samples."
             self.logger.error(msg)
             raise ValueError(msg)
-        
+
         if n_samples is not None and end_time is not None:
-            msg = ("Must input either end_time or n_samples, not both.")
+            msg = "Must input either end_time or n_samples, not both."
             self.logger.error(msg)
             raise ValueError(msg)
-        
+
         # if end time is given
-        if end_time is not None and n_samples is None:   
+        if end_time is not None and n_samples is None:
             start_index = self._get_index_from_time(start_time)
             end_index = self._get_index_from_time(end_time)
             npts = int(end_index - start_index)
@@ -1884,62 +1882,72 @@ class ChannelDataset():
             start_index = self._get_index_from_time(start_time)
             end_index = start_index + n_samples
             npts = n_samples
-            
-        if npts > self.hdf5_dataset.size: 
-            msg = ("Requested slice is larger than data.  " +
-                   f"Slice length = {npts}, data length = {self.hdf5_dataset.shape}" +
-                   " Check start and end times.")
+
+        if npts > self.hdf5_dataset.size:
+            msg = (
+                "Requested slice is larger than data.  "
+                + f"Slice length = {npts}, data length = {self.hdf5_dataset.shape}"
+                + " Check start and end times."
+            )
             self.logger.error(msg)
             raise ValueError(msg)
-        
+
         # create a regional reference that can be used, need +1 to be inclusive
-        regional_ref = self.hdf5_dataset.regionref[start_index:end_index + 1]
-        
+        regional_ref = self.hdf5_dataset.regionref[start_index : end_index + 1]
+
         dt_freq = "{0:.0f}N".format(1.0e9 / (self.metadata.sample_rate))
 
         dt_index = pd.date_range(
-            start=start_time.iso_str.split("+", 1)[0], 
+            start=start_time.iso_str.split("+", 1)[0],
             periods=npts,
             freq=dt_freq,
             closed=None,
         )
-        
-        self.logger.info(f'Slicing from {dt_index[0]} (index={start_index}) to' +
-                          f'{dt_index[-1]} (index={end_index})')
-        
-        self.logger.info('Slice start={0}, stop={1}, step={2}'.format(
-            dt_index[0], dt_index[-1], dt_freq))
-        
+
+        self.logger.info(
+            f"Slicing from {dt_index[0]} (index={start_index}) to"
+            + f"{dt_index[-1]} (index={end_index})"
+        )
+
+        self.logger.info(
+            f"Slice start={dt_index[0]}, stop={dt_index[-1]}, "
+            + f"step={dt_freq}, n_samples={npts}"
+        )
+
         meta_dict = self.metadata.to_dict()[self.metadata._class_name]
-        meta_dict['time_period.start'] = dt_index[0].isoformat()
-        meta_dict['time_period.end'] = dt_index[-1].isoformat()
-        
+        meta_dict["time_period.start"] = dt_index[0].isoformat()
+        meta_dict["time_period.end"] = dt_index[-1].isoformat()
+
         data = None
-        if return_type == 'xarray':
+        if return_type == "xarray":
             # need the +1 to be inclusive of the last point
-            data = xr.DataArray(self.hdf5_dataset[regional_ref],
-                                coords=[('time', dt_index)])
+            data = xr.DataArray(
+                self.hdf5_dataset[regional_ref], coords=[("time", dt_index)]
+            )
             data.attrs.update(meta_dict)
-            
-        elif return_type == 'pandas':
-            data = pd.DataFrame({'data': self.hdf5_dataset[regional_ref]},
-                                index=dt_index)
+
+        elif return_type == "pandas":
+            data = pd.DataFrame(
+                {"data": self.hdf5_dataset[regional_ref]}, index=dt_index
+            )
             data.attrs.update(meta_dict)
-            
-        elif return_type == 'numpy':
+
+        elif return_type == "numpy":
             data = self.hdf5_dataset[regional_ref]
-            
-        elif return_type == 'mtts':
-            data = MTTS(self.metadata.type, 
-                        data=self.hdf5_dataset[regional_ref],
-                        channel_metadata={self.metadata.type: meta_dict})
-              
+
+        elif return_type == "mtts":
+            data = MTTS(
+                self.metadata.type,
+                data=self.hdf5_dataset[regional_ref],
+                channel_metadata={self.metadata.type: meta_dict},
+            )
+
         return data
-    
+
     def _get_index_from_time(self, given_time):
         """
-        get the appropriate index for a given time.  
-        
+        get the appropriate index for a given time.
+
         :param given_time: DESCRIPTION
         :type given_time: TYPE
         :return: DESCRIPTION
@@ -1949,11 +1957,14 @@ class ChannelDataset():
 
         if not isinstance(given_time, MTime):
             given_time = MTime(given_time)
-            
-        index = (given_time - self.metadata.time_period.start) * self.metadata.sample_rate
+
+        index = (
+            given_time - self.metadata.time_period.start
+        ) * self.metadata.sample_rate
 
         return int(round(index))
-    
+
+
 @inherit_doc_string
 class ElectricDataset(ChannelDataset):
     def __init__(self, group, **kwargs):
@@ -1981,8 +1992,6 @@ class MTH5Table:
     if a user wants to use something more sophisticated for querying they
     should try using a pandas table.  In this case entries in the table
     are more difficult to change and datatypes need to be kept track of.
-
-
 
     """
 

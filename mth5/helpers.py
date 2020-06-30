@@ -20,11 +20,14 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-COMPRESSION = ['lzf', 'gzip', 'szip', None]
-COMPRESSION_LEVELS = {'lzf': [None], 
-                      'gzip': range(10),
-                      'szip':['ec-8', 'ee-10', 'nn-8', 'nn-10'],
-                      None: [None]}
+COMPRESSION = ["lzf", "gzip", "szip", None]
+COMPRESSION_LEVELS = {
+    "lzf": [None],
+    "gzip": range(10),
+    "szip": ["ec-8", "ee-10", "nn-8", "nn-10"],
+    None: [None],
+}
+
 
 def validate_compression(compression, level):
     """
@@ -45,36 +48,43 @@ def validate_compression(compression, level):
     if not isinstance(compression, (str, type(None))):
         msg = "compression type must be a string, not {0}".format(type(compression))
         logger.error(msg)
-        raise TypeError(msg)  
-        
+        raise TypeError(msg)
+
     if not compression in COMPRESSION:
-        msg = (f"Compression type {compression} not supported. " +
-               f"Supported options are {COMPRESSION}")
+        msg = (
+            f"Compression type {compression} not supported. "
+            + f"Supported options are {COMPRESSION}"
+        )
         logger.error(msg)
         raise ValueError(msg)
-    
-    if compression == 'lzf':
-        level = COMPRESSION_LEVELS['lzf'][0]
-    elif compression ==' gzip':
+
+    if compression == "lzf":
+        level = COMPRESSION_LEVELS["lzf"][0]
+    elif compression == " gzip":
         if not isinstance(level, (int)):
-            msg = ("Level type for gzip must be an int, not {0}.".format(type(level) +
-                   f" Options are {0}".format(COMPRESSION_LEVELS['gzip']))                                                     )
+            msg = "Level type for gzip must be an int, not {0}.".format(
+                type(level) + f" Options are {0}".format(COMPRESSION_LEVELS["gzip"])
+            )
             logger.error(msg)
             raise TypeError(msg)
-    elif compression ==' szip':
+    elif compression == " szip":
         if not isinstance(level, (str)):
-            msg = ("Level type for szip must be an str, not {0}.".format(type(level)) +
-                   " Options are {0}".format(COMPRESSION_LEVELS['szip'])) 
+            msg = "Level type for szip must be an str, not {0}.".format(
+                type(level)
+            ) + " Options are {0}".format(COMPRESSION_LEVELS["szip"])
             logger.error(msg)
             raise TypeError(msg)
-        
+
     if not level in COMPRESSION_LEVELS[compression]:
-        msg = (f"compression level {level} not supported for {compression}." +
-               " Options are {0}".format(COMPRESSION_LEVELS[compression]))
+        msg = (
+            f"compression level {level} not supported for {compression}."
+            + " Options are {0}".format(COMPRESSION_LEVELS[compression])
+        )
         logger.error(msg)
         raise ValueError(msg)
-        
+
     return compression, level
+
 
 def recursive_hdf5_tree(group, lines=[]):
     if isinstance(group, (h5py._hl.group.Group, h5py._hl.files.File)):
