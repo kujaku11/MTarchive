@@ -23,3 +23,7 @@ class MTH5Error(Exception):
 
 class MTH5TableError(Exception):
     pass
+
+
+class MTTSError(Exception):
+    pass

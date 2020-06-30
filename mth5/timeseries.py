@@ -20,6 +20,7 @@ import logging
 
 from mth5 import metadata
 from mth5.utils.mttime import MTime
+from mth5.utils.exceptions import MTTSError
 
 # ==============================================================================
 
@@ -30,73 +31,9 @@ class MTTS(object):
     .. note:: Assumes equally spaced samples from the start time.
     
     
-    MT time series object that will read/write data in different formats
-    including hdf5, txt, miniseed.
+    MT time series object is based on xarray and :class:`mth5.metadata`
 
-    The foundations are based on Pandas Python package.
-
-    The data are store in the variable ts, which is a pandas dataframe with
-    the data in the column 'data'.  This way the data can be indexed as a
-    numpy array:
-
-        >>> MTTS.ts['data'][0:256]
-
-        or
-
-        >>> MTTS.ts.data[0:256]
-
-    Also, the data can be indexed by time (note needs to be exact time):
-
-        >>> MTTS.ts['2017-05-04 12:32:00.0078125':'2017-05-05 12:35:00]
-
-    Input ts as a numpy.ndarray or Pandas DataFrame
-
-    ==================== ==================================================
-    Metadata              Description
-    ==================== ==================================================
-    azimuth              clockwise angle from coordinate system N (deg)
-    calibration_fn       file name for calibration data
-    component            component name [ 'ex' | 'ey' | 'hx' | 'hy' | 'hz']
-    coordinate_system    [ geographic | geomagnetic ]
-    datum                datum of geographic location ex. WGS84
-    declination          geomagnetic declination (deg)
-    dipole_length        length of dipole (m)
-    data_logger          data logger type
-    instrument_id        ID number of instrument for calibration
-    lat                  latitude of station in decimal degrees
-    lon                  longitude of station in decimal degrees
-    n_samples            number of samples in time series
-    sample_rate          sample rate in samples/second
-    start_time_epoch_sec start time in epoch seconds
-    start_time_utc       start time in UTC
-    station              station name
-    units                units of time series
-    ==================== ==================================================
-
-    .. note:: Currently only supports hdf5 and text files
-
-    ======================= ===============================================
-    Method                  Description
-    ======================= ===============================================
-    read_hdf5               read an hdf5 file
-    write_hdf5              write an hdf5 file
-    write_ascii_file        write an ascii file
-    read_ascii_file         read an ascii file
-    ======================= ===============================================
-
-
-    :Example: 
-
-    >>> import mtpy.core.ts as ts
-    >>> import numpy as np
-    >>> MTTS = ts.MTTS()
-    >>> MTTS.ts = np.random.randn(1024)
-    >>> MTTS.station = 'test'
-    >>> MTTS.lon = 30.00
-    >>> MTTS.lat = -122.00
-    >>> MTTS.component = 'HX'
-    >>> MTTS.units = 'counts'
-    >>> MTTS.write_hdf5(r"/home/test.h5")
+    
 
 
     """
@@ -502,100 +439,64 @@ class MTTS(object):
             # return new_ts
             return MTTS(self.metadata.type, data=new_ts, metadata=self.metadata)
 
-    def low_pass_filter(self, low_pass_freq=15, cutoff_freq=55):
+# =============================================================================
+# run container
+# =============================================================================
+class RunTS():
+    """
+    holds all run ts in one aligned array
+    
+    components --> {'ex': ex_xarray, 'ey': ey_xarray}
+    
+    """
+    
+    def __int__(self, array_list=None):
+        self.logger = logging.getLogger(f"{__name__}.{self._class_name}")
+        self.metadata = metadata.Run()
+        self._dataset = xr.Dataset()
+        
+        if array_list is not None:
+            self.build_dataset(array_list)
+            
+    @property()
+    def _class_name(self):
+        return self.__class__.__name__
+    
+    def _validate_array_list(self, array_list):
+        """ check to make sure all entries are a :class:`MTTS` object"""
+        
+        if not isinstance(array_list, (tuple, list)):
+            msg = f"array_list must be a list or tuple, not {type(array_list)}"
+    
+    def build_dataset(self, array_list, align_type='outer'):
         """
-        low pass the data
+        
+        :param array_list: list of xarrays
+        :type array_list: TYPE
+        :return: DESCRIPTION
+        :rtype: TYPE
 
-        :param low_pass_freq: low pass corner in Hz
-        :type low_pass_freq: float
-
-        :param cutoff_freq: cut off frequency in Hz
-        :type cutoff_freq: float
-
-        * filters ts.data
         """
-        pass
-        # self.ts = mtfilter.low_pass(self.ts.data,
-        #                             low_pass_freq,
-        #                             cutoff_freq,
-        #                             self.sample_rate)
-
-    # def plot_spectra(self, spectra_type='welch', **kwargs):
-    #     """
-    #     Plot spectra using the spectral type
-
-    #     .. note:: Only spectral type supported is welch
-
-    #     :param spectra_type: [ 'welch' ]
-    #     :type spectral_type: string
-
-    #     :Example: ::
-
-    #         >>> ts_obj = mtts.MTTS()
-    #         >>> ts_obj.read_hdf5(r"/home/MT/mt01.h5")
-    #         >>> ts_obj.plot_spectra()
-
-    #     """
-
-    #     s = Spectra()
-    #     param_dict = {}
-    #     if spectra_type == 'welch':
-    #         param_dict['fs'] = kwargs.pop('sample_rate',
-    #                                                    self.sample_rate)
-    #         param_dict['nperseg'] = kwargs.pop('nperseg', 2**12)
-    #         s.compute_spectra(self.ts.data, spectra_type, **param_dict)
+        
+        # first need to align the time series.
+        array_list = xr.align(*array_list, join=align_type)
+        
+        # input as a dictionary
+        xdict = dict([(x.metadata.component, x.ts) for x in array_list])
+        self._dataset = xr.Dataset(xdict)
+        
+        meta_dict = dict([{x.metadata.component, x.metadata.to_dict()} 
+                          for x in array_list])
+        
+        self._dataset.attrs.update(meta_dict)
+        
+        
+        
+    
+    
+        
+    
+    
 
 
-# ==============================================================================
-# Error classes
-# ==============================================================================
-class MTTSError(Exception):
-    pass
 
-
-# #==============================================================================
-# #  spectra
-# #==============================================================================
-# class Spectra(object):
-#     """
-#     compute spectra of time series
-#     """
-
-#     def __init__(self, **kwargs):
-#         self.spectra_type = 'welch'
-
-#     def compute_spectra(self, data, spectra_type, **kwargs):
-#         """
-#         compute spectra according to input type
-#         """
-
-#         if spectra_type.lower() == 'welch':
-#             self.welch_method(data, **kwargs)
-
-#     def welch_method(self, data, plot=True, **kwargs):
-#         """
-#         Compute the spectra using the Welch method, which is an average
-#         spectra of the data.  Computes short time window of length nperseg and
-#         averages them to reduce noise.
-
-#         Arguments
-#         ------------
-
-#         """
-
-#         f, p = signal.welch(data, **kwargs)
-
-#         if plot:
-#             fig = plt.figure()
-#             ax = fig.add_subplot(1, 1, 1)
-#             ax.loglog(f, p, lw=1.5)
-#             ax.set_xlabel('Frequency (Hz)',
-#                           fontdict={'size':10, 'weight':'bold'})
-#             ax.set_ylabel('Power (dB)',
-#                           fontdict={'size':10, 'weight':'bold'})
-#             ax.axis('tight')
-#             ax.grid(which='both')
-
-#             plt.show()
-
-#         return f, p
