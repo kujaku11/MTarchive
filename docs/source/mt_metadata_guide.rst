@@ -288,7 +288,9 @@ episodes but should be confined to a specific experiment or project. The
 ``Survey`` metadata category describes the general parameters of the
 survey.
 
-| p.275>p.5>>p.2 **Metadata Key** & **Description** & **Example**
+	  +----------------------+----------------------+----------------------+
+      | **Metadata Key**     | **Description**      | **Example**          |
+      +======================+======================+======================+
 
 **acquired_by.author**
 

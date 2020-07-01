@@ -534,12 +534,15 @@ class Base:
             "set {0} to {1} as type {2}".format(name, value, value_dict["type"])
         )
 
-    def to_dict(self, nested=False):
+    def to_dict(self, nested=False, single=False):
         """
         make a dictionary from attributes, makes dictionary from _attr_list.
         
         :param nested: make the returned dictionary nested
         :type nested: [ True | False ] , default is False
+        
+        :param single: return just metadata dictionary -> meta_dict[class_name]
+        :type single: [ True | False ], default is False
         
         """
         meta_dict = {}
@@ -561,6 +564,9 @@ class Base:
                 sorted(meta_dict.items(), key=itemgetter(0))
             )
         }
+        
+        if single:
+            meta_dict = meta_dict[list(meta_dict.keys())[0]]
 
         return meta_dict
 

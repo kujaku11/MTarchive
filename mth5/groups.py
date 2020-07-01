@@ -1765,15 +1765,66 @@ class ChannelDataset:
             
     def to_mtts(self):
         """
-        return a :class:`mth5.timeseries.MTTS` object
+        :return: a Timeseries with the appropriate time index and metadata
+        :rtype: :class:`mth5.timeseries.MTTS`
+    
+        loads from memory (nearly half the size of xarray alone, not sure why)
     
         """
         
         return MTTS(self.metadata.type,
-                    data=self.hdf5_dataset,
+                    data=self.hdf5_dataset[()],
                     channel_metadata=self.metadata)
+    
+    def to_xarray(self):
+        """
+        :return: an xarray DataArray with appropriate metadata and the 
+                 appropriate time index.
+        :rtype: :class:`xarray.DataArray`
         
+        .. note:: that metadta will not be validated if changed in an xarray.
+        
+        loads from memory
+        """
 
+        return xr.DataArray(self.hdf5_dataset[()],
+                            coords=[("time", self.time_index)],
+                            attrs=self.metadata.to_dict(single=True))
+    
+    def to_dataframe(self):
+        """
+        
+        :return: a dataframe where data is stored in the 'data' column and
+                 attributes are stored in the experimental attrs attribute 
+        :rtype: :class:`pandas.DataFrame`
+        
+        .. note:: that metadta will not be validated if changed in an xarray.
+        
+        loads into RAM
+        """
+        
+        df = pd.DataFrame({'data': self.hdf5_dataset[()]},
+                          index=self.time_index)
+        df.attrs.update(self.metadata.to_dict(single=True))
+        
+        return df
+    
+    def to_numpy(self):
+        """
+        :return: a numpy structured array with 2 columns (time, data)
+        """
+        pass
+
+    @property    
+    def time_index(self):
+        dt_freq = "{0:.0f}N".format(1.0e9 / (self.metadata.sample_rate))
+        return pd.date_range(
+            start=self.metadata.time_period._start_dt.iso_no_tz,
+            periods=self.hdf5_dataset.size,
+            freq=dt_freq
+        )
+    
+    
     @property
     def table_entry(self):
         """

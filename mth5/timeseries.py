@@ -133,7 +133,7 @@ class MTTS():
                 + ", ts needs to be a numpy.ndarray, pandas DataFrame, "
                 + "or xarray.DataArray."
             )
-            raise MTTSError()
+            raise MTTSError(msg)
 
     def update_xarray_metadata(self):
         """
@@ -177,7 +177,7 @@ class MTTS():
         if self._check_for_index():
             sr = 1e9 / self._ts.coords.indexes["time"][0].freq.nanos
         else:
-            self.logger.info(
+            self.logger.debug(
                 "Data has not been set yet, " + " sample rate is from metadata"
             )
             sr = self.metadata.sample_rate
@@ -206,7 +206,7 @@ class MTTS():
         if self._check_for_index():
             return MTime(self._ts.coords.indexes["time"][0].isoformat())
         else:
-            self.logger.info(
+            self.logger.debug(
                 "Data not set yet, pulling start time from "
                 + "metadata.time_period.start"
             )
