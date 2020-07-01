@@ -37,9 +37,6 @@ class MTTS(object):
     
     MT time series object is based on xarray and :class:`mth5.metadata`
 
-    
-
-
     """
 
     def __init__(self, channel_type, data=None, channel_metadata=None, **kwargs):
@@ -509,6 +506,24 @@ class RunTS():
     def dataset(self):
         return self._dataset
     
+        
+    @dataset.setter
+    def dataset(self):
+        msg = "Cannot set dataset, use build_dataset instead."
+        self.logger.error(msg)
+        raise AttributeError(msg)
+        
+    @property
+    def start(self):
+        return self.dataset.coords['time'].to_index()[0].isoformat()
+    
+    @property
+    def end(self):
+        return self.dataset.coords['time'].to_index()[-1].isoformat()
+    
+    @property
+    def sample_rate(self):
+        return 1E9/self.dataset.coords['time'].to_index().freq.n
         
         
         
