@@ -13,15 +13,19 @@
 # ==============================================================================
 # Imports
 # ==============================================================================
+import logging
+import inspect
+
 import numpy as np
 import pandas as pd
 import xarray as xr
-import logging
 
 from mth5 import metadata
 from mth5.utils.mttime import MTime
 from mth5.utils.exceptions import MTTSError
 
+# make a dictionary of available metadata classes
+meta_classes = dict(inspect.getmembers(metadata, inspect.isclass))
 # ==============================================================================
 
 # ==============================================================================
@@ -42,19 +46,15 @@ class MTTS(object):
         self.logger = logging.getLogger("{0}.{1}".format(__name__, self._class_name))
 
         # get correct metadata class
-        if channel_type in ["electric"]:
-            self.metadata = metadata.Electric()
-        elif channel_type in ["magnetic"]:
-            self.metadata = metadata.Magnetic()
-        elif channel_type in ["auxiliary"]:
-            self.metadata = metadata.Channel()
-        else:
+        try:
+            self.metadata = meta_classes[channel_type.capitalize()]()
+        except KeyError:
             msg = (
                 "Channel type is undefined, must be [ electric | "
                 + "magnetic | auxiliary ]"
             )
             self.logger.error(msg)
-            raise MTTSError(msg)
+            raise ValueError(msg)
 
         if channel_metadata is not None:
             if isinstance(channel_metadata, type(self.metadata)):
@@ -437,7 +437,9 @@ class MTTS(object):
         else:
             new_ts.attrs.update(self.metadata.to_dict()[self.metadata._class_name])
             # return new_ts
-            return MTTS(self.metadata.type, data=new_ts, metadata=self.metadata)
+            return MTTS(self.metadata.type,
+                             data=new_ts,
+                             metadata=self.metadata)
 
 # =============================================================================
 # run container
@@ -450,7 +452,7 @@ class RunTS():
     
     """
     
-    def __int__(self, array_list=None):
+    def __init__(self, array_list=None):
         self.logger = logging.getLogger(f"{__name__}.{self._class_name}")
         self.metadata = metadata.Run()
         self._dataset = xr.Dataset()
@@ -458,7 +460,7 @@ class RunTS():
         if array_list is not None:
             self.build_dataset(array_list)
             
-    @property()
+    @property
     def _class_name(self):
         return self.__class__.__name__
     
@@ -467,6 +469,21 @@ class RunTS():
         
         if not isinstance(array_list, (tuple, list)):
             msg = f"array_list must be a list or tuple, not {type(array_list)}"
+            self.logger.error(msg)
+            raise TypeError(msg)
+            
+        for index, item in enumerate(array_list):
+            if not isinstance(item, MTTS):
+                msg = f"array entry {index} must be MTTS object not {type(item)}"
+                self.logger.error(msg)
+                raise TypeError(msg)
+                
+        x_array_list = [x.ts for x in array_list]
+        meta_list = dict([(x.metadata.component, 
+                           x.metadata.to_dict()[list(x.metadata.to_dict().keys())[0]]) 
+                          for x in array_list])   
+            
+        return x_array_list, meta_list
     
     def build_dataset(self, array_list, align_type='outer'):
         """
@@ -477,18 +494,21 @@ class RunTS():
         :rtype: TYPE
 
         """
+        x_array_list, meta_dict = self._validate_array_list(array_list)
         
         # first need to align the time series.
-        array_list = xr.align(*array_list, join=align_type)
+        x_array_list = xr.align(*x_array_list, join=align_type)
         
         # input as a dictionary
-        xdict = dict([(x.metadata.component, x.ts) for x in array_list])
+        xdict = dict([(x.component, x) for x in x_array_list])
         self._dataset = xr.Dataset(xdict)
         
-        meta_dict = dict([{x.metadata.component, x.metadata.to_dict()} 
-                          for x in array_list])
-        
         self._dataset.attrs.update(meta_dict)
+        
+    @property
+    def dataset(self):
+        return self._dataset
+    
         
         
         

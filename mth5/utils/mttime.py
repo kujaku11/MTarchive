@@ -186,7 +186,11 @@ class MTime:
         sense to at 2 times together.  
         
         """
-        if not isinstance(other, datetime.timedelta):
+        if isinstance(other, (int, float)):
+            other = datetime.timedelta(seconds=other)
+            self.logger.debug("Assuming other time is in seconds")
+        
+        if not isinstance(other, (datetime.timedelta)):
             msg = (
                 "Adding times does not make sense, must use "
                 + "datetime.timedelta to add time. \n"

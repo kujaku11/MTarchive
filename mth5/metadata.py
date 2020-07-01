@@ -1639,7 +1639,7 @@ class Channel(Base):
         self.units = None
         self.channel_number = None
         self.component = None
-        self.sample_rate = None
+        self.sample_rate = 0.0
         self.measurement_azimuth = 0.0
         self.measurement_tilt = 0.0
         self.data_quality = DataQuality()
@@ -1653,7 +1653,17 @@ class Channel(Base):
         super().__init__(**kwargs)
         self._attr_dict = ATTR_DICT["channel"]
 
-
+# =============================================================================
+# auxiliary channel 
+# =============================================================================
+class Auxiliary(Channel):
+    """
+    auxiliary channel, anything that is not electric or magnetic
+    """
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+    
+    
 # =============================================================================
 # Electric Channel
 # =============================================================================
