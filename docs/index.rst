@@ -16,6 +16,13 @@ Welcome to MTH5 documentation!
 	source/basics
 	source/stations
 	source/runs
+	
+.. toctree::
+	:maxdepth: 1
+	:caption: Metadata Standards
+	
+	source/mt_metadata_guide
+	
 
 .. toctree::
     :maxdepth: 2
