@@ -29,7 +29,7 @@ meta_classes = dict(inspect.getmembers(metadata, inspect.isclass))
 # ==============================================================================
 
 # ==============================================================================
-class MTTS(object):
+class MTTS():
     """
     
     .. note:: Assumes equally spaced samples from the start time.
@@ -505,8 +505,7 @@ class RunTS():
     @property
     def dataset(self):
         return self._dataset
-    
-        
+            
     @dataset.setter
     def dataset(self):
         msg = "Cannot set dataset, use build_dataset instead."

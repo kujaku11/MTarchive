@@ -1762,6 +1762,17 @@ class ChannelDataset:
             value = to_numpy_type(value)
             self.logger.debug("wrote metadata {0} = {1}".format(key, value))
             self.hdf5_dataset.attrs.create(key, value)
+            
+    def to_mtts(self):
+        """
+        return a :class:`mth5.timeseries.MTTS` object
+    
+        """
+        
+        return MTTS(self.metadata.type,
+                    data=self.hdf5_dataset,
+                    channel_metadata=self.metadata)
+        
 
     @property
     def table_entry(self):
@@ -1941,7 +1952,11 @@ class ChannelDataset:
                 data=self.hdf5_dataset[regional_ref],
                 channel_metadata={self.metadata.type: meta_dict},
             )
-
+        else:
+            msg = "return_type not understood, must be [ pandas | numpy | mtts ]"
+            self.logger.error(msg)
+            raise ValueError(msg)
+            
         return data
 
     def _get_index_from_time(self, given_time):
