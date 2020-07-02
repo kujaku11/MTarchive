@@ -1741,7 +1741,34 @@ class ChannelDataset:
     @property
     def _class_name(self):
         return self.__class__.__name__.split("Dataset")[0]
-
+    
+    @property
+    def start(self):
+        return self.metadata.time_period._start_dt
+    
+    @start.setter
+    def start(self, value):
+        """ set start time and validate through metadata validator """
+        self.metadata.time_period.start = value
+        
+    @property
+    def end(self):
+        """ return end time based on the data"""
+        return self.start + self.n_sa
+    
+    @property
+    def sample_rate(self):
+        return self.metadata.sample_rate
+    
+    @sample_rate.setter
+    def sample_rate(self, value):
+        """ set sample rate through metadata validator """
+        self.metadata.sample_rate = value
+    
+    @property
+    def n_samples(self):
+        return self.hdf5_dataset.size
+    
     def read_metadata(self):
         """
         Read metadata from the HDF5 file into the metadata container, that
@@ -1788,7 +1815,8 @@ class ChannelDataset:
         self.hdf5_dataset[...] = new_data_array.shape
         self.logger.debug(f"replacing {self.hdf5_dataset.name}")  
         
-    def extend_dataset(self, new_data_array, start_time, sample_rate, fill=False):
+    def extend_dataset(self, new_data_array, start_time, sample_rate, 
+                       fill=None, max_gap_seconds=1):
         """
         Append data according to how the start time aligns with existing
         data.  If the start time is before existing start time the data is
@@ -1811,8 +1839,76 @@ class ChannelDataset:
         :rtype: TYPE
 
         """
-            
-        pass
+        if sample_rate != self.sample_rate:
+            msg = ("new data must have the same sampling rate as existing data.\n" +
+                   f"\tnew sample rate =      {sample_rate}\n" +
+                   f"\texisting sample rate = {self.sample_rate}")
+            self.logger.error(msg)
+            raise MTH5Error(msg)
+        
+        if not isinstance(start_time, MTime):
+            start_time = MTime(start_time)
+       
+        # get end time will need later    
+        end_time = start_time + (new_data_array.size / sample_rate)
+        
+        # check start time
+        t_diff = self._validate_new_array_time(start_time)
+        npts = abs(t_diff) / sample_rate
+        
+        # prepend data
+        if t_diff < 0: 
+            if  end_time not in self.time_index:
+                gap = abs(end_time - self.start)
+                if gap > 0:
+                    if gap > max_gap_seconds:
+                        msg = (f"Time gap of {gap} seconds " +
+                               f"is more than max_gap_seconds = {max_gap_seconds}." +
+                               " Consider making a new run.")
+                        self.logger.error(msg)
+                        raise MTH5Error(msg)
+                        
+                    if fill is None:
+                        msg = (f"A time gap of {gap} seconds is found " +
+                               "between new and existing data sets. \n" +
+                               f"\tnew end time:        {end_time}\n" +
+                               f"\texisting start time: {self.start}")
+                        self.logger.error(msg)
+                        raise MTH5Error(msg)
+                    
+                    # resize the existing data to make room for new data 
+                    self.hdf5_dataset.resize((int(new_data_array.size + 
+                                             self.hdf5_dataset.size + 
+                                             gap * sample_rate),))
+                    # set new start time
+                    old_slice = self.time_slice(self.start, end_time=self.end)
+                    old_start = self.start.copy()
+                    self.start = start_time
+                    
+                    # fill based on time, refill existing data first
+                    self.hdf5_dataset[self.get_index_from_time(old_start):] = \
+                        old_slice.ts.values
+                    self.hdf5_dataset[0:self.get_index_from_time(end_time)] = \
+                        new_data_array
+                        
+                    if fill == 'mean':
+                        fill_value = np.mean(np.array([new_data_array.mean(),
+                                                       np.mean(self.hdf5_dataset)]))
+                    elif fill == 'median':
+                        fill_value = np.median(np.array([np.median(new_data_array),
+                                                       np.median(self.hdf5_dataset)]))
+                    elif fill == 'nan':
+                        fill_value = np.nan
+                        
+                    else:
+                        msg = f"fill value {0} is not understood"
+                        self.logger.error(msg)
+                        raise MTH5Error(msg)
+                        
+                    self.logger.info(f"filling data gap with {fill_value}")
+                        
+                        
+                    
     
     
     def to_mtts(self):
@@ -1875,7 +1971,7 @@ class ChannelDataset:
                                            self.hdf5_dataset[()]],
                                           names='time,channel_data')
     
-    def from_mtts(self, mtts_obj, how='replace'):
+    def from_mtts(self, mtts_obj, how='replace', fill=None):
         """
         fill data set from a :class:`mth5.timeseries.MTTS` object.
         
@@ -1904,9 +2000,11 @@ class ChannelDataset:
             self.write_metadata()
         
         elif how == 'extend':
-            # check start time
-            t_diff = self._validate_new_array_time(mtts_obj.start)
-            npts = abs(t_diff) * mtts_obj.metadata.sample_rate
+            self.extend_dataset(mtts_obj.ts.values, 
+                                mtts_obj.start,
+                                mtts_obj.sample_rate,
+                                fill=fill)
+            
             
         
         
@@ -1918,8 +2016,10 @@ class ChannelDataset:
         :param start_time: start time of the new array
         :type start_time: string, int or :class:`mth5.utils.MTime`
         :return: time difference in seconds as new start time minus old.
-                 A positive number means new start time is later than old
-                 start time.
+                *  A positive number means new start time is later than old
+                   start time.
+                * A negative number means the new start time is earlier than
+                  the old start time.
         :rtype: float
 
         """
@@ -1927,8 +2027,8 @@ class ChannelDataset:
             start_time = MTime(start_time)
             
         t_diff = 0
-        if start_time != self.metadata.time_period.start:
-            t_diff = start_time - self.metadata.time_period._start_dt
+        if start_time != self.start:
+            t_diff = start_time - self.start
             
         return t_diff
     
@@ -1943,10 +2043,10 @@ class ChannelDataset:
         :rtype: :class:`pandas.DatetimeIndex`
 
         """
-        dt_freq = "{0:.0f}N".format(1.0e9 / (self.metadata.sample_rate))
+        dt_freq = "{0:.0f}N".format(1.0e9 / (self.sample_rate))
         return pd.date_range(
-            start=self.metadata.time_period._start_dt.iso_no_tz,
-            periods=self.hdf5_dataset.size,
+            start=self.start.iso_no_tz,
+            periods=self.n_samples,
             freq=dt_freq
         )
     
@@ -2061,13 +2161,13 @@ class ChannelDataset:
 
         # if end time is given
         if end_time is not None and n_samples is None:
-            start_index = self._get_index_from_time(start_time)
-            end_index = self._get_index_from_time(end_time)
+            start_index = self.get_index_from_time(start_time)
+            end_index = self.get_index_from_time(end_time)
             npts = int(end_index - start_index)
 
         # if n_samples are given
         elif end_time is None and n_samples is not None:
-            start_index = self._get_index_from_time(start_time)
+            start_index = self.get_index_from_time(start_time)
             end_index = start_index + n_samples
             npts = n_samples
 
@@ -2136,7 +2236,7 @@ class ChannelDataset:
             
         return data
 
-    def _get_index_from_time(self, given_time):
+    def get_index_from_time(self, given_time):
         """
         get the appropriate index for a given time.
 

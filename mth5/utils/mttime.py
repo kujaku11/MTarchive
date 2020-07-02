@@ -8,6 +8,7 @@ Created on Wed May 13 19:10:46 2020
 import datetime
 import logging
 import numpy as np
+from copy import deepcopy
 
 from dateutil import parser as dtparser
 from dateutil.tz.tz import tzutc
@@ -353,6 +354,10 @@ class MTime:
 
         """
         self.dt_object = self.validate_tzinfo(datetime.datetime.utcnow())
+        
+    def copy(self):
+        """ make a copy of the time """
+        return deepcopy(self)
 
 
 def get_now_utc():
