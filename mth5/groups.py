@@ -1763,6 +1763,58 @@ class ChannelDataset:
             self.logger.debug("wrote metadata {0} = {1}".format(key, value))
             self.hdf5_dataset.attrs.create(key, value)
             
+    def replace_dataset(self, new_data_array):
+        """
+        replace the entire dataset with a new one, nothing left behind
+        
+        :param new_data_array: new data array shape (npts, )
+        :type new_data_array: :class:`numpy.ndarray`
+
+        """
+        if not isinstance(new_data_array, np.ndarray):
+            try:
+                new_data_array = np.array(new_data_array)
+            except (ValueError, TypeError) as error:
+                msg = f"{error} Input must be a numpy array not {type(new_data_array)}"
+                self.logger.exception(msg)
+                raise TypeError(msg)
+                
+        if new_data_array.shape != self.hdf5_dataset.shape:
+            msg = (f"resizing dataset {self.hdf5_dataset.name} " +
+                    f"from {self.hdf5_dataset.shape} to " +
+                   f"{new_data_array.shape}")
+            self.logger.debug(msg)
+            self.hdf5_dataset.resize(new_data_array.shape)
+        self.hdf5_dataset[...] = new_data_array.shape
+        self.logger.debug(f"replacing {self.hdf5_dataset.name}")  
+        
+    def extend_dataset(self, new_data_array, start_time, sample_rate, fill=False):
+        """
+        Append data according to how the start time aligns with existing
+        data.  If the start time is before existing start time the data is
+        prepended, similarly if the start time is near the end data will be
+        appended.  
+        
+        If the start time is within the existing time range, existing data 
+        will be replace with the new data.
+        
+        If there is a gap between start or end time of the new data with
+        the existing data you can either fill the data with a constant value
+        or an error will be raise depending on the value of fill.
+        :param new_data_array: DESCRIPTION
+        :type new_data_array: TYPE
+        :param start_time: DESCRIPTION
+        :type start_time: TYPE
+        :param sample_rate: DESCRIPTION
+        :type sample_rate: TYPE
+        :return: DESCRIPTION
+        :rtype: TYPE
+
+        """
+            
+        pass
+    
+    
     def to_mtts(self):
         """
         :return: a Timeseries with the appropriate time index and metadata
@@ -1811,12 +1863,86 @@ class ChannelDataset:
     
     def to_numpy(self):
         """
-        :return: a numpy structured array with 2 columns (time, data)
+        :return: a numpy structured array with 2 columns (time, channel_data)
+        :rtype: :class:`numpy.core.records`
+        .. data:: data is a builtin to numpy and cannot be used as a name
+        
+        loads into RAM
+        
         """
-        pass
+        
+        return np.core.records.fromarrays([self.time_index.to_numpy(),
+                                           self.hdf5_dataset[()]],
+                                          names='time,channel_data')
+    
+    def from_mtts(self, mtts_obj, how='replace'):
+        """
+        fill data set from a :class:`mth5.timeseries.MTTS` object.
+        
+        Will check for time alignement, and metadata.
+        
+        :param mtts_obj: DESCRIPTION
+        :type mtts_obj: TYPE
+        :param how: how the new array will be input to the existing dataset
+                    * 'replace' -> replace the entire dataset nothing is 
+                                   left over.
+                    * 'extend' -> add onto the existing dataset on parts that
+                                  do not align
+        :return: DESCRIPTION
+        :rtype: TYPE
+
+        """
+        
+        if not isinstance(mtts_obj, MTTS):
+            msg = f"Input must be a MTTS object not {type(mtts_obj)}"
+            self.logger.error(msg)
+            raise TypeError(msg)
+            
+        if how == 'replace':
+            self.metadata = mtts_obj.metadata
+            self.replace_dataset(mtts_obj.ts.values)
+            self.write_metadata()
+        
+        elif how == 'extend':
+            # check start time
+            t_diff = self._validate_new_array_time(mtts_obj.start)
+            npts = abs(t_diff) * mtts_obj.metadata.sample_rate
+            
+        
+        
+    def _validate_new_array_time(self, start_time):
+        """
+        Make sure the new array has the same start time if not return the 
+        time difference
+        
+        :param start_time: start time of the new array
+        :type start_time: string, int or :class:`mth5.utils.MTime`
+        :return: time difference in seconds as new start time minus old.
+                 A positive number means new start time is later than old
+                 start time.
+        :rtype: float
+
+        """
+        if not isinstance(start_time, MTime):
+            start_time = MTime(start_time)
+            
+        t_diff = 0
+        if start_time != self.metadata.time_period.start:
+            t_diff = start_time - self.metadata.time_period._start_dt
+            
+        return t_diff
+    
+    # def _validate_new_array_size(self, )
+        
 
     @property    
     def time_index(self):
+        """
+        
+        :return: time index given parameters in metadata
+        :rtype: :class:`pandas.DatetimeIndex`
+
+        """
         dt_freq = "{0:.0f}N".format(1.0e9 / (self.metadata.sample_rate))
         return pd.date_range(
             start=self.metadata.time_period._start_dt.iso_no_tz,
