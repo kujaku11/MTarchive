@@ -1952,6 +1952,7 @@ class ChannelDataset:
                     
         # append data
         if t_diff > 0: 
+            old_end = self.end.copy()
             if start_time.iso_no_tz not in self.time_index:
                 gap = abs(self.end - start_time)
                 if gap > 0:
@@ -1975,18 +1976,19 @@ class ChannelDataset:
                                              self.hdf5_dataset.size + 
                                              gap * sample_rate),))
                     
-                    # fill based on time
-                    self.hdf5_dataset[self.get_index_from_time(start_time):] = \
-                        new_data_array
-                        
+                    self.hdf5_dataset[self.get_index_from_time(start_time):] = new_data_array
+                    old_index = self.get_index_from_time(old_end)
                     if fill == 'mean':
-                        fill_value = np.mean(np.array([new_data_array.mean(),
-                                                       np.mean(self.hdf5_dataset)]))
+                        fill_value = np.mean(np.array([new_data_array[0:fw].mean(),
+                                                       np.mean(self.hdf5_dataset[old_index-fw:])]))
                     elif fill == 'median':
-                        fill_value = np.median(np.array([np.median(new_data_array),
-                                                       np.median(self.hdf5_dataset)]))
+                        fill_value = np.median(np.array([np.median(new_data_array[0:fw]),
+                                                       np.median(self.hdf5_dataset[old_index-fw:])]))
                     elif fill == 'nan':
                         fill_value = np.nan
+                        
+                    elif isinstance(fill, (int, float)):
+                        fill_value = fill
                         
                     else:
                         msg = f"fill value {fill} is not understood"
@@ -1994,9 +1996,22 @@ class ChannelDataset:
                         raise MTH5Error(msg)
                         
                     self.logger.info(f"filling data gap with {fill_value}")
-                        
+                    self.hdf5_dataset[self.get_index_from_time(old_end):
+                                      self.get_index_from_time(start_time)] = fill_value    
                     
-    
+            else:
+                self.logger.debug("Appending data with overlaps.")
+                new_size = (self.n_samples + int(abs(t_diff) * sample_rate), )
+                overlap = abs(self.end - start_time)
+                self.logger.warning(f"New data is overlapping by {overlap} s." +
+                                    " Any overlap will be overwritten.")
+                
+                self.logger.debug(f"resizing data set from {self.n_samples} to {new_size}")
+                self.hdf5_dataset.resize(new_size)
+                
+                # put back the existing data, which any overlapping times
+                # will be overwritten
+                self.hdf5_dataset[self.get_index_from_time(start_time):] = new_data_array
     
     def to_mtts(self):
         """
