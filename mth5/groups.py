@@ -1832,15 +1832,59 @@ class ChannelDataset:
         If there is a gap between start or end time of the new data with
         the existing data you can either fill the data with a constant value
         or an error will be raise depending on the value of fill.
-        :param new_data_array: DESCRIPTION
-        :type new_data_array: TYPE
-        :param start_time: DESCRIPTION
-        :type start_time: TYPE
-        :param sample_rate: DESCRIPTION
-        :type sample_rate: TYPE
-        :return: DESCRIPTION
-        :rtype: TYPE
-
+        
+        :param new_data_array: new data array with shape (npts, )
+        :type new_data_array: :class:`numpy.ndarray`
+        :param start_time: start time of the new data array in UTC
+        :type start_time: string or :class:`mth5.utils.mttime.MTime`
+        :param sample_rate: Sample rate of the new data array, must match 
+                            existing sample rate
+        :type sample_rate: float
+        :param fill: If there is a data gap how do you want to fill the gap
+                    * None: will raise an 
+                    :class:`mth5.utils.exceptions.MTH5Error`
+                    * 'mean': will fill with the mean of each data set within
+                              the fill window
+                    * 'median': will fill with the median of each data set 
+                                within the fill window
+                    * value: can be an integer or float to fill the gap
+                    * 'nan': will fill the gap with NaN
+        :type fill: string, None, float, integer
+        :param max_gap_seconds: sets a maximum number of seconds the gap can
+                                be.  Anything over this number will raise 
+                                a :class:`mth5.utils.exceptions.MTH5Error`.
+        :type max_gap_seconds: float or integer
+        :param fill_window: number of points from the end of each data set
+                            to estimate fill value from.
+        :type fill_window: integer
+        
+        :raises: :class:`mth5.utils.excptions.MTH5Error` if sample rate is 
+                 not the same, or fill value is not understood, 
+                 
+        :Append Example:
+            
+        >>> ex = mth5_obj.get_channel('MT001', 'MT001a', 'Ex')
+        >>> ex.n_samples
+        4096
+        >>> ex.end
+        2015-01-08T19:32:09.500000+00:00
+        >>> t = timeseries.MTTS('electric',
+        ...                     data=2*np.cos(4 * np.pi * .05 * \
+        ...                                   np.linspace(0,4096l num=4096) *
+        ...                                   .01),
+        ...                     channel_metadata={'electric':{
+        ...                        'component': 'ex',
+        ...                        'sample_rate': 8, 
+        ...                        'time_period.start':(ex.end+(1)).iso_str}}) 
+        >>> ex.extend_dataset(t.ts, t.start, t.sample_rate, fill='median',
+        ...                   max_gap_seconds=2)
+        2020-07-02T18:02:47 - mth5.groups.Electric.extend_dataset - INFO -
+        filling data gap with 1.0385180759767025
+        >>> ex.n_samples
+        8200
+        >>> ex.end
+        2015-01-08T19:40:42.500000+00:00
+        
         """
         fw = fill_window
         # check input parameters
@@ -1866,7 +1910,8 @@ class ChannelDataset:
         end_time = start_time + (new_data_array.size / sample_rate)
         
         # check start time
-        t_diff = self._validate_new_array_time(start_time)
+        start_t_diff = self._get_diff_new_array_start(start_time)
+        end_t_diff = self._get_diff_new_array_end(end_time)
         
         self.logger.debug(f"Extending data.")
         self.logger.debug(f"Existing start time {self.start}")
@@ -1875,7 +1920,7 @@ class ChannelDataset:
         self.logger.debug(f"New end time        {end_time}")
 
         # prepend data
-        if t_diff < 0: 
+        if start_t_diff < 0: 
             self.logger.info("Prepending: ")
             self.logger.info(f"new start time {start_time} is before existing {self.start}")
             if end_time.iso_no_tz not in self.time_index:
@@ -1934,7 +1979,7 @@ class ChannelDataset:
                                       self.get_index_from_time(old_start)] = fill_value
             else:
                 self.logger.debug("Prepending data with overlaps.")
-                new_size = (self.n_samples + int(abs(t_diff) * sample_rate), )
+                new_size = (self.n_samples + int(abs(start_t_diff) * sample_rate), )
                 overlap = abs(end_time - self.start)
                 self.logger.warning(f"New data is overlapping by {overlap} s." +
                                     " Any overlap will be overwritten.")
@@ -1951,7 +1996,7 @@ class ChannelDataset:
                 self.hdf5_dataset[0: self.get_index_from_time(end_time)] = new_data_array
                     
         # append data
-        if t_diff > 0: 
+        elif start_t_diff > 0: 
             old_end = self.end.copy()
             if start_time.iso_no_tz not in self.time_index:
                 gap = abs(self.end - start_time)
@@ -2000,18 +2045,28 @@ class ChannelDataset:
                                       self.get_index_from_time(start_time)] = fill_value    
                     
             else:
-                self.logger.debug("Appending data with overlaps.")
-                new_size = (self.n_samples + int(abs(t_diff) * sample_rate), )
-                overlap = abs(self.end - start_time)
-                self.logger.warning(f"New data is overlapping by {overlap} s." +
-                                    " Any overlap will be overwritten.")
-                
-                self.logger.debug(f"resizing data set from {self.n_samples} to {new_size}")
-                self.hdf5_dataset.resize(new_size)
-                
-                # put back the existing data, which any overlapping times
-                # will be overwritten
-                self.hdf5_dataset[self.get_index_from_time(start_time):] = new_data_array
+                # if the new data fits within the extisting time span
+                if end_t_diff < 0:
+                    self.logger.debug("New data fits within existing time span" +
+                                      " all data in the window : "
+                                      f"{start_time} -- {end_time} " +
+                                      "will be overwritten.")
+                    self.hdf5_dataset[self.get_index_from_time(start_time):
+                                      self.get_index_from_time(end_time)] = \
+                        new_data_array
+                else:
+                    self.logger.debug("Appending data with overlaps.")
+                    new_size = (self.n_samples + int(abs(start_t_diff) * sample_rate), )
+                    overlap = abs(self.end - start_time)
+                    self.logger.warning(f"New data is overlapping by {overlap} s." +
+                                        " Any overlap will be overwritten.")
+                    
+                    self.logger.debug(f"resizing data set from {self.n_samples} to {new_size}")
+                    self.hdf5_dataset.resize(new_size)
+                    
+                    # put back the existing data, which any overlapping times
+                    # will be overwritten
+                    self.hdf5_dataset[self.get_index_from_time(start_time):] = new_data_array
     
     def to_mtts(self):
         """
@@ -2073,7 +2128,8 @@ class ChannelDataset:
                                            self.hdf5_dataset[()]],
                                           names='time,channel_data')
     
-    def from_mtts(self, mtts_obj, how='replace', fill=None):
+    def from_mtts(self, mtts_obj, how='replace', fill=None, 
+                  max_gap_seconds=1, fill_window=10):
         """
         fill data set from a :class:`mth5.timeseries.MTTS` object.
         
@@ -2084,10 +2140,27 @@ class ChannelDataset:
         :param how: how the new array will be input to the existing dataset
                     * 'replace' -> replace the entire dataset nothing is 
                                    left over.
-                    * 'extend' -> add onto the existing dataset on parts that
-                                  do not align
-        :return: DESCRIPTION
-        :rtype: TYPE
+                    * 'extend' -> add onto the existing dataset, any 
+                                  overlapping values will be rewritten, if 
+                                  there are gaps between data sets those will
+                                  be handled depending on the value of fill.
+         :param fill: If there is a data gap how do you want to fill the gap
+                    * None: will raise an 
+                    :class:`mth5.utils.exceptions.MTH5Error`
+                    * 'mean': will fill with the mean of each data set within
+                              the fill window
+                    * 'median': will fill with the median of each data set 
+                                within the fill window
+                    * value: can be an integer or float to fill the gap
+                    * 'nan': will fill the gap with NaN
+        :type fill: string, None, float, integer
+        :param max_gap_seconds: sets a maximum number of seconds the gap can
+                                be.  Anything over this number will raise 
+                                a :class:`mth5.utils.exceptions.MTH5Error`.
+        :type max_gap_seconds: float or integer
+        :param fill_window: number of points from the end of each data set
+                            to estimate fill value from.
+        :type fill_window: integer
 
         """
         
@@ -2095,7 +2168,7 @@ class ChannelDataset:
             msg = f"Input must be a MTTS object not {type(mtts_obj)}"
             self.logger.error(msg)
             raise TypeError(msg)
-            
+                   
         if how == 'replace':
             self.metadata = mtts_obj.metadata
             self.replace_dataset(mtts_obj.ts.values)
@@ -2107,10 +2180,63 @@ class ChannelDataset:
                                 mtts_obj.sample_rate,
                                 fill=fill)
             
+            # TODO need to check on metadata.
             
+    def from_xarray(self, dataarray, how='replace', fill=None, 
+                    max_gap_seconds=1, fill_window=10):
+        """
+        fill data set from a :class:`xarray.DataArray` object.
         
+        Will check for time alignement, and metadata.
         
-    def _validate_new_array_time(self, start_time):
+        :param mtts_obj: DESCRIPTION
+        :type mtts_obj: TYPE
+        :param how: how the new array will be input to the existing dataset
+                    * 'replace' -> replace the entire dataset nothing is 
+                                   left over.
+                    * 'extend' -> add onto the existing dataset, any 
+                                  overlapping values will be rewritten, if 
+                                  there are gaps between data sets those will
+                                  be handled depending on the value of fill.
+         :param fill: If there is a data gap how do you want to fill the gap
+                    * None: will raise an 
+                    :class:`mth5.utils.exceptions.MTH5Error`
+                    * 'mean': will fill with the mean of each data set within
+                              the fill window
+                    * 'median': will fill with the median of each data set 
+                                within the fill window
+                    * value: can be an integer or float to fill the gap
+                    * 'nan': will fill the gap with NaN
+        :type fill: string, None, float, integer
+        :param max_gap_seconds: sets a maximum number of seconds the gap can
+                                be.  Anything over this number will raise 
+                                a :class:`mth5.utils.exceptions.MTH5Error`.
+        :type max_gap_seconds: float or integer
+        :param fill_window: number of points from the end of each data set
+                            to estimate fill value from.
+        :type fill_window: integer
+
+        """
+        
+        if not isinstance(dataarray, xr.DataArray):
+            msg = f"Input must be a xarray.DataArray object not {type(dataarray)}"
+            self.logger.error(msg)
+            raise TypeError(msg)
+                   
+        if how == 'replace':
+            self.metadata.from_dict({self.metadata._class_name: dataarray.attrs})
+            self.replace_dataset(dataarray.values)
+            self.write_metadata()
+        
+        elif how == 'extend':
+            self.extend_dataset(dataarray.values, 
+                                dataarray.coords.indexes['time'][0].isoformat(),
+                                1e9 / dataarray.coords.indexes["time"][0].freq.nanos,
+                                fill=fill)
+            
+        # TODO need to check on metadata.
+        
+    def _get_diff_new_array_start(self, start_time):
         """
         Make sure the new array has the same start time if not return the 
         time difference
@@ -2134,8 +2260,29 @@ class ChannelDataset:
             
         return t_diff
     
-    # def _validate_new_array_size(self, )
+    def _get_diff_new_array_end(self, end_time):
+        """
+        Make sure the new array has the same end time if not return the 
+        time difference
         
+        :param end_time: end time of the new array
+        :type end_time: string, int or :class:`mth5.utils.MTime`
+        :return: time difference in seconds as new end time minus old.
+                *  A positive number means new end time is later than old
+                   end time.
+                * A negative number means the new end time is earlier than
+                  the old end time.
+        :rtype: float
+
+        """
+        if not isinstance(end_time, MTime):
+            end_time = MTime(end_time)
+            
+        t_diff = 0
+        if end_time != self.end:
+            t_diff = end_time - self.end
+            
+        return t_diff       
 
     @property    
     def time_index(self):

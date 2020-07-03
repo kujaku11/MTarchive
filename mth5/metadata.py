@@ -1354,8 +1354,8 @@ class Filtered(Base):
     """
 
     def __init__(self, **kwargs):
-        self._name = None
-        self._applied = None
+        self._name = [None]
+        self._applied = [None]
         super().__init__()
 
         self._attr_dict = ATTR_DICT["filtered"]
@@ -1395,9 +1395,10 @@ class Filtered(Base):
 
     @applied.setter
     def applied(self, applied):
-        if applied in [None, "none", "None", "NONE", "null", 0, "0"]:
-            self._applied = [False]
-            return
+        if not isinstance(applied, (list, tuple)):
+            if applied in [None, "none", "None", "NONE", "null", 0, "0"]:
+                self._applied = [False]
+                return
 
         if isinstance(applied, str):
             applied_list = [ss.strip().lower() for ss in applied.split(",")]
