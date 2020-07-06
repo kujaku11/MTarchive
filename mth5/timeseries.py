@@ -72,6 +72,7 @@ class MTTS():
 
         self._ts = xr.DataArray([1], coords=[("time", [1])])
         self.update_xarray_metadata()
+        
         if data is not None:
             self.ts = data
 
@@ -242,29 +243,6 @@ class MTTS():
         else:
             self.logger.warning("No data, just updating metadata start")
 
-    ## epoch seconds
-    @property
-    def start_time_utc(self):
-        """start time in UTC given in time format"""
-        return self.start.iso_str
-
-    @start_time_utc.setter
-    def start_time_utc(self):
-        self.logger.warning(
-            "Cannot set `start_time_utc`. " + "Use >>> MTTS.start = new_time"
-        )
-
-    @property
-    def start_time_epoch_sec(self):
-        """start time in epoch seconds"""
-        return self.start.epoch_seconds
-
-    @start_time_epoch_sec.setter
-    def start_time_epoch_sec(self):
-        self.logger.warning(
-            "Cannot set `start_time_epoch_seconds`. " + "Use >>> MTTS.start = new_time"
-        )
-
     @property
     def end(self):
         """MTime object"""
@@ -310,31 +288,6 @@ class MTTS():
         # else:
         #     self.logger.warning("No data, just updating metadata start")
 
-    @property
-    def end_time_epoch_sec(self):
-        """
-        End time in epoch seconds
-        """
-        return self.end.epoch_seconds
-
-    @end_time_epoch_sec.setter
-    def end_time_epoch_sec(self):
-        self.logger.warning(
-            "Cannot set `end_time_epoch_seconds`. " + "Use >>> MTTS.end = new_time"
-        )
-
-    @property
-    def end_time_utc(self):
-        """
-        End time in UTC
-        """
-        return self.end.iso_str
-
-    @end_time_utc.setter
-    def end_time_utc(self):
-        self.logger.warning(
-            "Cannot set `end_time_utc`. " + "Use >>> MTTS.end = new_time"
-        )
 
     def _make_dt_coordinates(self, start_time, sample_rate, n_samples):
         """
