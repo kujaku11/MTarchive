@@ -11,6 +11,7 @@ Created on Mon Dec 10 16:53:51 2018
 import os
 import shutil
 import datetime 
+
 import mth5.mth5 as mth5
 import usgs_archive.usgs_archive as archive
 import usgs_archive.usgs_sb_xml as sb_xml
@@ -20,22 +21,22 @@ import getpass
 # Inputs
 # =============================================================================
 ### path to station data
-station_dir = r"/mnt/hgfs/MTData/Geysers"
+station_dir = r"c:\Users\jpeacock\DOI\Cox, Evan M - Datarelease_troubleshoot_JP"
 
 ### path to survey parameter spread sheet
 ### this can be made by running this code and setting csv_fn to None
 #csv_fn = 
-csv_fn = r"/mnt/hgfs/MTData/Geysers/Archive/survey_summary.csv"
+csv_fn = None #r"/mnt/hgfs/MTData/Geysers/Archive/survey_summary.csv"
 
 ### path to mth5 configuration file
 ### this is a configuration file that has metadata explaining most of the 
 ### common information needed by the user.  See example files
-cfg_fn = r"/mnt/hgfs/MTData/Geysers/gz_mth5.cfg"
+cfg_fn = r"c:\Users\jpeacock\Documents\GitHub\MTarchive\examples\example_mth5_cfg.txt"
 
 ### path to xml configuration file
 ### this is a file that has metadata common to the xml files that go into 
 ### science base, see examples files
-xml_cfg_fn = r"/mnt/hgfs/MTData/Geysers/gz_archive.cfg"
+xml_cfg_fn = r"c:\Users\jpeacock\Documents\GitHub\MTarchive\examples\example_xml_configuration.cfg"
 
 ### path to calibration files
 ### path to the calibrations.  These are assumed to be
@@ -66,7 +67,7 @@ password = None
 summarize = True
 
 ### upload data [ True | False]
-upload_data = True 
+upload_data = False 
 ### type of files to upload in case you want to upload different formats
 upload_files = ['.zip', '.edi', '.png', '.xml', '.mth5']
 ### if upload_data is True need to get the password for the user
@@ -111,13 +112,13 @@ for station in station_list:
         ### capture output to put into a log file
         with archive.Capturing() as output:
             station_st = datetime.datetime.now()
-            ### copy edi and png into archive director
-            if not os.path.isfile(os.path.join(station_save_dir, '{0}.edi'.format(station))):
-                shutil.copy(os.path.join(edi_path, '{0}.edi'.format(station)),
-                            os.path.join(station_save_dir, '{0}.edi'.format(station)))
-            if not os.path.isfile(os.path.join(station_save_dir, '{0}.png'.format(station))):
-                shutil.copy(os.path.join(png_path, '{0}.png'.format(station)),
-                            os.path.join(station_save_dir, '{0}.png'.format(station)))
+            # ### copy edi and png into archive director
+            # if not os.path.isfile(os.path.join(station_save_dir, '{0}.edi'.format(station))):
+            #     shutil.copy(os.path.join(edi_path, '{0}.edi'.format(station)),
+            #                 os.path.join(station_save_dir, '{0}.edi'.format(station)))
+            # if not os.path.isfile(os.path.join(station_save_dir, '{0}.png'.format(station))):
+            #     shutil.copy(os.path.join(png_path, '{0}.png'.format(station)),
+            #                 os.path.join(station_save_dir, '{0}.png'.format(station)))
                 
             ### Make MTH5 File
             m = mth5.MTH5()
@@ -146,24 +147,24 @@ for station in station_list:
                 ### create group for schedule action
                 m.add_schedule(sch_obj)
                 
-            ### add calibrations
-            for hh in ['hx', 'hy', 'hz']:
-                mag_obj = getattr(m.field_notes, 'magnetometer_{0}'.format(hh))
-                if mag_obj.id is not None and mag_obj.id != 0:
-                    cal_fn = os.path.join(calibration_dir, 
-                                          'ant_{0}.csv'.format(mag_obj.id))
-                    cal_hx = mth5.Calibration()
-                    cal_hx.from_csv(cal_fn)
-                    cal_hx.name = hh
-                    cal_hx.instrument_id = mag_obj.id
-                    cal_hx.calibration_person.email = 'zonge@zonge.com'
-                    cal_hx.calibration_person.name = 'Zonge International'
-                    cal_hx.calibration_person.organization = 'Zonge International'
-                    cal_hx.calibration_person.organization_url = 'zonge.com'
-                    cal_hx.calibration_date = '2013-05-04'
-                    cal_hx.units = 'mV/nT'
+            # ### add calibrations
+            # for hh in ['hx', 'hy', 'hz']:
+            #     mag_obj = getattr(m.field_notes, 'magnetometer_{0}'.format(hh))
+            #     if mag_obj.id is not None and mag_obj.id != 0:
+            #         cal_fn = os.path.join(calibration_dir, 
+            #                               'ant_{0}.csv'.format(mag_obj.id))
+            #         cal_hx = mth5.Calibration()
+            #         cal_hx.from_csv(cal_fn)
+            #         cal_hx.name = hh
+            #         cal_hx.instrument_id = mag_obj.id
+            #         cal_hx.calibration_person.email = 'zonge@zonge.com'
+            #         cal_hx.calibration_person.name = 'Zonge International'
+            #         cal_hx.calibration_person.organization = 'Zonge International'
+            #         cal_hx.calibration_person.organization_url = 'zonge.com'
+            #         cal_hx.calibration_date = '2013-05-04'
+            #         cal_hx.units = 'mV/nT'
                     
-                    m.add_calibration(cal_hx)
+            #         m.add_calibration(cal_hx)
                 
             m.close_mth5()
             ####------------------------------------------------------------------

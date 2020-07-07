@@ -1420,7 +1420,7 @@ def get_nm_elev(lat, lon):
 
     """
     nm_url = r"https://nationalmap.gov/epqs/pqs.php?x={0:.5f}&y={1:.5f}&units=Meters&output=xml"
-
+    print(lat, lon)
     # call the url and get the response
     try:
         response = url.request.urlopen(nm_url.format(lon, lat))
@@ -1432,6 +1432,7 @@ def get_nm_elev(lat, lon):
     try:
         info = ET.ElementTree(ET.fromstring(response.read()))
         info = info.getroot()
+        nm_elev = 0.0
         for elev in info.iter('Elevation'):
             nm_elev = float(elev.text)
         return nm_elev
@@ -1512,11 +1513,11 @@ def summarize_station_runs(run_df):
             continue
         if col == 'start':
             value = run_df['start'].min()
-            start_date = datetime.datetime.fromtimestamp(float(value))
+            start_date = datetime.datetime.utcfromtimestamp(float(value))
             station_dict['start_date'] = start_date.isoformat()+' UTC'
         elif col == 'stop':
             value = run_df['stop'].max()
-            stop_date = datetime.datetime.fromtimestamp(float(value))
+            stop_date = datetime.datetime.utcfromtimestamp(float(value))
             station_dict['stop_date'] = stop_date.isoformat()+' UTC'
         else:
             try:
