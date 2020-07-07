@@ -706,6 +706,28 @@ class Schedule(object):
                             'n_samples',
                             'n_channels',
                             'sampling_rate']
+        
+        self.meta_keys = ['station',   
+                          'latitude',
+                          'longitude',
+                          'hx_azimuth',
+                          'hy_azimuth',
+                          'hz_azimuth',
+                          'ex_azimuth',
+                          'ey_azimuth',
+                          'hx_sensor',
+                          'hy_sensor',
+                          'hz_sensor',
+                          'ex_sensor',
+                          'ey_sensor',
+                          'ex_length',
+                          'ey_length',
+                          'ex_num',
+                          'ey_num',
+                          'hx_num',
+                          'hy_num',
+                          'hz_num',
+                          'instrument_id']
 
         #self.ts_df = time_series_dataframe
         self.meta_df = meta_df
@@ -794,7 +816,7 @@ class Schedule(object):
                                      closed='left',
                                      tz='UTC')
         elif n_samples is not None:
-            dt_index = pd.date_range(start=start_time,
+            dt_index = pd.date_range(start=start_time.split('UTC')[0],
                                      periods=n_samples,
                                      freq=dt_freq,
                                      tz='UTC')
@@ -832,6 +854,50 @@ class Schedule(object):
         self.dt_index = ts_dataframe.index
 
         return
+
+    def from_ascii(self, ascii_object):
+        """
+        From an MT ascii object
+        """
+        translator = {'ChnNum': 'num',
+                      'ChnID': 'comp',
+                      'InstrumentID': 'sensor',
+                      'Azimuth': 'azimuth',
+                      'Dipole_Length': 'length'}
+        start = datetime.datetime.strptime(ascii_object.AcqStartTime,
+                                           '%Y-%m-%dT%H:%M:%S %Z').timestamp()
+
+        
+        self.from_dataframe(ascii_object.ts)
+        meta_dict = {}
+        for chn_num, entry in ascii_object.channel_dict.items():
+            comp = entry.pop('ChnID').lower()
+            if 'e' in comp:
+                meta_dict[f"{comp}_length"] = entry.pop('Dipole_Length')
+            else:
+                entry.pop('Dipole_Length')
+            for key, value in entry.items():
+                meta_dict[f"{comp}_{translator[key]}"] = value
+            meta_dict[f"{comp}_nsamples"] = getattr(self, comp).size
+            meta_dict[f"{comp}_ndiff"] = 0
+            meta_dict[f"{comp}_std"] = getattr(self, comp).std()
+            meta_dict[f"{comp}_start"] = start
+        meta_dict['station'] = f"{ascii_object.SurveyID}{ascii_object.SiteID}"
+        meta_dict['latitude'] = ascii_object.SiteLatitude
+        meta_dict['longitude'] = ascii_object.SiteLongitude
+        meta_dict['elev'] = ascii_object.SiteElevation
+        meta_dict['instrument_id'] = entry['InstrumentID']
+        meta_dict['start_date'] = ascii_object.AcqStartTime
+        meta_dict['stop_date'] = ascii_object.AcqStopTime
+        meta_dict['notes'] = None
+        meta_dict['mtft_file'] = False
+        meta_dict['n_chan'] = ascii_object.Nchan
+        meta_dict['n_samples'] = ascii_object.AcqNumSmp
+        meta_dict['collected_by'] = 'USGS'
+        meta_dict['sampling_rate'] = ascii_object.AcqSmpFreq
+         
+        self.meta_df = pd.Series(meta_dict)
+
 
     def from_mth5(self, mth5_obj, name):
         """
@@ -873,6 +939,9 @@ class Schedule(object):
         """
         write metadata to a csv file
         """
+        if self.meta_df is None:
+            self.meta_df = pd.Series(dict([(k, getattr(self, k)) 
+                                           for k in self._attrs_list]))
         csv_fn = self._make_csv_fn(csv_dir)
         self.meta_df.to_csv(csv_fn, header=False)
 
@@ -884,7 +953,7 @@ class Schedule(object):
         """
         if not isinstance(self.meta_df, pd.Series):
             raise ValueError('meta_df is not a Pandas Series, {0}'.format(type(self.meta_df)))
-        csv_fn = '{0}_{1}_{2}_{3}.csv'.format(self.meta_df.station,
+        csv_fn = '{0}_{1}_{2}_{3}.csv'.format(self.name,
                                               self.dt_index[0].strftime('%Y%m%d'),
                                               self.dt_index[0].strftime('%H%M%S'),
                                               int(self.sampling_rate))
