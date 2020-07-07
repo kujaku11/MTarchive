@@ -45,6 +45,9 @@ import usgs_archive.usgs_sb_xml as sb_xml
 # station directory
 station_dir = Path(r"C:\Users\jpeacock\Downloads")
 
+# name of the station, needs to be verbatim what's in the ascii files.
+station = 'test'
+
 # ascii file name
 nims_ascii_fn_list = station_dir.glob("*.asc")
 
@@ -118,6 +121,16 @@ with usgs_archive.Capturing() as output:
     # read in ascii file
     # it reads in all components into a panda data frame with column names the
     # same as the channel names
+    # open an mth5 file
+    mth5_obj = mth5.MTH5()
+    mth5_obj.open_mth5(station_save_dir.joinpath(f'{station}.mth5'))
+    
+    # update the metadata from a cfg file
+    mth5_obj.update_metadata_from_cfg(cfg_fn)
+    
+    # if you have a spread sheet
+    # meta_series = usgs_archive.get_station_info_from_csv(csv_fn, station)
+    
     for nims_ascii_fn in nims_ascii_fn_list:
         asc_obj = usgs_archive.USGSasc()
         asc_obj.read_asc_file(nims_ascii_fn)
@@ -130,19 +143,12 @@ with usgs_archive.Capturing() as output:
         
         # write the run to a csv file
         schedule_obj.write_metadata_csv(station_save_dir)
-         
-        
-        # open an mth5 file
-        mth5_obj = mth5.MTH5()
-        mth5_obj.open_mth5(station_save_dir.joinpath(f'{station}.mth5'))
-        
-        # update the metadata from a cfg file
-        mth5_obj.update_metadata_from_cfg(cfg_fn)
-        
+
         # add schedule to mth5 file
         mth5_obj.add_schedule(schedule_obj)
-        
-        mth5_obj.close_mth5()
+    
+    # close file after all schedules are added.
+    mth5_obj.close_mth5()
     
     ### copy edi and png into archive directory
     if copy_files:
