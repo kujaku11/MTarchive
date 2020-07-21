@@ -7,7 +7,7 @@ MTH5
 MTH5 deals with reading and writing an MTH5 file, which are HDF5 files
 developed for magnetotelluric (MT) data.  The code is based on h5py and
 therefor numpy.  This is the simplest and we are not really dealing with
-large tables of data to warant using pytables.
+large tables of data to warrant using pytables.
 
 Created on Sun Dec  9 20:50:41 2018
 
@@ -221,7 +221,7 @@ class MTH5:
         data_level=1,
     ):
 
-        # make these private so the user can accidentally change anything.
+        # make these private so the user cant accidentally change anything.
         self.__hdf5_obj = None
         self.__compression, self.__compression_opts = helpers.validate_compression(
             compression, compression_opts

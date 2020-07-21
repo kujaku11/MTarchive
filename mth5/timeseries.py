@@ -34,6 +34,13 @@ class MTTS():
     
     .. note:: Assumes equally spaced samples from the start time.
     
+    The time series is stored in an :class:`xarray.Dataset` that is has 
+    coordinates of time and is a 1-D array labeled 'data'
+    
+    The time coordinate is made from the start time, sample rate and 
+    number of samples.  Currently, End time is a derived property and 
+    cannot be set. 
+    
     
     MT time series object is based on xarray and :class:`mth5.metadata`
 
@@ -439,9 +446,18 @@ class RunTS():
         """
         
         :param array_list: list of xarrays
-        :type array_list: TYPE
-        :return: DESCRIPTION
-        :rtype: TYPE
+        :type array_list: list of :class:`mth5.timeseries.MTTS` objects
+        :param align_type: how the different times will be aligned
+            * ’outer’: use the union of object indexes
+            * ’inner’: use the intersection of object indexes
+            * ’left’: use indexes from the first object with each dimension
+            * ’right’: use indexes from the last object with each dimension
+            * ’exact’: instead of aligning, raise ValueError when indexes to
+            be aligned are not equal
+            * ’override’: if indexes are of same size, rewrite indexes to
+            be those of the first object with that dimension. Indexes for
+            the same dimension must have the same size in all objects.
+        :type align_type: string
 
         """
         x_array_list, meta_dict = self._validate_array_list(array_list)

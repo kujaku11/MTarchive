@@ -1592,6 +1592,18 @@ class RunGroup(BaseGroup):
             )
             self.logger.exception(msg)
             raise MTH5Error(msg)
+            
+    def to_runts(self):
+        """
+        create a :class:`mth5.timeseries.RunTS` object from channels of the 
+        run
+        
+        :return: DESCRIPTION
+        :rtype: TYPE
+
+        """
+        
+        pass
 
 
 class ChannelDataset:
@@ -1913,7 +1925,7 @@ class ChannelDataset:
         start_t_diff = self._get_diff_new_array_start(start_time)
         end_t_diff = self._get_diff_new_array_end(end_time)
         
-        self.logger.debug(f"Extending data.")
+        self.logger.debug("Extending data.")
         self.logger.debug(f"Existing start time {self.start}")
         self.logger.debug(f"New start time      {start_time}")
         self.logger.debug(f"Existing end time   {self.end}")
@@ -2338,7 +2350,7 @@ class ChannelDataset:
 
             * numpy array with metadata
             * pandas.Dataframe with metadata
-            * xarray.DataFrame with metadata, 'default'
+            * xarray.DataFrame with metadata
             * :class:`mth5.timeseries.MTTS` 'default'
             * dask.DataFrame with metadata 'not yet'
 
