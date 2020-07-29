@@ -22,7 +22,7 @@ fn_path = Path(__file__).parent
 # =============================================================================
 # 
 # =============================================================================
-mth5.close_open_files()
+mth5.helpers.close_open_files()
 
 class TestMTH5(unittest.TestCase):
     def setUp(self):
@@ -61,7 +61,7 @@ class TestMTH5(unittest.TestCase):
     def test_add_station(self):
         new_station = self.mth5_obj.add_station('MT001')
         self.assertIn('MT001', self.mth5_obj.stations_group.groups_list)
-        self.assertIsInstance(new_station, mth5.m5groups.StationGroup)
+        self.assertIsInstance(new_station, mth5.groups.StationGroup)
         
     def test_remove_station(self):
         self.mth5_obj.add_station('MT001')
@@ -75,7 +75,7 @@ class TestMTH5(unittest.TestCase):
         new_station = self.mth5_obj.add_station('MT001')
         new_run = new_station.add_run('MT001a')
         self.assertIn('MT001a', new_station.groups_list)
-        self.assertIsInstance(new_run, mth5.m5groups.RunGroup)
+        self.assertIsInstance(new_run, mth5.groups.RunGroup)
         
     def test_remove_run(self):
         new_station = self.mth5_obj.add_station('MT001')
@@ -92,7 +92,7 @@ class TestMTH5(unittest.TestCase):
         new_run = new_station.add_run('MT001a')
         new_channel = new_run.add_channel('Ex', 'electric', None)
         self.assertIn('Ex', new_run.groups_list)
-        self.assertIsInstance(new_channel, mth5.m5groups.ElectricDataset)
+        self.assertIsInstance(new_channel, mth5.groups.ElectricDataset)
         
         self.assertIn('Ex', 
                       (new_run.summary_table.array['component']
