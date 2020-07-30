@@ -59,15 +59,15 @@ class BaseGroup:
     `metadata.add_base_attribute` method.
 
     >>> base.metadata.add_base_attribute('new_attribute',
-    >>> ...                              'new_attribute_value',
-    >>> ...                              {'type':str,
-    >>> ...                               'required':True,
-    >>> ...                               'style':'free form',
-    >>> ...                               'description': 'new attribute desc.',
-    >>> ...                               'units':None,
-    >>> ...                               'options':[],
-    >>> ...                               'alias':[],
-    >>> ...                               'example':'new attribute'})
+    ...                                  'new_attribute_value',
+    ...                                  {'type':str,
+    ...                                   'required':True,
+    ...                                   'style':'free form',
+    ...                                   'description': 'new attribute desc.',
+    ...                                   'units':None,
+    ...                                   'options':[],
+    ...                                   'alias':[],
+    ...                                   'example':'new attribute'})
 
     Includes intializing functions that makes a summary table and writes
     metadata.
@@ -1345,14 +1345,14 @@ class RunGroup(BaseGroup):
         Get a run table entry
 
         :return: a properly formatted run table entry
-        :rtype: :class:`numpy.ndarray` with dtype:
-            dtype([('id', 'S20'),
-                   ('start', 'S32'),
-                   ('end', 'S32'),
-                   ('components', 'S100'),
-                   ('measurement_type', 'S12'),
-                   ('sample_rate', np.float),
-                   ('hdf5_reference', h5py.ref_dtype)])
+        :rtype: :class:`numpy.ndarray` with dtype
+        dtype([('id', 'S20'),
+               ('start', 'S32'),
+               ('end', 'S32'),
+               ('components', 'S100'),
+               ('measurement_type', 'S12'),
+               ('sample_rate', np.float),
+               ('hdf5_reference', h5py.ref_dtype)])
 
         """
         return np.array(
@@ -1561,7 +1561,7 @@ class RunGroup(BaseGroup):
         :param station_name: existing station name
         :type station_name: string
 
-        :Example: ::
+        :Example: 
 
         >>> from mth5 import mth5
         >>> mth5_obj = mth5.MTH5()
@@ -1622,7 +1622,6 @@ class ChannelDataset:
                               :class:`mth5.metadata.Auxiliary` ], optional
     :raises MTH5Error: If the dataset is not of the correct type
 
-
     Utilities will be written to create some common objects like:
         * xarray.DataArray
         * pandas.DataFrame
@@ -1634,7 +1633,7 @@ class ChannelDataset:
 
     :Get a channel:
 
-    >> from mth5 import mth5
+    >>> from mth5 import mth5
     >>> mth5_obj = mth5.MTH5()
     >>> mth5_obj.open_mth5(r"/test.mth5", mode='a')
     >>> run = mth5_obj.stations_group.get_station('MT001').get_run('MT001a')
@@ -1642,18 +1641,13 @@ class ChannelDataset:
     >>> channel
     Channel Electric:
     -------------------
-    		component:        Ey
-        	data type:        electric
-        	data format:      float32
-        	data shape:       (4096,)
-        	start:            1980-01-01T00:00:00+00:00
-        	end:              1980-01-01T00:00:01+00:00
-        	sample rate:      4096
-
-    :Get a window:
-
-
-
+  		component:        Ey
+      	data type:        electric
+      	data format:      float32
+      	data shape:       (4096,)
+      	start:            1980-01-01T00:00:00+00:00
+      	end:              1980-01-01T00:00:01+00:00
+      	sample rate:      4096
 
     """
 
@@ -1853,14 +1847,14 @@ class ChannelDataset:
                             existing sample rate
         :type sample_rate: float
         :param fill: If there is a data gap how do you want to fill the gap
-                    * None: will raise an 
-                    :class:`mth5.utils.exceptions.MTH5Error`
-                    * 'mean': will fill with the mean of each data set within
-                              the fill window
-                    * 'median': will fill with the median of each data set 
-                                within the fill window
-                    * value: can be an integer or float to fill the gap
-                    * 'nan': will fill the gap with NaN
+            * None: will raise an 
+            :class:`mth5.utils.exceptions.MTH5Error`
+            * 'mean': will fill with the mean of each data set within
+                      the fill window
+            * 'median': will fill with the median of each data set 
+                        within the fill window
+            * value: can be an integer or float to fill the gap
+            * 'nan': will fill the gap with NaN
         :type fill: string, None, float, integer
         :param max_gap_seconds: sets a maximum number of seconds the gap can
                                 be.  Anything over this number will raise 
@@ -2150,21 +2144,21 @@ class ChannelDataset:
         :param mtts_obj: DESCRIPTION
         :type mtts_obj: TYPE
         :param how: how the new array will be input to the existing dataset
-                    * 'replace' -> replace the entire dataset nothing is 
-                                   left over.
-                    * 'extend' -> add onto the existing dataset, any 
-                                  overlapping values will be rewritten, if 
-                                  there are gaps between data sets those will
-                                  be handled depending on the value of fill.
+            * 'replace' -> replace the entire dataset nothing is 
+                           left over.
+            * 'extend' -> add onto the existing dataset, any 
+                          overlapping values will be rewritten, if 
+                          there are gaps between data sets those will
+                          be handled depending on the value of fill.
          :param fill: If there is a data gap how do you want to fill the gap
-                    * None: will raise an 
-                    :class:`mth5.utils.exceptions.MTH5Error`
-                    * 'mean': will fill with the mean of each data set within
-                              the fill window
-                    * 'median': will fill with the median of each data set 
-                                within the fill window
-                    * value: can be an integer or float to fill the gap
-                    * 'nan': will fill the gap with NaN
+            * None: will raise an 
+            :class:`mth5.utils.exceptions.MTH5Error`
+            * 'mean': will fill with the mean of each data set within
+                      the fill window
+            * 'median': will fill with the median of each data set 
+                        within the fill window
+            * value: can be an integer or float to fill the gap
+            * 'nan': will fill the gap with NaN
         :type fill: string, None, float, integer
         :param max_gap_seconds: sets a maximum number of seconds the gap can
                                 be.  Anything over this number will raise 
@@ -2204,21 +2198,21 @@ class ChannelDataset:
         :param mtts_obj: DESCRIPTION
         :type mtts_obj: TYPE
         :param how: how the new array will be input to the existing dataset
-                    * 'replace' -> replace the entire dataset nothing is 
-                                   left over.
-                    * 'extend' -> add onto the existing dataset, any 
-                                  overlapping values will be rewritten, if 
-                                  there are gaps between data sets those will
-                                  be handled depending on the value of fill.
+            * 'replace' -> replace the entire dataset nothing is 
+                           left over.
+            * 'extend' -> add onto the existing dataset, any 
+                          overlapping values will be rewritten, if 
+                          there are gaps between data sets those will
+                          be handled depending on the value of fill.
          :param fill: If there is a data gap how do you want to fill the gap
-                    * None: will raise an 
-                    :class:`mth5.utils.exceptions.MTH5Error`
-                    * 'mean': will fill with the mean of each data set within
-                              the fill window
-                    * 'median': will fill with the median of each data set 
-                                within the fill window
-                    * value: can be an integer or float to fill the gap
-                    * 'nan': will fill the gap with NaN
+            * None: will raise an 
+            :class:`mth5.utils.exceptions.MTH5Error`
+            * 'mean': will fill with the mean of each data set within
+                      the fill window
+            * 'median': will fill with the median of each data set 
+                        within the fill window
+            * value: can be an integer or float to fill the gap
+            * 'nan': will fill the gap with NaN
         :type fill: string, None, float, integer
         :param max_gap_seconds: sets a maximum number of seconds the gap can
                                 be.  Anything over this number will raise 
@@ -2256,10 +2250,10 @@ class ChannelDataset:
         :param start_time: start time of the new array
         :type start_time: string, int or :class:`mth5.utils.MTime`
         :return: time difference in seconds as new start time minus old.
-                *  A positive number means new start time is later than old
-                   start time.
-                * A negative number means the new start time is earlier than
-                  the old start time.
+            *  A positive number means new start time is later than old
+               start time.
+            * A negative number means the new start time is earlier than
+              the old start time.
         :rtype: float
 
         """
@@ -2280,10 +2274,10 @@ class ChannelDataset:
         :param end_time: end time of the new array
         :type end_time: string, int or :class:`mth5.utils.MTime`
         :return: time difference in seconds as new end time minus old.
-                *  A positive number means new end time is later than old
-                   end time.
-                * A negative number means the new end time is earlier than
-                  the old end time.
+            *  A positive number means new end time is later than old
+               end time.
+            * A negative number means the new end time is earlier than
+              the old end time.
         :rtype: float
 
         """
@@ -2535,7 +2529,6 @@ class MagneticDataset(ChannelDataset):
 @inherit_doc_string
 class AuxiliaryDataset(ChannelDataset):
     def __init__(self, group, **kwargs):
-
         super().__init__(group, **kwargs)
 
 
@@ -2680,13 +2673,13 @@ class MTH5Table:
         :param value: DESCRIPTION
         :type value: TYPE
         :type test: type of test to try
-            * 'eq': equals
-            * 'lt': less than
-            * 'le': less than or equal to
-            * 'gt': greater than
-            * 'ge': greater than or equal to.
-            * 'be': between or equal to
-            * 'bt': between
+        * 'eq': equals
+        * 'lt': less than
+        * 'le': less than or equal to
+        * 'gt': greater than
+        * 'ge': greater than or equal to.
+        * 'be': between or equal to
+        * 'bt': between
 
         If be or bt input value as a list of 2 values
 

@@ -724,44 +724,45 @@ class MTToStationXML:
     Any metadata that does not fit under the StationXML schema will be added
     as extra metadata in the namespace MT.
     
-    MT metadata is mapped into StationXML as:
-        
-        Inventory 
-        ===========
-          |--> Network (MT Survey)
-          -------------- 
-            |--> Station (MT Station)
-            -------------
-              |--> Channel (MT Channel + MT Run)
-              -------------
+    MT metadata is mapped into StationXML
+    
+    >>> # inventory mapping
+    Inventory 
+    ===========
+      |--> Network (MT Survey)
+      -------------- 
+        |--> Station (MT Station)
+        -------------
+          |--> Channel (MT Channel + MT Run)
+          -------------
               
-    :Example: ::
+    :Example:
         
-        >>> from mth5.utils import translator
-        >>> from mth import metadata
-        >>> # survey_dict = metadata for survey 
-        >>> mt2xml = translator.MTToStationXML()
-        >>> mt_survey = metadata.Survey()
-        >>> mt_survey.from_dict(survey_dict)
-        >>> mt2xml.add_network(mt_survey)
+    >>> from mth5.utils import translator
+    >>> from mth import metadata
+    >>> # survey_dict = metadata for survey 
+    >>> mt2xml = translator.MTToStationXML()
+    >>> mt_survey = metadata.Survey()
+    >>> mt_survey.from_dict(survey_dict)
+    >>> mt2xml.add_network(mt_survey)
     
-    :Add a station from an xml file with root <station>: ::
+    :Add a station from an xml file with root <station>:
         
-        >>> from xml.etree import ElementTree as et
-        >>> mt_station = metadata.Station()
-        >>> mt_station.from_xml(et.parse("mt_station_xml_fn.xml").getroot())
-        >>> mt2xml.add_station(mt_station)
+    >>> from xml.etree import ElementTree as et
+    >>> mt_station = metadata.Station()
+    >>> mt_station.from_xml(et.parse("mt_station_xml_fn.xml").getroot())
+    >>> mt2xml.add_station(mt_station)
     
-    :Add a channel from an json files with {channel:{}} and {run:{}} format: ::
+    :Add a channel from an json files with {channel:{}} and {run:{}} format:
 
-        >>> import json
-        >>> mt_electric = metadata.Electric()
-        >>> with open("electric_json_fn.json", 'r') as fid:
-        >>> ... mt_electric.from_json(json.load(fid))
-        >>> mt_run = metadata.Run()
-        >>> with open("run_json_fn.json", 'r') as fid:
-        >>> ... mt_run.from_json(json.load(fid))
-        >>> mt2xml.add_channel(mt_electric, mt_run, mt_station.archive_id)
+    >>> import json
+    >>> mt_electric = metadata.Electric()
+    >>> with open("electric_json_fn.json", 'r') as fid:
+    >>> ... mt_electric.from_json(json.load(fid))
+    >>> mt_run = metadata.Run()
+    >>> with open("run_json_fn.json", 'r') as fid:
+    >>> ... mt_run.from_json(json.load(fid))
+    >>> mt2xml.add_channel(mt_electric, mt_run, mt_station.archive_id)
         
     """
 

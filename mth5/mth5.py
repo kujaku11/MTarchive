@@ -51,13 +51,13 @@ class MTH5:
     
     MTH5 is built with h5py and therefore numpy.  The structure follows the
     different levels of MT data collection:
-        - Survey
-            - Reports
-            - Standards
-            - Filters
-            - Station
-                - Run
-                    - Channel
+    - Survey
+        - Reports
+        - Standards
+        - Filters
+        - Station
+            - Run
+                - Channel
             
     
     All timeseries data are stored as individual channels with the appropriate
@@ -271,7 +271,7 @@ class MTH5:
 
     @property
     def filename(self):
-        """ file name of the hdf5 file"""
+        """ file name of the hdf5 file """
         if self.h5_is_write():
             return Path(self.__hdf5_obj.filename)
         msg = (
@@ -283,7 +283,7 @@ class MTH5:
 
     @property
     def survey_group(self):
-        """ Convenience property for /Survey group"""
+        """ Convenience property for /Survey group """
         if self.h5_is_write():
             return groups.SurveyGroup(
                 self.__hdf5_obj["/Survey"], **self.dataset_options
@@ -293,7 +293,7 @@ class MTH5:
 
     @property
     def reports_group(self):
-        """ Convenience property for /Survey/Reports group"""
+        """ Convenience property for /Survey/Reports group """
         if self.h5_is_write():
             return groups.ReportsGroup(
                 self.__hdf5_obj["/Survey/Reports"], **self.dataset_options
@@ -303,7 +303,7 @@ class MTH5:
 
     @property
     def filters_group(self):
-        """ Convenience property for /Survey/Filters group"""
+        """ Convenience property for /Survey/Filters group """
         if self.h5_is_write():
             return groups.FiltersGroup(
                 self.__hdf5_obj["/Survey/Filters"], **self.dataset_options
