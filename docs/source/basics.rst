@@ -114,18 +114,17 @@ Metadata Help
 
 To get help with any metadata attribute you can use::
 
-.. code-block:: python
 
-	>>> existing_station.metadata.attribute_information('archive_id')
-	archive_id:
-		alias: []
-		description: station name that is archived {a-z;A-Z;0-9}
-		example: MT201
-		options: []
-		required: True
-		style: alpha numeric
-		type: string
-		units: None
+>>> existing_station.metadata.attribute_information('archive_id')
+archive_id:
+	alias: []
+	description: station name that is archived {a-z;A-Z;0-9}
+	example: MT201
+	options: []
+	required: True
+	style: alpha numeric
+	type: string
+	units: None
 	
 If no argument is given information for all metadata attributes will be printed.
 

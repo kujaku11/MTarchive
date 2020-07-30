@@ -1,8 +1,10 @@
 ![MTH5 Logo](https://github.com/kujaku11/MTarchive/blob/tables/docs/source/images/mth5_logo.png)
 
+Documentation can be found at https://mth5.readthedocs.io/en/tables/index.html
+
 # MTarchive
 
-The goal of MTarchive (*will become mth5py in the future*) is to develop a standard format and tools for archiving magnetotelluric (MT) time series data.  
+The goal of MTarchive (*will become mth5 in the future*) is to develop a standard format and tools for archiving magnetotelluric (MT) time series data.  
 
 The preferred format is HDF5 and has been adopted to conform to MT data, something that has been needed in the EM community for some time.  The module mth5 contains reading/writing capabilities and will contain tools for retrieving data in useful ways to work with processing codes.  
 
