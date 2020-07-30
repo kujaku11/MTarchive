@@ -34,7 +34,6 @@ autodoc_default_flags = [
          "show-inheritance",
 ]
 autosummary_generate = True  # Make _autosummary files and include them
-#napoleon_numpy_docstring = True  # Force consistency, leave only Google
 napoleon_use_rtype = True  # More legible
 napoleon_google_docstring = False
 napoleon_use_param = True
