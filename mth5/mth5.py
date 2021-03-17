@@ -28,22 +28,26 @@ import dateutil
 import h5py
 import pandas as pd
 import numpy as np
+
 # =============================================================================
 #  global parameters
 # =============================================================================
-dt_fmt = '%Y-%m-%dT%H:%M:%S.%f %Z'
+dt_fmt = "%Y-%m-%dT%H:%M:%S.%f %Z"
 
-#==============================================================================
+# ==============================================================================
 # Need a dummy utc time zone for the date time format
-#==============================================================================
+# ==============================================================================
 class UTC(datetime.tzinfo):
     """
     An class to hold information about UTC
     """
+
     def utcoffset(self, df):
         return datetime.timedelta(hours=0)
+
     def dst(self, df):
         return datetime.timedelta(0)
+
     def tzname(self, df):
         return "UTC"
 
@@ -56,12 +60,22 @@ class Generic(object):
         * to_json
         * from_json
     """
-    
+
     def __init__(self, **kwargs):
-        
+
         for key, value in kwargs.items():
             setattr(self, key, value)
-            
+
+    def to_dict(self):
+        """
+        return a dictionary
+        """
+        rdict = {}
+        for key, value in self.__dict__.items():
+            rdict[f"{self.__class__.__name__}.{key}"] = value
+
+        return rdict
+
     def to_json(self):
         """
         Write a json string from a given object, taking into account other
@@ -78,10 +92,11 @@ class Generic(object):
     
         """
         from_json(json_str, self)
-            
+
+
 # ==============================================================================
 # Location class, be sure to put locations in decimal degrees, and note datum
-# ==============================================================================       
+# ==============================================================================
 class Location(Generic):
     """
     location details including:
@@ -95,7 +110,7 @@ class Location(Generic):
 
     def __init__(self, **kwargs):
         super(Location, self).__init__()
-        self.datum = 'WGS84'
+        self.datum = "WGS84"
         self.declination = None
         self.declination_epoch = None
 
@@ -103,8 +118,8 @@ class Location(Generic):
         self._latitude = None
         self._longitude = None
 
-        self.elev_units = 'm'
-        self.coordinate_system = 'Geographic North'
+        self.elev_units = "m"
+        self.coordinate_system = "Geographic North"
 
         for key, value in kwargs.items():
             setattr(self, key, value)
@@ -132,7 +147,7 @@ class Location(Generic):
     @elevation.setter
     def elevation(self, elev):
         self._elevation = self._assert_elevation_value(elev)
-            
+
     def _assert_lat_value(self, latitude):
         """
         Make sure the latitude value is in decimal degrees, if not change it.
@@ -141,23 +156,23 @@ class Location(Generic):
         :param latitude: latitude in decimal degrees or other format
         :type latitude: float or string
         """
-        if latitude in [None, 'None']:
+        if latitude in [None, "None"]:
             return None
         try:
             lat_value = float(latitude)
-    
+
         except TypeError:
             return None
-    
+
         except ValueError:
             lat_value = self._convert_position_str2float(latitude)
-    
+
         if abs(lat_value) >= 90:
             print("==> The lat_value =", lat_value)
-            raise ValueError('|Latitude| > 90, unacceptable!')
-    
+            raise ValueError("|Latitude| > 90, unacceptable!")
+
         return lat_value
-    
+
     def _assert_lon_value(self, longitude):
         """
         Make sure the longitude value is in decimal degrees, if not change it.
@@ -166,23 +181,23 @@ class Location(Generic):
         :param latitude: longitude in decimal degrees or other format
         :type latitude: float or string
         """
-        if longitude in [None, 'None']:
+        if longitude in [None, "None"]:
             return None
         try:
             lon_value = float(longitude)
-    
+
         except TypeError:
             return None
-    
+
         except ValueError:
             lon_value = self._convert_position_str2float(longitude)
-    
+
         if abs(lon_value) >= 180:
             print("==> The longitude_value =", lon_value)
-            raise ValueError('|Longitude| > 180, unacceptable!')
-    
+            raise ValueError("|Longitude| > 180, unacceptable!")
+
         return lon_value
-    
+
     def _assert_elevation_value(self, elevation):
         """
         make sure elevation is a floating point number
@@ -190,14 +205,14 @@ class Location(Generic):
         :param elevation: elevation as a float or string that can convert
         :type elevation: float or str
         """
-    
+
         try:
             elev_value = float(elevation)
         except (ValueError, TypeError):
             elev_value = 0.0
-    
+
         return elev_value
-    
+
     def _convert_position_float2str(self, position):
         """
         Convert position float to a string in the format of DD:MM:SS.
@@ -207,33 +222,33 @@ class Location(Generic):
                            
         :returns: latitude or longitude in format of DD:MM:SS.ms
         """
-    
-        assert type(position) is float, 'Given value is not a float'
-    
+
+        assert type(position) is float, "Given value is not a float"
+
         deg = int(position)
         sign = 1
         if deg < 0:
             sign = -1
-    
+
         deg = abs(deg)
-        minutes = (abs(position) - deg) * 60.
+        minutes = (abs(position) - deg) * 60.0
         # need to round seconds to 4 decimal places otherwise machine precision
         # keeps the 60 second roll over and the string is incorrect.
-        sec = np.round((minutes - int(minutes)) * 60., 4)
-        if sec >= 60.:
+        sec = np.round((minutes - int(minutes)) * 60.0, 4)
+        if sec >= 60.0:
             minutes += 1
             sec = 0
-    
+
         if int(minutes) == 60:
             deg += 1
             minutes = 0
-            
-        position_str = '{0}:{1:02.0f}:{2:05.2f}'.format(sign * int(deg),
-                                                        int(minutes),
-                                                        sec)
-    
+
+        position_str = "{0}:{1:02.0f}:{2:05.2f}".format(
+            sign * int(deg), int(minutes), sec
+        )
+
         return position_str
-    
+
     def _convert_position_str2float(self, position_str):
         """
         Convert a position string in the format of DD:MM:SS to decimal degrees
@@ -243,38 +258,43 @@ class Location(Generic):
                            
         :returns: latitude or longitude as a float
         """
-    
-        if position_str in [None, 'None']:
+
+        if position_str in [None, "None"]:
             return None
-        
-        p_list = position_str.split(':')
+
+        p_list = position_str.split(":")
         if len(p_list) != 3:
-            raise ValueError('{0} not correct format, should be DD:MM:SS'.format(position_str))
-    
+            raise ValueError(
+                "{0} not correct format, should be DD:MM:SS".format(position_str)
+            )
+
         deg = float(p_list[0])
         minutes = self._assert_minutes(float(p_list[1]))
         sec = self._assert_seconds(float(p_list[2]))
-    
+
         # get the sign of the position so that when all are added together the
         # position is in the correct place
         sign = 1
         if deg < 0:
             sign = -1
-    
-        position_value = sign * (abs(deg) + minutes / 60. + sec / 3600.)
-    
+
+        position_value = sign * (abs(deg) + minutes / 60.0 + sec / 3600.0)
+
         return position_value
-    
+
     def _assert_minutes(self, minutes):
-        assert 0 <= minutes < 60., \
-            'minutes needs to be <60 and >0, currently {0:.0f}'.format(minutes)
-    
+        assert (
+            0 <= minutes < 60.0
+        ), "minutes needs to be <60 and >0, currently {0:.0f}".format(minutes)
+
         return minutes
 
     def _assert_seconds(self, seconds):
-        assert 0 <= seconds < 60., \
-            'seconds needs to be <60 and >0, currently {0:.3f}'.format(seconds)
+        assert (
+            0 <= seconds < 60.0
+        ), "seconds needs to be <60 and >0, currently {0:.3f}".format(seconds)
         return seconds
+
 
 # ==============================================================================
 # Site details
@@ -314,19 +334,21 @@ class Site(Location):
         self._stop_date = None
         self.id = None
         self.survey = None
-        self._attrs_list = ['acquired_by',
-                            'start_date',
-                            'stop_date',
-                            'id',
-                            'survey',
-                            'latitude',
-                            'longitude',
-                            'elevation',
-                            'datum',
-                            'declination',
-                            'declination_epoch',
-                            'elev_units',
-                            'coordinate_system']
+        self._attrs_list = [
+            "acquired_by",
+            "start_date",
+            "stop_date",
+            "id",
+            "survey",
+            "latitude",
+            "longitude",
+            "elevation",
+            "datum",
+            "declination",
+            "declination_epoch",
+            "elev_units",
+            "coordinate_system",
+        ]
 
         for key, value in kwargs.items():
             setattr(self, key, value)
@@ -357,6 +379,7 @@ class Site(Location):
         if self._stop_date.tzname() is None:
             self._stop_date = self._stop_date.replace(tzinfo=UTC())
 
+
 # ==============================================================================
 # Field Notes
 # ==============================================================================
@@ -383,16 +406,20 @@ class FieldNotes(Generic):
 
     def __init__(self, **kwargs):
         super(FieldNotes, self).__init__()
-        self._electric_channel = {'length':None,
-                                  'azimuth':None,
-                                  'chn_num':None,
-                                  'units':'mV',
-                                  'gain':1,
-                                  'contact_resistance':1}
-        self._magnetic_channel = {'azimuth':None,
-                                  'chn_num':None,
-                                  'units':'mV',
-                                  'gain':1}
+        self._electric_channel = {
+            "length": None,
+            "azimuth": None,
+            "chn_num": None,
+            "units": "mV",
+            "gain": 1,
+            "contact_resistance": 1,
+        }
+        self._magnetic_channel = {
+            "azimuth": None,
+            "chn_num": None,
+            "units": "mV",
+            "gain": 1,
+        }
 
         self.data_quality = DataQuality()
         self.data_logger = Instrument()
@@ -405,6 +432,7 @@ class FieldNotes(Generic):
 
         for key, value in kwargs.items():
             setattr(self, key, value)
+
 
 # ==============================================================================
 # Instrument
@@ -443,7 +471,7 @@ class Instrument(Generic):
         """
 
         try:
-            return np.sqrt((self.x2 - self.x)**2 + (self.y2 - self.y)**2)
+            return np.sqrt((self.x2 - self.x) ** 2 + (self.y2 - self.y) ** 2)
         except AttributeError:
             return 0
 
@@ -484,6 +512,7 @@ class DataQuality(Generic):
         for key, value in kwargs.items():
             setattr(self, key, value)
 
+
 # ==============================================================================
 # Citation
 # ==============================================================================
@@ -520,6 +549,7 @@ class Citation(Generic):
         for key, value in kwargs.items():
             setattr(self, key, value)
 
+
 # ==============================================================================
 # Copyright
 # ==============================================================================
@@ -546,26 +576,31 @@ class Copyright(Generic):
     def __init__(self, **kwargs):
         super(Copyright, self).__init__()
         self.citation = Citation()
-        self.conditions_of_use = ''.join(['All data and metadata for this survey are ',
-                                          'available free of charge and may be copied ',
-                                          'freely, duplicated and further distributed ',
-                                          'provided this data set is cited as the ',
-                                          'reference. While the author(s) strive to ',
-                                          'provide data and metadata of best possible ',
-                                          'quality, neither the author(s) of this data ',
-                                          'set, not IRIS make any claims, promises, or ',
-                                          'guarantees about the accuracy, completeness, ',
-                                          'or adequacy of this information, and expressly ',
-                                          'disclaim liability for errors and omissions in ',
-                                          'the contents of this file. Guidelines about ',
-                                          'the quality or limitations of the data and ',
-                                          'metadata, as obtained from the author(s), are ',
-                                          'included for informational purposes only.'])
+        self.conditions_of_use = "".join(
+            [
+                "All data and metadata for this survey are ",
+                "available free of charge and may be copied ",
+                "freely, duplicated and further distributed ",
+                "provided this data set is cited as the ",
+                "reference. While the author(s) strive to ",
+                "provide data and metadata of best possible ",
+                "quality, neither the author(s) of this data ",
+                "set, not IRIS make any claims, promises, or ",
+                "guarantees about the accuracy, completeness, ",
+                "or adequacy of this information, and expressly ",
+                "disclaim liability for errors and omissions in ",
+                "the contents of this file. Guidelines about ",
+                "the quality or limitations of the data and ",
+                "metadata, as obtained from the author(s), are ",
+                "included for informational purposes only.",
+            ]
+        )
         self.release_status = None
         self.additional_info = None
 
         for key, value in kwargs.items():
             setattr(self, key, value)
+
 
 # ==============================================================================
 # Provenance
@@ -593,13 +628,14 @@ class Provenance(Generic):
 
     def __init__(self, **kwargs):
         super(Provenance, self).__init__()
-        self.creation_time = time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime())
-        self.creating_application = 'MTH5'
+        self.creation_time = time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
+        self.creating_application = "MTH5"
         self.creator = Person()
         self.submitter = Person()
 
         for key, value in kwargs.items():
             setattr(self, key, value)
+
 
 # ==============================================================================
 # Person
@@ -634,6 +670,7 @@ class Person(Generic):
         for key, value in kwargs.items():
             setattr(self, key, value)
 
+
 # ==============================================================================
 # Software
 # ==============================================================================
@@ -650,6 +687,7 @@ class Software(Generic):
 
         for key, value in kwargs.items():
             setattr(self, key, value)
+
 
 # =============================================================================
 # schedule
@@ -697,39 +735,43 @@ class Schedule(object):
         self.dt_index = None
         self.name = name
 
-        self._comp_list = ['ex', 'ey', 'hx', 'hy', 'hz']
-        self._attrs_list = ['name',
-                            'start_time',
-                            'stop_time',
-                            'start_seconds_from_epoch',
-                            'stop_seconds_from_epoch',
-                            'n_samples',
-                            'n_channels',
-                            'sampling_rate']
-        
-        self.meta_keys = ['station',   
-                          'latitude',
-                          'longitude',
-                          'hx_azimuth',
-                          'hy_azimuth',
-                          'hz_azimuth',
-                          'ex_azimuth',
-                          'ey_azimuth',
-                          'hx_sensor',
-                          'hy_sensor',
-                          'hz_sensor',
-                          'ex_sensor',
-                          'ey_sensor',
-                          'ex_length',
-                          'ey_length',
-                          'ex_num',
-                          'ey_num',
-                          'hx_num',
-                          'hy_num',
-                          'hz_num',
-                          'instrument_id']
+        self._comp_list = ["ex", "ey", "hx", "hy", "hz"]
+        self._attrs_list = [
+            "name",
+            "start_time",
+            "stop_time",
+            "start_seconds_from_epoch",
+            "stop_seconds_from_epoch",
+            "n_samples",
+            "n_channels",
+            "sampling_rate",
+        ]
 
-        #self.ts_df = time_series_dataframe
+        self.meta_keys = [
+            "station",
+            "latitude",
+            "longitude",
+            "hx_azimuth",
+            "hy_azimuth",
+            "hz_azimuth",
+            "ex_azimuth",
+            "ey_azimuth",
+            "hx_sensor",
+            "hy_sensor",
+            "hz_sensor",
+            "ex_sensor",
+            "ey_sensor",
+            "ex_length",
+            "ey_length",
+            "ex_num",
+            "ey_num",
+            "hx_num",
+            "hy_num",
+            "hz_num",
+            "instrument_id",
+        ]
+
+        # self.ts_df = time_series_dataframe
         self.meta_df = meta_df
 
     @property
@@ -737,28 +779,28 @@ class Schedule(object):
         """
         Start time in UTC string format
         """
-        return '{0}'.format(self.dt_index[0].strftime(dt_fmt))
+        return "{0}".format(self.dt_index[0].strftime(dt_fmt))
 
     @property
     def stop_time(self):
         """
         Stop time in UTC string format
         """
-        return '{0}'.format(self.dt_index[-1].strftime(dt_fmt))
+        return "{0}".format(self.dt_index[-1].strftime(dt_fmt))
 
     @property
     def start_seconds_from_epoch(self):
         """
         Start time in epoch seconds
         """
-        return self.dt_index[0].to_datetime64().astype(np.int64)/1e9
+        return self.dt_index[0].to_datetime64().astype(np.int64) / 1e9
 
     @property
     def stop_seconds_from_epoch(self):
         """
         sopt time in epoch seconds
         """
-        return self.dt_index[-1].to_datetime64().astype(np.int64)/1e9
+        return self.dt_index[-1].to_datetime64().astype(np.int64) / 1e9
 
     @property
     def n_channels(self):
@@ -773,7 +815,7 @@ class Schedule(object):
         """
         sampling rate
         """
-        return np.round(1.0e9/self.dt_index[0].freq.nanos, decimals=1)
+        return np.round(1.0e9 / self.dt_index[0].freq.nanos, decimals=1)
 
     @property
     def n_samples(self):
@@ -787,11 +829,9 @@ class Schedule(object):
         """
         component list for the given schedule
         """
-        return [comp for comp in self._comp_list
-                if getattr(self, comp) is not None]
+        return [comp for comp in self._comp_list if getattr(self, comp) is not None]
 
-    def make_dt_index(self, start_time, sampling_rate, stop_time=None,
-                      n_samples=None):
+    def make_dt_index(self, start_time, sampling_rate, stop_time=None, n_samples=None):
         """
         make time index array
 
@@ -808,20 +848,20 @@ class Schedule(object):
         """
 
         # set the index to be UTC time
-        dt_freq = '{0:.0f}N'.format(1./(sampling_rate)*1E9)
+        dt_freq = "{0:.0f}N".format(1.0 / (sampling_rate) * 1e9)
         if stop_time is not None:
-            dt_index = pd.date_range(start=start_time,
-                                     end=stop_time,
-                                     freq=dt_freq,
-                                     closed='left',
-                                     tz='UTC')
+            dt_index = pd.date_range(
+                start=start_time, end=stop_time, freq=dt_freq, closed="left", tz="UTC"
+            )
         elif n_samples is not None:
-            dt_index = pd.date_range(start=start_time.split('UTC')[0],
-                                     periods=n_samples,
-                                     freq=dt_freq,
-                                     tz='UTC')
+            dt_index = pd.date_range(
+                start=start_time.split("UTC")[0],
+                periods=n_samples,
+                freq=dt_freq,
+                tz="UTC",
+            )
         else:
-            raise ValueError('Need to input either stop_time or n_samples')
+            raise ValueError("Need to input either stop_time or n_samples")
 
         return dt_index
 
@@ -843,8 +883,10 @@ class Schedule(object):
         try:
             assert isinstance(ts_dataframe, pd.DataFrame) is True
         except AssertionError:
-            raise TypeError('ts_dataframe is not a pandas.DataFrame object.\n',
-                            'ts_dataframe is {0}'.format(type(ts_dataframe)))
+            raise TypeError(
+                "ts_dataframe is not a pandas.DataFrame object.\n",
+                "ts_dataframe is {0}".format(type(ts_dataframe)),
+            )
 
         for col in ts_dataframe.columns:
             try:
@@ -859,45 +901,46 @@ class Schedule(object):
         """
         From an MT ascii object
         """
-        translator = {'ChnNum': 'num',
-                      'ChnID': 'comp',
-                      'InstrumentID': 'sensor',
-                      'Azimuth': 'azimuth',
-                      'Dipole_Length': 'length'}
-        start = datetime.datetime.strptime(ascii_object.AcqStartTime,
-                                           '%Y-%m-%dT%H:%M:%S %Z').timestamp()
+        translator = {
+            "ChnNum": "num",
+            "ChnID": "comp",
+            "InstrumentID": "sensor",
+            "Azimuth": "azimuth",
+            "Dipole_Length": "length",
+        }
+        start = datetime.datetime.strptime(
+            ascii_object.AcqStartTime, "%Y-%m-%dT%H:%M:%S %Z"
+        ).timestamp()
 
-        
         self.from_dataframe(ascii_object.ts)
         meta_dict = {}
         for chn_num, entry in ascii_object.channel_dict.items():
-            comp = entry.pop('ChnID').lower()
-            if 'e' in comp:
-                meta_dict[f"{comp}_length"] = entry.pop('Dipole_Length')
+            comp = entry.pop("ChnID").lower()
+            if "e" in comp:
+                meta_dict[f"{comp}_length"] = entry.pop("Dipole_Length")
             else:
-                entry.pop('Dipole_Length')
+                entry.pop("Dipole_Length")
             for key, value in entry.items():
                 meta_dict[f"{comp}_{translator[key]}"] = value
             meta_dict[f"{comp}_nsamples"] = getattr(self, comp).size
             meta_dict[f"{comp}_ndiff"] = 0
             meta_dict[f"{comp}_std"] = getattr(self, comp).std()
             meta_dict[f"{comp}_start"] = start
-        meta_dict['station'] = f"{ascii_object.SurveyID}{ascii_object.SiteID}"
-        meta_dict['latitude'] = ascii_object.SiteLatitude
-        meta_dict['longitude'] = ascii_object.SiteLongitude
-        meta_dict['elev'] = ascii_object.SiteElevation
-        meta_dict['instrument_id'] = entry['InstrumentID']
-        meta_dict['start_date'] = ascii_object.AcqStartTime
-        meta_dict['stop_date'] = ascii_object.AcqStopTime
-        meta_dict['notes'] = None
-        meta_dict['mtft_file'] = False
-        meta_dict['n_chan'] = ascii_object.Nchan
-        meta_dict['n_samples'] = ascii_object.AcqNumSmp
-        meta_dict['collected_by'] = 'USGS'
-        meta_dict['sampling_rate'] = ascii_object.AcqSmpFreq
-         
-        self.meta_df = pd.Series(meta_dict)
+        meta_dict["station"] = f"{ascii_object.SurveyID}{ascii_object.SiteID}"
+        meta_dict["latitude"] = ascii_object.SiteLatitude
+        meta_dict["longitude"] = ascii_object.SiteLongitude
+        meta_dict["elev"] = ascii_object.SiteElevation
+        meta_dict["instrument_id"] = entry["InstrumentID"]
+        meta_dict["start_date"] = ascii_object.AcqStartTime
+        meta_dict["stop_date"] = ascii_object.AcqStopTime
+        meta_dict["notes"] = None
+        meta_dict["mtft_file"] = False
+        meta_dict["n_chan"] = ascii_object.Nchan
+        meta_dict["n_samples"] = ascii_object.AcqNumSmp
+        meta_dict["collected_by"] = "USGS"
+        meta_dict["sampling_rate"] = ascii_object.AcqSmpFreq
 
+        self.meta_df = pd.Series(meta_dict)
 
     def from_mth5(self, mth5_obj, name):
         """
@@ -917,31 +960,32 @@ class Schedule(object):
             try:
                 setattr(self, comp, mth5_schedule[comp])
             except KeyError:
-                print('\t xxx No {0} data for {1} xxx'.format(comp, self.name))
+                print("\t xxx No {0} data for {1} xxx".format(comp, self.name))
                 continue
 
-        self.dt_index = self.make_dt_index(mth5_schedule.attrs['start_time'],
-                                           mth5_schedule.attrs['sampling_rate'],
-                                           n_samples=mth5_schedule.attrs['n_samples'])
+        self.dt_index = self.make_dt_index(
+            mth5_schedule.attrs["start_time"],
+            mth5_schedule.attrs["sampling_rate"],
+            n_samples=mth5_schedule.attrs["n_samples"],
+        )
         assert self.dt_index.shape[0] == getattr(self, self.comp_list[0]).shape[0]
         return
 
-    def from_numpy_array(self, schedul_np_array, start_time, stop_time,
-                         sampling_rate):
+    def from_numpy_array(self, schedul_np_array, start_time, stop_time, sampling_rate):
         """
         TODO
         update attributes from a numpy array
         """
         pass
 
-
     def write_metadata_csv(self, csv_dir):
         """
         write metadata to a csv file
         """
         if self.meta_df is None:
-            self.meta_df = pd.Series(dict([(k, getattr(self, k)) 
-                                           for k in self._attrs_list]))
+            self.meta_df = pd.Series(
+                dict([(k, getattr(self, k)) for k in self._attrs_list])
+            )
         csv_fn = self._make_csv_fn(csv_dir)
         self.meta_df.to_csv(csv_fn, header=False)
 
@@ -952,13 +996,18 @@ class Schedule(object):
         create csv file name from data.
         """
         if not isinstance(self.meta_df, pd.Series):
-            raise ValueError('meta_df is not a Pandas Series, {0}'.format(type(self.meta_df)))
-        csv_fn = '{0}_{1}_{2}_{3}.csv'.format(self.name,
-                                              self.dt_index[0].strftime('%Y%m%d'),
-                                              self.dt_index[0].strftime('%H%M%S'),
-                                              int(self.sampling_rate))
+            raise ValueError(
+                "meta_df is not a Pandas Series, {0}".format(type(self.meta_df))
+            )
+        csv_fn = "{0}_{1}_{2}_{3}.csv".format(
+            self.name,
+            self.dt_index[0].strftime("%Y%m%d"),
+            self.dt_index[0].strftime("%H%M%S"),
+            int(self.sampling_rate),
+        )
 
         return os.path.join(csv_dir, csv_fn)
+
 
 # =============================================================================
 # Calibrations
@@ -986,14 +1035,14 @@ class Calibration(Generic):
         self.frequency = None
         self.real = None
         self.imaginary = None
-        self._col_list = ['frequency', 'real', 'imaginary']
-        self._attrs_list = ['name',
-                           'instrument_id',
-                           'units',
-                           'calibration_date',
-                           'calibration_person']
-        
-
+        self._col_list = ["frequency", "real", "imaginary"]
+        self._attrs_list = [
+            "name",
+            "instrument_id",
+            "units",
+            "calibration_date",
+            "calibration_person",
+        ]
 
     def from_dataframe(self, cal_dataframe, name=None):
         """
@@ -1034,13 +1083,13 @@ class Calibration(Generic):
 
         ### assume length of 1 is a structured array
         if len(cal_np_array.shape) == 1:
-            assert cal_np_array.dtype.names == ('frequency', 'real', 'imaginary')
+            assert cal_np_array.dtype.names == ("frequency", "real", "imaginary")
             for key in cal_np_array.dtype.names:
                 setattr(self, key, cal_np_array[key])
 
         ### assume an unstructured array (f, r, i)
         if len(cal_np_array.shape) == 2 and cal_np_array.shape[0] == 3:
-            for ii, key in enumerate(['frequency', 'real', 'imaginary']):
+            for ii, key in enumerate(["frequency", "real", "imaginary"]):
                 setattr(self, key, cal_np_array[ii, :])
 
         return
@@ -1050,13 +1099,14 @@ class Calibration(Generic):
         update attribues from mth5 file
         """
         self.name = name
-        for key in mth5_obj['/calibrations/{0}'.format(self.name)].keys():
-            setattr(self, key, mth5_obj['/calibrations/{0}/{1}'.format(self.name,
-                                                                       key)])
+        for key in mth5_obj["/calibrations/{0}".format(self.name)].keys():
+            setattr(self, key, mth5_obj["/calibrations/{0}/{1}".format(self.name, key)])
 
         ### read in attributes
-        self.from_json(mth5_obj['/calibrations/{0}'.format(self.name)].attrs['metadata'])
-        
+        self.from_json(
+            mth5_obj["/calibrations/{0}".format(self.name)].attrs["metadata"]
+        )
+
     def from_csv(self, cal_csv, name=None, header=False):
         """
         Read a csv file that is in the format frequency,real,imaginary
@@ -1075,10 +1125,11 @@ class Calibration(Generic):
             cal_df = pd.read_csv(cal_csv, header=None, names=self._col_list)
         else:
             cal_df = pd.read_csv(cal_csv, names=self._col_list)
-            
+
         if name is not None:
             self.name
         self.from_dataframe(cal_df)
+
 
 # =============================================================================
 # MT HDF5 file
@@ -1196,9 +1247,9 @@ class MTH5(object):
         """
         if isinstance(self.mth5_obj, h5py.File):
             try:
-                if 'w' in self.mth5_obj.mode or '+' in self.mth5_obj.mode:
+                if "w" in self.mth5_obj.mode or "+" in self.mth5_obj.mode:
                     return True
-                elif self.mth5_obj.mode == 'r':
+                elif self.mth5_obj.mode == "r":
                     return False
             except ValueError:
                 return False
@@ -1211,10 +1262,10 @@ class MTH5(object):
         self.mth5_fn = mth5_fn
 
         if os.path.isfile(self.mth5_fn):
-            print('*** Overwriting {0}'.format(mth5_fn))
+            print("*** Overwriting {0}".format(mth5_fn))
 
-        self.mth5_obj = h5py.File(self.mth5_fn, 'w')
-        self.mth5_obj.create_group('calibrations')
+        self.mth5_obj = h5py.File(self.mth5_fn, "w")
+        self.mth5_obj.create_group("calibrations")
 
     def close_mth5(self):
         """
@@ -1222,7 +1273,7 @@ class MTH5(object):
         """
 
         self.mth5_obj.flush()
-        self.write_metadata()        
+        self.write_metadata()
         self.mth5_obj.close()
 
     def write_metadata(self):
@@ -1235,9 +1286,8 @@ class MTH5(object):
             * software
         """
         if self.h5_is_write():
-            for attr in ['site', 'field_notes', 'copyright', 'provenance',
-                         'software']:
-                self.mth5_obj.attrs[attr] = getattr(self, attr).to_json()
+            for attr in ["site", "field_notes", "copyright", "provenance", "software"]:
+                self.mth5_obj.attrs.update(getattr(self, attr).to_dict())
 
     def add_schedule(self, schedule_obj, compress=True):
         """
@@ -1265,21 +1315,23 @@ class MTH5(object):
             ### add datasets for each channel
             for comp in schedule_obj.comp_list:
                 if compress:
-                    schedule.create_dataset(comp.lower(),
-                                            data=getattr(schedule_obj, comp),
-                                            compression='gzip',
-                                            compression_opts=9)
+                    schedule.create_dataset(
+                        comp.lower(),
+                        data=getattr(schedule_obj, comp),
+                        compression="gzip",
+                        compression_opts=9,
+                    )
                 else:
-                    schedule.create_dataset(comp.lower(),
-                                            data=getattr(schedule_obj, comp))
+                    schedule.create_dataset(
+                        comp.lower(), data=getattr(schedule_obj, comp)
+                    )
             ### set the convenience attribute to the schedule
             setattr(self, schedule_obj.name, Schedule())
-            getattr(self, schedule_obj.name).from_mth5(self.mth5_obj, 
-                                                       schedule_obj.name)
-            
+            getattr(self, schedule_obj.name).from_mth5(self.mth5_obj, schedule_obj.name)
+
         else:
-            raise MTH5Error('{0} is not writeable'.format(self.mth5_fn))
-            
+            raise MTH5Error("{0} is not writeable".format(self.mth5_fn))
+
     def remove_schedule(self, schedule_name):
         """
         Remove a schedule item given schedule name.
@@ -1296,13 +1348,13 @@ class MTH5(object):
         if self.h5_is_write():
             try:
                 delattr(self, schedule_name)
-                del self.mth5_obj['/{0}'.format(schedule_name)]
+                del self.mth5_obj["/{0}".format(schedule_name)]
             except AttributeError:
                 print("Could not find {0}, not an attribute".format(schedule_name))
 
         else:
             raise MTH5Error("File not open")
-            
+
     def add_calibration(self, calibration_obj, compress=True):
         """
         add calibrations for sensors
@@ -1314,25 +1366,27 @@ class MTH5(object):
         """
 
         if self.h5_is_write():
-            cal = self.mth5_obj['/calibrations'].require_group(calibration_obj.name)
-            cal.attrs['metadata'] = calibration_obj.to_json()
+            cal = self.mth5_obj["/calibrations"].require_group(calibration_obj.name)
+            cal.attrs["metadata"] = calibration_obj.to_json()
             for col in calibration_obj._col_list:
                 if compress:
-                    cal.create_dataset(col.lower(),
-                                       data=getattr(calibration_obj, col),
-                                       compression='gzip',
-                                       compression_opts=9)
+                    cal.create_dataset(
+                        col.lower(),
+                        data=getattr(calibration_obj, col),
+                        compression="gzip",
+                        compression_opts=9,
+                    )
                 else:
-                    cal.create_dataset(col.lower(),
-                                       data=getattr(calibration_obj, col))
-            
+                    cal.create_dataset(col.lower(), data=getattr(calibration_obj, col))
+
             ### set the convenience attribute to the calibration
             setattr(self, calibration_obj.name, Calibration())
-            getattr(self, calibration_obj.name).from_mth5(self.mth5_obj, 
-                                                          calibration_obj.name)
+            getattr(self, calibration_obj.name).from_mth5(
+                self.mth5_obj, calibration_obj.name
+            )
         else:
-            raise MTH5Error('{0} is not writeable'.format(self.mth5_fn))
-            
+            raise MTH5Error("{0} is not writeable".format(self.mth5_fn))
+
     def remove_calibration(self, calibration_name):
         """
         Remove a calibration item given calibration name.
@@ -1349,19 +1403,19 @@ class MTH5(object):
         if self.h5_is_write():
             try:
                 delattr(self, calibration_name)
-                del self.mth5_obj['calibrations/{0}'.format(calibration_name)]
+                del self.mth5_obj["calibrations/{0}".format(calibration_name)]
             except AttributeError:
                 print("Could not find {0}, not an attribute".format(calibration_name))
         else:
             raise MTH5Error("File not open")
-    
+
     def update_schedule_metadata(self):
         """
         update schedule metadata on the HDF file
         """
-        
+
         for key in self.__dict__.keys():
-            if 'sch' in key:
+            if "sch" in key:
                 for attr in getattr(self, key)._attrs_list:
                     value = getattr(getattr(self, key), attr)
                     self.mth5_obj[key].attrs[attr] = value
@@ -1372,30 +1426,29 @@ class MTH5(object):
         
         :param str mth5_fn: full path to mth5 file
         """
-        
+
         if not os.path.isfile(mth5_fn):
             raise MTH5Error("Could not find {0}, check path".format(mth5_fn))
 
         self.mth5_fn = mth5_fn
         ### read in file and give write permissions in case the user wants to
         ### change any parameters
-        self.mth5_obj = h5py.File(self.mth5_fn, 'r+')
-        for attr in ['site', 'field_notes', 'copyright', 'provenance',
-                     'software']:
+        self.mth5_obj = h5py.File(self.mth5_fn, "r+")
+        for attr in ["site", "field_notes", "copyright", "provenance", "software"]:
             getattr(self, attr).from_json(self.mth5_obj.attrs[attr])
 
         for key in self.mth5_obj.keys():
-            if 'sch' in key:
+            if "sch" in key:
                 setattr(self, key, Schedule())
                 getattr(self, key).from_mth5(self.mth5_obj, key)
-            elif 'cal' in key:
+            elif "cal" in key:
                 try:
                     for ckey in self.mth5_obj[key].keys():
-                        m_attr = 'calibration_{0}'.format(ckey)
+                        m_attr = "calibration_{0}".format(ckey)
                         setattr(self, m_attr, Calibration())
                         getattr(self, m_attr).from_mth5(self.mth5_obj, ckey)
                 except KeyError:
-                    print('No Calibration Data')
+                    print("No Calibration Data")
 
     def update_metadata_from_cfg(self, mth5_cfg_fn):
         """
@@ -1431,24 +1484,24 @@ class MTH5(object):
             field_notes.data_logger.manufacturer = Zonge
             field_notes.data_logger.type = 32-Bit 5-channel GPS synced
         """
-        usgs_str = 'U.S. Geological Survey'
+        usgs_str = "U.S. Geological Survey"
         # read in the configuration file
-        with open(mth5_cfg_fn, 'r') as fid:
+        with open(mth5_cfg_fn, "r") as fid:
             lines = fid.readlines()
 
         for line in lines:
             # skip comment lines
-            if line.find('#') == 0 or len(line.strip()) < 2:
+            if line.find("#") == 0 or len(line.strip()) < 2:
                 continue
             # make a key = value pair
-            key, value = [item.strip() for item in line.split('=', 1)]
+            key, value = [item.strip() for item in line.split("=", 1)]
 
-            if value == 'usgs_str':
+            if value == "usgs_str":
                 value = usgs_str
-            if value.find('[') >= 0 and value.find(']') >= 0 and value.find('<') != 0:
-                value = value.replace('[', '').replace(']', '')
-                value = [v.strip() for v in value.split(',')]
-            if value.find('.') > 0:
+            if value.find("[") >= 0 and value.find("]") >= 0 and value.find("<") != 0:
+                value = value.replace("[", "").replace("]", "")
+                value = [v.strip() for v in value.split(",")]
+            if value.find(".") > 0:
                 try:
                     value = float(value)
                 except ValueError:
@@ -1460,15 +1513,14 @@ class MTH5(object):
                     pass
 
             # if there is a dot, meaning an object with an attribute separate
-            if key.count('.') == 0:
+            if key.count(".") == 0:
                 setattr(self, key, value)
-            elif key.count('.') == 1:
-                obj, obj_attr = key.split('.')
+            elif key.count(".") == 1:
+                obj, obj_attr = key.split(".")
                 setattr(getattr(self, obj), obj_attr, value)
-            elif key.count('.') == 2:
-                obj, obj_attr_01, obj_attr_02 = key.split('.')
-                setattr(getattr(getattr(self, obj), obj_attr_01), obj_attr_02,
-                        value)
+            elif key.count(".") == 2:
+                obj, obj_attr_01, obj_attr_02 = key.split(".")
+                setattr(getattr(getattr(self, obj), obj_attr_01), obj_attr_02, value)
 
     def update_metadata_from_series(self, station_series, update_time=False):
         """
@@ -1512,46 +1564,54 @@ class MTH5(object):
         if isinstance(station_series, pd.DataFrame):
             station_series = station_series.iloc[0]
 
-        assert isinstance(station_series, pd.Series), \
-                'station_series is not a pandas.Series'
+        assert isinstance(
+            station_series, pd.Series
+        ), "station_series is not a pandas.Series"
 
         for key in station_series.index:
             value = getattr(station_series, key)
             if key in self.site._attrs_list:
                 setattr(self.site, key, value)
-            elif key == 'start_date':
+            elif key == "start_date":
                 if not update_time:
                     continue
                 attr = key
                 setattr(self.site, attr, value)
-            elif key == 'stop_date':
+            elif key == "stop_date":
                 if not update_time:
                     continue
-                attr = 'end_date'
+                attr = "end_date"
                 setattr(self.site, attr, value)
-            elif key == 'instrument_id':
+            elif key == "instrument_id":
                 self.field_notes.data_logger.id = value
-            elif key == 'quality':
+            elif key == "quality":
                 self.field_notes.data_quality.rating = value
-            elif key == 'notes':
+            elif key == "notes":
                 self.field_notes.data_quality.comments = value
-            elif key == 'station':
+            elif key == "station":
                 self.site.id = value
-            elif key == 'units':
+            elif key == "units":
                 self.site.elev_units = value
-            elif key[0:2] in ['ex', 'ey', 'hx', 'hy', 'hz']:
+            elif key[0:2] in ["ex", "ey", "hx", "hy", "hz"]:
                 comp = key[0:2]
-                attr = key.split('_')[1]
-                if attr == 'num':
-                    attr = 'chn_num'
-                if attr == 'sensor':
-                    attr = 'id'
-                if 'e' in comp:
-                    setattr(getattr(self.field_notes, 'electrode_{0}'.format(comp)),
-                            attr, value)
-                elif 'h' in comp:
-                    setattr(getattr(self.field_notes, 'magnetometer_{0}'.format(comp)),
-                            attr, value)
+                attr = key.split("_")[1]
+                if attr == "num":
+                    attr = "chn_num"
+                if attr == "sensor":
+                    attr = "id"
+                if "e" in comp:
+                    setattr(
+                        getattr(self.field_notes, "electrode_{0}".format(comp)),
+                        attr,
+                        value,
+                    )
+                elif "h" in comp:
+                    setattr(
+                        getattr(self.field_notes, "magnetometer_{0}".format(comp)),
+                        attr,
+                        value,
+                    )
+
 
 # =============================================================================
 #  read and write json for attributes
@@ -1560,19 +1620,34 @@ class NumpyEncoder(json.JSONEncoder):
     """
     Need to encode numpy ints and floats for json to work
     """
+
     def default(self, obj):
-        if isinstance(obj, (np.int_, np.intc, np.intp, np.int8,
-                            np.int16, np.int32, np.int64, np.uint8,
-                            np.uint16, np.uint32, np.uint64)):
+        if isinstance(
+            obj,
+            (
+                np.int_,
+                np.intc,
+                np.intp,
+                np.int8,
+                np.int16,
+                np.int32,
+                np.int64,
+                np.uint8,
+                np.uint16,
+                np.uint32,
+                np.uint64,
+            ),
+        ):
             return int(obj)
 
         elif isinstance(obj, (np.float_, np.float16, np.float32, np.float64)):
             return float(obj)
 
-        elif isinstance(obj,(np.ndarray)):
+        elif isinstance(obj, (np.ndarray)):
             return obj.tolist()
 
         return json.JSONEncoder.default(self, obj)
+
 
 def to_json(obj):
     """
@@ -1588,28 +1663,39 @@ def to_json(obj):
 
     obj_dict = {}
     for key in keys:
-        if key.find('_') == 0:
+        if key.find("_") == 0:
             continue
         value = getattr(obj, key)
 
-        if isinstance(value, (FieldNotes, Instrument, DataQuality, Citation, 
-                              Provenance, Person, Software)):
+        if isinstance(
+            value,
+            (
+                FieldNotes,
+                Instrument,
+                DataQuality,
+                Citation,
+                Provenance,
+                Person,
+                Software,
+            ),
+        ):
             obj_dict[key] = {}
             for o_key, o_value in value.__dict__.items():
-                if o_key.find('_') == 0:
+                if o_key.find("_") == 0:
                     continue
                 obj_dict[key][o_key] = o_value
 
         elif isinstance(value, (Site, Calibration)):
             obj_dict[key] = {}
             for o_key in value._attrs_list:
-                if o_key.find('_') == 0:
+                if o_key.find("_") == 0:
                     continue
                 obj_dict[key][o_key] = getattr(obj, o_key)
         else:
             obj_dict[key] = value
 
     return json.dumps(obj_dict, cls=NumpyEncoder)
+
 
 def from_json(json_str, obj):
     """
@@ -1634,6 +1720,7 @@ def from_json(json_str, obj):
             setattr(obj, key, value)
 
     return obj
+
 
 # ==============================================================================
 #             Error
