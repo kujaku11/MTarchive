@@ -52,6 +52,10 @@ calibration_dir = r"/mnt/hgfs/MTData/Ant_calibrations"
 edi_path = r"/mnt/hgfs/MTData/Geysers/final_edi"
 png_path = r"/mnt/hgfs/MTData/Geysers/final_png"
 
+### Make xml file each
+make_xml = False
+xml_path = r"path/to/xml/file"
+
 ### SCIENCE BASE
 ### page id number
 ### this is the end of the link that science base sends you
@@ -176,43 +180,48 @@ for station in station_list:
             s_df, run_csv_fn = archive.combine_station_runs(station_save_dir)
             # summarize the runs
             s_df = archive.summarize_station_runs(s_df)
-            # make xml file
-            s_xml = sb_xml.XMLMetadata()
-            s_xml.read_config_file(xml_cfg_fn)
-            s_xml.supplement_info = s_xml.supplement_info.replace("\\n", "\n\t\t\t")
-
-            # add station name to title
-            s_xml.title += ", station {0}".format(station)
-
-            # location
-            s_xml.survey.east = s_df.longitude
-            s_xml.survey.west = s_df.longitude
-            s_xml.survey.north = s_df.latitude
-            s_xml.survey.south = s_df.latitude
-
-            # get elevation from national map
-            s_elev = archive.get_nm_elev(s_df.latitude, s_df.longitude)
-            s_xml.survey.elev_min = s_elev
-            s_xml.survey.elev_max = s_elev
-
-            # start and end time
-            s_xml.survey.begin_date = s_df.start_date
-            s_xml.survey.end_date = s_df.stop_date
-
-            # add list of files
-            s_xml.supplement_info += "\n\t\t\tFile List:\n\t\t\t" + "\n\t\t\t".join(
-                [
-                    "{0}.edi".format(station),
-                    "{0}.png".format(station),
-                    os.path.basename(mth5_fn),
-                ]
-            )
-
-            # write station xml
-            s_xml.write_xml_file(
-                os.path.join(station_save_dir, "{0}_meta.xml".format(station)),
-                write_station=True,
-            )
+            
+            if make_xml:
+                # make xml file
+                s_xml = sb_xml.XMLMetadata()
+                s_xml.read_config_file(xml_cfg_fn)
+                s_xml.supplement_info = s_xml.supplement_info.replace("\\n", "\n\t\t\t")
+    
+                # add station name to title
+                s_xml.title += ", station {0}".format(station)
+    
+                # location
+                s_xml.survey.east = s_df.longitude
+                s_xml.survey.west = s_df.longitude
+                s_xml.survey.north = s_df.latitude
+                s_xml.survey.south = s_df.latitude
+    
+                # get elevation from national map
+                s_elev = archive.get_nm_elev(s_df.latitude, s_df.longitude)
+                s_xml.survey.elev_min = s_elev
+                s_xml.survey.elev_max = s_elev
+    
+                # start and end time
+                s_xml.survey.begin_date = s_df.start_date
+                s_xml.survey.end_date = s_df.stop_date
+    
+                # add list of files
+                s_xml.supplement_info += "\n\t\t\tFile List:\n\t\t\t" + "\n\t\t\t".join(
+                    [
+                        "{0}.edi".format(station),
+                        "{0}.png".format(station),
+                        os.path.basename(mth5_fn),
+                    ]
+                )
+    
+                # write station xml
+                s_xml.write_xml_file(
+                    os.path.join(station_save_dir, "{0}_meta.xml".format(station)),
+                    write_station=True,
+                )
+            if not make_xml and os.path.exists(xml_path):
+                shutil.copy(os.path.join(xml_path, '{0}.png'.format(station)),
+                            os.path.join(station_save_dir, '{0}.png'.format(station)))
 
             station_et = datetime.datetime.now()
             t_diff = station_et - station_st
