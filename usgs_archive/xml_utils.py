@@ -98,13 +98,13 @@ def xml_document_loader(xml_locator):
         return xml_locator
 
 
-def save_to_file(element, fname):
+def save_to_file(element, fn):
     """
     Save the provided element as the filename provided
     Parameters
     ----------
     element : lxml element
-    fname : str
+    fn : str
 
     Returns
     -------
@@ -112,7 +112,7 @@ def save_to_file(element, fname):
     """
     import codecs
 
-    file = codecs.open(fname, "w", "utf-8")
+    file = codecs.open(fn, "w", "utf-8")
 
     file.write(node_to_string(element))
     file.close()
@@ -329,19 +329,19 @@ def node_to_string(node, encoding=True):
     ).decode("utf-8")
 
 
-def fname_to_node(fname):
+def fname_to_node(fn):
     """
     parse the contents of local filename into an lxml node object
 
     Parameters
     ----------
-    fname : str
+    fn : str
             full file and path to the the file to load
     Returns
     -------
     lxml node
     """
-    return lxml.parse(fname)
+    return lxml.parse(fn)
 
 
 def string_to_node(str_node):
@@ -401,12 +401,12 @@ def xml_node(tag, text="", parent_node=None, index=-1, comment=False):
     return node
 
 
-def load_xslt(fname):
-    return etree.XSLT(fname_to_node(fname))
+def load_xslt(fn):
+    return etree.XSLT(fname_to_node(fn))
 
 
-def load_schema(fname):
-    return etree.XMLSchema(fname_to_node(fname))
+def load_schema(fn):
+    return etree.XMLSchema(fname_to_node(fn))
 
 
 def clear_children(element):
@@ -425,7 +425,7 @@ def clear_children(element):
 
 
 class XMLRecord(object):
-    def __init__(self, contents):
+    def __init__(self, fn=None):
         """
         contents must be one of the following
 
@@ -437,41 +437,50 @@ class XMLRecord(object):
         contents : str, lxml node
                 url, file path, string xml snippet
         """
-        try:
-            contents_path = Path(contents)
-            try:
-                exists = contents_path.exists()
-            except OSError:
-                exists = False
-
-            if exists:
-                self.fname = str(contents_path.absolute())
-                # they passde us a file path
-                self.record = lxml.parse(self.fname)
-                self._root = self.record.getroot()
-
-        except etree.XMLSyntaxError:
-            self.fname = None
-            self.record = lxml.fromstring(contents)
-            self._root = self.record.getroot()
-
-        self.tag = self._root.tag
-        self.__dict__[self._root.tag] = XMLNode(self.record.getroot())
-        self._contents = self.__dict__[self._root.tag]
+        self.tag = None
+        self.record = None
+        self._root = None
+        self._contents = None
+        self.fn = fn
 
     def __repr__(self):
         return self.__str__()
 
     def __str__(self):
-        return self.__dict__[self.tag].__str__()
+        if self.tag:
+            return self.__dict__[self.tag].__str__()
+        return "No Metadata"
 
     def serialize(self):
         return self.__str__()
+    
+    @property
+    def fn(self):
+        return self._fn
+    
+    @fn.setter
+    def fn(self, value):
+        if value is None:
+            self._fn = None
+        else:
+            self._fn = Path(value)
+            if self._fn.exists():
+                self.read(self._fn)
+    
+    def read(self, fn):
+        """
+        Read xml file
+        """
+        self.record = lxml.parse(self.fn.as_posix())
+        self._root = self.record.getroot()
+        self.tag = self._root.tag
+        self.__dict__[self._root.tag] = XMLNode(self.record.getroot())
+        self._contents = self.__dict__[self._root.tag]
 
-    def save(self, fname=""):
-        if not fname:
-            fname = self.fname
-        save_to_file(self._contents.to_xml(), fname)
+    def save(self, fn=""):
+        if not fn:
+            fn = self.fn
+        save_to_file(self._contents.to_xml(), fn)
 
     def validate(self, schema="fgdc", as_dataframe=True):
         """
@@ -916,7 +925,7 @@ class XMLNode(object):
             index = len(self.children)
         if index < -1:
             index += 1
-
+        
         if type(child) == etree._Element:
             node_str = node_to_string(child, encoding=False)
         else:

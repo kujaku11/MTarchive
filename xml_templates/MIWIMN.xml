@@ -1,0 +1,607 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata>
+  <idinfo>
+    <citation>
+      <citeinfo>
+        <origin>Paul A. Bedrosian</origin>
+        <origin>Michael D. M. Pace</origin>
+        <origin>Evan M. Cox</origin>
+        <origin>Katrina D. Zamudio</origin>
+        <origin>Daniel W. Feucht</origin>
+        <pubdate>20200814</pubdate>
+        <title>Magnetotelluric data from Minnesota, Wisconsin, and Upper Michigan, 2015-2019</title>
+        <geoform>ACII and binary digital data, shapefile, image</geoform>
+        <othercit>Additional information about Originators: Paul Bedrosian, https://orcid.org/0000-0002-6786-1038; Michael Pace, https://orcid.org/0000-0003-2770-5724; Evan Cox, https://orcid.org/0000-0002-1434-7000; Katrina Zamudio, https://orcid.org/0000-0003-0278-0154; Daniel Feucht, https://orcid.org/0000-0002-3672-4719.
+		
+		Suggested citation: Bedrosian, P.A., Pace, M.D., Cox, E.M.,  Zamudio, K.D., and Feucht, D.W., 2020, Magnetotelluric data from Minnesota, Wisconsin, and Upper Michigan, 2015-2019: U.S. Geological Survey data release, https://doi.org/10.5066/F7610XTR. 
+		</othercit>
+        <onlink>https://doi.org/10.5066/F7610XTR</onlink>
+      </citeinfo>
+    </citation>
+    <descript>
+      <abstract>This dataset consists of 176 wideband magnetotelluric (MT) stations collected from 2015-2019 across parts of Minnesota, Wisconsin and the Upper Peninsula of Michigan. The U.S. Geological Survey acquired these data as part of regional investigations into the geologic and tectonic framework of the area and to support mineral resource investigations. These data have been used to generate a 3D regional conductivity model of the area. Files included in this publication include measured electric- and magnetic-field time series as well as estimated impedance and vertical-magnetic field transfer functions.</abstract>
+      <purpose>The purpose of this data release is to provide MT station locations, time-series data, and estimated MT transfer functions to the public.</purpose>
+      <supplinf>This data product contains magnetotelluric (MT) transfer functions (TFs), which define the frequency dependent linear relations between components of electromagnetic (EM) field variations measured at a single site. Two types of TFs are provided for most sites, impedance data relating horizontal electric and magnetic fields, and tipper data, relating vertical and horizontal magnetic fields. All of the TFs provide input data for subsequent MT inversion and interpretation. They are estimated from the raw EM time series by (a) Fourier transforming data in a series of short overlapping time windows, and (b) applying robust regression methods to calculate TFs from the resulting spectral field estimates. For remote reference processing, data from one or more synchronously recording sites are used for more effective signal/noise separation. The supplied TFs are calculated for a range of periods (which may vary, depending on instrumentation and deployment time), as well as estimation error covariances. 
+
+References relevant to this release include: Wight, D., 1991, MT/EMAP Data Interchange Standard, The Society of Exploration Geophysicists, accessed January 19, 2021, at  https://www.seg.org/Portals/0/SEG/News%20and%20Resources/Technical%20Standards/seg_mt_emap_1987.pdf. 
+
+This data release contains MT data for all sites in this collection. The contents of the files included on the landing page and child pages are described in the PDF, Guide_to_MT_Data_Types, and the Entity and Attribute Information section of the metadata.</supplinf>
+    </descript>
+    <timeperd>
+      <timeinfo>
+        <rngdates>
+          <begdate>201508</begdate>
+          <enddate>201909</enddate>
+        </rngdates>
+      </timeinfo>
+      <current>ground condition</current>
+    </timeperd>
+    <status>
+      <progress>Complete</progress>
+      <update>As needed</update>
+    </status>
+    <spdom>
+      <bounding>
+        <westbc>-93.9605</westbc>
+        <eastbc>-84.1760</eastbc>
+        <northbc>48.0779</northbc>
+        <southbc>44.9151</southbc>
+      </bounding>
+    </spdom>
+    <keywords>
+      <theme>
+        <themekt>ISO 19115 Topic Category</themekt>
+        <themekey>geoscientificInformation</themekey>
+      </theme>
+      <theme>
+        <themekt>None</themekt>
+        <themekey>Geology, Geophysics, and Geochemistry Science Center</themekey>
+        <themekey>GGGSC</themekey>
+        <themekey>Mineral Resources Program</themekey>
+        <themekey>MRP</themekey>
+        <themekey>magnetotellurics</themekey>
+        <themekey>MT</themekey>
+        <themekey>time series</themekey>
+        <themekey>impedance</themekey>
+        <themekey>apparent resistivity</themekey>
+        <themekey>phase</themekey>
+        <themekey>tipper</themekey>
+        <themekey>conductivity</themekey>
+      </theme>
+      <theme>
+        <themekt>USGS Thesaurus</themekt>
+        <themekey>magnetotelluric surveying</themekey>
+        <themekey>magnetic field (earth)</themekey>
+        <themekey>geophysics</themekey>
+        <themekey>electromagnetic surveying</themekey>
+        <themekey>mineral resources</themekey>
+        <themekey>geologic structure</themekey>
+        <themekey>tectonics</themekey>
+        <themekey>exploration</themekey>
+      </theme>
+      <place>
+        <placekt>Geographic Names Information System (GNIS)</placekt>
+        <placekey>Lake Superior</placekey>
+        <placekey>Keweenaw Peninsula</placekey>
+      </place>
+      <place>
+        <placekt>Common Geographic Areas</placekt>
+        <placekey>Minnesota</placekey>
+        <placekey>Wisconsin</placekey>
+        <placekey>Michigan</placekey>
+      </place>
+      <place>
+        <placekt>None</placekt>
+        <placekey>Upper Peninsula</placekey>
+        <placekey>Bayfield Peninsula</placekey>
+        <placekey>Animikie Basin</placekey>
+        <placekey>Midcontinent Rift</placekey>
+        <placekey>Penokean Orogen</placekey>
+        <placekey>Wisconsin Magmatic Terranes</placekey>
+        <placekey>Duluth Complex</placekey>
+        <placekey>Ashland Syncline</placekey>
+      </place>
+      <temporal>
+        <tempkt>Geolex</tempkt>
+        <tempkey>Archean</tempkey>
+        <tempkey>Quaternary</tempkey>
+      </temporal>
+      <temporal>
+        <tempkt>None</tempkt>
+        <tempkey>Paleoproterozoic</tempkey>
+        <tempkey>Mesoproterozoic</tempkey>
+        <tempkey>Phanerozoic</tempkey>
+      </temporal>
+    </keywords>
+    <accconst>None. Please see 'Distribution Info' for details.</accconst>
+    <useconst>Any use of trade, firm, or product names is for descriptive purposes only and does not imply endorsement by the U.S. Government. Although these data have been processed successfully on a computer system at the U.S. Geological Survey (USGS), no warranty expressed or implied is made regarding the display or utility of the data for other purposes, nor on all computer systems, nor shall the act of distribution constitute any such warranty. The USGS or the U.S. Government shall not be held liable for improper or incorrect use of the data described and/or contained herein.</useconst>
+    <ptcontac>
+      <cntinfo>
+        <cntperp>
+          <cntper>Paul A Bedrosian</cntper>
+          <cntorg>U.S. Geological Survey</cntorg>
+        </cntperp>
+        <cntpos>Research Geophysicist</cntpos>
+        <cntaddr>
+          <addrtype>mailing address</addrtype>
+          <address>PO Box 25046, Mail Stop 973, W 6th Ave Kipling St</address>
+          <city>Lakewood</city>
+          <state>CO</state>
+          <postal>80225</postal>
+          <country>US</country>
+        </cntaddr>
+        <cntvoice>303-236-4834</cntvoice>
+        <cntfax>303-236-1425</cntfax>
+        <cntemail>pbedrosian@usgs.gov</cntemail>
+      </cntinfo>
+    </ptcontac>
+    <datacred>Mineral Resources Program</datacred>
+  </idinfo>
+  <dataqual>
+    <attracc>
+      <attraccr>The data have been peer reviewed and compared with related ancillary data.</attraccr>
+    </attracc>
+    <logic>Data were reviewed for consistency and analyses results were checked for validity.</logic>
+    <complete>Data set is considered complete for the information presented, as described in the abstract. Users are advised to read the rest of the metadata record carefully for additional details.</complete>
+    <posacc>
+      <horizpa>
+        <horizpar>Spatial locations were determined from hand-held global positioning system (GPS) devices. In general, the GPS units used by field scientists recorded sample locations to within 100 feet (30 meters) of the true location. The locations were verified using a geographic information system (GIS) and digital topographic maps.
+		</horizpar>
+      </horizpa>
+      <vertacc>
+        <vertaccr>Elevations were determined from USGS, The National Map, Bulk Point Query Service based on the USGS 3DEP (3D elevation program) 1/3 arc-second layer (10-meter). Vertical accuracy was not assessed for this specific dataset. The overall absolute vertical accuracy of the seamless DEMs within the conterminous United States (2013), expressed as the root mean square error (RMSE) of 25,310 reference points, was 1.55 meters (USGS, 2014 - https://doi.org/10.3133/ofr20141008). The vertical accuracy varies across the U.S. as a result of differences in source DEM quality, terrain relief, land cover, and other factors.
+		
+		Gesch, D.B., Oimoen, M.J., and Evans, G.A., 2014, Accuracy assessment of the U.S. Geological Survey National Elevation Dataset, and comparison with other large-area elevation datasets-SRTM and ASTER: U.S. Geological Survey Open-File Report 2014-1008, 10 p., https://doi.org/10.3133/ofr20141008. 
+		</vertaccr>
+      </vertacc>
+    </posacc>
+    <lineage>
+      <procstep>
+        <procdesc>Time-series electric and magnetic field data were collected in a geomagnetic north and east coordinate system using wideband magnetotelluric instrumentation at each site location. These data are provided in HDf5 format (*.mth5 files) for all 2018 and 2019 stations and in zipped ascii format (*.asc files) for all 2015 data. More information about instrumentation and file formats can be found in the PDF Guide_to_MT_Data_types, available at https://doi.org/10.5066/F7610XTR.
+</procdesc>
+        <procdate>20190829</procdate>
+      </procstep>
+      <procstep>
+        <procdesc>Fourier spectra were calculated from windowed time-series data and used to calculate cross- and auto-power spectra. Remote reference processing, in which synchronously recording stations are processed together to remove incoherent noise, was carried out using all possible station combinations. Impedance and tipper transfer functions were calculated at each station. System and sensor responses were accounted for during this process and transfer function estimates were made for particular frequency bandwidths for each data run. Processing software used can be found in the *.edi and file header information. These files are described in detail within the PDF Guide_to_MT_Data_Types, available at https://doi.org/10.5066/F7610XTR. </procdesc>
+        <procdate>20200101</procdate>
+      </procstep>
+      <procstep>
+        <procdesc>Transfer function estimates were constructed by selecting optimal transfer function estimates at each period from a series of processing runs using different reference combinations. High and low sampling rate wideband recordings provided transfer function estimates for 1000-1 Hz and 0.001-1 Hz, respectively. So-called optimal transfer functions were selected based on examination of phase slope, smooth curve assumptions, and operator discretion. Transfer function estimates provided in the *.edi files and displayed in the *.png files have been rotated to geographic coordinates (X = North). Additional metadata information can be found in the *.edi file headers as well as the provided *mth5 files. Descriptions of these metadata can be found in the PDF Guide_to_MT_Data_Types, available at https://doi.org/10.5066/F7610XTR.</procdesc>
+        <procdate>20200310</procdate>
+      </procstep>
+      <procstep>
+      	<procdesc>The shapefile MIWIMN_EUP_NMN_PEN_WUP.shp was created using a suite of scripts written in Python. These scripts parse through the metadata for each station, and write the data to a shapefile table. Elevations are retrieved from The National Map, Bulk Point Query Service. See attached PDF Guide_to_MT_Data_types, available at https://doi.org/10.5066/F7610XTR, for more information about specific metadata files.</procdesc>
+      	<procdate>20201030</procdate>
+      </procstep>
+    </lineage>
+  </dataqual>
+  <spdoinfo>
+    <direct>Point</direct>
+    <ptvctinf>
+      <sdtsterm>
+        <sdtstype>Entity point</sdtstype>
+        <ptvctcnt>176</ptvctcnt>
+      </sdtsterm>
+    </ptvctinf>
+  </spdoinfo>
+  <spref>
+    <horizsys>
+      <geograph>
+        <latres>0.0001</latres>
+        <longres>0.0001</longres>
+        <geogunit>Decimal degrees</geogunit>
+      </geograph>
+      <geodetic>
+        <horizdn>World Geodetic System 1984 (WGS 84)</horizdn>
+        <ellips>WGS_84</ellips>
+        <semiaxis>6378137.0</semiaxis>
+        <denflat>298.257223563</denflat>
+      </geodetic>
+    </horizsys>
+    <vertdef>
+      <altsys>
+        <altdatum>National Geodetic Vertical Datum of 1988</altdatum>
+        <altres>1.0</altres>
+        <altunits>Meter</altunits>
+        <altenc>Attribute values</altenc>
+      </altsys>
+    </vertdef>
+  </spref>
+  <eainfo>
+    <detailed>
+      <enttyp>
+        <enttypl>MIWIMN_EUP_NMN_PEN_WUP.shp Attribute Table</enttypl>
+        <enttypd>Table containing site information for all MT stations included in the data release.</enttypd>
+        <enttypds>U.S. Geological Survey</enttypds>
+      </enttyp>
+      <attr>
+        <attrlabl>FID</attrlabl>
+        <attrdef>Unique internal feature number managed by Esri.</attrdef>
+        <attrdefs>Esri</attrdefs>
+        <attrdomv>
+          <udom>Sequential integers</udom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>Shape</attrlabl>
+        <attrdef>Internal feature geometry managed by Esri.</attrdef>
+        <attrdefs>Esri</attrdefs>
+        <attrdomv>
+          <udom>geometry:Point</udom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>sitePrefix</attrlabl>
+        <attrdef>Regional site identifier of MT sounding used to distinguish between areas associated with this survey.</attrdef>
+        <attrdefs>U.S. Geological Survey</attrdefs>
+        <attrdomv>
+          <edom>
+            <edomv>eup</edomv>
+            <edomvd>Eastern Upper Peninsula</edomvd>
+            <edomvds>U.S. Geological Survey</edomvds>
+          </edom>
+        </attrdomv>
+        <attrdomv>
+          <edom>
+            <edomv>nmn</edomv>
+            <edomvd>Northern Minnesota</edomvd>
+            <edomvds>U.S. Geological Survey</edomvds>
+          </edom>
+        </attrdomv>
+        <attrdomv>
+          <edom>
+            <edomv>pen</edomv>
+            <edomvd>Penokean Orogney</edomvd>
+            <edomvds>U.S. Geological Survey</edomvds>
+          </edom>
+        </attrdomv>
+        <attrdomv>
+          <edom>
+            <edomv>wup</edomv>
+            <edomvd>Western Upper Peninsula</edomvd>
+            <edomvds>U.S. Geological Survey</edomvds>
+          </edom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>siteID</attrlabl>
+        <attrdef>Site identifier of MT sounding used to distinguish between the soundings associated with this survey.</attrdef>
+        <attrdefs>U.S. Geological Survey</attrdefs>
+        <attrdomv>
+          <rdom>
+            <rdommin>6</rdommin>
+            <rdommax>5115</rdommax>
+          </rdom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>latitude</attrlabl>
+        <attrdef>Latitude coordinate of site, datum of WGS 84.</attrdef>
+        <attrdefs>U.S. Geological Survey</attrdefs>
+        <attrdomv>
+          <rdom>
+            <rdommin>44.91519</rdommin>
+            <rdommax>48.07787883</rdommax>
+            <attrunit>Decimal degrees</attrunit>
+          </rdom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>longitude</attrlabl>
+        <attrdef>Longitude coordinate of the site, datum of WGS 84.</attrdef>
+        <attrdefs>U.S. Geological Survey</attrdefs>
+        <attrdomv>
+          <rdom>
+            <rdommin>-93.96049503</rdommin>
+            <rdommax>-84.17604769</rdommax>
+            <attrunit>Decimal degrees</attrunit>
+          </rdom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>elevation</attrlabl>
+        <attrdef>Elevation determined from USGS, The National Map, Bulk Point Query Service based on the USGS 3DEP (3D elevation program) 1/3 arc-second layer (10-meter), vertical datum of NAVD88.</attrdef>
+        <attrdefs>U.S. Geolgical Survey</attrdefs>
+        <attrdomv>
+          <rdom>
+            <rdommin>177.99</rdommin>
+            <rdommax>581.52</rdommax>
+            <attrunit>Meters</attrunit>
+          </rdom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>hx_azimuth</attrlabl>
+        <attrdef>Azimuth of HX sensor</attrdef>
+        <attrdefs>U.S. Geological Survey</attrdefs>
+        <attrdomv>
+          <rdom>
+            <rdommin>0</rdommin>
+            <rdommax>0</rdommax>
+            <attrunit>Angle (degrees) relative to magnetic North</attrunit>
+          </rdom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>hy_azimuth</attrlabl>
+        <attrdef>Azimuth of HY sensor</attrdef>
+        <attrdefs>U.S. Geological Survey</attrdefs>
+        <attrdomv>
+          <rdom>
+            <rdommin>90</rdommin>
+            <rdommax>90</rdommax>
+            <attrunit>Angle (degrees) relative to magnetic North</attrunit>
+          </rdom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>hz_inclina</attrlabl>
+        <attrdef>Inclination of HZ sensor</attrdef>
+        <attrdefs>U.S. Geological Survey</attrdefs>
+        <attrdomv>
+          <rdom>
+            <rdommin>90</rdommin>
+            <rdommax>90</rdommax>
+            <attrunit>Angle (degrees) relative to horizontal (0)</attrunit>
+          </rdom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>hx_sensor</attrlabl>
+        <attrdef>Sensor ID for HX.</attrdef>
+        <attrdefs>U.S. Geological Survey</attrdefs>
+        <attrdomv>
+          <udom>Zen type data format ####. MT-24 type data format BF4-####</udom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>hy_sensor</attrlabl>
+        <attrdef>Sensor ID for HY.</attrdef>
+        <attrdefs>U.S. Geological Survey</attrdefs>
+        <attrdomv>
+          <udom>Zen type data format ####. MT-24 type data format BF4-####</udom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>hz_sensor</attrlabl>
+        <attrdef>Sensor ID for HZ.</attrdef>
+        <attrdefs>Producer Defined</attrdefs>
+        <attrdomv>
+          <udom>Zen type data format ####. MT-24 type data format BF4-####</udom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>ex_length</attrlabl>
+        <attrdef>Dipole length for EX</attrdef>
+        <attrdefs>U.S. Geological Survey</attrdefs>
+        <attrdomv>
+          <rdom>
+            <rdommin>43.6</rdommin>
+            <rdommax>115.19</rdommax>
+            <attrunit>Distance in meters</attrunit>
+          </rdom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>ey_length</attrlabl>
+        <attrdef>Dipole length for EY</attrdef>
+        <attrdefs>U.S. Geological Survey</attrdefs>
+        <attrdomv>
+          <rdom>
+            <rdommin>34.0</rdommin>
+            <rdommax>114.6</rdommax>
+            <attrunit>Distance in meters</attrunit>
+          </rdom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>ex_azimuth</attrlabl>
+        <attrdef>Orientation of EX sensor</attrdef>
+        <attrdefs>U.S. Geological Survey</attrdefs>
+        <attrdomv>
+          <rdom>
+            <rdommin>0</rdommin>
+            <rdommax>347</rdommax>
+            <attrunit>Angle (degrees) relative to magnetic North</attrunit>
+          </rdom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>ey_azimuth</attrlabl>
+        <attrdef>Orientation of EY sensor.</attrdef>
+        <attrdefs>U.S. Geological Survey</attrdefs>
+        <attrdomv>
+          <rdom>
+            <rdommin>75</rdommin>
+            <rdommax>90</rdommax>
+            <attrunit>Angle (degrees) relative to magnetic North</attrunit>
+          </rdom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>n_chan</attrlabl>
+        <attrdef>Number of channels recorded.</attrdef>
+        <attrdefs>U.S. Geological Survey</attrdefs>
+        <attrdomv>
+          <rdom>
+            <rdommin>4</rdommin>
+            <rdommax>5</rdommax>
+            <attrunit>Number</attrunit>
+          </rdom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>instr_id</attrlabl>
+        <attrdef>Data logger or instrument setup ID.</attrdef>
+        <attrdefs>U.S. Geological Survey</attrdefs>
+        <attrdomv>
+          <udom>Zen type data format ZEN###. MT-24 type data format ###</udom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>type</attrlabl>
+        <attrdef>Type of data acquired</attrdef>
+        <attrdefs>U.S. Geological Survey</attrdefs>
+        <attrdomv>
+          <edom>
+            <edomv>zen</edomv>
+            <edomvd>Detailed description of ZEN can be found in PDF Guide_to_MT_Data_types</edomvd>
+            <edomvds>U.S. Geological Survey</edomvds>
+          </edom>
+        </attrdomv>
+        <attrdomv>
+          <edom>
+            <edomv>MT24</edomv>
+            <edomvd>Detailed description of MT24 can be found in PDF Guide_to_MT_Data_types</edomvd>
+            <edomvds>U.S. Geological Survey</edomvds>
+          </edom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>quality</attrlabl>
+        <attrdef>Data quality factor</attrdef>
+        <attrdefs>U.S. Geological Survey</attrdefs>
+        <attrdomv>
+          <edom>
+            <edomv>1</edomv>
+            <edomvd>Poor quality transfer functions, barely useable for inversion</edomvd>
+            <edomvds>U.S. Geological Survey</edomvds>
+          </edom>
+        </attrdomv>
+        <attrdomv>
+          <edom>
+            <edomv>2</edomv>
+            <edomvd>Serious issues with transfer functions on one or more modes</edomvd>
+            <edomvds>U.S. Geological Survey</edomvds>
+          </edom>
+        </attrdomv>
+        <attrdomv>
+          <edom>
+            <edomv>3</edomv>
+            <edomvd>Transfer functions are compromosed for one or more modes</edomvd>
+            <edomvds>U.S. Geological Survey</edomvds>
+          </edom>
+        </attrdomv>
+        <attrdomv>
+          <edom>
+            <edomv>4</edomv>
+            <edomvd>Good transfer functions through entire frequency range</edomvd>
+            <edomvds>U.S. Geological Survey</edomvds>
+          </edom>
+        </attrdomv>
+        <attrdomv>
+          <edom>
+            <edomv>5</edomv>
+            <edomvd>Great transfer functions through entire frequency range</edomvd>
+            <edomvds>U.S. Geological Survey</edomvds>
+          </edom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>start_date</attrlabl>
+        <attrdef>Starting date for station data acquisition</attrdef>
+        <attrdefs>U.S. Geological Survey</attrdefs>
+        <attrdomv>
+          <udom>Zen type data date format in YYYY-MM-DDTHH:MM:SS UTC. MT24LF type data date format in YYYYMMDD</udom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>stop_date</attrlabl>
+        <attrdef>End date for station data acquisition.</attrdef>
+        <attrdefs>U.S. Geological Survey</attrdefs>
+        <attrdomv>
+          <udom>Zen type data date in YYYY-MM-DDTHH:MM:SS.ms UTC. MT24LF type data date in YYYYMMDD</udom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>Preview</attrlabl>
+        <attrdef>Link to data PNG image of tipper data for site</attrdef>
+        <attrdefs>U.S. Geological Survey</attrdefs>
+        <attrdomv>
+          <udom>PNG image linked within each child item of landing page.</udom>
+        </attrdomv>
+      </attr>
+    </detailed>
+    <overview>
+      <eaover>MIWIMN_all_edi.zip. Zip file containing all Electrical Data Interchange (EDI) transfer function files (*.edi) for child items associated with this data release. EDI files are named according to MT station.</eaover>
+      <eadetcit>For the complete description of the attributes of each .edi file, see child item metadata associated with this data release (https://doi.org/10.5066/F7610XTR). For a full description of the .edi file format, see https://www.seg.org/Portals/0/SEG/News%20and%20Resources/Technical%20Standards/seg_mt_emap_1987.pdf</eadetcit>
+    </overview>
+    <overview>
+      <eaover>MIWIMN_all_png.zip. Zip file containing .png image files of transfer function estimates for child items associated with this data release.</eaover>
+      <eadetcit>Each image relates to the .edi file of the same name (MT station). See child item metadata associated with this data release (https://doi.org/10.5066/F7610XTR).</eadetcit>
+    </overview>
+    <overview>
+      <eaover>Guide_to_Magnetotelluric_Data_Types.pdf</eaover>
+      <eadetcit>Guide_to_Magnetotelluric_Data_Types.pdf describes available magnetotelluric data types from the USGS. This report describes typical magnetotelluric instrumentation and the various data types required in MT processing and data quality assessment (including electric and magnetic field time-series, instrument response files, MT HDF5 format (MTH5), and transfer functions), accessible at, https://doi.org/10.5066/F7610XTR</eadetcit>
+    </overview>
+  </eainfo>
+  <distinfo>
+    <distrib>
+      <cntinfo>
+        <cntperp>
+          <cntper>GS ScienceBase</cntper>
+          <cntorg>U.S. Geological Survey</cntorg>
+        </cntperp>
+        <cntaddr>
+          <addrtype>mailing address</addrtype>
+          <address>Denver Federal Center, Building 810, Mail Stop 302</address>
+          <city>Denver</city>
+          <state>CO</state>
+          <postal>80225</postal>
+          <country>United States</country>
+        </cntaddr>
+        <cntvoice>1-888-275-8747</cntvoice>
+        <cntemail>sciencebase@usgs.gov</cntemail>
+      </cntinfo>
+    </distrib>
+    <resdesc>https://www.sciencebase.gov/catalog/item/5e87586b82cee42d13400f6b</resdesc>
+    <distliab>Unless otherwise stated, all data, metadata and related materials are considered to satisfy the quality standards relative to the purpose for which the data were collected. Although these data and associated metadata have been reviewed for accuracy and completeness and approved for release by the U.S. Geological Survey (USGS), no warranty expressed or implied is made regarding the display or utility of the data for other purposes, nor on all computer systems, nor shall the act of distribution constitute any such warranty.</distliab>
+    <stdorder>
+      <digform>
+        <digtinfo>
+          <formname>Digital Data</formname>
+          <filedec>Use a file extraction software such as WinZip, 7zip, Peazip</filedec>
+        </digtinfo>
+        <digtopt>
+          <onlinopt>
+            <computer>
+              <networka>
+                <networkr>https://doi.org/10.5066/F7610XTR</networkr>
+              </networka>
+            </computer>
+          </onlinopt>
+        </digtopt>
+      </digform>
+      <fees>None</fees>
+    </stdorder>
+        <techpreq>Part or all of this report is presented in Portable Document Format (PDF); the latest version of Adobe Acrobat Reader or similar software is required to view it.
+
+	Part or all of this release is presented in a zipped file folder. A file extraction software such as WinZip, 7zip, or Peazip is required to view it.</techpreq>
+  </distinfo>
+  <metainfo>
+    <metd>20210226</metd>
+    <metc>
+      <cntinfo>
+        <cntperp>
+          <cntper>Paul A Bedrosian</cntper>
+          <cntorg>U.S. Geological Survey</cntorg>
+        </cntperp>
+        <cntpos>Research Geophysicist</cntpos>
+        <cntaddr>
+          <addrtype>mailing address</addrtype>
+          <address>PO Box 25046 Mail Stop 964, W 6th Ave Kipling St</address>
+          <city>Lakewood</city>
+          <state>CO</state>
+          <postal>80225</postal>
+          <country>US</country>
+        </cntaddr>
+        <cntvoice>303-236-4834</cntvoice>
+        <cntfax>303-236-1425</cntfax>
+        <cntemail>pbedrosian@usgs.gov</cntemail>
+        <cntemail>gs_gggsc_dm_team@usgs.gov</cntemail>
+      </cntinfo>
+    </metc>
+    <metstdn>FGDC Content Standard for Digital Geospatial Metadata</metstdn>
+    <metstdv>FGDC-STD-001-1998</metstdv>
+  </metainfo>
+</metadata>
