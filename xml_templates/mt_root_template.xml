@@ -496,6 +496,10 @@
       <eaover>Attached file</eaover>
       <eadetcit>citation for the attached file</eadetcit>
     </overview>
+	<overview>
+      <eaover>Attached file</eaover>
+      <eadetcit>citation for the attached file</eadetcit>
+    </overview>
   </eainfo>
   <distinfo>
     <distrib>

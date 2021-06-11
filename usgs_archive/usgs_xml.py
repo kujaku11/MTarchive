@@ -11,6 +11,7 @@ Created on Thu Jun 10 12:33:12 2021
 from pathlib import Path
 from configparser import ConfigParser
 from usgs_archive import xml_utils
+import datetime
 
 class MTSBXML(xml_utils.XMLRecord):
     """
@@ -60,6 +61,7 @@ class MTSBXML(xml_utils.XMLRecord):
         self._update_constraints(c["usage"]["constraints"])
         self._update_contact(c["principle_investigator"])
         self._update_processing(c["processing"])
+        self._update_attachments(c["attachments"])
         
         
     def _update_authors(self, authors, orcids=None):
@@ -299,6 +301,57 @@ class MTSBXML(xml_utils.XMLRecord):
                 text=date,
                 parent_node=self.metadata.dataqual.lineage.procstep[index + 1], 
                 index=1)
+            
+    def _update_attachments(self, config_object):
+        """
+        Update processing steps
+        :param config_object: DESCRIPTION
+        :type config_object: TYPE
+        :return: DESCRIPTION
+        :rtype: TYPE
 
+        """
+        self.metadata.eainfo.clear_children("overview")
+        count = len(self.metadata.eainfo.detailed.attr)
+
+        for ii, ext in enumerate(["edi", "png", "guide"]):
+            overview = xml_utils.XMLNode(
+                tag="overview", 
+                parent_node=self.metadata.eainfo, 
+                index=ii + count)
+    
+            xml_utils.XMLNode(
+                tag="eaover", 
+                text=config_object[f"{ext}.fn"],
+                parent_node=overview, 
+                index=0)
+            
+            xml_utils.XMLNode(
+                tag="eadetcit", 
+                text=config_object[f"{ext}.description"],
+                parent_node=overview, 
+                index=1)
+            
+    def update_dates(self, date=None):
+        """
+        Update release and metadata dates to input date or if not input the current 
+        date
+        
+        :param date: DESCRIPTION, defaults to None
+        :type date: TYPE, optional
+        :return: DESCRIPTION
+        :rtype: TYPE
+
+        """
+
+        if date is None:
+            date = datetime.datetime.utcnow()
+            date = date.strftime("%Y%m%d")
+            
+        self.metadata.metainfo.metd.text = date
+        self.metadata.idinfo.citation.citeinfo.pubdate.text = date
+        
+            
+        
         
                     
