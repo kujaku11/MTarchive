@@ -98,6 +98,7 @@
 				<cntper>PI contact person</cntper>
 				<cntorg>U.S. Geological Survey</cntorg>
 			</cntperp>
+			<cntpos>PI Position</cntpos>
 			<cntaddr>
 				<addrtype>mailing address</addrtype>
 				<address>PI Address</address>
@@ -107,6 +108,7 @@
 				<country>PI country</country>
 			</cntaddr>
 			<cntvoice>PI Phone number</cntvoice>
+			<cntfax>PI FAX number</cntfax>
 			<cntemail>PI email</cntemail>
 		</cntinfo>
 	</ptcontac>
@@ -132,7 +134,12 @@
     </posacc>
     <lineage>
       <procstep>
-        <procdesc>describe processing step.
+        <procdesc>describe processing step 1.
+		</procdesc>
+        <procdate>processing date</procdate>
+      </procstep>
+	  <procstep>
+        <procdesc>describe processing step n.
 		</procdesc>
         <procdate>processing date</procdate>
       </procstep>
@@ -551,6 +558,7 @@
 				<country>PI State</country>
 			</cntaddr>
 			<cntvoice>PI Phone Number</cntvoice>
+			<cntfax>PI FAX number</cntfax>
 			<cntemail>PI email</cntemail>
 			<cntemail>science center email</cntemail>
 		</cntinfo>

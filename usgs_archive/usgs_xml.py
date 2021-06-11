@@ -57,7 +57,9 @@ class MTSBXML(xml_utils.XMLRecord):
         for k in ["geolex", "eras"]:
             self._update_temporal(c["temporal"][k], k)
             
-        self._update_constraints(c["supplemental"]["usage_constraints"])
+        self._update_constraints(c["usage"]["constraints"])
+        self._update_contact(c["principle_investigator"])
+        self._update_processing(c["processing"])
         
         
     def _update_authors(self, authors, orcids=None):
@@ -216,10 +218,87 @@ class MTSBXML(xml_utils.XMLRecord):
         
         self.metadata.idinfo.useconst.text = constraint_string
         
+    def _update_contact(self, config_object):
+        """
+        Update ptcontact and metc
+        
+        :param config_object: DESCRIPTION
+        :type config_object: TYPE
+        :return: DESCRIPTION
+        :rtype: TYPE
+
+        """
+        
+        self.metadata.idinfo.ptcontac.cntinfo.cntperp.cntper.text = config_object["name"]
+        self.metadata.metainfo.metc.cntinfo.cntperp.cntper.text = config_object["name"]
+        
+        self.metadata.idinfo.ptcontac.cntinfo.cntperp.cntorg.text = config_object["orginization"]
+        self.metadata.metainfo.metc.cntinfo.cntperp.cntorg.text = config_object["orginization"]
+        
+        self.metadata.idinfo.ptcontac.cntinfo.cntpos.text = config_object["position"]
+        self.metadata.metainfo.metc.cntinfo.cntpos.text = config_object["position"]
+        
+        self.metadata.idinfo.ptcontac.cntinfo.cntaddr.addrtype.text = "mailing address"
+        self.metadata.metainfo.metc.cntinfo.cntaddr.addrtype.text = "mailing address"
+        
+        self.metadata.idinfo.ptcontac.cntinfo.cntaddr.address.text = config_object["address"]
+        self.metadata.metainfo.metc.cntinfo.cntaddr.address.text = config_object["address"]
+        
+        self.metadata.idinfo.ptcontac.cntinfo.cntaddr.city.text = config_object["city"]
+        self.metadata.metainfo.metc.cntinfo.cntaddr.city.text = config_object["city"]
+        
+        self.metadata.idinfo.ptcontac.cntinfo.cntaddr.state.text = config_object["state"]
+        self.metadata.metainfo.metc.cntinfo.cntaddr.state.text = config_object["state"]
+        
+        self.metadata.idinfo.ptcontac.cntinfo.cntaddr.postal.text = config_object["postal"]
+        self.metadata.metainfo.metc.cntinfo.cntaddr.postal.text = config_object["postal"]
+        
+        self.metadata.idinfo.ptcontac.cntinfo.cntaddr.country.text = config_object["country"]
+        self.metadata.metainfo.metc.cntinfo.cntaddr.country.text = config_object["country"]
+
+        self.metadata.idinfo.ptcontac.cntinfo.cntvoice.text = config_object["phone"]
+        self.metadata.metainfo.metc.cntinfo.cntvoice.text = config_object["phone"] 
+        
+        self.metadata.idinfo.ptcontac.cntinfo.cntfax.text = config_object["fax"]
+        self.metadata.metainfo.metc.cntinfo.cntfax.text = config_object["fax"]
+        
+        self.metadata.idinfo.ptcontac.cntinfo.cntemail.text = config_object["email"]
+        self.metadata.metainfo.metc.cntinfo.cntemail[0].text = config_object["email"]
+        self.metadata.metainfo.metc.cntinfo.cntemail[1].text = config_object["data_managment_email"]
+        
+        self.metadata.idinfo.datacred.text = config_object["funding_source"]
         
         
-        
-        
-        
+    def _update_processing(self, config_object):
+        """
+        Update processing steps
+        :param config_object: DESCRIPTION
+        :type config_object: TYPE
+        :return: DESCRIPTION
+        :rtype: TYPE
+
+        """
+        self.metadata.dataqual.lineage.clear_children("procstep")
+        for step in [k for k in config_object.keys() if "step" in k]:
+            index = int(step[-2:])
+            date = config_object[f"date_{index:02}"].replace("-", "")
+
+            xml_utils.XMLNode(
+                tag="procstep", 
+                parent_node=self.metadata.dataqual.lineage, 
+                index=index - 1)
+
+            xml_utils.XMLNode(
+                tag="procdesc", 
+                text=config_object[step],
+                parent_node=self.metadata.dataqual.lineage.procstep[index + 1], 
+                index=0)
+            
+            xml_utils.XMLNode(
+                tag="procdate", 
+                text=date,
+                parent_node=self.metadata.dataqual.lineage.procstep[index + 1], 
+                index=1)
+
         
                     
