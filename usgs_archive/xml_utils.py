@@ -508,9 +508,18 @@ class XMLRecord(object):
             pandas dataframe
         """
 
-        return validate_xml(
+        df = validate_xml(
             self._contents.to_xml(), xsl_fname=schema, as_dataframe=as_dataframe
         )
+        
+        lines = ["Error Messages", '=' * 25]
+        for entry in df.itertuples():
+            lines += [f"\tLine: {entry.line}"]
+            lines += [f"\txpath: {entry.xpath}"]
+            lines += [f"\t{entry.message}"]
+            lines += ["-" * 25]
+            
+        print("\n".join(lines))
 
 
 class XMLNode(object):
@@ -1112,7 +1121,7 @@ def validate_xml(xml, xsl_fname="fgdc", as_dataframe=False):
     errors = list(OrderedDict.fromkeys(errors))
 
     if as_dataframe:
-        cols = ["xpath", "message", "line number"]
+        cols = ["xpath", "message", "line"]
         return pd.DataFrame.from_records(errors, columns=cols)
     else:
         return errors
@@ -1154,8 +1163,7 @@ def clean_error_message(message, fgdc_lookup=None):
     """
     parts = message.split()
     if "Missing child element" in message:
-        clean_message = "The {} is missing the expected element(s) '{}'"
-        clean_message.format(parts[1][:-1], parts[-2])
+        clean_message = f"The {parts[1][:-1]} is missing the expected element(s) '{parts[-2]}'"
     elif (
         r"' is not accepted by the pattern '\s*\S(.|\n|\r)*'" in message
         or "'' is not a valid value of the atomic type" in message

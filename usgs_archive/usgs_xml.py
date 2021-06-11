@@ -24,6 +24,9 @@ class MTSBXML(xml_utils.XMLRecord):
     
     def __init__(self, fn=None):
         super().__init__(fn)
+        
+    def _get_date(self, date):
+        return xml_utils.format_date(date)
     
     def read_template_xml(self, template_fn):
         """
@@ -50,19 +53,33 @@ class MTSBXML(xml_utils.XMLRecord):
             raise IOError(f"Could not find {cfg_fn}")
         c = ConfigParser()
         c.read_file(cfg_fn.open())
+        return c
         
-        self._update_cite_info(c["general"])
-        self._update_description(c["general"])
+    def update_from_config(self, cfg_fn):
+        
+        c = self.read_config(cfg_fn)
+        
+        self._run_update(self._update_cite_info, c["general"])
+        self._run_update(self._update_journal_citation, c["journal_citation"])
+        self._run_update(self._update_description, c["general"])
         for k in ["general", "thesaurus"]:
-            self._update_keywords(c["keywords"][k], k)
+            self._run_update(self._update_keywords, c["keywords"][k], k)
         for k in ["geolex", "eras"]:
-            self._update_temporal(c["temporal"][k], k)
+            self._run_update(self._update_temporal, c["temporal"][k], k)
             
-        self._update_constraints(c["usage"]["constraints"])
-        self._update_contact(c["principle_investigator"])
-        self._update_processing(c["processing"])
-        self._update_attachments(c["attachments"])
-        
+        self._run_update(self._update_constraints, c["usage"]["constraints"])
+        self._run_update(self._update_contact, c["principle_investigator"])
+        self._run_update(self._update_processing, c["processing"])
+        self._run_update(self._update_attachments, c["attachments"])
+    
+    @staticmethod
+    def _run_update(function, *args):
+        try:
+            function(*args)
+        except KeyError as error:
+            print(f"Cound not run {function.__func__.__name__} with {args}")
+            print("Error:")
+            print(error)
         
     def _update_authors(self, authors, orcids=None):
         authors = [name.strip() for name in authors.split(',')] 
@@ -113,11 +130,63 @@ class MTSBXML(xml_utils.XMLRecord):
                 self.metadata.idinfo.citation.citeinfo.othercit.text = other_cite
                 
             elif k == "release_date":
-                self.metadata.idinfo.citation.citeinfo.pubdate.text = v.replace('-', '')
+                self.metadata.idinfo.citation.citeinfo.pubdate.text = self._get_date(v)
                 
             else:
                 setattr(getattr(self.metadata.idinfo.citation.citeinfo, xml_key), "text", v)
                 
+                
+    def _update_journal_citation(self, config_object):
+        """
+        Add a journal citation
+        """
+        
+        lworkcit = xml_utils.XMLNode(
+            tag="lworkcit",
+            parent_node=self.metadata.idinfo.citation.citeinfo)
+        
+        citation = xml_utils.XMLNode(
+            tag="citeinfo",
+            parent_node=lworkcit)
+
+        count = 0
+        for name in config_object["authors"].split(','):
+            xml_utils.XMLNode(
+                tag="origin", 
+                text=name.strip(),
+                parent_node=citation, 
+                index=count)
+            count += 1
+            
+            
+        xml_utils.XMLNode(tag="pubdate",
+                          text=self._get_date(config_object["date"]),
+                          parent_node=citation)
+        
+        xml_utils.XMLNode(tag="title",
+                          text=config_object["title"],
+                          parent_node=citation)
+            
+        
+    
+        xml_utils.XMLNode(tag="geoform",
+                          text="Publication",
+                          parent_node=citation)
+        
+        serinfo = xml_utils.XMLNode(tag="serinfo",
+                          parent_node=citation)
+        xml_utils.XMLNode(tag="sername",
+                          text=config_object["journal"],
+                          parent_node=serinfo)
+        xml_utils.XMLNode(tag="issue",
+                          text=config_object["issue"],
+                          parent_node=serinfo)
+        
+        xml_utils.XMLNode(tag="onlink",
+                          text=config_object["doi"],
+                          parent_node=citation)
+        
+        
     def _update_description(self, config_object):
         """ 
         update description
