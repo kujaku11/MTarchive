@@ -14,7 +14,8 @@ import datetime
 
 import mth5.mth5 as mth5
 import usgs_archive.usgs_archive as archive
-import usgs_archive.usgs_sb_xml as sb_xml
+#import usgs_archive.usgs_sb_xml as sb_xml
+from usgs_archive import usgs_xml
 import getpass
 
 # =============================================================================
@@ -38,6 +39,15 @@ cfg_fn = r"c:\Users\jpeacock\Documents\GitHub\MTarchive\examples\example_mth5_cf
 ### science base, see examples files
 xml_cfg_fn = r"c:\Users\jpeacock\Documents\GitHub\MTarchive\examples\example_xml_configuration.cfg"
 
+### path to main xml file template.  This could be made somewhere else and
+### has been through review.  
+xml_main_template = r"c:\Users\jpeacock\Documents\GitHub\MTarchive\xml_templates\mt_root_template.xml"
+
+### path to xml template for child item
+### this is a file that has been created according to the metadata standards
+### and only a few fields will be update with station specific information
+xml_child_template = r"c:\Users\jpeacock\Documents\GitHub\MTarchive\xml_templates\mt_child_template.xml"
+
 ### path to calibration files
 ### path to the calibrations.  These are assumed to be
 ### in the format (frequency, real, imaginary) for each coil with the
@@ -53,7 +63,10 @@ edi_path = r"/mnt/hgfs/MTData/Geysers/final_edi"
 png_path = r"/mnt/hgfs/MTData/Geysers/final_png"
 
 ### Make xml file each
-make_xml = False
+make_xml = True
+
+### if the chile xmls are already made, put them all in the same folder and add the
+### path here.
 xml_path = r"path/to/xml/file"
 
 ### SCIENCE BASE
@@ -181,38 +194,46 @@ for station in station_list:
             # summarize the runs
             s_df = archive.summarize_station_runs(s_df)
             
+            # make xml file
             if make_xml:
-                # make xml file
-                s_xml = sb_xml.XMLMetadata()
-                s_xml.read_config_file(xml_cfg_fn)
-                s_xml.supplement_info = s_xml.supplement_info.replace("\\n", "\n\t\t\t")
+                s_xml = usgs_xml.MTSBXML()
+                if xml_child_template:
+                   s_xml.read_template_xml(xml_child_template)
+                if xml_cfg_fn:
+                    s_xml.update_from_config(xml_cfg_fn)
+                    
+                
+                
+                # add station name to title and abstract
+                s_xml.metadata.idinfo.citation.title.text.replace("{STATION}", station)
     
-                # add station name to title
-                s_xml.title += ", station {0}".format(station)
-    
-                # location
-                s_xml.survey.east = s_df.longitude
-                s_xml.survey.west = s_df.longitude
-                s_xml.survey.north = s_df.latitude
-                s_xml.survey.south = s_df.latitude
-    
-                # get elevation from national map
-                s_elev = archive.get_nm_elev(s_df.latitude, s_df.longitude)
-                s_xml.survey.elev_min = s_elev
-                s_xml.survey.elev_max = s_elev
-    
-                # start and end time
-                s_xml.survey.begin_date = s_df.start_date
-                s_xml.survey.end_date = s_df.stop_date
-    
+                s_xml.metadata.idinfo.descript.abstract.text.replace("{STATION}", station)
+                
                 # add list of files
-                s_xml.supplement_info += "\n\t\t\tFile List:\n\t\t\t" + "\n\t\t\t".join(
+                s_xml.metadata.idinfo.descript.supplinf.text.replace(
+                    "{STATION_FILES}",
+                    "\n\t\t\t".join(
                     [
                         "{0}.edi".format(station),
                         "{0}.png".format(station),
                         os.path.basename(mth5_fn),
                     ]
-                )
+                ))            
+                
+                for ii in range(3):
+                    s_xml.metadata.eainfo.overview[ii].eaover.text.replace("{STATION}", station)
+                    s_xml.metadata.eainfo.overview[ii].eadetcit.text.replace("{STATION}", station)
+                
+               
+    
+                # location
+                s_xml.update_bounding_box(s_df.longitude.max(),
+                                          s_df.longitude.min(),
+                                          s_df.latitude.max(),
+                                          s_df.latitude.min())
+    
+                # start and end time
+                s_xml.update_time_period(s_df.start_date, s_df.stop_date)
     
                 # write station xml
                 s_xml.write_xml_file(

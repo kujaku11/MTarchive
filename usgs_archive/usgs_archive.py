@@ -1013,6 +1013,7 @@ def sb_upload_data(
     sb_username,
     sb_password=None,
     f_types=[".zip", ".edi", ".png", ".xml", ".mth5"],
+    child_xml=None,
 ):
     """
     Upload a given archive station directory to a new child item of the given
@@ -1054,6 +1055,8 @@ def sb_upload_data(
     station = os.path.basename(archive_station_dir)
 
     ### File to upload
+    if child_xml:
+        f_types.remove(".xml")
     upload_fn_list = sb_get_fn_list(archive_station_dir, f_types=f_types)
 
     ### check if child item is already created
@@ -1073,7 +1076,12 @@ def sb_upload_data(
         "summary": "Magnetotelluric data",
     }
     new_child = session.create_item(new_child_dict)
-
+    
+    if child_xml:
+        child_xml.update_child(new_child)
+        child_xml.save(os.path.join(archive_station_dir, f"{station}.xml"))
+        upload_fn_list.append(child_xml.fn.as_posix())
+        
     # sort list so that xml, edi, png, zip files
     # upload data
     try:

@@ -205,11 +205,10 @@ class MTSBXML(xml_utils.XMLRecord):
         """
         update the bounding box
         """
-        
-        self.metadata.idinfo.spdom.bounding.westbc.text = west
-        self.metadata.idinfo.spdom.bounding.eastbc.text = east
-        self.metadata.idinfo.spdom.bounding.northbc.text = north
-        self.metadata.idinfo.spdom.bounding.southbc.text = south
+        self.metadata.idinfo.spdom.bounding.westbc.text = f"{float(west):.5f}"
+        self.metadata.idinfo.spdom.bounding.eastbc.text = f"{float(east):.5f}"
+        self.metadata.idinfo.spdom.bounding.northbc.text = f"{float(north):.5f}"
+        self.metadata.idinfo.spdom.bounding.southbc.text = f"{float(south):.5f}"
         
     def _update_keywords(self, kw_string, key):
         """
@@ -419,6 +418,47 @@ class MTSBXML(xml_utils.XMLRecord):
             
         self.metadata.metainfo.metd.text = date
         self.metadata.idinfo.citation.citeinfo.pubdate.text = date
+        
+    def update_time_period(self, start, end):
+        """
+        Update time period start and end times
+        
+        :param start: DESCRIPTION
+        :type start: TYPE
+        :param end: DESCRIPTION
+        :type end: TYPE
+        :return: DESCRIPTION
+        :rtype: TYPE
+
+        """
+        self.metadata.idinfo.timeperd.timeinfo.rngdates.clear_children()
+        xml_utils.XMLNode(tag="begdate",
+                          text=xml_utils.format_date(start),
+                          parent_node=self.metadata.idinfo.timeperd.timeinfo.rngdates,
+                          index=0)
+            
+
+        xml_utils.XMLNode(tag="begtime",
+                          text=xml_utils.format_time(start),
+                          parent_node=self.metadata.idinfo.timeperd.timeinfo.rngdates,
+                          index=1)
+            
+        xml_utils.XMLNode(tag="enddate",
+                          text=xml_utils.format_date(end),
+                          parent_node=self.metadata.idinfo.timeperd.timeinfo.rngdates,
+                          index=2)
+
+        xml_utils.XMLNode(tag="endtime",
+                          text=xml_utils.format_time(end),
+                          parent_node=self.metadata.idinfo.timeperd.timeinfo.rngdates,
+                          index=3)
+        
+    def update_child(self, child_item):
+        """
+        Update information from a child item
+        """
+        self.metadata.distinfo.resdesc.text = child_item["link"]["url"]
+        
         
             
         

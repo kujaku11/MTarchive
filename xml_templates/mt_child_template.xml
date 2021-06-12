@@ -32,6 +32,8 @@
             <timeinfo>
                 <rngdates>
                     <begdate>{STATION_BEGIN_DATE}</begdate>
+					<begtime>{STATION_BEGIN_TIME}</begtime>
+					<enddate>{STATION_END_TIME}</enddate>
                     <endtime>{STATION_END_TIME}</endtime>
                 </rngdates>
             </timeinfo>
@@ -185,15 +187,15 @@
     </spref>
     <eainfo>
         <overview>
-            <eaover>{STATION.edi}</eaover>
+            <eaover>{STATION}.edi</eaover>
             <eadetcit>Electrical Data Interchange (EDI) transfer function file for station {STATION}. The *.edi file type is described in detail in the PDF document, Guide_to_Magnetotelluric_Data_Types, available at https://doi.org/10.5066/F7610XTR.</eadetcit>
         </overview>
         <overview>
-            <eaover>{STATION.png}</eaover>
+            <eaover>{STATION}.png</eaover>
             <eadetcit>Thumbnail image of the resistivity, phase, and tipper values for station {STATION}, available at https://doi.org/10.5066/F7610XTR.</eadetcit>
         </overview>
         <overview>
-            <eaover>{STATION.mth5}</eaover>
+            <eaover>{STATION}.mth5</eaover>
             <eadetcit>MTH5 format data file for station {STATION}. The *.mth5 file type is described in detail in the PDF document, Guide_to_Magnetotelluric_Data_Types.pdf, available at https://doi.org/10.5066/F7610XTR.</eadetcit>
         </overview>
     </eainfo>

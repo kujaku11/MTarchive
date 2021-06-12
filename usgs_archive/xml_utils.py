@@ -1204,3 +1204,11 @@ def format_date(date_input):
 
     return date_input.strftime("%Y%m%d")
 
+def format_time(date_time_str):
+        """
+        get time string
+        """
+        dt = parser.parse(date_time_str)
+
+        return dt.strftime("%H%M%S%f")[:10] + "Z"
+
