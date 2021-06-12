@@ -68,8 +68,9 @@ import pandas as pd
 fgdc_dir = Path(__file__).parent.parent.joinpath("fgdc_standards")
 FGDC_XSD_NAME = fgdc_dir.joinpath("fgdc-std-001-1998-annotated.xsd")
 BDP_LOOKUP = fgdc_dir.joinpath("bdp_lookup.json")
-    
+
 # =============================================================================
+
 
 def xml_document_loader(xml_locator):
     """
@@ -279,7 +280,9 @@ def remove_control_characters(s):
     string
     """
     s = str(s)
-    return "".join(ch for ch in s if unicodedata.category(ch)[0] != "C" or ch in ['\n', '\t'])
+    return "".join(
+        ch for ch in s if unicodedata.category(ch)[0] != "C" or ch in ["\n", "\t"]
+    )
 
 
 def element_to_df(results):
@@ -390,7 +393,7 @@ def xml_node(tag, text="", parent_node=None, index=-1, comment=False):
         node = etree.Element(tag)
 
     if text:
-        node.text = u"{}".format(remove_control_characters(text))
+        node.text = "{}".format(remove_control_characters(text))
 
     if parent_node is not None:
         if index == -1:
@@ -453,11 +456,11 @@ class XMLRecord(object):
 
     def serialize(self):
         return self.__str__()
-    
+
     @property
     def fn(self):
         return self._fn
-    
+
     @fn.setter
     def fn(self, value):
         if value is None:
@@ -466,7 +469,7 @@ class XMLRecord(object):
             self._fn = Path(value)
             if self._fn.exists():
                 self.read(self._fn)
-    
+
     def read(self, fn):
         """
         Read xml file
@@ -511,14 +514,14 @@ class XMLRecord(object):
         df = validate_xml(
             self._contents.to_xml(), xsl_fname=schema, as_dataframe=as_dataframe
         )
-        
-        lines = ["Error Messages", '=' * 25]
+
+        lines = ["Error Messages", "=" * 25]
         for entry in df.itertuples():
             lines += [f"\tLine: {entry.line}"]
             lines += [f"\txpath: {entry.xpath}"]
             lines += [f"\t{entry.message}"]
             lines += ["-" * 25]
-            
+
         print("\n".join(lines))
 
 
@@ -934,7 +937,7 @@ class XMLNode(object):
             index = len(self.children)
         if index < -1:
             index += 1
-        
+
         if type(child) == etree._Element:
             node_str = node_to_string(child, encoding=False)
         else:
@@ -980,8 +983,6 @@ def split_tag(tag):
         fgdc_tag = tag
         index = 0
     return fgdc_tag, index
-
-
 
 
 def validate_xml(xml, xsl_fname="fgdc", as_dataframe=False):
@@ -1163,7 +1164,9 @@ def clean_error_message(message, fgdc_lookup=None):
     """
     parts = message.split()
     if "Missing child element" in message:
-        clean_message = f"The {parts[1][:-1]} is missing the expected element(s) '{parts[-2]}'"
+        clean_message = (
+            f"The {parts[1][:-1]} is missing the expected element(s) '{parts[-2]}'"
+        )
     elif (
         r"' is not accepted by the pattern '\s*\S(.|\n|\r)*'" in message
         or "'' is not a valid value of the atomic type" in message
@@ -1204,11 +1207,11 @@ def format_date(date_input):
 
     return date_input.strftime("%Y%m%d")
 
+
 def format_time(date_time_str):
-        """
+    """
         get time string
         """
-        dt = parser.parse(date_time_str)
+    dt = parser.parse(date_time_str)
 
-        return dt.strftime("%H%M%S%f")[:10] + "Z"
-
+    return dt.strftime("%H%M%S%f")[:10] + "Z"

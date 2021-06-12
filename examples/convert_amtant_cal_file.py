@@ -119,9 +119,15 @@ for key in ant_dict.keys():
 
     if birrp:
         df.to_csv(
-        save_path.joinpath(f"{key}.csv"), index=False, header=False, float_format="%.5e"
+            save_path.joinpath(f"{key}.csv"),
+            index=False,
+            header=False,
+            float_format="%.5e",
         )
     else:
         df.to_csv(
-            save_path.joinpath(f"{key}.csv"), index=False, header=True, float_format="%.5e"
+            save_path.joinpath(f"{key}.csv"),
+            index=False,
+            header=True,
+            float_format="%.5e",
         )

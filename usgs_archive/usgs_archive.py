@@ -1076,12 +1076,12 @@ def sb_upload_data(
         "summary": "Magnetotelluric data",
     }
     new_child = session.create_item(new_child_dict)
-    
+
     if child_xml:
         child_xml.update_child(new_child)
         child_xml.save(os.path.join(archive_station_dir, f"{station}.xml"))
         upload_fn_list.append(child_xml.fn.as_posix())
-        
+
     # sort list so that xml, edi, png, zip files
     # upload data
     try:
