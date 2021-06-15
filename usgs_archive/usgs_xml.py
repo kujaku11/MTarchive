@@ -487,3 +487,26 @@ class MTSBXML(xml_utils.XMLRecord):
         Update information from a child item
         """
         self.metadata.distinfo.resdesc.text = child_item["link"]["url"]
+        
+    def update_shp_attributes(self, df):
+        """
+        Update the bounds on shapefile attributes from the survey dataframe
+        
+        :param df: DESCRIPTION
+        :type df: TYPE
+        :return: DESCRIPTION
+        :rtype: TYPE
+
+        """
+        
+        for attr in self.metadata.eainfo.detailed.attr:
+            label = attr.attrlabl
+            try:
+                low = df[label].min()
+                high = df[label].max()
+                
+                attr.attrdomv.rdom.rdommin.text = str(low)
+                attr.attrdomv.rdom.rdommax.text = str(high)
+                
+            except KeyError:
+                print(f"could not find {label} in dataframe, skipping")

@@ -22,6 +22,8 @@ import getpass
 # =============================================================================
 # Inputs
 # =============================================================================
+survey_name = "gabbs_valley"
+
 ### path to station data
 station_dir = r"c:\Users\jpeacock\DOI\Cox, Evan M - Datarelease_troubleshoot_JP"
 
@@ -137,13 +139,13 @@ for station in station_list:
         ### capture output to put into a log file
         with archive.Capturing() as output:
             station_st = datetime.datetime.now()
-            # ### copy edi and png into archive director
-            # if not os.path.isfile(os.path.join(station_save_dir, '{0}.edi'.format(station))):
-            #     shutil.copy(os.path.join(edi_path, '{0}.edi'.format(station)),
-            #                 os.path.join(station_save_dir, '{0}.edi'.format(station)))
-            # if not os.path.isfile(os.path.join(station_save_dir, '{0}.png'.format(station))):
-            #     shutil.copy(os.path.join(png_path, '{0}.png'.format(station)),
-            #                 os.path.join(station_save_dir, '{0}.png'.format(station)))
+            ### copy edi and png into archive director
+            if not os.path.isfile(os.path.join(station_save_dir, '{0}.edi'.format(station))):
+                shutil.copy(os.path.join(edi_path, '{0}.edi'.format(station)),
+                            os.path.join(station_save_dir, '{0}.edi'.format(station)))
+            if not os.path.isfile(os.path.join(station_save_dir, '{0}.png'.format(station))):
+                shutil.copy(os.path.join(png_path, '{0}.png'.format(station)),
+                            os.path.join(station_save_dir, '{0}.png'.format(station)))
 
             ### Make MTH5 File
             m = mth5.MTH5()
@@ -172,23 +174,23 @@ for station in station_list:
                 m.add_schedule(sch_obj)
 
             # ### add calibrations
-            # for hh in ['hx', 'hy', 'hz']:
-            #     mag_obj = getattr(m.field_notes, 'magnetometer_{0}'.format(hh))
-            #     if mag_obj.id is not None and mag_obj.id != 0:
-            #         cal_fn = os.path.join(calibration_dir,
-            #                               'ant_{0}.csv'.format(mag_obj.id))
-            #         cal_hx = mth5.Calibration()
-            #         cal_hx.from_csv(cal_fn)
-            #         cal_hx.name = hh
-            #         cal_hx.instrument_id = mag_obj.id
-            #         cal_hx.calibration_person.email = 'zonge@zonge.com'
-            #         cal_hx.calibration_person.name = 'Zonge International'
-            #         cal_hx.calibration_person.organization = 'Zonge International'
-            #         cal_hx.calibration_person.organization_url = 'zonge.com'
-            #         cal_hx.calibration_date = '2013-05-04'
-            #         cal_hx.units = 'mV/nT'
+            for hh in ['hx', 'hy', 'hz']:
+                mag_obj = getattr(m.field_notes, 'magnetometer_{0}'.format(hh))
+                if mag_obj.id is not None and mag_obj.id != 0:
+                    cal_fn = os.path.join(calibration_dir,
+                                          'ant_{0}.csv'.format(mag_obj.id))
+                    cal_hx = mth5.Calibration()
+                    cal_hx.from_csv(cal_fn)
+                    cal_hx.name = hh
+                    cal_hx.instrument_id = mag_obj.id
+                    cal_hx.calibration_person.email = 'zonge@zonge.com'
+                    cal_hx.calibration_person.name = 'Zonge International'
+                    cal_hx.calibration_person.organization = 'Zonge International'
+                    cal_hx.calibration_person.organization_url = 'zonge.com'
+                    cal_hx.calibration_date = '2013-05-04'
+                    cal_hx.units = 'mV/nT'
 
-            #         m.add_calibration(cal_hx)
+                    m.add_calibration(cal_hx)
 
             m.close_mth5()
             ####------------------------------------------------------------------
@@ -235,25 +237,24 @@ for station in station_list:
                     )
 
                 # location
-                s_xml.update_bounding_box(
-                    s_df.longitude.max(),
-                    s_df.longitude.min(),
-                    s_df.latitude.max(),
-                    s_df.latitude.min(),
-                )
+                # s_xml.update_bounding_box(
+                #     s_df.longitude.max(),
+                #     s_df.longitude.min(),
+                #     s_df.latitude.max(),
+                #     s_df.latitude.min(),
+                # )
 
                 # start and end time
                 s_xml.update_time_period(s_df.start_date, s_df.stop_date)
 
                 # write station xml
-                s_xml.write_xml_file(
+                s_xml.save(
                     os.path.join(station_save_dir, "{0}_meta.xml".format(station)),
-                    write_station=True,
                 )
             if not make_xml and os.path.exists(xml_path):
                 shutil.copy(
-                    os.path.join(xml_path, "{0}.png".format(station)),
-                    os.path.join(station_save_dir, "{0}.png".format(station)),
+                    os.path.join(xml_path, "{0}.xml".format(station)),
+                    os.path.join(station_save_dir, "{0}.xml".format(station)),
                 )
 
             station_et = datetime.datetime.now()
@@ -291,26 +292,28 @@ if summarize:
 
     ### write survey xml
     # adjust survey information to align with data
-    survey_xml = sb_xml.XMLMetadata()
-    survey_xml.read_config_file(xml_cfg_fn)
-    survey_xml.supplement_info = survey_xml.supplement_info.replace("\\n", "\n\t\t\t")
+    survey_xml = usgs_xml.MTSBXML()
+    if xml_main_template:
+        survey_xml.read_template_xml(xml_child_template)
+    if xml_cfg_fn:
+        survey_xml.update_from_config(xml_cfg_fn)
 
     # location
-    survey_xml.survey.east = survey_df.longitude.min()
-    survey_xml.survey.west = survey_df.longitude.max()
-    survey_xml.survey.south = survey_df.latitude.min()
-    survey_xml.survey.north = survey_df.latitude.max()
-
-    # get elevation min and max from station locations, not sure if this is correct
-    survey_xml.survey.elev_min = survey_df.elevation.min()
-    survey_xml.survey.elev_max = survey_df.elevation.max()
+    survey_xml.update_bounding_box(
+        survey_df.longitude.min(),
+        survey_df.longitude.max(),
+        survey_df.latitude.max(),
+        survey_df.latitude.min())
 
     # dates
-    survey_xml.survey.begin_date = survey_df.start_date.min()
-    survey_xml.survey.end_date = survey_df.stop_date.max()
+    survey_xml.update_time_period(survey_df.start_date.min(), 
+                                  survey_df.start_date.max())
+    
+    # shape file attributes limits
+    survey_xml.update_shp_attributes(survey_df)
 
     ### --> write survey xml file
-    survey_xml.write_xml_file(os.path.join(save_dir, "{0}.xml".format("mp_survey")))
+    survey_xml.save(os.path.join(save_dir, f"{survey_name}.xml"))
 
 # print timing
 et = datetime.datetime.now()
