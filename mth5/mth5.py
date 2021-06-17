@@ -70,10 +70,19 @@ class Generic(object):
         """
         return a dictionary
         """
-        rdict = {}
-        for key, value in self.__dict__.items():
-            rdict[f"{self.__class__.__name__}.{key}"] = value
-
+        rdict = json.loads(self.to_json())
+        for key, value in rdict.items():
+            if value is None:
+                rdict[key] = ""
+        # rdict = {}
+        # for key in self._attrs_list:
+        #     value = getattr(self, key)
+        #     if not isinstance(value, (str, float, int, list)):
+                
+        #     if value is None:
+        #         value = ""
+        #     rdict[f"{self.__class__.__name__}.{key}"] = value
+        print(rdict)
         return rdict
 
     def to_json(self):
@@ -1287,7 +1296,9 @@ class MTH5(object):
         """
         if self.h5_is_write():
             for attr in ["site", "field_notes", "copyright", "provenance", "software"]:
-                self.mth5_obj.attrs.update(getattr(self, attr).to_dict())
+                input_dict = getattr(self, attr).to_dict()
+                print(input_dict)
+                self.mth5_obj.attrs.update(input_dict)
 
     def add_schedule(self, schedule_obj, compress=True):
         """
@@ -1679,18 +1690,20 @@ def to_json(obj):
                 Software,
             ),
         ):
-            obj_dict[key] = {}
+            # obj_dict[key] = {}
             for o_key, o_value in value.__dict__.items():
                 if o_key.find("_") == 0:
                     continue
-                obj_dict[key][o_key] = o_value
+                key = f"{key}.{o_key}"
+                obj_dict[key] = o_value
 
         elif isinstance(value, (Site, Calibration)):
-            obj_dict[key] = {}
+            # obj_dict[key] = {}
             for o_key in value._attrs_list:
                 if o_key.find("_") == 0:
                     continue
-                obj_dict[key][o_key] = getattr(obj, o_key)
+                key = f"{key}.{o_key}"
+                obj_dict[key] = getattr(obj, o_key)
         else:
             obj_dict[key] = value
 

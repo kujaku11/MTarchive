@@ -25,7 +25,7 @@ import getpass
 survey_name = "gabbs_valley"
 
 ### path to station data
-station_dir = r"c:\Users\jpeacock\DOI\Cox, Evan M - Datarelease_troubleshoot_JP"
+station_dir = r"/mnt/hgfs/MT_Data/GV2020"
 
 ### path to survey parameter spread sheet
 ### this can be made by running this code and setting csv_fn to None
@@ -35,24 +35,24 @@ csv_fn = None  # r"/mnt/hgfs/MTData/Geysers/Archive/survey_summary.csv"
 ### path to mth5 configuration file
 ### this is a configuration file that has metadata explaining most of the
 ### common information needed by the user.  See example files
-cfg_fn = r"c:\Users\jpeacock\Documents\GitHub\MTarchive\examples\example_mth5_cfg.txt"
+cfg_fn = r"/mnt/hgfs/MT_Data/GV2020/gv_mth5.cfg"
 
 ### path to xml configuration file
 ### this is a file that has metadata common to the xml files that go into
 ### science base, see examples files
-xml_cfg_fn = r"c:\Users\jpeacock\Documents\GitHub\MTarchive\examples\example_xml_configuration.cfg"
+xml_cfg_fn = r"/mnt/hgfs/MT_Data/GV2020/gv_sb_config.cfg"
 
 ### path to main xml file template.  This could be made somewhere else and
 ### has been through review.
 xml_main_template = (
-    r"c:\Users\jpeacock\Documents\GitHub\MTarchive\xml_templates\mt_root_template.xml"
+    r"/mnt/hgfs/MT_Data/GV2020/mt_root_template.xml"
 )
 
 ### path to xml template for child item
 ### this is a file that has been created according to the metadata standards
 ### and only a few fields will be update with station specific information
 xml_child_template = (
-    r"c:\Users\jpeacock\Documents\GitHub\MTarchive\xml_templates\mt_child_template.xml"
+    r"/mnt/hgfs/MT_Data/GV2020/mt_child_template.xml"
 )
 
 ### path to calibration files
@@ -60,21 +60,21 @@ xml_child_template = (
 ### in the format (frequency, real, imaginary) for each coil with the
 ### coil name in the file name, e.g. ant2284.[cal, txt, csv]
 ### see example script
-calibration_dir = r"/mnt/hgfs/MTData/Ant_calibrations"
+calibration_dir = r"/mnt/hgfs/MT_Data/birrp_responses"
 
 ### paths to edi and png files if not already copied over
 ### typically all edi files are stored in one folder, but to make it easier
 ### to archive the code copies the edi and png files into the archve/station
 ### folder that makes it easier to upload to science base
-edi_path = r"/mnt/hgfs/MTData/Geysers/final_edi"
-png_path = r"/mnt/hgfs/MTData/Geysers/final_png"
+edi_path = r"/mnt/hgfs/MTData/GV2020/final_edi"
+png_path = r"/mnt/hgfs/MTData/GV202/final_png"
 
 ### Make xml file each
 make_xml = True
 
 ### if the chile xmls are already made, put them all in the same folder and add the
 ### path here.
-xml_path = r"path/to/xml/file"
+xml_path = None
 
 ### SCIENCE BASE
 ### page id number

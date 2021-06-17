@@ -346,8 +346,8 @@ class MTSBXML(xml_utils.XMLRecord):
         self.metadata.idinfo.ptcontac.cntinfo.cntvoice.text = config_object["phone"]
         self.metadata.metainfo.metc.cntinfo.cntvoice.text = config_object["phone"]
 
-        self.metadata.idinfo.ptcontac.cntinfo.cntfax.text = config_object["fax"]
-        self.metadata.metainfo.metc.cntinfo.cntfax.text = config_object["fax"]
+        #self.metadata.idinfo.ptcontac.cntinfo.cntfax.text = config_object["fax"]
+        #self.metadata.metainfo.metc.cntinfo.cntfax.text = config_object["fax"]
 
         self.metadata.idinfo.ptcontac.cntinfo.cntemail.text = config_object["email"]
         self.metadata.metainfo.metc.cntinfo.cntemail[0].text = config_object["email"]
@@ -401,8 +401,11 @@ class MTSBXML(xml_utils.XMLRecord):
 
         """
         self.metadata.eainfo.clear_children("overview")
-        count = len(self.metadata.eainfo.detailed.attr)
-
+        try:
+            count = len(self.metadata.eainfo.detailed.attr)
+        except AttributeError:
+            count = 0
+            
         for ii, ext in enumerate(["edi", "png", "guide"]):
             overview = xml_utils.XMLNode(
                 tag="overview", parent_node=self.metadata.eainfo, index=ii + count
